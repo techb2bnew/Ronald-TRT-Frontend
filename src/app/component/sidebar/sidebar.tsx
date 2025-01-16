@@ -1,6 +1,5 @@
 // components/Sidebar.tsx
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState } from 'react'; 
 import Link from 'next/link';
 const Sidebar = () => {
     const [isUsersOpen, setIsUsersOpen] = useState(false);

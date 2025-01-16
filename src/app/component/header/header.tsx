@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
-import User from '../../../../public/userImg.png'
-import Image from 'next/image';
+import React, { useState } from 'react'; 
 export default function Home() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [notificationOpen, setnotificationOpen] = useState(false);
