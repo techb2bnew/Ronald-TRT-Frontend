@@ -6,17 +6,12 @@ import Delete from '../../../public/delete.svg'
 import Image from 'next/image';
 
 interface TableActionsProps {
-  isActive: boolean;
-  onToggle: (isActive: boolean) => void;
+  isActive: boolean; 
 }
 
-const TableActions: React.FC<TableActionsProps> = ({ isActive, onToggle }) => {
-  const [active, setActive] = useState(isActive);
-
-  const toggleActive = () => {
-    setActive(!active);
-    onToggle(!active);
-  };
+const TableActions: React.FC<TableActionsProps> = ({ isActive }) => {
+   
+ 
 
   return (
     <div className="flex items-center space-x-2">

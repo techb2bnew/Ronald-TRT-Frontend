@@ -47,8 +47,7 @@ const TechnicianTable: React.FC = () => {
                 </td>
                 <td>
                 <TableActions
-                isActive={tech.active}
-                onToggle={(newActiveStatus) => console.log('Toggled status to:', newActiveStatus)}
+                isActive={tech.active} 
               />
                 </td>
               </tr>
