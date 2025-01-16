@@ -52,7 +52,7 @@ export default function Login() {
                     Remember Me
                   </label>
                 </div>
-                <a href="#" className="text-sm primary-text">Forgot Password?</a>
+                <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
               </div>
 
               <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
