@@ -1,15 +1,13 @@
 // components/TableActions.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import Edit from '../../../public/edit.svg'
 import Eye from '../../../public/eye-off.svg'
 import Delete from '../../../public/delete.svg'
 import Image from 'next/image';
 
-interface TableActionsProps {
-  isActive: boolean; 
-}
+ 
 
-const TableActions: React.FC<TableActionsProps> = ({ isActive }) => {
+export default function TableActions() {
    
  
 
@@ -34,5 +32,4 @@ const TableActions: React.FC<TableActionsProps> = ({ isActive }) => {
     </div>
   );
 };
-
-export default TableActions;
+ 

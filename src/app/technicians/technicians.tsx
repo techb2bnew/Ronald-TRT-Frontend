@@ -46,8 +46,7 @@ const TechnicianTable: React.FC = () => {
                   </span>
                 </td>
                 <td>
-                <TableActions
-                isActive={tech.active} 
+                <TableActions 
               />
                 </td>
               </tr>
