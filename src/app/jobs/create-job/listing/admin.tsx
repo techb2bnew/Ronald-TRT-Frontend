@@ -1,0 +1,75 @@
+// components/TechnicianTable.tsx
+import React from 'react';
+import TableActions from '../../../component/action';
+import CommonHeader from '../../../component/commonHeader';
+const TechnicianTable: React.FC = () => {
+  // Sample data
+  const technicians = [
+    { id: '#1234', name: 'John Smith', email: 'info@johnsmith.com', phone: '+61 7 1234 1234', payRate: 'Fixed', status: 'Active', active: true },
+    { id: '#1234', name: 'John Smith', email: 'info@johnsmith.com', phone: '+61 7 1234 1234', payRate: 'Flat Rate', status: 'Inactive', active: true },
+    // Add more sample technicians as needed
+  ];
+  const handleSearch = (searchTerm: string) => {
+    console.log('Searching for:', searchTerm);
+    // Implement search logic here
+  };
+  return (
+    <div className="container mx-auto mt-4">
+      <CommonHeader heading='IFS Admin' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create IFS Admin" buttonLink="/workshop/admin/create" />
+
+      <div className="overflow-x-auto rounded-md">
+        <table className="table w-full table-fixed">
+          {/* Table header */}
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone Number</th>
+              <th>No. of Tech.</th>
+              <th>Account Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Table body */}
+            {technicians.map((tech, index) => (
+              <tr key={index}>
+                <td>{tech.id}</td>
+                <td>{tech.name}</td>
+                <td>{tech.email}</td>
+                <td>{tech.phone}</td>
+                <td>{tech.payRate}</td>
+                <td>
+                  <span className={`badge ${tech.status === 'Active' ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>
+                    {tech.status}
+                  </span>
+                </td>
+                <td>
+                  <div className="flex items-center gap-4">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_914_4397)">
+                      <path d="M14.4205 6.82693C14.7256 7.13211 14.7256 7.6268 14.4205 7.93182L9.17938 13.1731C8.87421 13.4781 8.37967 13.4781 8.07449 13.1731L5.57953 10.6779C5.27435 10.3729 5.27435 9.87823 5.57953 9.57321C5.88455 9.26804 6.37924 9.26804 6.68427 9.57321L8.62686 11.5158L13.3156 6.82693C13.6208 6.52191 14.1154 6.52191 14.4205 6.82693ZM20 10C20 15.5275 15.5267 20 10 20C4.4725 20 0 15.5267 0 10C0 4.4725 4.47327 0 10 0C15.5275 0 20 4.47327 20 10ZM18.4375 10C18.4375 5.33615 14.6632 1.5625 10 1.5625C5.33615 1.5625 1.5625 5.33676 1.5625 10C1.5625 14.6638 5.33676 18.4375 10 18.4375C14.6638 18.4375 18.4375 14.6632 18.4375 10Z" fill="#21BA21" />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_914_4397">
+                        <rect width="20" height="20" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+
+                  <TableActions
+                    editRoute="/workshop/admin/create"
+                  />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default TechnicianTable;

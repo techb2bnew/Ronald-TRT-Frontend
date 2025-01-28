@@ -1,10 +1,10 @@
 "use client";
-import Forgot from "./forgot";
+import Reset from "./[token]/page";
 
 export default function Index() {
   return (
    <>
-   <Forgot />
+   <Reset />
    </>
   );
 }

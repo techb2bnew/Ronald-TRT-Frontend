@@ -4,23 +4,26 @@ import Edit from '../../../public/edit.svg'
 import Eye from '../../../public/eye-off.svg'
 import Delete from '../../../public/delete.svg'
 import Image from 'next/image';
+import Link from 'next/link';
 
- 
+interface TableActionsProps {
+  editRoute: string;  // Prop for the edit route
+}
 
-export default function TableActions() {
+const TableActions: React.FC<TableActionsProps> = ({ editRoute }) => {
    
  
 
   return (
-    <div className="flex items-center space-x-2">
-      <button className="p-2" onClick={() => console.log('View')}>
-      <Image alt='eye' src={Eye} /> 
-      </button>
-      <button className="p-2" onClick={() => console.log('Edit')}>
-        <Image alt='edit' src={Edit} />
-      </button>
+    <div className="flex items-center space-x-1">
+      <Link className="p-1" href='#'>
+      <Image alt='eye' src={Eye} className='w-[14px]' /> 
+      </Link>
+      <Link className="p-1" href={editRoute}>
+        <Image alt='edit' src={Edit} className='w-[14px]'/>
+      </Link>
       <button className="p-2" onClick={() => console.log('Delete')}>
-      <Image alt='delete' src={Delete} /> 
+      <Image alt='delete' src={Delete} className='w-[14px]'/> 
       </button>
      
       
@@ -33,3 +36,4 @@ export default function TableActions() {
   );
 };
  
+export default TableActions;

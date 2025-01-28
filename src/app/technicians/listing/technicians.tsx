@@ -1,7 +1,7 @@
 // components/TechnicianTable.tsx
 import React from 'react';
-import TableActions from '../component/action';
-import CommonHeader from '../component/commonHeader';
+import TableActions from '../../component/action';
+import CommonHeader from '../../component/commonHeader';
 const TechnicianTable: React.FC = () => {
   // Sample data
   const technicians = [
@@ -15,7 +15,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Technicians' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} />
+      <CommonHeader heading='IFS Technicians' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create Technician" buttonLink="/technicians/create-technician"/>
        
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -47,6 +47,7 @@ const TechnicianTable: React.FC = () => {
                 </td>
                 <td>
                 <TableActions 
+                editRoute="/technicians/create-technician"
               />
                 </td>
               </tr>

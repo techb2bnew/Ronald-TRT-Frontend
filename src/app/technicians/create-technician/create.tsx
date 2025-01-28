@@ -1,0 +1,342 @@
+"use client"; 
+import React, { useState } from 'react';
+import { Country, State } from 'country-state-city';
+import { ICountry, IState } from 'country-state-city';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+interface TechnicianForm {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  secondaryContactName:string;
+  email: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  zipCode: string;
+  secondaryEmail?: string;
+  password: string;
+  payRate: string;
+  taxForms: File[];
+  amountPercentage: string;
+}
+export default function Technicians() {
+
+  const [formData, setFormData] = useState<TechnicianForm>({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
+    country: '',
+    state: '',
+    city: '',
+    zipCode: '',
+    secondaryContactName:'',
+    secondaryEmail: '',
+    password: '',
+    payRate: '',
+    taxForms: [],
+    amountPercentage: '',
+  });
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, taxForms: [...formData.taxForms, ...Array.from(e.target.files || [])] });
+  };
+
+  const handleRemoveFile = (index:any) => {
+    // Create a new array by filtering out the file at the given index
+    const updatedFiles = formData.taxForms.filter((_, fileIndex) => fileIndex !== index);
+    setFormData({ ...formData, taxForms: updatedFiles });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    if (!formData.firstName || !formData.lastName) {
+      alert('First name and last name are required.');
+      return;
+    }
+  
+    const formPayload = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (key !== 'taxForms') {
+        const value = formData[key as keyof TechnicianForm];
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'object' && !(value instanceof File)) {
+            // For non-file object types (if any), stringify or handle accordingly
+            // Example: if it's a Date object or some other serializable type
+            formPayload.append(key, JSON.stringify(value));
+          } else {
+            // Append value as string if it's not a File object
+            formPayload.append(key, value.toString());
+          }
+        }
+      }
+    });
+  
+     // Append each file separately under the key "taxForms"
+  formData.taxForms.forEach((file) => {
+    if (file) {  // Check that the file is not undefined
+      formPayload.append('taxForms', file);
+    }
+  });
+  
+    try {
+      const response = await fetch('http://3.111.36.139:5000/api/register', {
+        method: 'POST',
+        body: formPayload,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+      toast.success('Technician created successfully!'); 
+    } catch (error: any) {
+      toast.error(error.message || 'An unexpected error occurred'); 
+    }
+  };
+
+  const countries = Country.getAllCountries();
+  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
+
+
+  return (
+    <div className='main-container mb-5'>
+            <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1>
+      <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p>
+      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Client Name and Business Name */}
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>First Name <span className='text-red-500'>*</span></label>
+              <input
+                type="text"
+                placeholder="Enter your first name"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Last Name <span className='text-red-500'>*</span></label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Enter your last name"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Client Name and Business Name */}
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Phone <span className='text-red-500'>*</span></label>
+              <input
+                type="number"
+                name="phoneNumber"
+                placeholder="Enter your phone number"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Email <span className='text-red-500'>*</span></label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+          </div>
+          {/* Address and Email */}
+          <div className='mb-2'>
+            <label htmlFor="" className='text-sm'>Address <span className='text-red-500'>*</span></label>
+            <input
+              type="text"
+               name="address"
+              placeholder="Enter your address"
+              value={formData.address}
+              onChange={handleChange}
+              className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+            />
+          </div>
+          <div className="grid grid-cols-4 gap-4">
+            {/* Client Name and Business Name */}
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Country <span className='text-red-500'>*</span></label>
+              <select
+                name="country"
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+                value={formData.country}
+                onChange={handleChange}
+              >
+                <option value="">Select country</option>
+                {countries.map((country: ICountry) => (
+                  <option key={country.isoCode} value={country.isoCode}>{country.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>State <span className='text-red-500'>*</span></label>
+              <select
+                name="state"
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+                value={formData.state}
+                onChange={handleChange}
+                disabled={!formData.country}
+              >
+                <option value="">Select state</option>
+                {states.map((state: IState) => (
+                  <option key={state.isoCode} value={state.isoCode}>{state.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>City <span className='text-red-500'>*</span></label>
+              <input
+                type="text"
+                placeholder="Enter your city"
+                 name="city"
+                value={formData.city}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Zip Code <span className='text-red-500'>*</span></label>
+              <input
+                type="text"
+                placeholder="Enter your email"
+                name="zipCode" 
+                value={formData.zipCode}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Secondary phone number</label>
+              <input
+                type="number"
+                name="secondaryContactName" 
+                placeholder="Enter your phone number"
+                value={formData.secondaryContactName}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div> 
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Secondary Email</label>
+
+              <input
+                type="email"
+                name="secondaryEmail" 
+                placeholder="Enter secondary email address"
+                value={formData.secondaryEmail}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+            </div>
+          <div className="grid grid-cols-2 gap-4">
+
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Password <span className='text-red-500'>*</span></label>
+
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter secondary email address"
+                value={formData.password}
+                onChange={handleChange}
+                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+              />
+            </div>
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Pay Rate <span className='text-red-500'>*</span></label>
+ 
+                <select defaultValue="" name='rate' className="select input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"  value={formData.payRate}
+                onChange={handleChange}>
+                <option value='' disabled>Select pay rate</option>
+                <option value='Pay Per Vehicles'>Pay Per Vehicles</option>
+                <option value='per job'>Pay Per Job</option>
+                <option value='flat'>Flat Rate/Percentage</option>
+              </select>
+            </div>
+            </div>
+          <div className="grid grid-cols-2 gap-4">
+
+            <div className='mb-2'>
+              <label htmlFor="" className='text-sm'>Tax Forms <span className='text-red-500'>*</span></label>
+
+              <div className="form-control w-full p-3 mt-1 rounded relative" style={{border:'2px dashed #ccc'}}>
+                <label className="label text-center"> 
+                <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#EF502E"/>
+                </svg> 
+                  <p className='text-sm mb-1 mt-1'>Upload File</p>
+                  <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                </label>
+                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"  onChange={handleFileChange} />
+              </div>
+              <div className='flex gap-4 items-center mt-5'>
+        {formData.taxForms.map((file, index) => (
+          <div key={index} style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
+            {file.type.includes('image') ? (
+              <img src={URL.createObjectURL(file)} alt={`file-${index}`} className='shadow rounded' style={{ width: 50, height: 50, marginRight: '10px', objectFit:'cover' }} />
+            ) : (
+              <a href={URL.createObjectURL(file)} target="_blank" rel="noopener noreferrer" style={{ marginRight: '10px' }}>{file.name}</a>
+            )}
+            <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+            </div>
+           
+            <div className="mb-2">
+          <label htmlFor="" className='text-sm'>Amount/Percentage <span className='text-red-500'>*</span></label>
+          <input
+            type="text"
+            name='amountPercentage'
+            placeholder="$50/$20%"
+            value={formData.amountPercentage}
+                onChange={handleChange}
+            className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+          />
+          </div>
+          </div>
+        
+
+
+          {/* Submit Button */}
+          <div className="text-left">
+          <button type="submit" className="primary-bg pl-5 pr-5 p-2 rounded">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
