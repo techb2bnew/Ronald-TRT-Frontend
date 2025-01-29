@@ -14,21 +14,22 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function Login() {
     const router = useRouter();
-    const [emailAddress, setemailAddress] = useState('');
+    const [email, setemailAddress] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [errors, setErrors] = useState({ emailAddress: '', password: '' });
+    const [errors, setErrors] = useState({ email: '', password: '' });
   
   
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const apiUrl = "/api/login";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+ 
 
         try {
-            const response = await fetch(apiUrl, {
+            const response = await fetch(`${apiUrl}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ emailAddress, password}),
+                body: JSON.stringify({ email, password}),
             });
             const data = await response.json();
 
@@ -75,7 +76,7 @@ export default function Login() {
               <div>
                 <label className="block text-[#161616]">E-mail / Phone Number</label>
                 <input type="email" name="" id="" placeholder="Enter your emailAddress" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required
-                  value={emailAddress}
+                  value={email}
                   onChange={(e) => setemailAddress(e.target.value)} /> 
               </div>
 

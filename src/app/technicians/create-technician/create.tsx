@@ -4,6 +4,7 @@ import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
 
 interface TechnicianForm {
   firstName: string;
@@ -19,10 +20,13 @@ interface TechnicianForm {
   secondaryEmail?: string;
   password: string;
   payRate: string;
-  taxForms: File[];
+  taxForms: string;
   amountPercentage: string;
+  role:string;
+  agreeTerms:string;
 }
 export default function Technicians() {
+    const router = useRouter();
 
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
@@ -38,72 +42,92 @@ export default function Technicians() {
     secondaryEmail: '',
     password: '',
     payRate: '',
-    taxForms: [],
+    taxForms: 'img',
     amountPercentage: '',
+    role:'technician',
+    agreeTerms:'true',
   });
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, taxForms: [...formData.taxForms, ...Array.from(e.target.files || [])] });
-  };
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setFormData({ ...formData, taxForms: [...formData.taxForms, ...Array.from(e.target.files || [])] });
+  // };
 
-  const handleRemoveFile = (index:any) => {
-    // Create a new array by filtering out the file at the given index
-    const updatedFiles = formData.taxForms.filter((_, fileIndex) => fileIndex !== index);
-    setFormData({ ...formData, taxForms: updatedFiles });
-  };
+  // const handleRemoveFile = (index:any) => {
+  //   // Create a new array by filtering out the file at the given index
+  //   const updatedFiles = formData.taxForms.filter((_, fileIndex) => fileIndex !== index);
+  //   setFormData({ ...formData, taxForms: updatedFiles });
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   
-    if (!formData.firstName || !formData.lastName) {
-      alert('First name and last name are required.');
-      return;
-    }
+    // Prepare the payload as a plain object with all form data
+    const payload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+      email: formData.email,
+      address: formData.address,
+      country: formData.country,
+      state: formData.state,
+      city: formData.city,
+      zipCode: formData.zipCode,
+      secondaryContactName: formData.secondaryContactName,
+      secondaryEmail: formData.secondaryEmail,
+      password: formData.password,
+      payRate: formData.payRate,
+      taxForms: formData.taxForms,  // Make sure to handle taxForms properly if needed
+      amountPercentage: formData.amountPercentage,
+      role: formData.role,
+      agreeTerms:true
+    };
   
-    const formPayload = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key !== 'taxForms') {
-        const value = formData[key as keyof TechnicianForm];
-        if (value !== undefined && value !== null) {
-          if (typeof value === 'object' && !(value instanceof File)) {
-            // For non-file object types (if any), stringify or handle accordingly
-            // Example: if it's a Date object or some other serializable type
-            formPayload.append(key, JSON.stringify(value));
-          } else {
-            // Append value as string if it's not a File object
-            formPayload.append(key, value.toString());
-          }
-        }
-      }
-    });
-  
-     // Append each file separately under the key "taxForms"
-  formData.taxForms.forEach((file) => {
-    if (file) {  // Check that the file is not undefined
-      formPayload.append('taxForms', file);
-    }
-  });
+    // Log the payload to verify the structure before sending
+    // console.log('Payload:', payload);
   
     try {
-      const response = await fetch('http://3.111.36.139:5000/api/register', {
+      const response = await fetch(`${apiUrl}/register`, {
         method: 'POST',
-        body: formPayload,
+        headers: {
+          'Content-Type': 'application/json', // Set content type to JSON
+        },
+        body: JSON.stringify(payload), // Send the payload as a JSON string
       });
+  
       const data = await response.json();
+  
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        if (data.errors) {
+          setErrors(prev => ({ ...prev, ...data.errors }));
+          Object.values(data.errors).forEach(error => {
+            toast.error(data.error);
+          });
+        } else if (data.error) {
+          setErrors(prev => ({ ...prev, general: data.error }));
+          toast.error(data.error);
+        }
+      } else {
+        toast.success(data.message);
+        router.push('/technicians/listing');
       }
-      toast.success('Technician created successfully!'); 
     } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred'); 
+      toast.error(error.message || 'An unexpected error occurred');
     }
   };
+  
+  
+  
+  
+  
+
+  
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
@@ -274,7 +298,7 @@ export default function Technicians() {
             <div className='mb-2'>
               <label htmlFor="" className='text-sm'>Pay Rate <span className='text-red-500'>*</span></label>
  
-                <select defaultValue="" name='rate' className="select input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"  value={formData.payRate}
+                <select defaultValue="" name='payRate' className="select input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"  value={formData.payRate}
                 onChange={handleChange}>
                 <option value='' disabled>Select pay rate</option>
                 <option value='Pay Per Vehicles'>Pay Per Vehicles</option>
@@ -296,9 +320,10 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload File</p>
                   <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
                 </label>
-                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"  onChange={handleFileChange} />
+                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"   />
+                {/* onChange={handleFileChange} */}
               </div>
-              <div className='flex gap-4 items-center mt-5'>
+              {/* <div className='flex gap-4 items-center mt-5'>
         {formData.taxForms.map((file, index) => (
           <div key={index} style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
             {file.type.includes('image') ? (
@@ -313,7 +338,7 @@ export default function Technicians() {
             </button>
           </div>
         ))}
-      </div>
+      </div> */}
             </div>
            
             <div className="mb-2">

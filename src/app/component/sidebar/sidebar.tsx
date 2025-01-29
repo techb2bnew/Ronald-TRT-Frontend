@@ -142,17 +142,17 @@ const Sidebar = () => {
           {isUser2Open && (
             <ul className="ml-4">
               <li >
-                <Link href="/workshop/technicians/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('technician')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('technician')}>
                   <span>Technician</span>
                 </Link>
               </li>
               <li >
-                <Link href="/workshop/clients/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('clients')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('clients')}>
                   <span>Clients</span>
                 </Link>
               </li>
               <li >
-                <Link href="/workshop/admin/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('admin')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('admin')}>
                   <span>Admin</span>
                 </Link>
               </li>
@@ -204,7 +204,7 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li >
-                <Link href="/workshop/admin/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('job')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('job')}>
                   <span>Job by Group</span>
                 </Link>
               </li>

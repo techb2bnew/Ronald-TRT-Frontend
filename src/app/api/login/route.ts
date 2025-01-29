@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const VALID_EMAIL = "B2b@yopmail.com";
+const VALID_EMAIL = "ronaldomartin@yopmail.com";
 const VALID_PASSWORD = "12345678";
 
 // Handle POST requests
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     if (emailAddress === VALID_EMAIL && password === VALID_PASSWORD) {
       // Generate a mock JWT token
       const token = "mock-jwt-token";
+      localStorage.setItem('token', token);
       return NextResponse.json({ message: "Login successful!", token });
     } else {
       // Invalid credentials
