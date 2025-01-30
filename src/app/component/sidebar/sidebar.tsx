@@ -1,7 +1,10 @@
 // components/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'; 
+import { usePathname  } from 'next/navigation';
+
 const Sidebar = () => {
+  
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isUser1Open, setIsUser1Open] = useState(false);
   const [isUser2Open, setIsUser2Open] = useState(false);
@@ -10,9 +13,11 @@ const Sidebar = () => {
   useEffect(() => {
     const usersOpenState = localStorage.getItem('isUsersOpen');
     const user1OpenState = localStorage.getItem('isUser1Open');
+    const user3OpenState = localStorage.getItem('isUser3Open');
     
     if (usersOpenState) setIsUsersOpen(JSON.parse(usersOpenState));
     if (user1OpenState) setIsUser1Open(JSON.parse(user1OpenState));
+    if (user3OpenState) setIsUser3Open(JSON.parse(user3OpenState));
     
   }, []);
 
@@ -20,6 +25,10 @@ const Sidebar = () => {
   const handleDropdownToggle = () => {
     setIsUsersOpen((prevState) => {
       const newState = !prevState;
+      if (newState) {
+        // setIsUser1Open(false);
+        // setIsUser3Open(false);
+      }
       localStorage.setItem('isUsersOpen', JSON.stringify(newState)); // Store in localStorage
       return newState;
     });
@@ -28,24 +37,40 @@ const Sidebar = () => {
   const handleDropdownToggles = () => {
     setIsUser1Open((prevState) => {
       const newState = !prevState;
+      if (newState) { 
+        // setIsUser3Open(false);
+      }
       localStorage.setItem('isUser1Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
     });
   };
-
-  const handleLinkClick = (link: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the accordion from closing when clicking a link
-    setActiveLink(link); // Set active link
+  const handleDropdownTogglesJobs = () => {
+    setIsUser3Open((prevState) => {
+      const newState = !prevState;
+      if (newState) {
+        // setIsUsersOpen(false);
+        // setIsUser1Open(false);
+      }
+      localStorage.setItem('isUser3Open', JSON.stringify(newState)); // Store in localStorage
+      return newState;
+    });
   };
- 
+  
+  const pathname = usePathname();
+  React.useEffect(() => {
+    setActiveLink(pathname);
+  }, [pathname]);
+
+
+
   return (
     <div className="w-[15%] bg-black text-white fixed top-[0]" style={{ height: '100vh' }}>
       <div className="flex items-center justify-center h-16 border-b border-gray-700">
         <svg width="147" height="26" viewBox="0 0 147 26" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0.667969 12.9921H6.50396C7.83559 12.9921 9.2151 12.9087 10.3485 12.1907C11.2345 11.6295 11.9803 10.8628 12.5262 9.95196C13.2246 8.78677 13.3058 7.36858 13.3058 5.99962V0H4.65885C3.6004 0 2.58531 0.432255 1.83687 1.20167C1.08844 1.97109 0.667969 3.01465 0.667969 4.10277L0.667969 12.9921ZM31.5674 1.36759C31.5674 1.7303 31.4272 2.07815 31.1777 2.33462C30.9282 2.5911 30.5899 2.73518 30.2371 2.73518C29.8842 2.73518 29.5459 2.5911 29.2964 2.33462C29.0469 2.07815 28.9068 1.7303 28.9068 1.36759C28.9068 1.00488 29.0469 0.657031 29.2964 0.400558C29.5459 0.144085 29.8842 0 30.2371 0C30.5899 0 30.9282 0.144085 31.1777 0.400558C31.4272 0.657031 31.5674 1.00488 31.5674 1.36759ZM141.487 8.27666C145.206 8.27666 147 10.9469 147 14.0397V19.8485H143.108V14.729C143.108 13.3272 142.611 12.1702 141.184 12.1702C139.757 12.1702 139.282 13.3272 139.282 14.729V19.8478H135.39V14.729C135.39 13.3272 134.914 12.1702 133.487 12.1702C132.06 12.1702 131.563 13.3272 131.563 14.729V19.8478H127.672V14.039C127.672 10.9462 129.466 8.27598 133.184 8.27598C135.217 8.27598 136.687 9.09927 137.358 10.4566C138.071 9.09927 139.628 8.27529 141.487 8.27529V8.27666ZM120.678 16.288C121.932 16.288 122.473 15.1085 122.473 13.706V8.72113H126.364V14.1956C126.364 17.4669 124.505 20.1822 120.678 20.1822C116.851 20.1822 114.992 17.4676 114.992 14.1956V8.72113H118.884V13.706C118.884 15.1078 119.424 16.288 120.678 16.288ZM109.27 20.2041C106.827 20.2041 105.248 19.3364 104.318 17.6453L107.129 16.0206C107.518 16.7325 108.102 17.0887 109.075 17.0887C109.875 17.0887 110.242 16.7995 110.242 16.4432C110.242 15.0859 104.535 16.4658 104.535 12.149C104.535 10.0566 106.264 8.36555 109.205 8.36555C111.777 8.36555 113.183 9.65588 113.81 10.9024L110.999 12.549C110.762 11.8816 110.026 11.4809 109.291 11.4809C108.729 11.4809 108.426 11.7257 108.426 12.0594C108.426 13.4393 114.134 12.1709 114.134 16.3543C114.134 18.6909 111.907 20.2041 109.27 20.2041ZM95.6728 24.9667H91.7811V14.2626C91.7811 10.8573 94.2674 8.38743 97.7268 8.38743C101.1 8.38743 103.673 11.0358 103.673 14.2626C103.673 17.8231 101.38 20.1822 97.943 20.1822C97.1428 20.1822 96.3433 19.9374 95.6728 19.5586V24.9667ZM97.7268 16.4213C98.9593 16.4213 99.7808 15.4422 99.7808 14.2845C99.7808 13.1056 98.9593 12.1483 97.7268 12.1483C96.4943 12.1483 95.6728 13.1056 95.6728 14.2852C95.6728 15.4422 96.4943 16.4213 97.7268 16.4213ZM87.8826 7.54226C86.6069 7.54226 85.548 6.45161 85.548 5.13872C85.548 3.82584 86.6069 2.73518 87.8826 2.73518C89.1584 2.73518 90.218 3.82584 90.218 5.13872C90.218 6.45161 89.1584 7.54226 87.8826 7.54226ZM85.9371 8.72113H89.8289V19.8485H85.9371V8.72113ZM78.4702 20.1822C75.0972 20.1822 72.5244 17.512 72.5244 14.2626C72.5244 11.0358 75.0972 8.36555 78.4702 8.36555C81.8431 8.36555 84.4159 11.0358 84.4159 14.2626C84.4159 17.512 81.8431 20.1822 78.4702 20.1822ZM78.4702 16.4213C79.7027 16.4213 80.5241 15.4422 80.5241 14.2845C80.5241 13.1056 79.7027 12.1264 78.4702 12.1264C77.2376 12.1264 76.4162 13.1056 76.4162 14.2845C76.4162 15.4422 77.2376 16.4213 78.4702 16.4213ZM65.1759 25.3004C62.4953 25.3004 60.5491 24.0764 59.5547 21.8951L62.776 20.1152C63.1219 20.8722 63.7704 21.651 65.1107 21.651C66.5168 21.651 67.446 20.7381 67.5544 19.136C67.0356 19.6037 66.2135 19.9593 64.9817 19.9593C61.9759 19.9593 59.5541 17.5783 59.5541 14.24C59.5541 11.0139 62.1275 8.38743 65.5005 8.38743C68.9599 8.38743 71.4462 10.858 71.4462 14.2626V18.669C71.4462 22.6747 68.743 25.3004 65.1759 25.3004ZM65.4353 16.1991C66.6026 16.1991 67.4893 15.3751 67.4893 14.1511C67.4893 12.9497 66.6033 12.1483 65.4353 12.1483C64.2892 12.1483 63.3813 12.9497 63.3813 14.1518C63.3813 15.3758 64.2892 16.1984 65.4353 16.1984V16.1991ZM52.9531 20.1822C49.5802 20.1822 47.0067 17.512 47.0067 14.2626C47.0067 11.0358 49.5802 8.36555 52.9531 8.36555C56.3254 8.36555 58.8989 11.0358 58.8989 14.2626C58.8989 17.512 56.3261 20.1822 52.9531 20.1822ZM52.9531 16.4213C54.1857 16.4213 55.0071 15.4422 55.0071 14.2845C55.0071 13.1056 54.1857 12.1264 52.9531 12.1264C51.7206 12.1264 50.8992 13.1056 50.8992 14.2845C50.8992 15.4422 51.7206 16.4213 52.9531 16.4213ZM39.9203 4.8276V16.0651H46.3635V19.8485H39.3795C36.9151 19.8485 35.9207 18.5131 35.9207 16.3988V4.8276H39.9203Z" fill="currentColor" />
-        </svg>
-
+        </svg> 
       </div>
+     
       <ul className="flex flex-col py-4">
         <li className='p-2'>
           <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
@@ -58,7 +83,9 @@ const Sidebar = () => {
             <span>Dashboard</span>
           </a>
         </li>
-       
+      
+ 
+
         <li className='p-2'>
           <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUsersOpen ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
@@ -89,21 +116,20 @@ const Sidebar = () => {
                   <ul className="ml-4">
                     <li >
                     <Link
-                        href="/technicians/listing"
-                        onClick={(e) => handleLinkClick('technicians', e)}
-                        className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'technicians' ? 'active text-[#EF502E]' : ''}`}
+                        href="/technicians/listing" 
+                        className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/technicians/listing' ? 'active text-[#EF502E]' : ''}`}
                       >
-                        <span>Technician</span>
+                         Technician 
                       </Link>
                     </li>
                     <li  >
-                      <Link href="/admin/listing" onClick={(e) => handleLinkClick('admin', e)} className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`}  >
-                        <span>Admin</span>
+                      <Link href="/admin/listing"  className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/admin/listing' ? 'active text-[#EF502E]' : ''}`}  >
+                         Admin 
                       </Link>
                     </li>
                     <li >
-                      <Link href="/client/listing" onClick={(e) => handleLinkClick('client', e)} className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'client' ? 'active text-[#EF502E]' : ''}`}   >
-                        <span>Client</span>
+                      <Link href="/client/listing"   className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/client/listing' ? 'active text-[#EF502E]' : ''}`}   >
+                        Customer 
                       </Link>
                     </li>
                   </ul>
@@ -116,7 +142,7 @@ const Sidebar = () => {
           <button onClick={() => setIsUser2Open(!isUser2Open)} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser2Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
               <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clip-path="url(#clip0_690_1656)">
+                <g clipPath="url(#clip0_690_1656)">
                   <path d="M5.84375 22H18.7344C19.0903 22 19.3789 21.7114 19.3789 21.3555V3.26562C19.3789 2.90967 19.0903 2.62109 18.7344 2.62109H16.8008V0.644531C16.8008 0.288578 16.5122 0 16.1562 0H3.26562C2.90967 0 2.62109 0.288578 2.62109 0.644531V18.7773C2.62109 19.1333 2.90967 19.4219 3.26562 19.4219H5.19922V21.3555C5.19922 21.7114 5.4878 22 5.84375 22ZM16.8008 18.7773V3.91016H18.0898V20.7109H6.48828V19.4219H16.1562C16.5122 19.4219 16.8008 19.1333 16.8008 18.7773ZM3.91016 18.1328V1.28906H15.5117V18.1328H3.91016Z" fill="currentColor" />
                   <path d="M5.84375 5.19922H9.71094C10.0669 5.19922 10.3555 4.91064 10.3555 4.55469C10.3555 4.19873 10.0669 3.91016 9.71094 3.91016H5.84375C5.4878 3.91016 5.19922 4.19873 5.19922 4.55469C5.19922 4.91064 5.4878 5.19922 5.84375 5.19922Z" fill="currentColor" />
                   <path d="M13.5781 6.48828H5.84375C5.4878 6.48828 5.19922 6.77686 5.19922 7.13281C5.19922 7.48877 5.4878 7.77734 5.84375 7.77734H13.5781C13.9341 7.77734 14.2227 7.48877 14.2227 7.13281C14.2227 6.77686 13.9341 6.48828 13.5781 6.48828Z" fill="currentColor" />
@@ -142,17 +168,17 @@ const Sidebar = () => {
           {isUser2Open && (
             <ul className="ml-4">
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('technician')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('technician')}>
                   <span>Technician</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('clients')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('clients')}>
                   <span>Clients</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('admin')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('admin')}>
                   <span>Admin</span>
                 </Link>
               </li>
@@ -160,10 +186,10 @@ const Sidebar = () => {
           )}
         </li>
         <li className='p-2'>
-          <button onClick={() => setIsUser3Open(!isUser3Open)} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser3Open ? 'active bg-white text-[#EF502E]' : ''}`}>
+          <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser3Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
               <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clip-path="url(#clip0_690_1656)">
+                <g clipPath="url(#clip0_690_1656)">
                   <path d="M5.84375 22H18.7344C19.0903 22 19.3789 21.7114 19.3789 21.3555V3.26562C19.3789 2.90967 19.0903 2.62109 18.7344 2.62109H16.8008V0.644531C16.8008 0.288578 16.5122 0 16.1562 0H3.26562C2.90967 0 2.62109 0.288578 2.62109 0.644531V18.7773C2.62109 19.1333 2.90967 19.4219 3.26562 19.4219H5.19922V21.3555C5.19922 21.7114 5.4878 22 5.84375 22ZM16.8008 18.7773V3.91016H18.0898V20.7109H6.48828V19.4219H16.1562C16.5122 19.4219 16.8008 19.1333 16.8008 18.7773ZM3.91016 18.1328V1.28906H15.5117V18.1328H3.91016Z" fill="currentColor" />
                   <path d="M5.84375 5.19922H9.71094C10.0669 5.19922 10.3555 4.91064 10.3555 4.55469C10.3555 4.19873 10.0669 3.91016 9.71094 3.91016H5.84375C5.4878 3.91016 5.19922 4.19873 5.19922 4.55469C5.19922 4.91064 5.4878 5.19922 5.84375 5.19922Z" fill="currentColor" />
                   <path d="M13.5781 6.48828H5.84375C5.4878 6.48828 5.19922 6.77686 5.19922 7.13281C5.19922 7.48877 5.4878 7.77734 5.84375 7.77734H13.5781C13.9341 7.77734 14.2227 7.48877 14.2227 7.13281C14.2227 6.77686 13.9341 6.48828 13.5781 6.48828Z" fill="currentColor" />
@@ -189,22 +215,22 @@ const Sidebar = () => {
           {isUser3Open && (
             <ul className="ml-4">
               <li  >
-                <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'createJob' ? 'active text-[#EF502E]' : ''}`} onClick={(e) => { handleLinkClick('createJob', e); }}>
+                <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Create Job</span>
                 </Link>
               </li>
               <li >
-                <Link href="/jobs/active-job/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'activeJob' ? 'active text-[#EF502E]' : ''}`} onClick={(e) => { handleLinkClick( 'activeJob', e); }}>
+                <Link href="/jobs/active-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job/listing' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Active Job</span>
                 </Link>
               </li>
               <li >
-                <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'completeJob' ? 'active text-[#EF502E]' : ''}`} onClick={(e) => { handleLinkClick( 'completeJob', e); }}>
+                <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#EF502E]' : ''}`}>
                   <span>Complete Job</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('job')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('job')}>
                   <span>Job by Group</span>
                 </Link>
               </li>
@@ -236,7 +262,8 @@ const Sidebar = () => {
           </a>
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+        <a href="/#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded" >
+
             <svg width="18" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.8125 6.5625H9.1875C8.8394 6.5625 8.50556 6.70078 8.25942 6.94692C8.01328 7.19306 7.875 7.5269 7.875 7.875V17.7188C7.875 18.0668 8.01328 18.4007 8.25942 18.6468C8.50556 18.893 8.8394 19.0312 9.1875 19.0312H11.8125C12.1606 19.0312 12.4944 18.893 12.7406 18.6468C12.9867 18.4007 13.125 18.0668 13.125 17.7188V7.875C13.125 7.5269 12.9867 7.19306 12.7406 6.94692C12.4944 6.70078 12.1606 6.5625 11.8125 6.5625ZM9.1875 17.7188V7.875H11.8125V17.7188H9.1875ZM18.375 1.96875H15.75C15.4019 1.96875 15.0681 2.10703 14.8219 2.35317C14.5758 2.59931 14.4375 2.93315 14.4375 3.28125V17.7188C14.4375 18.0668 14.5758 18.4007 14.8219 18.6468C15.0681 18.893 15.4019 19.0312 15.75 19.0312H18.375C18.7231 19.0312 19.0569 18.893 19.3031 18.6468C19.5492 18.4007 19.6875 18.0668 19.6875 17.7188V3.28125C19.6875 2.93315 19.5492 2.59931 19.3031 2.35317C19.0569 2.10703 18.7231 1.96875 18.375 1.96875ZM15.75 17.7188V3.28125H18.375V17.7188H15.75ZM5.25 11.1562H2.625C2.2769 11.1562 1.94306 11.2945 1.69692 11.5407C1.45078 11.7868 1.3125 12.1207 1.3125 12.4688V17.7188C1.3125 18.0668 1.45078 18.4007 1.69692 18.6468C1.94306 18.893 2.2769 19.0312 2.625 19.0312H5.25C5.5981 19.0312 5.93194 18.893 6.17808 18.6468C6.42422 18.4007 6.5625 18.0668 6.5625 17.7188V12.4688C6.5625 12.1207 6.42422 11.7868 6.17808 11.5407C5.93194 11.2945 5.5981 11.1562 5.25 11.1562ZM2.625 17.7188V12.4688H5.25V17.7188H2.625Z" fill="currentColor" />
             </svg>

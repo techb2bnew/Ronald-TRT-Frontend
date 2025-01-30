@@ -2,14 +2,20 @@
   "name": "ronaldo",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "export": "next export",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.2",
     "@next/env": "^15.1.5",
+    "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
     "next": "15.1.4",
     "react": "^19.0.0",

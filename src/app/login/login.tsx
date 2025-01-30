@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import TextField from '@mui/material/TextField';
 
 export default function Login() {
     const router = useRouter();
@@ -64,28 +65,24 @@ export default function Login() {
         <div className="bg-[#F7F7FD] flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">
-            <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
+            <img src='https://ronaldo-trt.s3.ap-south-1.amazonaws.com/login.png' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
           </div>
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
               <Image src={Logo} className="m-auto" width='200' height='50' alt="page img" />
               <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Tech Repair Tracker</h2>
-              <p className="text-[#161616] mt-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque leo felis, volutpat in imperdiet id, vulputate ac odio.</p>
+              <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
             <form className="mt-6" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-[#161616]">E-mail / Phone Number</label>
-                <input type="email" name="" id="" placeholder="Enter your emailAddress" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required
-                  value={email}
-                  onChange={(e) => setemailAddress(e.target.value)} /> 
+                <label className="block text-[#161616] mb-2">E-mail / Phone Number</label>
+                <TextField fullWidth  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined"  onChange={(e) => setemailAddress(e.target.value)}  />
+               
               </div>
 
               <div className="mt-4 relative">
-                <label className="block text-[#161616]">Password</label>
-                <input type={showPassword ? "text" : "password"} name="" id="" placeholder="Enter your Password" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500
-                  focus:bg-white focus:outline-none" required value={password}
-                  onChange={(e) => setPassword(e.target.value)}/>
-                 
+                <label className="block text-[#161616] mb-2">Password</label>
+                <TextField fullWidth  type={showPassword ? "text" : "password"} id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined"   onChange={(e) => setPassword(e.target.value)} />
                   <button 
                     type="button" 
                     style={{ position: 'absolute', right: '10px', top: '44px' }}
@@ -113,14 +110,14 @@ export default function Login() {
                 <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
               </div>
 
-              <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
+              <button type="submit" className="w-[40%] m-auto block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Log In</button>
             </form>
             <div className="text-sm text-center mt-5">
               <p>Don&apos;t have account?
                 <Link href='/signup' className="primary-text"> Sign Up</Link> </p>
             </div>
-            <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
+            {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />
               <p className="text-center text-black text-sm">OR</p>
               <hr className="border-black" />
@@ -136,7 +133,7 @@ export default function Login() {
               <Link href='#'>
                 <Image src={Apple} alt="" width='70' height='100' />
               </Link>
-            </div>
+            </div> */}
 
 
           </div>

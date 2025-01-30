@@ -65,7 +65,7 @@ const JobTable: React.FC = () => {
               <th className='w-[50px]'>ID</th>
               <th className='w-[150px]'>Job Description</th>
               <th className='w-[120px]'>Client Name</th>
-              <th className='w-[150px]'>Email</th>
+              <th className='w-[180px]'>Email</th>
               <th className='w-[120px]'>Client Ph. Number</th>
               <th className='w-[100px]'>Technician Name</th>
               <th className='w-[100px]'>Tech.  Ph. Number</th>

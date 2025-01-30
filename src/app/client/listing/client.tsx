@@ -55,7 +55,7 @@ import { useRouter } from "next/navigation";
   }, [router]); // Add `router` to the dependency array
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Clients' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create IFS Client" buttonLink="/client/create" />
+      <CommonHeader heading='IFS Customer' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -5,6 +5,11 @@ import { ICountry, IState } from 'country-state-city';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import InputLabel from '@mui/material/InputLabel';
+import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 interface TechnicianForm {
   firstName: string;
@@ -19,8 +24,9 @@ interface TechnicianForm {
   zipCode: string;
   secondaryEmail?: string;
   password: string;
+  confirmPassword:string;
   payRate: string;
-  taxForms: string;
+  taxForms: File | null;
   amountPercentage: string;
   role:string;
   agreeTerms:string;
@@ -41,86 +47,112 @@ export default function Technicians() {
     secondaryContactName:'',
     secondaryEmail: '',
     password: '',
+    confirmPassword:'',
     payRate: '',
-    taxForms: 'img',
+    taxForms: null,
     amountPercentage: '',
     role:'technician',
     agreeTerms:'true',
   });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({}); 
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+   const handleSelectChange = (
+      event: SelectChangeEvent<string>,
+      child: React.ReactNode // You might not actually need to use this parameter in your function
+    ) => {
+      const name = event.target.name; // The name of the select element if you set it
+      const value = event.target.value;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value
+      }));
+    
+    };
+
+   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setFormData({ ...formData, taxForms: [...formData.taxForms, ...Array.from(e.target.files || [])] });
-  // };
-
-  // const handleRemoveFile = (index:any) => {
-  //   // Create a new array by filtering out the file at the given index
-  //   const updatedFiles = formData.taxForms.filter((_, fileIndex) => fileIndex !== index);
-  //   setFormData({ ...formData, taxForms: updatedFiles });
-  // };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-  
-    // Prepare the payload as a plain object with all form data
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      email: formData.email,
-      address: formData.address,
-      country: formData.country,
-      state: formData.state,
-      city: formData.city,
-      zipCode: formData.zipCode,
-      secondaryContactName: formData.secondaryContactName,
-      secondaryEmail: formData.secondaryEmail,
-      password: formData.password,
-      payRate: formData.payRate,
-      taxForms: formData.taxForms,  // Make sure to handle taxForms properly if needed
-      amountPercentage: formData.amountPercentage,
-      role: formData.role,
-      agreeTerms:true
-    };
-  
-    // Log the payload to verify the structure before sending
-    // console.log('Payload:', payload);
-  
-    try {
-      const response = await fetch(`${apiUrl}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json', // Set content type to JSON
-        },
-        body: JSON.stringify(payload), // Send the payload as a JSON string
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        if (data.errors) {
-          setErrors(prev => ({ ...prev, ...data.errors }));
-          Object.values(data.errors).forEach(error => {
-            toast.error(data.error);
-          });
-        } else if (data.error) {
-          setErrors(prev => ({ ...prev, general: data.error }));
-          toast.error(data.error);
-        }
-      } else {
-        toast.success(data.message);
-        router.push('/technicians/listing');
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred');
+    if (name === 'confirmPassword') {
+      validateConfirmPassword(value);
     }
   };
+  const validateConfirmPassword = (confirmPassword: string) => {
+    if (confirmPassword !== formData.password) {
+        setErrors(prev => ({
+            ...prev,
+            confirmPassword: 'Passwords do not match'
+        }));
+    } else {
+        setErrors(prev => ({
+            ...prev,
+            confirmPassword: ''
+        }));
+    }
+};
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files ? e.target.files[0] : null; // Get the first file
+  setFormData(prev => ({ ...prev, taxForms: file }));
+};
+
+const handleRemoveFile = () => {
+  // Set the taxForms to null to effectively remove the file
+  setFormData({ ...formData, taxForms: null });
+};
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (formData.confirmPassword !== formData.password) {
+    setErrors(prev => ({
+        ...prev,
+        confirmPassword: 'Passwords do not match'
+    }));
+    return; // Stop the function if passwords do not match
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const formDataObj = new FormData();
+  Object.keys(formData).forEach(key => {
+    if (key === 'confirmPassword') {
+      // Skip confirmPassword, do not append to FormData
+      return;
+  }
+      if (key === 'taxForms' && formData[key]) {
+          formDataObj.append(key, formData[key]); // Ensure file is appended correctly
+      } else {
+          // formDataObj.append(key, formData[key as keyof TechnicianForm].toString()); // Convert all values to string
+            formDataObj.append(key, String(formData[key as keyof TechnicianForm]));
+
+      }
+  });
+
+  try {
+    const response = await fetch(`${apiUrl}/register`, {
+      method: 'POST',
+      body: formDataObj, // Send the FormData object without setting Content-Type header
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.errors) {
+        setErrors(prev => ({ ...prev, ...data.errors }));
+        Object.values(data.errors).forEach(error => {
+          toast.error(data.error);
+        });
+      } else if (data.error) {
+        setErrors(prev => ({ ...prev, general: data.error }));
+        toast.error(data.error);
+      }
+    } else {
+      toast.success(data.message);
+      router.push('/technicians/listing');
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'An unexpected error occurred');
+  }
+};
+
   
   
   
@@ -143,70 +175,97 @@ export default function Technicians() {
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>First Name <span className='text-red-500'>*</span></label>
-              <input
+              <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p>
+              <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
+              
+              {/* <input
                 type="text"
                 placeholder="Enter your first name"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Last Name <span className='text-red-500'>*</span></label>
-              <input
+              <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p>
+              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
+
+              {/* <input
                 type="text"
                 name="lastName"
                 placeholder="Enter your last name"
                 value={formData.lastName}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Phone <span className='text-red-500'>*</span></label>
-              <input
+              <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p>
+              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
+
+              {/* <input
                 type="number"
                 name="phoneNumber"
                 placeholder="Enter your phone number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Email <span className='text-red-500'>*</span></label>
-              <input
+              <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p>
+              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email"  variant="outlined"  value={formData.email}  onChange={handleChange} />
+
+              {/* <input
                 type="email"
                 name="email"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div>
           </div>
           {/* Address and Email */}
           <div className='mb-2'>
-            <label htmlFor="" className='text-sm'>Address <span className='text-red-500'>*</span></label>
-            <input
+            <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p>
+            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address"  variant="outlined"  value={formData.address}  onChange={handleChange} />
+
+            {/* <input
               type="text"
                name="address"
               placeholder="Enter your address"
               value={formData.address}
               onChange={handleChange}
               className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-            />
+            /> */}
           </div>
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Country <span className='text-red-500'>*</span></label>
-              <select
+            <div className='mb-2'> 
+              <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p>
+
+                      <FormControl fullWidth>
+                      <InputLabel id="country">Select country</InputLabel>
+                      <Select
+                      labelId="country"
+                      id="country"
+                      value={formData.country}
+                      label="country"
+                      name="country"
+                      onChange={handleSelectChange}
+                      > 
+                      {countries.map((country: ICountry) => ( 
+                      <MenuItem  key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
+                        ))} 
+                      </Select>
+                      </FormControl>
+
+              {/* <select
                 name="country"
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
                 value={formData.country}
@@ -216,10 +275,29 @@ export default function Technicians() {
                 {countries.map((country: ICountry) => (
                   <option key={country.isoCode} value={country.isoCode}>{country.name}</option>
                 ))}
-              </select>
+              </select> */}
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>State <span className='text-red-500'>*</span></label>
+            <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p>
+
+              <FormControl fullWidth>
+              <InputLabel id="state">Select state</InputLabel>
+              <Select
+              labelId="state"
+              id="select-state"
+              value={formData.state}
+              label="State"
+              name="state"
+              onChange={handleSelectChange}
+              > 
+              {states.map((state: IState) => ( 
+              <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
+                ))} 
+              </Select>
+              </FormControl>
+
+
+              {/* <label htmlFor="" className='text-sm'>State <span className='text-red-500'>*</span></label>
               <select
                 name="state"
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
@@ -231,86 +309,119 @@ export default function Technicians() {
                 {states.map((state: IState) => (
                   <option key={state.isoCode} value={state.isoCode}>{state.name}</option>
                 ))}
-              </select>
+              </select> */}
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>City <span className='text-red-500'>*</span></label>
-              <input
-                type="text"
-                placeholder="Enter your city"
-                 name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+                <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p>
+            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city"  variant="outlined"  value={formData.city}  onChange={handleChange} />
+              
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Zip Code <span className='text-red-500'>*</span></label>
-              <input
-                type="text"
-                placeholder="Enter your email"
-                name="zipCode" 
-                value={formData.zipCode}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+               <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p>
+                <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
+            
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Secondary phone number</label>
-              <input
+              <p   className='text-sm mb-2'>Secondary phone number</p>
+              <TextField fullWidth size="medium" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
+
+              {/* <input
                 type="number"
                 name="secondaryContactName" 
                 placeholder="Enter your phone number"
                 value={formData.secondaryContactName}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div> 
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Secondary Email</label>
+              <p className='text-sm mb-2'>Secondary Email</p>
+              <TextField fullWidth size="medium" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
 
-              <input
+              {/* <input
                 type="email"
                 name="secondaryEmail" 
                 placeholder="Enter secondary email address"
                 value={formData.secondaryEmail}
                 onChange={handleChange}
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+              /> */}
             </div>
             </div>
           <div className="grid grid-cols-2 gap-4">
 
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Password <span className='text-red-500'>*</span></label>
+              <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p>
+              <TextField fullWidth size="medium" name="password" id="outlined-basic" color="warning" label="Enter your password"  variant="outlined"  value={formData.password}  onChange={handleChange} />
 
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter secondary email address"
-                value={formData.password}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              />
+             
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Pay Rate <span className='text-red-500'>*</span></label>
- 
-                <select defaultValue="" name='payRate' className="select input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"  value={formData.payRate}
+        <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p>
+        <TextField 
+          fullWidth 
+          size="medium" 
+          name="confirmPassword" 
+          id="confirmPassword" 
+          color="warning" 
+          label="Confirm your password"  
+          variant="outlined"  
+          value={formData.confirmPassword}  
+          onChange={handleChange} 
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword}
+        /> 
+      </div>
+            </div>
+          <div className="grid grid-cols-2 gap-4">
+
+            <div className='mb-2'>
+              <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p>
+              <FormControl fullWidth>
+              <InputLabel id="payRate">Select pay rate</InputLabel>
+              <Select
+              labelId="payRate"
+              id="select-payRate"
+              value={formData.payRate}
+              label="payRate"
+              name="payRate"
+              onChange={handleSelectChange}
+              >  
+              <MenuItem value='Pay Per Vehicles'>Pay Per Vehicles</MenuItem>
+              <MenuItem value='per job'>per job</MenuItem>
+              <MenuItem value='flat'>Flat Rate/Percentage</MenuItem>
+               
+              </Select>
+              </FormControl>
+
+                {/* <select defaultValue="" name='payRate' className="select input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"  value={formData.payRate}
                 onChange={handleChange}>
                 <option value='' disabled>Select pay rate</option>
                 <option value='Pay Per Vehicles'>Pay Per Vehicles</option>
                 <option value='per job'>Pay Per Job</option>
                 <option value='flat'>Flat Rate/Percentage</option>
-              </select>
+              </select> */}
             </div>
+            <div className="mb-2">
+          <p  className='text-sm mb-2'>Amount/Percentage <span className='text-red-500'>*</span></p>
+          <TextField fullWidth size="medium" name="amountPercentage" id="outlined-basic" color="warning" label="$50/$20%"  variant="outlined"  value={formData.amountPercentage}  onChange={handleChange} />
+
+          {/* <input
+            type="text"
+            name='amountPercentage'
+            placeholder="$50/$20%"
+            value={formData.amountPercentage}
+                onChange={handleChange}
+            className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+          /> */}
+          </div>
             </div>
           <div className="grid grid-cols-2 gap-4">
 
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Tax Forms <span className='text-red-500'>*</span></label>
+              <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p>
 
               <div className="form-control w-full p-3 mt-1 rounded relative" style={{border:'2px dashed #ccc'}}>
                 <label className="label text-center"> 
@@ -320,38 +431,29 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload File</p>
                   <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
                 </label>
-                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"   />
+                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange}   />
                 {/* onChange={handleFileChange} */}
               </div>
-              {/* <div className='flex gap-4 items-center mt-5'>
-        {formData.taxForms.map((file, index) => (
-          <div key={index} style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
-            {file.type.includes('image') ? (
-              <img src={URL.createObjectURL(file)} alt={`file-${index}`} className='shadow rounded' style={{ width: 50, height: 50, marginRight: '10px', objectFit:'cover' }} />
-            ) : (
-              <a href={URL.createObjectURL(file)} target="_blank" rel="noopener noreferrer" style={{ marginRight: '10px' }}>{file.name}</a>
-            )}
-            <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        ))}
-      </div> */}
+              <div className='flex gap-4 items-center mt-5'>
+              {formData.taxForms && (
+                            <div className='flex gap-4 items-center mt-5' style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
+                                {formData.taxForms.type.includes('image') ? (
+                                    <img src={URL.createObjectURL(formData.taxForms)} alt="Uploaded file" className='shadow rounded' style={{ width: 50, height: 50, marginRight: '10px', objectFit: 'cover' }} />
+                                ) : (
+                                    <a href={URL.createObjectURL(formData.taxForms)} target="_blank" rel="noopener noreferrer" className='shadow rounded' style={{ marginRight: '10px', textDecoration: 'none' }}>{formData.taxForms.name}</a>
+                                )}
+                                <button onClick={handleRemoveFile} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+
+      </div>
             </div>
            
-            <div className="mb-2">
-          <label htmlFor="" className='text-sm'>Amount/Percentage <span className='text-red-500'>*</span></label>
-          <input
-            type="text"
-            name='amountPercentage'
-            placeholder="$50/$20%"
-            value={formData.amountPercentage}
-                onChange={handleChange}
-            className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-          />
-          </div>
+         
           </div>
         
 

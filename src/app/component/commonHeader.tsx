@@ -3,6 +3,7 @@ import Link from 'next/link';
 import React from 'react';
 import plusIcon from '../../../public/plus-circle.png'
 import Image from 'next/image'; 
+import TextField from '@mui/material/TextField';
 
 interface CommonHeaderProps {
   heading: string;
@@ -22,20 +23,22 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ title, heading, onSearch, b
         </div>
         <div className='flex gap-4'>
         <div className="flex w-[250]">
-        <input
-          type="search"
-          className="input text-xs input-bordered w-full p-2 rounded border border-gray-400"
-          placeholder="Search"
-          onChange={(e) => onSearch(e.target.value)}
-        />
+         
+      <TextField fullWidth size="medium" id="outlined-basic" color="warning" label="Search"  variant="outlined"   onChange={(e) => onSearch(e.target.value)}  />
+        
       </div>
           <button className="text-xs border border-gray-300 p-1 pl-5 pr-5 bg-white rounded">
             Export
           </button>
           <Link href={buttonLink}>
-          <button className="text-xs border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
+          <button className="text-xs border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
           {buttonLabel}
-            <Image src={plusIcon} alt='' height='18' width='18' />
+          <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 8.5V16.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 12.5H16" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+
           </button>
           </Link>
           

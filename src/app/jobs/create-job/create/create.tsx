@@ -3,6 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
+import InputLabel from '@mui/material/InputLabel';
+import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+
 export default function Technicians() {
   const [vin, setVin] = useState('');
   const [vehicleData, setVehicleData] = useState<any>(null);
@@ -16,6 +22,9 @@ export default function Technicians() {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any[]>([]);
   const router = useRouter();
+
+ 
+
   // Fetch Customers api
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -203,16 +212,18 @@ export default function Technicians() {
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>ViN <span className='text-[red]'>*</span> </label>
+              <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p>
               <div className='flex gap-3 items-center'>
-                <input
+         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number"  variant="outlined"  value={vin}  onChange={(e) => setVin(e.target.value)} />
+                
+                {/* <input
                   type="text"
                   placeholder="5YJSA3DS*EF"
                   value={vin}
                   onChange={(e) => setVin(e.target.value)}
                   className="input text-xs mt-1 input-bordered w-[40%] p-3 rounded border border-gray-400"
-                />
-                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 text-sm p-2 rounded">Fetch Car Details</button>
+                /> */}
+                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 text-sm pt-[18px] pb-[18px] w-[300px] rounded">Fetch Car Details</button>
               </div>
             </div>
           </div>
@@ -260,8 +271,29 @@ export default function Technicians() {
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Color <span className='text-[red]'>*</span></label>
-              <select name="color" id="" value={color}
+              <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p>
+              <FormControl fullWidth>
+              <InputLabel id="color">Select color</InputLabel>
+              <Select 
+              labelId="color"
+              id="select-color"
+              value={color}
+              label="color"
+              name="color"
+              onChange={(e) => setColor(e.target.value)}
+              >  
+              <MenuItem value='red'>Red</MenuItem>
+              <MenuItem value='black'>Black</MenuItem>
+              <MenuItem value='white'>White</MenuItem>
+              <MenuItem value='orange'>Orange</MenuItem>
+              <MenuItem value='silver'>Silver</MenuItem>
+              <MenuItem value='gray'>Gray</MenuItem>
+              <MenuItem value='brown'>Brown</MenuItem>
+               
+              </Select>
+              </FormControl>
+
+              {/* <select name="color" id="" value={color}
                 onChange={(e) => setColor(e.target.value)}
                 className='input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400'>
                 <option value="">Select color</option>
@@ -272,14 +304,14 @@ export default function Technicians() {
                 <option value="silver">Silver</option>
                 <option value="gray">Gray</option>
                 <option value="brown">Brown</option>
-              </select>
+              </select> */}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Job Descriptor</label>
+              <p className='text-sm mb-2'>Job Descriptor</p>
               <textarea name="jobDescription" id="" value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 placeholder='Enter Description' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
@@ -288,8 +320,24 @@ export default function Technicians() {
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Assign Client <span className='text-[red]'>*</span></label>
-              <select
+              <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p>
+              <FormControl fullWidth>
+              <InputLabel id="assignCustomer">Select customer</InputLabel>
+              <Select
+              labelId="assignCustomer"
+              id="select-assignCustomer"
+              value={assignCustomer}
+              label="assignCustomer"
+              name="assignCustomer"
+              onChange={(e) => setAssignCustomer(e.target.value)}
+              > 
+              {customer.map((customer: any) => (
+              <MenuItem  key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
+                ))} 
+              </Select>
+              </FormControl>
+
+              {/* <select
                 name="assignTechnician"
                 id=""
                 value={assignCustomer}
@@ -302,12 +350,28 @@ export default function Technicians() {
                     {customer.firstName} {customer.lastName}
                   </option>
                 ))}
-              </select>
+              </select> */}
 
             </div>
             <div className='mb-2'>
-              <label htmlFor="" className='text-sm'>Assign Technician <span className='text-[red]'>*</span></label>
-              <select
+              <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p>
+              <FormControl fullWidth>
+              <InputLabel id="assignTechnician">Select technician</InputLabel>
+              <Select
+              labelId="assignTechnician"
+              id="select-assignTechnician"
+              value={assignTechnician}
+              label="assignTechnician"
+              name="assignTechnician"
+              onChange={(e) => setAssignTechnician(e.target.value)}
+              > 
+             {technicians.map((technician: any) => (
+              <MenuItem  key={technician.id} value={technician.id}>{technician.firstName} {technician.lastName}</MenuItem>
+                ))} 
+              </Select>
+              </FormControl>
+
+              {/* <select
                 name="assignTechnician"
                 id=""
                 value={assignTechnician}
@@ -320,7 +384,7 @@ export default function Technicians() {
                     {technician.firstName} {technician.lastName}
                   </option>
                 ))}
-              </select>
+              </select> */}
             </div>
           </div>
           <div className="text-right mt-4 mb-4">
