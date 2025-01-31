@@ -6,7 +6,7 @@ import Sidebar from '../../component/sidebar/page';
 import AuthCheck from '@/app/component/AuthCheck';
 export default function Technicians() {
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = 3; // Sample total pages
+    const totalPages = 1; // Sample total pages
   
   return (
     <>

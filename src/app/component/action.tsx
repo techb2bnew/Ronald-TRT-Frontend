@@ -4,15 +4,67 @@ import Edit from '../../../public/edit.svg'
 import Eye from '../../../public/eye-off.svg'
 import Delete from '../../../public/delete.svg'
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from 'next/link'; 
+import Swal from 'sweetalert2';
 
 interface TableActionsProps {
-  editRoute: string;  // Prop for the edit route
+  editRoute: string;          // Route for the edit button
+  deleteRoute: string;        // API endpoint for the DELETE request
+  itemId: string;    
+  idKey: string;             // ID of the item to delete
+  onDeleteSuccess?: () => void;  // Callback function after a successful delete (optional)
 }
-
-const TableActions: React.FC<TableActionsProps> = ({ editRoute }) => {
-   
  
+
+const TableActions: React.FC<TableActionsProps> = ({ editRoute, deleteRoute, idKey, itemId, onDeleteSuccess }) => {
+
+   
+   // ✅ Common Delete Handler
+   const handleDelete = async () => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won’t be able to undo this action!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (!result.isConfirmed) {
+      return;  // User canceled the action
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+      const body = JSON.stringify({ [idKey]: itemId });
+      // ✅ Send the itemId in the body of the request
+      const response = await fetch(deleteRoute, {
+        method: 'POST',
+        headers,
+        body
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await Swal.fire('Deleted!', 'Your item has been deleted.', 'success');
+        if (onDeleteSuccess) {
+          onDeleteSuccess();  // Execute callback after deletion 
+        }
+      } else {
+        Swal.fire('Error!', data.error || 'Failed to delete the item.', 'error');
+      }
+    } catch (error) {
+      Swal.fire('Error!', 'An error occurred while deleting the item.', 'error');
+    }
+  };
 
   return (
     <div className="flex items-center space-x-1">
@@ -22,7 +74,7 @@ const TableActions: React.FC<TableActionsProps> = ({ editRoute }) => {
       <Link className="p-1" href={editRoute}>
         <Image alt='edit' src={Edit} className='w-[14px]'/>
       </Link>
-      <button className="p-2" onClick={() => console.log('Delete')}>
+      <button className="p-2" onClick={handleDelete}>
       <Image alt='delete' src={Delete} className='w-[14px]'/> 
       </button>
      

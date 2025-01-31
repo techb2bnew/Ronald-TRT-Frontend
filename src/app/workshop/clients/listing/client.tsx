@@ -2,6 +2,8 @@
 import React from 'react';
 import TableActions from '../../../component/action';
 import CommonHeader from '../../../component/commonHeader';
+import { toast } from 'react-toastify';
+
 const TechnicianTable: React.FC = () => {
   // Sample data
   const technicians = [
@@ -13,9 +15,12 @@ const TechnicianTable: React.FC = () => {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
   };
+    const handleDeleteSuccess = () => {
+      toast.success('Refreshing data...');
+    };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Clients' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create IFS Client" buttonLink="/workshop/client/create" />
+      <CommonHeader heading='IFS Clients' onSearch={handleSearch} buttonLabel="Create IFS Client" buttonLink="/workshop/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -44,9 +49,10 @@ const TechnicianTable: React.FC = () => {
                   {tech.make}
                 </td>
                 <td> 
-                  <TableActions
-                    editRoute="/workshop/clients/create"
-                  /> 
+                {/* <TableActions editRoute="/workshop/clients/create"   
+         deleteRoute="/api/deleteTechnician"  // Pass the correct endpoint
+          itemId={tech.id}  // Pass the technician ID
+          onDeleteSuccess={handleDeleteSuccess} /> */}
                 </td>
               </tr>
             ))}

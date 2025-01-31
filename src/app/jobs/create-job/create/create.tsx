@@ -52,7 +52,7 @@ export default function Technicians() {
         const data = await response.json();
 
         // Assuming the response has an array called "technician"
-        setCustomer(data.customers);
+        setCustomer(data.customers.customers);
       } catch (error) {
         console.error('Error fetching technician data:', error);
       }
@@ -90,7 +90,7 @@ export default function Technicians() {
         const data = await response.json();
 
         // Assuming the response has an array called "technician"
-        setTechnicians(data.technician);
+        setTechnicians(data.technician.technicians);
       } catch (error) {
         console.error('Error fetching technician data:', error);
       }
@@ -223,7 +223,7 @@ export default function Technicians() {
                   onChange={(e) => setVin(e.target.value)}
                   className="input text-xs mt-1 input-bordered w-[40%] p-3 rounded border border-gray-400"
                 /> */}
-                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 text-sm pt-[18px] pb-[18px] w-[300px] rounded">Fetch Car Details</button>
+                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 text-sm pt-[18px] pb-[18px] w-[300px] rounded">Add new vehicle</button>
               </div>
             </div>
           </div>

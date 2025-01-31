@@ -15,7 +15,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='Completed Jobs' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create job" buttonLink="/" />
+      <CommonHeader heading='Completed Jobs'  onSearch={handleSearch} buttonLabel="Create job" buttonLink="/" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -53,9 +53,9 @@ const TechnicianTable: React.FC = () => {
                 <td>{tech.status}</td>  
                 <td>{tech.date}</td>  
                 <td> 
-                  <TableActions
+                  {/* <TableActions
                     editRoute="/workshop/clients/create"
-                  /> 
+                  />  */}
                 </td>
               </tr>
             ))}

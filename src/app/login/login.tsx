@@ -85,7 +85,7 @@ export default function Login() {
                 <TextField fullWidth  type={showPassword ? "text" : "password"} id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined"   onChange={(e) => setPassword(e.target.value)} />
                   <button 
                     type="button" 
-                    style={{ position: 'absolute', right: '10px', top: '44px' }}
+                    style={{ position: 'absolute', right: '10px', top: '52px' }}
                     onClick={() => setShowPassword(!showPassword)}
                 >
                     {showPassword ? <Image src={EyeOff} width='18' height='18'   alt="eye"/>  : <Image src={Eye} width='18' height='18'   alt="eye"/>
@@ -107,16 +107,16 @@ export default function Login() {
                     Remember Me
                   </label>
                 </div>
-                <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
+                {/* <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link> */}
               </div>
 
               <button type="submit" className="w-[40%] m-auto block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Log In</button>
             </form>
-            <div className="text-sm text-center mt-5">
+            {/* <div className="text-sm text-center mt-5">
               <p>Don&apos;t have account?
                 <Link href='/signup' className="primary-text"> Sign Up</Link> </p>
-            </div>
+            </div> */}
             {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />
               <p className="text-center text-black text-sm">OR</p>

@@ -1,99 +1,170 @@
+// components/ClientListing.tsx
 "use client";
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
-import { useRouter } from "next/navigation"; 
-  export default function ClientListing() {
-    const [customer, setCustomer] = useState<any[]>([]);
-    const router = useRouter();
-  
-    const handleSearch = (searchTerm: string) => {
-      console.log('Searching for:', searchTerm);
-      // Implement search logic here
-    };
-    useEffect(() => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+import { useRouter } from "next/navigation";
+import { toast } from 'react-toastify';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+
+export default function ClientListing() {
+  const [customer, setCustomer] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState<string>('id'); // Default sorting column is 'id'
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const router = useRouter();
+
+  const handleSearch = (searchTerm: string) => {
+    console.log('Searching for:', searchTerm);
+    // Implement search logic here
+  };
+const handleDeleteSuccess = (deletedId: string) => {
+    toast.success('Technician deleted successfully');
+
+    // ✅ Remove the deleted technician from the table
+    setCustomer((prev) => prev.filter((cust) => cust.id !== deletedId));
+  };
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const fetchCustomer = async () => {
       try {
-        // Retrieve token from localStorage
         const token = localStorage.getItem('token');
-  
-        // Create headers object
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
-  
-        // If the token exists, add the Authorization header
+
         if (token) {
           headers['Authorization'] = `Token ${token}`;
         }
-  
+
         const response = await fetch(`${apiUrl}/fetchCustomer`, {
-          method: 'GET', // Assuming you're using a GET request to fetch 
-          headers, // Pass the headers object
+          method: 'GET',
+          headers,
         });
-  
+
         const data = await response.json();
-  
+
         if (response.ok) {
-          // Assuming the response has an array called "technician"
-          setCustomer(data.customers);
+          setCustomer(data.customers.customers);
         } else {
-          // Check for 'Invalid Token' in the response and redirect to login if found
           if (data.error && data.error === 'Invalid Token') {
             router.push('/login');
           } else {
-            console.error('Error fetching technician data:', data.error);
+            console.error('Error fetching customer data:', data.error);
           }
         }
       } catch (error) {
-        console.error('Error fetching technician data:', error);
+        console.error('Error fetching customer data:', error);
       }
     };
-  
+
     fetchCustomer();
-  }, [router]); // Add `router` to the dependency array
+  }, [router]);
+
+  const handleSort = (column: string) => {
+    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(direction);
+    setSortBy(column);
+  
+    const sortedCustomers = [...customer].sort((a, b) => {
+      if (column === 'name') {
+        const nameA = `${a.firstName} ${a.lastName}`;
+        const nameB = `${b.firstName} ${b.lastName}`;
+        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      }
+  
+      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
+      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  
+    setCustomer(sortedCustomers);
+  };
+
+
+  const renderRow = (cust: any) => (
+    <tr key={cust.id}>
+      <td>{cust.id}</td>
+      <td>{cust.firstName} {cust.lastName}</td>
+      <td>{cust.email}</td>
+      <td>{cust.phoneNumber}</td>
+      <td>{cust.address}</td>
+      <td>{cust.country}</td>
+      <td>
+      <TableActions 
+         editRoute={`/jobs/create-job/create?jobid=${cust.id}`}   
+         deleteRoute={`${apiUrl}/deleteCustomer`} 
+         idKey="jobid"
+          itemId={cust.id}  // Pass the technician ID
+          onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
+      </td>
+    </tr>
+  );
+
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Customer' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
+      <CommonHeader heading='IFS Customer' onSearch={handleSearch} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
-          {/* Table header */}
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone Number</th>
-              <th>Address</th>
-              <th>Country</th>
-              <th>Action</th>
+              <th className="w-[50px]" onClick={() => handleSort('id')}>
+                ID
+                {sortBy === 'id' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('name')}>
+                Name
+                {sortBy === 'name' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('email')}>
+                Email
+                {sortBy === 'email' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>
+                Phone Number
+                {sortBy === 'phoneNumber' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('address')}>
+                Address
+                {sortBy === 'address' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('country')}>
+                Country
+                {sortBy === 'country' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[160px]">Action</th>
             </tr>
           </thead>
           <tbody>
-            {/* Table body */}
-            {customer.map((customer, index) => (
-              <tr key={index}>
-                <td>{customer.id}</td>
-                <td>{customer.firstName}</td>
-                <td>{customer.email}</td>
-                <td>{customer.phoneNumber}</td>
-                <td>{customer.address}</td>
-                <td> 
-                  {customer.country}
-                </td>
-                <td> 
-                  <TableActions
-                    editRoute="/create-technician"
-                  /> 
-                </td>
-              </tr>
-            ))}
+            {customer.map((cust, index) => renderRow(cust))}
           </tbody>
         </table>
       </div>
     </div>
   );
-};
- 
+}

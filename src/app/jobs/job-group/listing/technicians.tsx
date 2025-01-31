@@ -15,7 +15,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Technicians' title="Onboard clients effortlessly for seamless collaboration!" onSearch={handleSearch} buttonLabel="Create Technician" buttonLink="/workshop/technicians/create-technician"/>
+      <CommonHeader heading='IFS Technicians'  onSearch={handleSearch} buttonLabel="Create Technician" buttonLink="/workshop/technicians/create-technician"/>
        
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -46,9 +46,9 @@ const TechnicianTable: React.FC = () => {
                   </span>
                 </td>
                 <td>
-                <TableActions 
+                {/* <TableActions 
                 editRoute="/workshop/technicians/create-technician"
-              />
+              /> */}
                 </td>
               </tr>
             ))}

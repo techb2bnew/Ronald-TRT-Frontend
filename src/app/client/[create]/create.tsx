@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
 import { ToastContainer, toast } from 'react-toastify';
@@ -11,8 +11,21 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 
+interface CustomerForm {
+  id?: string;  // Optional ID for editing
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  zipCode: string;
+}
+
 export default function Technicians() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CustomerForm>({
     firstName: '',
     lastName: '',
     phoneNumber: '',
@@ -25,6 +38,7 @@ export default function Technicians() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const handleSelectChange = (
     event: SelectChangeEvent<string>,
     child: React.ReactNode // You might not actually need to use this parameter in your function
@@ -45,22 +59,63 @@ export default function Technicians() {
     }));
   };
 
+   const fetchCustomerData = async (customerId: string) => {
+     
+     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+     try {
+        const token = localStorage.getItem('token');
+  
+        // Create headers object
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+  
+        // If token exists, add it to Authorization header
+        if (token) {
+          headers['Authorization'] = `Token ${token}`;
+        }
+  
+        // Make GET request with technicianId as query parameter
+        const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
+          method: 'POST',
+          headers,
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          setFormData(prev => ({
+            ...prev,
+            ...data.customers,
+            id: data.customers.id, 
+          }));
+        } else {
+          toast.error(data.error || 'Error fetching technician data');
+        }
+      } catch (error) {
+        toast.error('An error occurred while fetching technician data');
+      }
+    };
+ 
+
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
 
-    setLoading(true);
-
+    // Create headers object
+    const headers: Record<string, string> = {};
+    // If token exists, add it to Authorization header
+   
     try {
-      const response = await fetch(`${apiUrl}/createCustomer`, {
+      const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`, 
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(isEdit ? { ...formData, customerId: formData.id } : formData), 
       });
       const data = await response.json();
       if (response.ok) {
@@ -90,15 +145,26 @@ export default function Technicians() {
       setLoading(false);
     }
   };
-
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const customerId = searchParams.get('customerId') || '';
+    console.log(customerId, 'customerIdcustomerId')
+    if (customerId) {
+      setIsEdit(true);  // Set to true if `customerId` exists in the URL
+      fetchCustomerData(customerId);
+    } else {
+      setIsEdit(false); // Set to false if `customerId` is missing
+    } 
+  }, []);
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   return (
     <div className='main-container mb-5'>
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1>
-      <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p>
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
+      <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
+      {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
@@ -106,29 +172,13 @@ export default function Technicians() {
             <div className='mb-2'>
               <p className='text-sm mb-2'>First Name <span className='text-[red]'>*</span> </p>
                 <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
-              {/* <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="Enter your client name"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+              
             </div>
             <div className='mb-2'>
               <p className='text-sm mb-2'>Last Name <span className='text-[red]'>*</span></p>
               <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
-              {/* <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Enter your business name"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+              
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -137,29 +187,13 @@ export default function Technicians() {
               <p className='text-sm mb-2'>Phone <span className='text-[red]'>*</span></p>
               <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
 
-              {/* <input
-                type="number"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="Enter your phone number"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+              
             </div>
             <div className='mb-2'>
               <p className='text-sm mb-2'>Email <span className='text-[red]'>*</span></p>
               <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email"  variant="outlined"  value={formData.email}  onChange={handleChange} />
 
-              {/* <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+             
             </div>
           </div>
 
@@ -168,15 +202,7 @@ export default function Technicians() {
             <p className='text-sm mb-2'>Address <span className='text-[red]'>*</span></p>
             <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address"  variant="outlined"  value={formData.address}  onChange={handleChange} />
 
-            {/* <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter your address"
-              className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              required
-            /> */}
+           
           </div>
 
           <div className="grid grid-cols-4 gap-4">
@@ -200,17 +226,7 @@ export default function Technicians() {
             </Select>
           </FormControl>
 
-              {/* <select
-                name="country"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                value={formData.country}
-                onChange={handleChange}
-              >
-                <option value="">Select country</option>
-                {countries.map((country: ICountry) => (
-                  <option key={country.isoCode} value={country.isoCode}>{country.name}</option>
-                ))}
-              </select> */}
+            
             </div>
             <div className='mb-2'>
               <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p>
@@ -229,48 +245,19 @@ export default function Technicians() {
               <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                 ))} 
             </Select>
-          </FormControl>
-
-              {/* <select
-                name="state"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                value={formData.state}
-                onChange={handleChange}
-                disabled={!formData.country}
-              >
-                <option value="">Select state</option>
-                {states.map((state: IState) => (
-                  <option key={state.isoCode} value={state.isoCode}>{state.name}</option>
-                ))}
-              </select> */}
+          </FormControl> 
             </div>
             <div className='mb-2'>
               <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p>
             <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city"  variant="outlined"  value={formData.city}  onChange={handleChange} />
 
-              {/* <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Enter your city"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+             
             </div>
             <div className='mb-2'>
               <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p>
             <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
 
-              {/* <input
-                type="text"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleChange}
-                placeholder="Enter zip code"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                required
-              /> */}
+             
             </div>
           </div>
 

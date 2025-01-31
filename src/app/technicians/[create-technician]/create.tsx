@@ -1,10 +1,10 @@
 "use client"; 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from "next/navigation";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
@@ -12,6 +12,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
 interface TechnicianForm {
+  id?: string; 
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -33,6 +34,13 @@ interface TechnicianForm {
 }
 export default function Technicians() {
     const router = useRouter();
+    const pathname = usePathname();
+    // const { id } = router.query;
+    // console.log(id,'dddddddddddddd')
+
+    const [errors, setErrors] = useState<{ [key: string]: string }>({}); 
+    const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
+  
 
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
@@ -54,8 +62,58 @@ export default function Technicians() {
     role:'technician',
     agreeTerms:'true',
   });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({}); 
 
+
+  const fetchTechnicianData = async (technicianId: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // Create headers object
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // If token exists, add it to Authorization header
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+
+      // Make GET request with technicianId as query parameter
+      const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
+        method: 'POST',
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormData(prev => ({
+          ...prev,
+          ...data.technician,
+          id: technicianId,
+          password: '', 
+          taxForms: null, // Reset to null to allow new file uploads
+        }));
+      } else {
+        toast.error(data.error || 'Error fetching technician data');
+      }
+    } catch (error) {
+      toast.error('An error occurred while fetching technician data');
+    }
+  };
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const techId = searchParams.get('technicianId') || '';
+
+    if (techId) {
+      setIsEdit(true);  // Set to true if `technicianId` exists in the URL
+      fetchTechnicianData(techId);
+    } else {
+      setIsEdit(false); // Set to false if `technicianId` is missing
+    } 
+  }, []); 
    const handleSelectChange = (
       event: SelectChangeEvent<string>,
       child: React.ReactNode // You might not actually need to use this parameter in your function
@@ -124,12 +182,25 @@ const handleSubmit = async (e: React.FormEvent) => {
             formDataObj.append(key, String(formData[key as keyof TechnicianForm]));
 
       }
-  });
+  }); 
+  if (isEdit && formData.id) {
+    formDataObj.append('technicianId', formData.id);  // Append the ID correctly
+  }
+  // Create headers object
+  const headers: Record<string, string> = {};
+  // If token exists, add it to Authorization header
+  if (isEdit) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Token ${token}`;
+    }
+  }
 
   try {
-    const response = await fetch(`${apiUrl}/register`, {
-      method: 'POST',
+    const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
+      method: isEdit ? 'POST' : 'POST',
       body: formDataObj, // Send the FormData object without setting Content-Type header
+      headers, 
     });
 
     const data = await response.json();
@@ -168,8 +239,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <div className='main-container mb-5'>
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1>
-      <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p>
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+      <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
+      {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
       <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
