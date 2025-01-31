@@ -92,9 +92,9 @@ const handleDeleteSuccess = (deletedId: string) => {
       <td>{cust.country}</td>
       <td>
       <TableActions 
-         editRoute={`/jobs/create-job/create?jobid=${cust.id}`}   
+         editRoute={`/jobs/create-job/create?customerId=${cust.id}`}   
          deleteRoute={`${apiUrl}/deleteCustomer`} 
-         idKey="jobid"
+         idKey="customerId"
           itemId={cust.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
       </td>

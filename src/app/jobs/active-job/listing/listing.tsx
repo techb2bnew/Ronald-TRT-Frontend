@@ -96,7 +96,7 @@ const JobTable: React.FC = () => {
       <td>
         <TableActions editRoute="/workshop/clients/create"    
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         idKey="technicianId"
+         idKey="jobid"
           itemId={job.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
            />
