@@ -8,6 +8,29 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Loader from '@/app/component/loader';
+
+interface JobPayload {
+  vin: string;
+  make: string;
+  model: string;
+  modelYear: string;
+  manufactureName: string;
+  vehicleDescription: string;
+  vehicleType: string;
+  jobDescription: string;
+  color: string;
+  assignTechnician: string;
+  assignCustomer: string;
+  createdBy: string;
+  plantCountry: string;
+  plantCompanyName: string;
+  plantState: string;
+  bodyClass: string;
+  schedule: string;
+  ip: string;
+  jobId?: string;  // Optional property for jobId
+}
 
 export default function Technicians() {
   const [vin, setVin] = useState('');
@@ -17,14 +40,73 @@ export default function Technicians() {
   const [assignCustomer, setAssignCustomer] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [ip, setIpAddress] = useState('');
-  const [createdBy, setRole] = useState('admin');
-  const [loading, setLoading] = useState(false);
+  const [createdBy, setRole] = useState('admin'); 
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any[]>([]);
   const router = useRouter();
+  const [isEdit, setIsEdit] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null); 
+  const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
 
- 
 
+     const fetchJobData = async (jobid: string) => {
+       
+       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+       try {
+          const token = localStorage.getItem('token');
+    
+          // Create headers object
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+    
+          // If token exists, add it to Authorization header
+          if (token) {
+            headers['Authorization'] = `Token ${token}`;
+          }
+    
+          // Make GET request with technicianId as query parameter
+          const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobid}`, {
+            method: 'POST',
+            headers,
+          });
+    
+          const data = await response.json();
+    
+          if (response.ok && data.jobs) {
+            // Assuming you have state setters like setVin, setVehicleData, etc.
+            setVin(data.jobs.vin);
+            setJobDescription(data.jobs.jobDescription);
+            setColor(data.jobs.color);
+            setAssignTechnician(data.jobs.assignTechnician.toString()); // Assuming it needs to be a string
+            setAssignCustomer(data.jobs.assignCustomer.toString());
+            // You might want to set additional fields based on your form needs
+           
+          }else {
+            toast.error(data.error || 'Error fetching technician data');
+          }
+        } catch (error) {
+          toast.error('An error occurred while fetching technician data');
+        }
+      };
+      useEffect(() => {
+        if (vin) {  // Ensure that vin is not empty or undefined
+          fetchVehicleDetails();
+        }
+      }, [vin]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const jobId = searchParams.get('jobId') || '';
+    console.log(jobId, 'jobIdjobId')
+    if (jobId) {
+      setJobId(jobId);
+      setIsEdit(true);  // Set to true if `customerId` exists in the URL
+      fetchJobData(jobId);
+    } else {
+      setIsEdit(false); // Set to false if `customerId` is missing
+    } 
+  }, []);
   // Fetch Customers api
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -115,21 +197,28 @@ export default function Technicians() {
   }, []);
 
   const fetchVehicleDetails = async () => {
-    setLoading(true);
+    setSubmitting(true);
     try {
       const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${vin}?format=json`);
       const data = await response.json();
-      const relevantData = data.Results.filter((item: any) =>
-        ['Vehicle Descriptor', 'Make', 'Manufacturer Name', 'Model', 'Model Year', 'Vehicle Type'].includes(item.Variable) &&
-        item.Value != null && item.Value !== 'N/A'
-      );
-      setVehicleData(relevantData);
+      if (response.ok && data.Results && Array.isArray(data.Results)) {
+        const relevantData = data.Results.filter((item: any) =>
+          ['Vehicle Descriptor', 'Make', 'Manufacturer Name', 'Model', 'Model Year', 'Vehicle Type'].includes(item.Variable) &&
+          item.Value != null && item.Value !== 'N/A'
+        );
+        setVehicleData(relevantData);
+      } else {
+        console.error('Invalid data structure:', data);
+        toast.error('Failed to fetch vehicle details due to unexpected data format.');
+      }
     } catch (error) {
       console.error('Error fetching vehicle details:', error);
+      toast.error('An error occurred while fetching vehicle details');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+  
   const renderValue = (value: any) => {
     if (value === null || value === '' || value === 'N/A') {
       return 'N/A';
@@ -141,7 +230,7 @@ export default function Technicians() {
     e.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-    const payload = {
+    const payload: JobPayload = {
       vin,
       make: renderValue(vehicleData?.find((item: any) => item.Variable === "Make")?.Value) || "",
       model: renderValue(vehicleData?.find((item: any) => item.Variable === "Model")?.Value) || "",
@@ -161,12 +250,17 @@ export default function Technicians() {
       schedule: '',
       ip
     };
-
+    console.log('Is Edit:', isEdit, 'Job ID:', jobId);
+    if (isEdit && jobId) {
+      payload.jobId = jobId;  // Add jobId to the payload if editing
+      console.log('Adding Job ID to payload:', payload);
+    }
     try {
-
-      setLoading(true);
-      const response = await fetch(`${apiUrl}/technicianCreateJob`, {
-        method: "POST",
+      setSubmitting(true);  
+      const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
+      const method = isEdit ? "POST" : "POST";
+      const response = await fetch(endpoint, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
@@ -185,7 +279,7 @@ export default function Technicians() {
         setAssignTechnician("");
         setAssignCustomer('');
         setJobDescription("");
-        router.push('/jobs/active-job/listing');
+        router.push('/jobs/active-job');
       } else {
         alert("Error creating job.");
       }
@@ -194,7 +288,7 @@ export default function Technicians() {
 
       // alert("Error creating job.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);  // ✅ Hide loader when done
     }
   };
 
@@ -204,6 +298,11 @@ export default function Technicians() {
       <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Job</h1>
       <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p>
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+        {submitting ? (
+                          <div className="flex justify-center items-center h-64">
+                            <Loader />  {/* ✅ Show loader during submission */}
+                          </div>
+                        ) : (
         <form className="" onSubmit={handleSubmit}>
           <div className="flex justify-between">
             <h2 className="text-lg leading-6 font-bold text-gray-900">Create New Job</h2>
@@ -228,7 +327,7 @@ export default function Technicians() {
             </div>
           </div>
           <div>
-            {vehicleData && !loading && (
+            {vehicleData && (
               <div className="overflow-x-auto rounded-md mt-4 mb-5">
                 <table className="table w-full ">
                   {/* Table header */}
@@ -391,6 +490,8 @@ export default function Technicians() {
             <button type="submit" className="primary-bg pl-5 pr-5 text-sm p-2 rounded">Submit</button>
           </div>
         </form>
+         )}
+
       </div>
     </div>
   );

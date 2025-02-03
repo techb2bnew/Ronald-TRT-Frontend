@@ -10,6 +10,7 @@ import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
+import Loader from '@/app/component/loader';
 
 interface CustomerForm {
   id?: string;  // Optional ID for editing
@@ -35,8 +36,8 @@ export default function Technicians() {
     state: '',
     city: '',
     zipCode: ''
-  });
-  const [loading, setLoading] = useState(false);
+  }); 
+  const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const router = useRouter();
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const handleSelectChange = (
@@ -109,6 +110,8 @@ export default function Technicians() {
     // If token exists, add it to Authorization header
    
     try {
+    setSubmitting(true);
+
       const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {
         method: 'POST',
         headers: {
@@ -142,7 +145,7 @@ export default function Technicians() {
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');
     } finally {
-      setLoading(false);
+      setSubmitting(false);  // ✅ Hide loader when done
     }
   };
   useEffect(() => {
@@ -166,6 +169,11 @@ export default function Technicians() {
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+         {submitting ? (
+                  <div className="flex justify-center items-center h-64">
+                    <Loader />  {/* ✅ Show loader during submission */}
+                  </div>
+                ) : (
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
@@ -265,13 +273,13 @@ export default function Technicians() {
           <div className="text-left mt-5">
             <button
               type="submit"
-              className="primary-bg pl-5 pr-5 p-2 rounded"
-              disabled={loading}
+              className="primary-bg pl-5 pr-5 p-2 rounded" 
             >
-              {loading ? "Submitting..." : "Submit"}
+             Submit
             </button>
           </div>
         </form>
+         )}
 
       </div>
     </div>

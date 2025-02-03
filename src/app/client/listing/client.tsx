@@ -5,6 +5,10 @@ import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
+import Pagination from '../../component/pagination';
+import Empty from '@/app/component/empty';
+import Loader from '@/app/component/loader';
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
 export default function ClientListing() {
@@ -12,6 +16,9 @@ export default function ClientListing() {
   const [sortBy, setSortBy] = useState<string>('id'); // Default sorting column is 'id'
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);  
+  const [loading, setLoading] = useState<boolean>(true); 
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -27,6 +34,7 @@ const handleDeleteSuccess = (deletedId: string) => {
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const fetchCustomer = async () => {
+      setLoading(true); 
       try {
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = {
@@ -37,7 +45,7 @@ const handleDeleteSuccess = (deletedId: string) => {
           headers['Authorization'] = `Token ${token}`;
         }
 
-        const response = await fetch(`${apiUrl}/fetchCustomer`, {
+        const response = await fetch(`${apiUrl}/fetchCustomer?page=${currentPage}`, {
           method: 'GET',
           headers,
         });
@@ -45,7 +53,8 @@ const handleDeleteSuccess = (deletedId: string) => {
         const data = await response.json();
 
         if (response.ok) {
-          setCustomer(data.customers.customers);
+          setCustomer(data.customers.customers); 
+          setTotalPages(data.customers.totalPages); // Set the total pages from API response 
         } else {
           if (data.error && data.error === 'Invalid Token') {
             router.push('/login');
@@ -55,11 +64,13 @@ const handleDeleteSuccess = (deletedId: string) => {
         }
       } catch (error) {
         console.error('Error fetching customer data:', error);
+      } finally {
+        setLoading(false);  // Hide loader after fetching
       }
     };
 
     fetchCustomer();
-  }, [router]);
+  }, [router, currentPage]);
 
   const handleSort = (column: string) => {
     const direction = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -80,7 +91,10 @@ const handleDeleteSuccess = (deletedId: string) => {
   
     setCustomer(sortedCustomers);
   };
-
+  const handlePageChange = (data: { selected: number }) => {
+    console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
+    setCurrentPage(data.selected + 1);
+  };
 
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
@@ -161,10 +175,27 @@ const handleDeleteSuccess = (deletedId: string) => {
             </tr>
           </thead>
           <tbody>
-            {customer.map((cust, index) => renderRow(cust))}
+          {loading ? (
+              <tr>
+                <td colSpan={7} className="text-center py-10">
+                  <Loader />
+                </td>
+              </tr>
+            ) : customer.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-10">
+                  <Empty />
+                </td>
+              </tr>
+            ) : (
+              customer.map((cust) => renderRow(cust))
+            )}
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+
     </div>
   );
 }

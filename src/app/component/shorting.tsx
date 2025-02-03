@@ -1,5 +1,6 @@
-// components/shorting.tsx
 import React from 'react';
+import Loader from '@/app/component/loader';
+import Empty from '@/app/component/empty';
 
 interface SortableTableProps {
   headers: string[];
@@ -8,6 +9,7 @@ interface SortableTableProps {
   sortBy: string;
   sortDirection: 'asc' | 'desc';
   handleSort: (column: string) => void;
+  loading: boolean;  // New prop to track loading state
 }
 
 const SortableTable: React.FC<SortableTableProps> = ({
@@ -17,6 +19,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
   sortBy,
   sortDirection,
   handleSort,
+  loading,
 }) => {
   // Define sortable columns
   const sortableColumns = ['id', 'name', 'email', 'phone number', 'pay rate', 'account status'];
@@ -46,7 +49,21 @@ const SortableTable: React.FC<SortableTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => renderRow(item))}
+          {loading ? (
+            <tr>
+              <td colSpan={headers.length} className="text-center py-10">
+                <Loader /> {/* Loader displayed while fetching data */}
+              </td>
+            </tr>
+          ) : data.length === 0 ? (
+            <tr>
+              <td colSpan={headers.length} className="text-center py-10 text-gray-500">
+                <Empty />
+              </td>
+            </tr>
+          ) : (
+            data.map((item, index) => renderRow(item))
+          )}
         </tbody>
       </table>
     </div>

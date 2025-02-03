@@ -1,11 +1,16 @@
 // components/TechnicianTable.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
 import SortableTable from '../../component/shorting'; // Import SortableTable
 import Link from 'next/link';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import Pagination from '../../component/pagination';
+import Empty from '@/app/component/empty';
+import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -13,7 +18,85 @@ const TechnicianTable: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
-  const router = useRouter();
+  const router = useRouter(); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);  
+  const [loading, setLoading] = useState<boolean>(true); 
+  
+  const toggleApproval = async (technicianId: number, currentApprovalStatus: boolean) => {
+    // Show a confirmation dialog before proceeding
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to change the approval status of this account?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF502E',
+      cancelButtonColor: 'black',
+      confirmButtonText: 'Yes, change it!'
+    });
+  
+    // Check if the user confirmed the action
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem('token');
+  
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Token ${token}` })
+          }
+        };
+  
+        const response = await axios.post(`${apiUrl}/technicianActiveUnactiveAccount`, {
+          technicianId,
+          isApproved: !currentApprovalStatus
+        }, config);
+  
+        if (response.data.status ) {
+          // Optimistically update the local state
+          setTechnicians(prev => prev.map(tech => {
+            if (tech.id === technicianId) {
+              return { ...tech, isApproved: !tech.isApproved };
+            }
+            return tech;
+          }));
+          Swal.fire({
+            title: 'Success!',
+            text: 'Technician status updated successfully.',
+            confirmButtonColor:'#EF502E',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          });
+        } else {
+          console.error('Failed to update technician status');
+          Swal.fire({
+            title: 'Error!',
+            text: 'Failed to update technician status.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      } catch (error) {
+        console.error('Error updating technician status:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Error updating technician status.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
+    } else {
+      // User clicked 'Cancel', do nothing
+      Swal.fire({
+        title: 'Cancelled',
+        text: 'Technician status change was cancelled.',
+        icon: 'info',
+        confirmButtonText: 'OK'
+      });
+    }
+  };
+  
+  
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -27,9 +110,10 @@ const TechnicianTable: React.FC = () => {
     setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
   };
 
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  useEffect(() => { 
+
     const fetchTechnicians = async () => {
+      setLoading(true);
       try {
         // Retrieve token from localStorage
         const token = localStorage.getItem('token');
@@ -44,7 +128,7 @@ const TechnicianTable: React.FC = () => {
           headers['Authorization'] = `Token ${token}`;
         }
 
-        const response = await fetch(`${apiUrl}/fetchTechnician`, {
+        const response = await fetch(`${apiUrl}/fetchTechnician?page=${currentPage}`, {
           method: 'GET',
           headers,
         });
@@ -52,7 +136,9 @@ const TechnicianTable: React.FC = () => {
         const data = await response.json();
 
         if (response.ok) {
-          setTechnicians(data.technician.technicians);
+          setTechnicians(data.technician.technicians); 
+          setTotalPages(data.technician.totalPages); // Set the total pages from API response
+          setCurrentPage(data.technician.currentPage); // Update current page from API
         } else {
           if (data.error && data.error === 'Invalid Token') {
             router.push('/login');
@@ -63,10 +149,13 @@ const TechnicianTable: React.FC = () => {
       } catch (error) {
         console.error('Error fetching technician data:', error);
       }
+      finally {
+        setLoading(false);  // Hide loader after fetching
+      }
     };
 
     fetchTechnicians();
-  }, [router]);
+  }, [router, currentPage]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -89,7 +178,10 @@ const TechnicianTable: React.FC = () => {
 
     setTechnicians(sortedTechnicians);
   };
-
+  const handlePageChange = (data: { selected: number }) => {
+    console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
+    setCurrentPage(data.selected + 1);
+  };
 
 
   // Render row function for SortableTable
@@ -100,14 +192,15 @@ const TechnicianTable: React.FC = () => {
       <td>{tech.email}</td>
       <td>{tech.phoneNumber}</td>
       <td>{tech.payRate}</td>
-      <td>
+      <td onClick={() => toggleApproval(tech.id, tech.isApproved)} style={{ cursor: 'pointer' }}>
         <span
-          className={`badge ${tech.isApproved === true ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+          className={`badge ${tech.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
-          {tech.isApproved === true ? 'Active' : 'Inactive'}
+          {tech.isApproved ? 'Active' : 'Inactive'}
         </span>
       </td>
-      <td><Link href='/jobs/create-job/create' className='flex gap-2 items-center border border-black rounded p-2 pl-5 pr-5 w-[fit-content]'>Create Job
+      <td className='w-[400px] font-sm'>
+        <Link href={`/jobs/create-job/create?jobId=${tech.id}`} className='flex gap-2 items-center border border-black rounded p-2 pl-5 pr-5 w-[140px] justify-center'>Create Job
         <svg width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M12 8.5V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -129,15 +222,20 @@ const TechnicianTable: React.FC = () => {
     <div className="container mx-auto mt-4">
       <CommonHeader heading="IFS Technicians" onSearch={handleSearch} buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
 
-      {/* Pass sorting function and sort direction to the SortableTable component */}
-      <SortableTable
-        headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Account Status', 'Create New Job', 'Action']}
-        data={technicians}
-        renderRow={renderRow}
-        sortBy={sortBy}
-        sortDirection={sortDirection} // Pass direction to indicate the current sorting state
-        handleSort={handleSort} // Pass sorting handler
-      />
+    
+        <SortableTable
+          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Account Status', 'Create New Job', 'Action']}
+          data={technicians}
+          renderRow={renderRow}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          handleSort={handleSort}
+          loading={loading}
+        />
+     
+
+<Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+
     </div>
   );
 };

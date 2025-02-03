@@ -15,11 +15,13 @@
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.2",
     "@next/env": "^15.1.5",
+    "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
     "next": "15.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-paginate": "^8.3.0",
     "react-toastify": "^11.0.3",
     "sweetalert2": "^11.15.10"
   },

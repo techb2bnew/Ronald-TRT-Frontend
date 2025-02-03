@@ -10,6 +10,7 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Loader from '@/app/component/loader';
 
 interface TechnicianForm {
   id?: string; 
@@ -37,7 +38,7 @@ export default function Technicians() {
     const pathname = usePathname();
     // const { id } = router.query;
     // console.log(id,'dddddddddddddd')
-
+    const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
     const [errors, setErrors] = useState<{ [key: string]: string }>({}); 
     const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   
@@ -197,6 +198,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 
   try {
+    setSubmitting(true);
     const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
       method: isEdit ? 'POST' : 'POST',
       body: formDataObj, // Send the FormData object without setting Content-Type header
@@ -221,6 +223,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   } catch (error: any) {
     toast.error(error.message || 'An unexpected error occurred');
+  }  finally {
+    setSubmitting(false);  // ✅ Hide loader when done
   }
 };
 
@@ -243,6 +247,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      {submitting ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader />  {/* ✅ Show loader during submission */}
+          </div>
+        ) : (
       <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
@@ -535,6 +544,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <button type="submit" className="primary-bg pl-5 pr-5 p-2 rounded">Submit</button>
           </div>
         </form>
+         )}
       </div>
     </div>
   );

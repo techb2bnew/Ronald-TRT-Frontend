@@ -220,7 +220,7 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li >
-                <Link href="/jobs/active-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job/listing' ? 'active text-[#EF502E]' : ''}`} >
+                <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Active Job</span>
                 </Link>
               </li>
