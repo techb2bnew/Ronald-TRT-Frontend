@@ -22,7 +22,8 @@ const TechnicianTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
-  
+  const [searchTerm, setSearchTerm] = useState('');
+
   const toggleApproval = async (technicianId: number, currentApprovalStatus: boolean) => {
     // Show a confirmation dialog before proceeding
     const result = await Swal.fire({
@@ -96,12 +97,94 @@ const TechnicianTable: React.FC = () => {
     }
   };
   
-  
+  const fetchTechnicians = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
 
-  const handleSearch = (searchTerm: string) => {
-    console.log('Searching for:', searchTerm);
-    // Implement search logic here
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/fetchTechnician?page=${currentPage}`, {
+        method: 'GET',
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTechnicians(data.technician.technicians);
+        setTotalPages(data.technician.totalPages);
+        setCurrentPage(data.technician.currentPage);
+      } else {
+        if (data.error && data.error === 'Invalid Token') {
+          router.push('/login');
+        } else {
+          console.error('Error fetching technician data:', data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching technician data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+useEffect(() => {
+    fetchTechnicians();
+  }, [currentPage]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim() === '') {
+        fetchTechnicians(); // Clear search and fetch all technicians
+      } else {
+        handleSearch(searchTerm);
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const handleSearch = async (query: string) => {
+    try {
+      const token = localStorage.getItem('token');
+  
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+  
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+  
+      // Determine API endpoint based on search term
+      const response = await fetch(
+        `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch search results');
+      }
+  
+      const data = await response.json();
+      setTechnicians(data.technicians || []); // Set technicians or empty array if no data
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+      setTechnicians([]); // Clear table on error
+    }
+  };
+  
+  
+  
 
   const handleDeleteSuccess = (deletedId: string) => {
     toast.success('Technician deleted successfully');
@@ -110,52 +193,7 @@ const TechnicianTable: React.FC = () => {
     setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
   };
 
-  useEffect(() => { 
 
-    const fetchTechnicians = async () => {
-      setLoading(true);
-      try {
-        // Retrieve token from localStorage
-        const token = localStorage.getItem('token');
-
-        // Create headers object
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-
-        // If the token exists, add the Authorization header
-        if (token) {
-          headers['Authorization'] = `Token ${token}`;
-        }
-
-        const response = await fetch(`${apiUrl}/fetchTechnician?page=${currentPage}`, {
-          method: 'GET',
-          headers,
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setTechnicians(data.technician.technicians); 
-          setTotalPages(data.technician.totalPages); // Set the total pages from API response
-          setCurrentPage(data.technician.currentPage); // Update current page from API
-        } else {
-          if (data.error && data.error === 'Invalid Token') {
-            router.push('/login');
-          } else {
-            console.error('Error fetching technician data:', data.error);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching technician data:', error);
-      }
-      finally {
-        setLoading(false);  // Hide loader after fetching
-      }
-    };
-
-    fetchTechnicians();
-  }, [router, currentPage]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -183,6 +221,7 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
+ 
 
   // Render row function for SortableTable
   const renderRow = (tech: any) => (
@@ -209,6 +248,7 @@ const TechnicianTable: React.FC = () => {
       <td>
         <TableActions
           editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
+          viewRoute={`/technicians/view?technicianId=${tech.id}`}
           deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
           itemId={tech.id}  // Pass the technician ID
           idKey="technicianId"
@@ -220,7 +260,7 @@ const TechnicianTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={handleSearch} buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
 
     
         <SortableTable

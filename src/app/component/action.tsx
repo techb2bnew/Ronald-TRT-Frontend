@@ -1,7 +1,7 @@
 // components/TableActions.tsx
 import React from 'react';
 import Edit from '../../../public/edit.svg'
-import Eye from '../../../public/eye-off.svg'
+import Eye from '../../../public/eye.svg'
 import Delete from '../../../public/delete.svg'
 import Image from 'next/image';
 import Link from 'next/link'; 
@@ -11,12 +11,13 @@ interface TableActionsProps {
   editRoute: string;          // Route for the edit button
   deleteRoute: string;        // API endpoint for the DELETE request
   itemId: string;    
-  idKey: string;             // ID of the item to delete
+  idKey: string;    
+  viewRoute: string;         // ID of the item to delete
   onDeleteSuccess?: () => void;  // Callback function after a successful delete (optional)
 }
  
 
-const TableActions: React.FC<TableActionsProps> = ({ editRoute, deleteRoute, idKey, itemId, onDeleteSuccess }) => {
+const TableActions: React.FC<TableActionsProps> = ({ viewRoute, editRoute, deleteRoute, idKey, itemId, onDeleteSuccess }) => {
 
    
    // ✅ Common Delete Handler
@@ -68,8 +69,8 @@ const TableActions: React.FC<TableActionsProps> = ({ editRoute, deleteRoute, idK
 
   return (
     <div className="flex items-center space-x-1">
-      <Link className="p-1" href='#'>
-      <Image alt='eye' src={Eye} className='w-[14px]' /> 
+      <Link className="p-1" href={viewRoute}>
+      <Image alt='eye' src={Eye} className='w-[16px]' /> 
       </Link>
       <Link className="p-1" href={editRoute}>
         <Image alt='edit' src={Edit} className='w-[14px]'/>

@@ -98,7 +98,17 @@ export default function Technicians() {
       }
     };
  
-
+    useEffect(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const customerId = searchParams.get('customerId') || '';
+      console.log(customerId, 'customerIdcustomerId')
+      if (customerId) {
+        setIsEdit(true);  // Set to true if `customerId` exists in the URL
+        fetchCustomerData(customerId);
+      } else {
+        setIsEdit(false); // Set to false if `customerId` is missing
+      } 
+    }, []);
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,17 +158,7 @@ export default function Technicians() {
       setSubmitting(false);  // ✅ Hide loader when done
     }
   };
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const customerId = searchParams.get('customerId') || '';
-    console.log(customerId, 'customerIdcustomerId')
-    if (customerId) {
-      setIsEdit(true);  // Set to true if `customerId` exists in the URL
-      fetchCustomerData(customerId);
-    } else {
-      setIsEdit(false); // Set to false if `customerId` is missing
-    } 
-  }, []);
+
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 

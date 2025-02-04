@@ -137,25 +137,25 @@ const JobTable: React.FC = () => {
           }));
           Swal.fire({
             title: 'Success!',
-            text: 'Technician status updated successfully.',
+            text: 'Job status updated successfully.',
             confirmButtonColor:'#EF502E',
             icon: 'success',
             confirmButtonText: 'OK'
           });
         } else {
-          console.error('Failed to update technician status');
+          console.error('Failed to update job status');
           Swal.fire({
             title: 'Error!',
-            text: 'Failed to update technician status.',
+            text: 'Failed to update job status.',
             icon: 'error',
             confirmButtonText: 'OK'
           });
         }
       } catch (error) {
-        console.error('Error updating technician status:', error);
+        console.error('Error updating job status:', error);
         Swal.fire({
           title: 'Error!',
-          text: 'Error updating technician status.',
+          text: 'Error updating job status.',
           icon: 'error',
           confirmButtonText: 'OK'
         });
@@ -196,7 +196,8 @@ const JobTable: React.FC = () => {
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         idKey="jobid"
+         viewRoute={`/jobs/view?jobId=${job.id}`}
+           idKey="jobid"
           itemId={job.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
            />

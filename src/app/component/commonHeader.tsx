@@ -15,7 +15,7 @@ interface CommonHeaderProps {
 
 const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonLabel, buttonLink   }) => {
   return (
-    <div className="px-3 mb-4">
+    <div className="px-1 mb-4">
       <div className="flex items-center justify-between  w-full">
         <div>
         <h1 className="text-lg leading-6 font-bold text-gray-900">{heading}</h1>
@@ -24,12 +24,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonL
         <div className='flex items-center gap-4'>
         <div className="flex w-[250]">
          
-      <TextField fullWidth size="small" id="outlined-basic" color="warning" label="Search"  variant="outlined"   onChange={(e) => onSearch(e.target.value)}  />
+      <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search"  variant="outlined"   onChange={(e) => onSearch(e.target.value)}  />
         
       </div>
           <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded">
             Export
           </button>
+          {buttonLink && buttonLabel && (
           <Link href={buttonLink} className="text-xs border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
           {buttonLabel}
           <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,7 +40,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonL
           </svg>
 
           </Link>
-          
+          )}
         </div>
       </div>
       {/* <div className="text-right mt-1 mb-2">

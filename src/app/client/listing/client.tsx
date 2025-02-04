@@ -19,20 +19,16 @@ export default function ClientListing() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearch = (searchTerm: string) => {
-    console.log('Searching for:', searchTerm);
-    // Implement search logic here
-  };
+ 
 const handleDeleteSuccess = (deletedId: string) => {
     toast.success('Technician deleted successfully');
 
     // ✅ Remove the deleted technician from the table
     setCustomer((prev) => prev.filter((cust) => cust.id !== deletedId));
   };
-
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+ 
     const fetchCustomer = async () => {
       setLoading(true); 
       try {
@@ -69,8 +65,10 @@ const handleDeleteSuccess = (deletedId: string) => {
       }
     };
 
-    fetchCustomer();
-  }, [router, currentPage]);
+ 
+useEffect(() => {
+  fetchCustomer();
+  }, [currentPage]);
 
   const handleSort = (column: string) => {
     const direction = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -96,6 +94,51 @@ const handleDeleteSuccess = (deletedId: string) => {
     setCurrentPage(data.selected + 1);
   };
 
+ useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim() === '') {
+        fetchCustomer(); // Clear search and fetch all technicians
+      } else {
+        handleSearch(searchTerm);
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const handleSearch = async (query: string) => {
+    try {
+      const token = localStorage.getItem('token');
+  
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+  
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+  
+      // Determine API endpoint based on search term
+      const response = await fetch(
+        `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch search results');
+      }
+  
+      const data = await response.json();
+      setCustomer(data.customers || []); // Set technicians or empty array if no data
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+      setCustomer([]); // Clear table on error
+    }
+  };
+
+
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
       <td>{cust.id}</td>
@@ -106,8 +149,9 @@ const handleDeleteSuccess = (deletedId: string) => {
       <td>{cust.country}</td>
       <td>
       <TableActions 
-         editRoute={`/jobs/create-job/create?customerId=${cust.id}`}   
+         editRoute={`/client/create?customerId=${cust.id}`}   
          deleteRoute={`${apiUrl}/deleteCustomer`} 
+         viewRoute={`/client/view?customerId=${cust.id}`}
          idKey="customerId"
           itemId={cust.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
@@ -117,7 +161,7 @@ const handleDeleteSuccess = (deletedId: string) => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Customer' onSearch={handleSearch} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
+      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
