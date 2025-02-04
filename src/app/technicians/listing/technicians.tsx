@@ -97,11 +97,10 @@ const TechnicianTable: React.FC = () => {
     }
   };
   
-  const fetchTechnicians = async () => {
+  const fetchTechnicians = async (page = 1, query = '') => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -110,78 +109,76 @@ const TechnicianTable: React.FC = () => {
         headers['Authorization'] = `Token ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchTechnician?page=${currentPage}`, {
-        method: 'GET',
-        headers,
-      });
+      // Determine correct endpoint
+      const endpoint = query.trim()
+        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`
+        : `${apiUrl}/fetchTechnician?page=${page}`;
 
+      const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
 
       if (response.ok) {
-        setTechnicians(data.technician.technicians);
-        setTotalPages(data.technician.totalPages);
-        setCurrentPage(data.technician.currentPage);
+         // Handle technicians array for both APIs correctly
+         const fetchedTechnicians = query.trim()
+         ? data.technicians || []  // For search API response
+         : data.technician?.technicians || [];  // For pagination API response
+
+        setTechnicians(fetchedTechnicians);
+        setTotalPages(data.technician?.totalPages || 1);
       } else {
-        if (data.error && data.error === 'Invalid Token') {
+        if (data.error === 'Invalid Token') {
           router.push('/login');
         } else {
-          console.error('Error fetching technician data:', data.error);
+          console.error('Error fetching technicians:', data.error);
         }
       }
     } catch (error) {
-      console.error('Error fetching technician data:', error);
+      console.error('Error fetching technicians:', error);
     } finally {
       setLoading(false);
     }
   };
 
-useEffect(() => {
-    fetchTechnicians();
-  }, [currentPage]);
-
+  // Unified useEffect to handle both search and pagination
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchTerm.trim() === '') {
-        fetchTechnicians(); // Clear search and fetch all technicians
-      } else {
-        handleSearch(searchTerm);
-      }
+      fetchTechnicians(currentPage, searchTerm);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [currentPage, searchTerm]);
 
-  const handleSearch = async (query: string) => {
-    try {
-      const token = localStorage.getItem('token');
+  // const handleSearch = async (query: string) => {
+  //   try {
+  //     const token = localStorage.getItem('token');
   
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+  //     const headers: Record<string, string> = {
+  //       'Content-Type': 'application/json',
+  //     };
   
-      if (token) {
-        headers['Authorization'] = `Token ${token}`;
-      }
+  //     if (token) {
+  //       headers['Authorization'] = `Token ${token}`;
+  //     }
   
-      // Determine API endpoint based on search term
-      const response = await fetch(
-        `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`,
-        {
-          method: 'GET',
-          headers,
-        }
-      );
+  //     // Determine API endpoint based on search term
+  //     const response = await fetch(
+  //       `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`,
+  //       {
+  //         method: 'GET',
+  //         headers,
+  //       }
+  //     );
   
-      if (!response.ok) {
-        throw new Error('Failed to fetch search results');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch search results');
+  //     }
   
-      const data = await response.json();
-      setTechnicians(data.technicians || []); // Set technicians or empty array if no data
-    } catch (error) {
-      console.error('Error fetching search results:', error);
-      setTechnicians([]); // Clear table on error
-    }
-  };
+  //     const data = await response.json();
+  //     setTechnicians(data.technicians || []); // Set technicians or empty array if no data
+  //   } catch (error) {
+  //     console.error('Error fetching search results:', error);
+  //     setTechnicians([]); // Clear table on error
+  //   }
+  // };
   
   
   

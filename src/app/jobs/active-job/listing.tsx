@@ -1,6 +1,6 @@
 // components/JobTable.tsx
 "use client";
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useCallback } from 'react'; 
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
@@ -32,44 +32,41 @@ const JobTable: React.FC = () => {
       // ✅ Remove the deleted technician from the table
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
-
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const fetchJobs = async () => {
-      setLoading(true); 
+    const fetchJobs = useCallback(async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-
         if (token) headers['Authorization'] = `Token ${token}`;
-
+  
         const response = await fetch(`${apiUrl}/fetchAllJobs?page=${currentPage}`, {
           method: 'GET',
           headers,
         });
-
+  
         const data = await response.json();
-
         if (response.ok) {
           setActiveJob(data.jobs.jobs);
-          setTotalPages(data.jobs.totalPages); // Set the total pages from API response
-          setCurrentPage(data.jobs.currentPage); // Update current page from API
+          setTotalPages(data.jobs.totalPages);
         } else {
-          if (data.error && data.error === 'Invalid Token') {
+          if (data.error === 'Invalid Token') {
             router.push('/login');
           } else {
-            console.error('Error fetching technician data:', data.error);
+            console.error('Error fetching job data:', data.error);
           }
         }
       } catch (error) {
-        console.error('Error fetching technician data:', error);
-      }finally {
-        setLoading(false);  // Hide loader after fetching
+        console.error('Error fetching job data:', error);
+      } finally {
+        setLoading(false);
       }
-    };
+    }, [currentPage, router]);
+ 
+  
 
-    fetchJobs();
-  }, [router, currentPage]);
+    useEffect(() => {
+      fetchJobs();
+    }, [fetchJobs]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
