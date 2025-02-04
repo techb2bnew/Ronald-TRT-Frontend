@@ -1,5 +1,5 @@
 import React from 'react'; 
-import Emptyimg from '../../../public/emptystate-files.avif'
+import Emptyimg from '../../../public/emptystate-files.png'
 import Image from 'next/image';
  
 export default function Empty() { 
