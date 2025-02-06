@@ -23,7 +23,7 @@ export default function ClientListing() {
 
  
 const handleDeleteSuccess = (deletedId: string) => {
-    toast.success('Technician deleted successfully');
+    // toast.success('Technician deleted successfully');
 
     // ✅ Remove the deleted technician from the table
     setCustomer((prev) => prev.filter((cust) => cust.id !== deletedId));
@@ -82,8 +82,11 @@ const handleDeleteSuccess = (deletedId: string) => {
           : `${apiUrl}/fetchCustomer?page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
+        if (response.status == 400) {
+          localStorage.removeItem('token');
+          router.push('/login');
+        }
         const data = await response.json();
-  
         if (response.ok) {
            // Handle customers array for both APIs correctly
            const fetchedCustomers = query.trim()

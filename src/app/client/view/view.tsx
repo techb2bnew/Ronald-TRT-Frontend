@@ -60,22 +60,22 @@ export default function ViewDetails() {
       <h2 className="text-xl font-bold mb-4 pt-4 pl-6 border-b border-[#ccc] mb-2 pb-3">Customer Detail</h2>
         <div className="grid grid-cols-2 gap-6 p-6">
           {/* Left Section */}
-          <div>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Customer Id:</strong> {CustomerData?.id}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {CustomerData?.firstName} {CustomerData?.lastName}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Email:</strong> {CustomerData?.email}</p> 
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {CustomerData?.phoneNumber}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Address:</strong> {CustomerData?.address}</p> 
+          <div className='shadow-lg p-5 bg-white rounded'>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Id:</strong> {CustomerData?.id}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {CustomerData?.firstName} {CustomerData?.lastName}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Email:</strong> {CustomerData?.email}</p> 
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {CustomerData?.phoneNumber}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Address:</strong> {CustomerData?.address}</p> 
          
           </div>
 
           {/* Right Section */}
-          <div>  
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Country:</strong> {CustomerData?.country}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>State:</strong> {CustomerData?.state}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>City:</strong> {CustomerData?.city}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(CustomerData.updatedAt).toLocaleDateString('en-GB')} </p>
+          <div className='shadow-lg p-5 bg-white rounded'> 
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Country:</strong> {CustomerData?.country}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>State:</strong> {CustomerData?.state}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>City:</strong> {CustomerData?.city}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(CustomerData.updatedAt).toLocaleDateString('en-GB')} </p>
           </div>
         </div>
       </div>

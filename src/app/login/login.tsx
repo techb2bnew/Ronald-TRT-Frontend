@@ -74,18 +74,18 @@ export default function Login() {
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
             <form className="mt-6" onSubmit={handleSubmit}>
-              <div>
-                <label className="block text-[#161616] mb-2">E-mail / Phone Number</label>
+              <div className="mb-4">
+                {/* <label className="block text-[#161616] mb-2">E-mail / Phone Number</label> */}
                 <TextField fullWidth  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined"  onChange={(e) => setemailAddress(e.target.value)}  />
                
               </div>
 
-              <div className="mt-4 relative">
-                <label className="block text-[#161616] mb-2">Password</label>
+              <div className="mt-5 relative">
+                {/* <label className="block text-[#161616] mb-2">Password</label> */}
                 <TextField fullWidth  type={showPassword ? "text" : "password"} id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined"   onChange={(e) => setPassword(e.target.value)} />
                   <button 
                     type="button" 
-                    style={{ position: 'absolute', right: '10px', top: '52px' }}
+                    style={{ position: 'absolute', right: '10px', top: '20px' }}
                     onClick={() => setShowPassword(!showPassword)}
                 >
                     {showPassword ? <Image src={EyeOff} width='18' height='18'   alt="eye"/>  : <Image src={Eye} width='18' height='18'   alt="eye"/>

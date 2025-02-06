@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/navigation';
-import InputLabel from '@mui/material/InputLabel';
+// import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+// import FormControl from '@mui/material/FormControl';
+// import Select, { SelectChangeEvent } from '@mui/material/Select';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText } from '@mui/material';
+// import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 
 // interface UploadedImage {
@@ -25,7 +26,7 @@ interface JobPayload {
   vehicleType: string;
   jobDescription: string;
   color: string;
-  assignTechnician: string;
+  assignTechnician: string[];
   assignCustomer: string;
   createdBy: string;
   plantCountry: string;
@@ -40,7 +41,7 @@ export default function Technicians() {
   const [vin, setVin] = useState('');
   const [vehicleData, setVehicleData] = useState<any>(null);
   const [color, setColor] = useState("");
-  const [assignTechnician, setAssignTechnician] = useState("");
+  const [assignTechnician, setAssignTechnician] = useState<string[]>([]);
   const [assignCustomer, setAssignCustomer] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [ip, setIpAddress] = useState('');
@@ -94,11 +95,11 @@ export default function Technicians() {
           toast.error('An error occurred while fetching technician data');
         }
       };
-      useEffect(() => {
-        if (vin) {  // Ensure that vin is not empty or undefined
-          fetchVehicleDetails();
-        }
-      }, [vin]);
+      // useEffect(() => {
+      //   if (vin) {  // Ensure that vin is not empty or undefined
+      //     fetchVehicleDetails();
+      //   }
+      // }, [vin]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -113,77 +114,27 @@ export default function Technicians() {
     } 
   }, []);
   // Fetch Customers api
-  useEffect(() => {
+  const fetchData = async (endpoint: string, setState: (data: any) => void) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Token ${token}`;
 
-    const fetchCustomer = async () => {
-      try {
-        // Retrieve token from localStorage
-        const token = localStorage.getItem('token');
-
-        // Create headers object
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-
-        // If the token exists, add the Authorization header
-        if (token) {
-          headers['Authorization'] = `Token ${token}`;
-        }
-
-        const response = await fetch(`${apiUrl}/fetchCustomer`, {
-          method: 'GET', // Assuming you're using a GET request to fetch technicians
-          headers, // Pass the headers object
-        });
-
-        const data = await response.json();
-
-        // Assuming the response has an array called "technician"
-        setCustomer(data.customers.customers);
-      } catch (error) {
-        console.error('Error fetching technician data:', error);
+      const response = await fetch(`${apiUrl}/${endpoint}`, { method: 'GET', headers });
+      if (response.status == 400) {
+        localStorage.removeItem('token');
+        router.push('/login');
       }
-    };
-
-    fetchCustomer();
-  }, []);
-
-
-  // Fetch technicians API
-
+      const data = await response.json();
+      setState(endpoint === 'fetchTechnician' ? data.technician.technicians : data.customers.customers);
+    } catch (error) {
+      console.error(`Error fetching ${endpoint}:`, error);
+    }
+  };
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-
-    const fetchTechnicians = async () => {
-      try {
-        // Retrieve token from localStorage
-        const token = localStorage.getItem('token');
-
-        // Create headers object
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-
-        // If the token exists, add the Authorization header
-        if (token) {
-          headers['Authorization'] = `Token ${token}`;
-        }
-
-        const response = await fetch(`${apiUrl}/fetchTechnician`, {
-          method: 'GET', // Assuming you're using a GET request to fetch technicians
-          headers, // Pass the headers object
-        });
-
-        const data = await response.json();
-
-        // Assuming the response has an array called "technician"
-        setTechnicians(data.technician.technicians);
-      } catch (error) {
-        console.error('Error fetching technician data:', error);
-      }
-    };
-
-    fetchTechnicians();
+    fetchData('fetchTechnician', setTechnicians);
+    fetchData('fetchCustomer', setCustomer);
   }, []);
 
 
@@ -272,7 +223,7 @@ export default function Technicians() {
         },
         body: JSON.stringify(payload),
       });
-
+      
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message);
@@ -281,12 +232,12 @@ export default function Technicians() {
         setVin("");
         setVehicleData(null);
         setColor("");
-        setAssignTechnician("");
+        setAssignTechnician([]);
         setAssignCustomer('');
         setJobDescription("");
         router.push('/jobs/active-job');
       } else {
-        alert("Error creating job.");
+        // alert("Error creating job.");
       }
     } catch (error: any) {
       toast.success(error);
@@ -295,6 +246,10 @@ export default function Technicians() {
     } finally {
       setSubmitting(false);  // ✅ Hide loader when done
     }
+  };
+
+  const handleTechnicianChange = (event: SelectChangeEvent<string[]>) => {
+    setAssignTechnician(event.target.value as string[]);
   };
 
   // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +273,7 @@ export default function Technicians() {
     <div className='main-container mb-5'>
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Job</h1>
-      <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p>
+      {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
         {submitting ? (
                           <div className="flex justify-center items-center h-64">
@@ -332,10 +287,10 @@ export default function Technicians() {
           </div>
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
               <div className='flex gap-3 items-center'>
-         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number"  variant="outlined"  value={vin}  onChange={(e) => setVin(e.target.value)} />
+         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={vin}  onChange={(e) => setVin(e.target.value)} />
                 
                 {/* <input
                   type="text"
@@ -391,50 +346,45 @@ export default function Technicians() {
           </div>
          
           <div className="grid grid-cols-3 gap-4">
-          <div className='mb-2'>
-              <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p>
+          <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p> */}
               <FormControl fullWidth>
-              <InputLabel id="color">Select color</InputLabel>
+              <InputLabel id="color" color="warning">Select color *</InputLabel>
               <Select 
               labelId="color"
               id="select-color"
               value={color}
               label="color"
               name="color"
+              color="warning"
               onChange={(e) => setColor(e.target.value)}
               >  
-              <MenuItem value='red'>Red</MenuItem>
               <MenuItem value='black'>Black</MenuItem>
-              <MenuItem value='white'>White</MenuItem>
-              <MenuItem value='orange'>Orange</MenuItem>
-              <MenuItem value='silver'>Silver</MenuItem>
               <MenuItem value='gray'>Gray</MenuItem>
+              <MenuItem value='blue'>Blue</MenuItem>
+              <MenuItem value='silver'>Silver</MenuItem>
+              <MenuItem value='red'>Red</MenuItem>
+              <MenuItem value='maroon'>Maroon</MenuItem>
+              <MenuItem value='yellow'>Yellow</MenuItem>
+              <MenuItem value='white'>White</MenuItem>
               <MenuItem value='brown'>Brown</MenuItem>
+              <MenuItem value='tan'>Tan</MenuItem>
+              <MenuItem value='gold'>Gold</MenuItem>
+              <MenuItem value='green'>Green</MenuItem>
+              <MenuItem value='orange'>Orange</MenuItem>
                
               </Select>
-              </FormControl>
-
-              {/* <select name="color" id="" value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className='input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400'>
-                <option value="">Select color</option>
-                <option value="red">Red</option>
-                <option value="black">Black</option>
-                <option value="white">White</option>
-                <option value="orange">Orange</option>
-                <option value="silver">Silver</option>
-                <option value="gray">Gray</option>
-                <option value="brown">Brown</option>
-              </select> */}
+              </FormControl> 
             </div>
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
               <FormControl fullWidth>
-              <InputLabel id="assignCustomer">Select customer</InputLabel>
+              <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
               <Select
               labelId="assignCustomer"
               id="select-assignCustomer"
+              color="warning"
               value={assignCustomer}
               label="assignCustomer"
               name="assignCustomer"
@@ -447,38 +397,49 @@ export default function Technicians() {
               </FormControl> 
 
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
               <FormControl fullWidth>
-              <InputLabel id="assignTechnician">Select technician</InputLabel>
-              <Select
-              labelId="assignTechnician"
-              id="select-assignTechnician"
-              value={assignTechnician}
-              label="assignTechnician"
-              name="assignTechnician"
-              onChange={(e) => setAssignTechnician(e.target.value)}
-              > 
-             {technicians.map((technician: any) => (
-              <MenuItem  key={technician.id} value={technician.id}>{technician.firstName} {technician.lastName}</MenuItem>
-                ))} 
+        <InputLabel id="assignTechnician" color="warning">Select technician *</InputLabel>
+        <Select
+                labelId="assignTechnician"
+                id="select-assignTechnician" 
+                name="assignTechnician"
+                label="assignTechnician"
+                color="warning"
+                multiple
+                value={assignTechnician}
+                onChange={handleTechnicianChange}
+                renderValue={(selected) =>
+                  selected.map((id) => {
+                    const tech = technicians.find((tech) => tech.id === id);
+                    return tech ? `${tech.firstName} ${tech.lastName}` : '';
+                  }).join(', ')
+                }
+              >
+                {technicians.map((tech) => (
+                  <MenuItem key={tech.id} value={tech.id}>
+                     <Checkbox checked={assignTechnician.indexOf(tech.id) > -1} />
+                     <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                  </MenuItem>
+                ))}
               </Select>
-              </FormControl> 
+      </FormControl>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Job Description</p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Job Description</p> */}
               <textarea name="jobDescription" id="" value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder='Enter Description' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+                placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
           </div>
          
 
-          <div className='mb-2'>
-              <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p>
+          <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
 
               <div className="form-control w-full p-3 mt-1 rounded relative" style={{border:'2px dashed #ccc'}}>
                 <label className="label text-center"> 
@@ -524,10 +485,10 @@ export default function Technicians() {
             </div>
             <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Note</p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Note</p> */}
               <textarea name="note" id=""  
-                placeholder='Enter Note'  className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+                placeholder='Enter Note *'  className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
           </div>
 

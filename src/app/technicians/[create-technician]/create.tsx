@@ -86,7 +86,10 @@ export default function Technicians() {
         method: 'POST',
         headers,
       });
-
+      if (response.status == 400) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
       const data = await response.json();
 
       if (response.ok) {
@@ -105,15 +108,16 @@ export default function Technicians() {
     }
   };
   useEffect(() => {
+    if (typeof window !== 'undefined') {
     const searchParams = new URLSearchParams(window.location.search);
     const techId = searchParams.get('technicianId') || '';
-
     if (techId) {
       setIsEdit(true);  // Set to true if `technicianId` exists in the URL
       fetchTechnicianData(techId);
     } else {
       setIsEdit(false); // Set to false if `technicianId` is missing
     } 
+  }
   }, []); 
    const handleSelectChange = (
       event: SelectChangeEvent<string>,
@@ -255,9 +259,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p>
-              <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
+              <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
               
               {/* <input
                 type="text"
@@ -268,9 +272,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
               /> */}
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p>
-              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
+              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
               {/* <input
                 type="text"
@@ -284,9 +288,9 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p>
-              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
+              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
 
               {/* <input
                 type="number"
@@ -297,9 +301,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
               /> */}
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p>
-              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email"  variant="outlined"  value={formData.email}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
+              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
 
               {/* <input
                 type="email"
@@ -312,9 +316,9 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           </div>
           {/* Address and Email */}
-          <div className='mb-2'>
-            <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p>
-            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address"  variant="outlined"  value={formData.address}  onChange={handleChange} />
+          <div className='mb-4'>
+            {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
+            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
 
             {/* <input
               type="text"
@@ -327,13 +331,14 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'> 
-              <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p>
+            <div className='mb-4'> 
+              {/* <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p> */}
 
                       <FormControl fullWidth>
-                      <InputLabel id="country">Select country</InputLabel>
+                      <InputLabel id="country"  color="warning">Select country *</InputLabel>
                       <Select
                       labelId="country"
+                       color="warning"
                       id="country"
                       value={formData.country}
                       label="country"
@@ -358,13 +363,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                 ))}
               </select> */}
             </div>
-            <div className='mb-2'>
-            <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p>
+            <div className='mb-4'>
+            {/* <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p> */}
 
               <FormControl fullWidth>
-              <InputLabel id="state">Select state</InputLabel>
+              <InputLabel id="state"  color="warning"> Select state *</InputLabel>
               <Select
               labelId="state"
+               color="warning"
               id="select-state"
               value={formData.state}
               label="State"
@@ -392,20 +398,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 ))}
               </select> */}
             </div>
-            <div className='mb-2'>
-                <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p>
-            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city"  variant="outlined"  value={formData.city}  onChange={handleChange} />
+            <div className='mb-4'>
+                {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
+            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
               
             </div>
-            <div className='mb-2'>
-               <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p>
-                <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
+            <div className='mb-4'>
+               {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
+                <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
             
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className='mb-2'>
-              <p   className='text-sm mb-2'>Secondary phone number</p>
+            <div className='mb-4'>
+              {/* <p   className='text-sm mb-2'>Secondary phone number</p> */}
               <TextField fullWidth size="medium" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
 
               {/* <input
@@ -417,8 +423,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                 className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
               /> */}
             </div> 
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Secondary Email</p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Secondary Email</p> */}
               <TextField fullWidth size="medium" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
 
               {/* <input
@@ -433,21 +439,21 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           <div className="grid grid-cols-2 gap-4">
 
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p>
-              <TextField fullWidth size="medium" name="password" id="outlined-basic" color="warning" label="Enter your password"  variant="outlined"  value={formData.password}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
+              <TextField fullWidth size="medium" name="password" id="outlined-basic" color="warning" label="Enter your password *"  variant="outlined"  value={formData.password}  onChange={handleChange} />
 
              
             </div>
-            <div className='mb-2'>
-        <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p>
+            <div className='mb-4'>
+        {/* <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p> */}
         <TextField 
           fullWidth 
           size="medium" 
           name="confirmPassword" 
           id="confirmPassword" 
           color="warning" 
-          label="Confirm your password"  
+          label="Confirm your password *"  
           variant="outlined"  
           value={formData.confirmPassword}  
           onChange={handleChange} 
@@ -458,20 +464,21 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           <div className="grid grid-cols-2 gap-4">
 
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
               <FormControl fullWidth>
-              <InputLabel id="payRate">Select pay rate</InputLabel>
+              <InputLabel id="payRate"  color="warning">Select pay rate *</InputLabel>
               <Select
               labelId="payRate"
+               color="warning"
               id="select-payRate"
               value={formData.payRate}
               label="payRate"
               name="payRate"
               onChange={handleSelectChange}
               >  
-              <MenuItem value='Pay Per Vehicles'>Pay Per Vehicles</MenuItem>
-              <MenuItem value='per job'>per job</MenuItem>
+              <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
+              <MenuItem value='per job'>Pay Per Job</MenuItem>
               <MenuItem value='flat'>Flat Rate/Percentage</MenuItem>
                
               </Select>
@@ -485,9 +492,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <option value='flat'>Flat Rate/Percentage</option>
               </select> */}
             </div>
-            <div className="mb-2">
-          <p  className='text-sm mb-2'>Amount/Percentage <span className='text-red-500'>*</span></p>
-          <TextField fullWidth size="medium" name="amountPercentage" id="outlined-basic" color="warning" label="$50/$20%"  variant="outlined"  value={formData.amountPercentage}  onChange={handleChange} />
+            <div className="mb-4">
+          {/* <p  className='text-sm mb-2'>Amount/Percentage <span className='text-red-500'>*</span></p> */}
+          <TextField fullWidth size="medium" name="amountPercentage" id="outlined-basic" color="warning" label="$50/$20% *"  variant="outlined"  value={formData.amountPercentage}  onChange={handleChange} />
 
           {/* <input
             type="text"
@@ -502,7 +509,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="grid grid-cols-2 gap-4">
 
             <div className='mb-2'>
-              <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p>
+              {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
 
               <div className="form-control w-full p-3 mt-1 rounded relative" style={{border:'2px dashed #ccc'}}>
                 <label className="label text-center"> 

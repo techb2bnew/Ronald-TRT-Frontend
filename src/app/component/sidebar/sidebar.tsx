@@ -73,7 +73,7 @@ const Sidebar = () => {
      
       <ul className="flex flex-col py-4">
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
               <path fillRule="evenodd" clipRule="evenodd" d="M2.03486 13.5347C2.6676 12.9019 3.56085 12.6458 4.5835 12.6458H6.41683C7.43947 12.6458 8.33273 12.9019 8.96547 13.5347C9.5982 14.1674 9.85433 15.0607 9.85433 16.0833V17.9166C9.85433 18.9393 9.5982 19.8325 8.96547 20.4653C8.33273 21.098 7.43947 21.3541 6.41683 21.3541H4.5835C3.56085 21.3541 2.6676 21.098 2.03486 20.4653C1.40212 19.8325 1.146 18.9393 1.146 17.9166V16.0833C1.146 15.0607 1.40212 14.1674 2.03486 13.5347ZM3.00713 14.5069C2.7232 14.7909 2.521 15.2726 2.521 16.0833V17.9166C2.521 18.7273 2.7232 19.2091 3.00713 19.493C3.29106 19.7769 3.7728 19.9791 4.5835 19.9791H6.41683C7.22752 19.9791 7.70926 19.7769 7.99319 19.493C8.27712 19.2091 8.47933 18.7273 8.47933 17.9166V16.0833C8.47933 15.2726 8.27712 14.7909 7.99319 14.5069C7.70926 14.223 7.22752 14.0208 6.41683 14.0208H4.5835C3.7728 14.0208 3.29106 14.223 3.00713 14.5069Z" fill="currentColor" />
@@ -81,7 +81,7 @@ const Sidebar = () => {
               <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
             </svg>
             <span>Dashboard</span>
-          </a>
+          </Link>
         </li>
       
  
@@ -168,17 +168,17 @@ const Sidebar = () => {
           {isUser2Open && (
             <ul className="ml-4">
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('technician')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'technician' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Technician</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('clients')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`}  >
                   <span>Clients</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('admin')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`}  >
                   <span>Admin</span>
                 </Link>
               </li>
@@ -230,7 +230,7 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`} onClick={() => setActiveLink('job')}>
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`}  >
                   <span>Job by Group</span>
                 </Link>
               </li>
@@ -238,7 +238,7 @@ const Sidebar = () => {
           )}
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.61623 7.10532H15.429C15.6986 7.10532 15.9173 6.88671 15.9173 6.61702C15.9173 6.34733 15.6986 6.12872 15.429 6.12872H7.61623C7.34654 6.12872 7.12793 6.34733 7.12793 6.61702C7.12793 6.88671 7.34654 7.10532 7.61623 7.10532Z" fill="currentColor" />
               <path d="M17.8705 9.05849C17.8705 8.7888 17.6518 8.57019 17.3822 8.57019H7.61623C7.34654 8.57019 7.12793 8.7888 7.12793 9.05849C7.12793 9.32818 7.34654 9.54679 7.61623 9.54679H17.3822C17.6518 9.54679 17.8705 9.32818 17.8705 9.05849Z" fill="currentColor" />
@@ -249,30 +249,30 @@ const Sidebar = () => {
             </svg>
 
             <span>Reporting</span>
-          </a>
+          </Link>
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18.2256 18.9668L17.1984 6.02411C17.1344 5.19027 16.4292 4.53706 15.593 4.53706H13.5642V4.44587C13.5642 1.9944 11.5698 0 9.11828 0C6.66681 0 4.67241 1.9944 4.67241 4.44587V4.53706H2.64365C1.80734 4.53706 1.10211 5.19023 1.03832 6.02236L0.0108676 18.9686C-0.0686441 20.0051 0.290955 21.0371 0.997397 21.7998C1.70384 22.5625 2.70528 23 3.74491 23H14.4916C15.5312 23 16.5327 22.5625 17.2392 21.7998C17.9456 21.0371 18.3052 20.0051 18.2256 18.9668ZM6.01962 4.44587C6.01962 2.73727 7.40973 1.34721 9.11828 1.34721C10.8268 1.34721 12.217 2.73731 12.217 4.44587V4.53706H6.01962V4.44587ZM16.2508 20.8844C15.7917 21.3799 15.1671 21.6528 14.4916 21.6528H3.74495C3.06951 21.6528 2.44482 21.3799 1.98581 20.8844C1.52685 20.3889 1.30251 19.7451 1.35408 19.0734L2.38144 6.12712C2.39186 5.99092 2.50704 5.88427 2.64365 5.88427H4.67241V7.54346C4.67241 7.91546 4.97402 8.21706 5.34601 8.21706C5.71801 8.21706 6.01962 7.91546 6.01962 7.54346V5.88427H12.217V7.54346C12.217 7.91546 12.5186 8.21706 12.8906 8.21706C13.2626 8.21706 13.5642 7.91546 13.5642 7.54346V5.88427H15.593C15.7295 5.88427 15.8447 5.99096 15.8553 6.12892L16.8824 19.0716C16.9341 19.7451 16.7097 20.3888 16.2508 20.8844Z" fill="currentColor" />
               <path d="M12.1555 11.4228C11.8925 11.1598 11.4659 11.1598 11.2029 11.4228L8.19514 14.4306L7.03858 13.2741C6.77556 13.011 6.34903 13.011 6.08597 13.2741C5.82291 13.5371 5.82291 13.9636 6.08597 14.2267L7.71883 15.8595C7.85037 15.9911 8.02278 16.0569 8.1951 16.0569C8.36742 16.0569 8.53987 15.9911 8.67136 15.8595L12.1554 12.3755C12.4185 12.1124 12.4185 11.6859 12.1555 11.4228Z" fill="currentColor" />
             </svg>
 
             <span>Orders</span>
-          </a>
+          </Link>
         </li>
         <li className='p-2'>
-        <a href="/#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded" >
+        <Link href="/#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded" >
 
             <svg width="18" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.8125 6.5625H9.1875C8.8394 6.5625 8.50556 6.70078 8.25942 6.94692C8.01328 7.19306 7.875 7.5269 7.875 7.875V17.7188C7.875 18.0668 8.01328 18.4007 8.25942 18.6468C8.50556 18.893 8.8394 19.0312 9.1875 19.0312H11.8125C12.1606 19.0312 12.4944 18.893 12.7406 18.6468C12.9867 18.4007 13.125 18.0668 13.125 17.7188V7.875C13.125 7.5269 12.9867 7.19306 12.7406 6.94692C12.4944 6.70078 12.1606 6.5625 11.8125 6.5625ZM9.1875 17.7188V7.875H11.8125V17.7188H9.1875ZM18.375 1.96875H15.75C15.4019 1.96875 15.0681 2.10703 14.8219 2.35317C14.5758 2.59931 14.4375 2.93315 14.4375 3.28125V17.7188C14.4375 18.0668 14.5758 18.4007 14.8219 18.6468C15.0681 18.893 15.4019 19.0312 15.75 19.0312H18.375C18.7231 19.0312 19.0569 18.893 19.3031 18.6468C19.5492 18.4007 19.6875 18.0668 19.6875 17.7188V3.28125C19.6875 2.93315 19.5492 2.59931 19.3031 2.35317C19.0569 2.10703 18.7231 1.96875 18.375 1.96875ZM15.75 17.7188V3.28125H18.375V17.7188H15.75ZM5.25 11.1562H2.625C2.2769 11.1562 1.94306 11.2945 1.69692 11.5407C1.45078 11.7868 1.3125 12.1207 1.3125 12.4688V17.7188C1.3125 18.0668 1.45078 18.4007 1.69692 18.6468C1.94306 18.893 2.2769 19.0312 2.625 19.0312H5.25C5.5981 19.0312 5.93194 18.893 6.17808 18.6468C6.42422 18.4007 6.5625 18.0668 6.5625 17.7188V12.4688C6.5625 12.1207 6.42422 11.7868 6.17808 11.5407C5.93194 11.2945 5.5981 11.1562 5.25 11.1562ZM2.625 17.7188V12.4688H5.25V17.7188H2.625Z" fill="currentColor" />
             </svg>
 
             <span>Subscribers</span>
-          </a>
+          </Link>
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clipPath="url(#clip0_217_1077)">
                 <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -288,10 +288,10 @@ const Sidebar = () => {
             </svg>
 
             <span>Invoice</span>
-          </a>
+          </Link>
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
 
             <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
@@ -303,10 +303,10 @@ const Sidebar = () => {
             </svg>
 
             <span>Roles & Permissions</span>
-          </a>
+          </Link>
         </li>
         <li className='p-2'>
-          <a href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 20 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1 5.58337H3H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M17 5.58337V19.5834C17 20.1138 16.7893 20.6225 16.4142 20.9976C16.0391 21.3727 15.5304 21.5834 15 21.5834H5C4.46957 21.5834 3.96086 21.3727 3.58579 20.9976C3.21071 20.6225 3 20.1138 3 19.5834V5.58337M6 5.58337V3.58337C6 3.05294 6.21071 2.54423 6.58579 2.16916C6.96086 1.79409 7.46957 1.58337 8 1.58337H12C12.5304 1.58337 13.0391 1.79409 13.4142 2.16916C13.7893 2.54423 14 3.05294 14 3.58337V5.58337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" />
@@ -315,7 +315,7 @@ const Sidebar = () => {
             </svg>
 
             <span>Trash</span>
-          </a>
+          </Link>
         </li>
       </ul>
     </div>

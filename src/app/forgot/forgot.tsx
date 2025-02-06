@@ -4,6 +4,7 @@ import Logo from "../../../public/logo.svg";
 import { useState, FormEvent } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import TextField from '@mui/material/TextField';
 
 interface ForgotForm {
     emailOrPhone: string;
@@ -39,7 +40,7 @@ export default function Forgot() {
                         toast.error(data.error);
                     }
                 } else { 
-                    toast.success(data.message);
+                    toast.success('Password reset email sent successfully'); 
                     // Handle success (e.g., clearing form, redirecting)
                 }
             } catch (error) { 
@@ -64,8 +65,9 @@ export default function Forgot() {
             </div> 
             <form onSubmit={handleSubmit} className="mt-6">
               <div>
-                <label className="block text-[#161616]">E-mail / Phone Number</label>
-                <input type="email" name="" onChange={handleChange} id="" placeholder="Enter your email" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required />
+                {/* <label className="block text-[#161616]">E-mail / Phone Number</label> */}
+              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"   onChange={handleChange} />
+                {/* <input type="email" name="" onChange={handleChange} id="" placeholder="Enter your email" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required /> */}
               </div>  
               <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Forgot Password</button>

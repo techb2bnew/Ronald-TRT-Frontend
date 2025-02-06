@@ -55,19 +55,20 @@ export default function ViewDetails() {
   }
 
   return (
-    <div className='max-w-5xl mx-auto p-4 rounded-lg shadow bg-white'>
+    <div className='max-w-6xl mx-auto p-4 rounded-lg shadow bg-white'>
       <div className="bg-[#F6F6F6] rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4 pt-4 pl-6 border-b border-[#ccc] mb-2 pb-3">Technician Details</h2>
+      <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Technician Details</h2>
+   
         <div className="grid grid-cols-2 gap-6 p-6">
           {/* Left Section */}
-          <div>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Email:</strong> {technician?.email}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Secondary Contact Name:</strong> {technician?.secondaryContactName}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</p> 
+          <div className='shadow-lg p-5 bg-white rounded'>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> {technician?.email}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</p> 
             <p><strong className='w-[200px] inline-block'>Status:</strong><span
           className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -76,14 +77,20 @@ export default function ViewDetails() {
           </div>
 
           {/* Right Section */}
-          <div> 
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Pay Rate:</strong> {technician?.payRate}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> {technician?.amountPercentage}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Country:</strong> {technician?.country}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
-            <p className='mb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+          <div className='shadow-lg p-5 bg-white rounded'> 
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Pay Rate:</strong> {technician?.payRate}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> {technician?.amountPercentage}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Country:</strong> {technician?.country}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+            {technician?.taxForms && (
+            <div className="mt-1 m-auto block mb-2  ">
+              {/* <strong className='inline-block'>Tax Form Image</strong> */}
+              <img onClick={() => window.open(technician?.taxForms, '_blank')} src={technician?.taxForms} alt="Technician Tax Form" className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer" />
+            </div>
+          )}
           </div>
         </div>
       </div>

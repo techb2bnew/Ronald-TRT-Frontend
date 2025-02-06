@@ -1,11 +1,18 @@
-import React from 'react'; 
-import Loader from '../../../public/loader.gif'
-import Image from 'next/image';
+import React from 'react';  
  
 export default function Loading() { 
   return (
-    <div className='flex justify-center items-center h-[20vh]'>
-            <Image alt='empty' src={Loader} height='50' width='50' /> 
+    <div className='flex justify-center items-center h-[20vh]'> 
+            <div id="preloader">
+    <div className="bar-container">
+      <div className="bar"></div>
+      <div className="bar"></div>
+      <div className="bar"></div>
+      <div className="bar"></div>
+      <div className="bar"></div>
+    </div>
+    <h1>Loading...</h1>
+  </div>
     </div>
   );
 };

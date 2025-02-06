@@ -80,10 +80,9 @@ export default function Technicians() {
         const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
           method: 'POST',
           headers,
-        });
-  
+        }); 
         const data = await response.json();
-  
+      
         if (response.ok) {
           setFormData(prev => ({
             ...prev,
@@ -130,6 +129,10 @@ export default function Technicians() {
         },
         body: JSON.stringify(isEdit ? { ...formData, customerId: formData.id } : formData), 
       });
+      if (response.status  == 400) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
       const data = await response.json();
       if (response.ok) {
           toast.success(data.message);
@@ -177,49 +180,49 @@ export default function Technicians() {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>First Name <span className='text-[red]'>*</span> </p>
-                <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>First Name <span className='text-[red]'>*</span> </p> */}
+                <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
               
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Last Name <span className='text-[red]'>*</span></p>
-              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Last Name <span className='text-[red]'>*</span></p> */}
+              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
               
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Phone and Email */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Phone <span className='text-[red]'>*</span></p>
-              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Phone <span className='text-[red]'>*</span></p> */}
+              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
 
               
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Email <span className='text-[red]'>*</span></p>
-              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email"  variant="outlined"  value={formData.email}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Email <span className='text-[red]'>*</span></p> */}
+              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
 
              
             </div>
           </div>
 
           {/* Address */}
-          <div className='mb-2'>
-            <p className='text-sm mb-2'>Address <span className='text-[red]'>*</span></p>
-            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address"  variant="outlined"  value={formData.address}  onChange={handleChange} />
+          <div className='mb-4'>
+            {/* <p className='text-sm mb-2'>Address <span className='text-[red]'>*</span></p> */}
+            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
 
            
           </div>
 
           <div className="grid grid-cols-4 gap-4">
             {/* Country, State, City, Zip Code */}
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p> */}
 
               <FormControl fullWidth>
-            <InputLabel id="country">Select country</InputLabel>
+            <InputLabel id="country">Select country *</InputLabel>
             <Select
               labelId="country"
               id="country"
@@ -236,11 +239,11 @@ export default function Technicians() {
 
             
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p>
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p> */}
 
               <FormControl fullWidth>
-            <InputLabel id="demo-simple-select-label">Select state</InputLabel>
+            <InputLabel id="demo-simple-select-label">Select state *</InputLabel>
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
@@ -255,15 +258,15 @@ export default function Technicians() {
             </Select>
           </FormControl> 
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p>
-            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city"  variant="outlined"  value={formData.city}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
+            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
 
              
             </div>
-            <div className='mb-2'>
-              <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p>
-            <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
+            <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
 
              
             </div>

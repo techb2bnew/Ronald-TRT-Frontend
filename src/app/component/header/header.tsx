@@ -10,7 +10,7 @@ export default function Home() {
         <>
             <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
                 <div className='w-100 ml-auto flex items-center'>
-                    <div className="flex-grow relative">
+                    {/* <div className="flex-grow relative">
                         <div style={{position:'absolute', left:'10px', top:'15px'}}>
                     <svg width="14" height="14" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" clipRule="evenodd" d="M10.5413 2.52081C6.11156 2.52081 2.52051 6.11186 2.52051 10.5416C2.52051 14.9714 6.11156 18.5625 10.5413 18.5625C14.9711 18.5625 18.5622 14.9714 18.5622 10.5416C18.5622 6.11186 14.9711 2.52081 10.5413 2.52081ZM1.14551 10.5416C1.14551 5.35247 5.35217 1.14581 10.5413 1.14581C15.7305 1.14581 19.9372 5.35247 19.9372 10.5416C19.9372 15.7308 15.7305 19.9375 10.5413 19.9375C5.35217 19.9375 1.14551 15.7308 1.14551 10.5416Z" fill="#060606"/>
@@ -23,7 +23,7 @@ export default function Home() {
                             type="search"
                             placeholder="Search for anything..."
                         />
-                    </div>
+                    </div> */}
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <button onClick={toggleNotification} className="ml-4 bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 p-3">

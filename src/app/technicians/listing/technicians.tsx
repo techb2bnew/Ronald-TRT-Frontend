@@ -115,8 +115,13 @@ const TechnicianTable: React.FC = () => {
         : `${apiUrl}/fetchTechnician?page=${page}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
+      console.log(response.status,'responseresponseresponse')
+      if (response.status == 400) {
+        localStorage.removeItem('token');
+        router.push('/login');
+      }
       const data = await response.json();
-
+      console.log(data,'data>>>>>>>>>>>')
       if (response.ok) {
          // Handle technicians array for both APIs correctly
          const fetchedTechnicians = query.trim()
@@ -126,13 +131,11 @@ const TechnicianTable: React.FC = () => {
         setTechnicians(fetchedTechnicians);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
-        if (data.error === 'Invalid Token') {
-          router.push('/login');
-        } else {
-          console.error('Error fetching technicians:', data.error);
-        }
-      }
-    } catch (error) {
+        console.error('Error fetching technicians:', );
+      } 
+    }
+      catch (error) {
+      // router.push('/login');
       console.error('Error fetching technicians:', error);
     } finally {
       setLoading(false);
@@ -184,8 +187,7 @@ const TechnicianTable: React.FC = () => {
   
 
   const handleDeleteSuccess = (deletedId: string) => {
-    toast.success('Technician deleted successfully');
-
+    // toast.success('Technician deleted successfully'); 
     // ✅ Remove the deleted technician from the table
     setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
   };

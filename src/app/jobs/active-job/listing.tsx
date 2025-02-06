@@ -27,7 +27,7 @@ const JobTable: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-      toast.success('Technician deleted successfully');
+      // toast.success('Technician deleted successfully');
   
       // ✅ Remove the deleted technician from the table
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
