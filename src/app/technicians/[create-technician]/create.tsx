@@ -28,7 +28,7 @@ interface TechnicianForm {
   password: string;
   confirmPassword:string;
   payRate: string;
-  taxForms: File | null;
+  taxForms: File[];
   amountPercentage: string;
   role:string;
   agreeTerms:string;
@@ -58,7 +58,7 @@ export default function Technicians() {
     password: '',
     confirmPassword:'',
     payRate: '',
-    taxForms: null,
+    taxForms: [],
     amountPercentage: '',
     role:'technician',
     agreeTerms:'true',
@@ -153,84 +153,84 @@ export default function Technicians() {
     }
 };
 const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files ? e.target.files[0] : null; // Get the first file
-  setFormData(prev => ({ ...prev, taxForms: file }));
+  const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
+  setFormData(prev => ({ ...prev, taxForms: files }));
 };
 
-const handleRemoveFile = () => {
-  // Set the taxForms to null to effectively remove the file
-  setFormData({ ...formData, taxForms: null });
+const handleRemoveFile = (index: number) => {
+  const newFiles = formData.taxForms.filter((_, i) => i !== index);
+  setFormData(prev => ({ ...prev, taxForms: newFiles }));
 };
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-
   if (formData.confirmPassword !== formData.password) {
-    setErrors(prev => ({
-        ...prev,
-        confirmPassword: 'Passwords do not match'
-    }));
-    return; // Stop the function if passwords do not match
+      setErrors(prev => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match'
+      }));
+      return; // Stop the function if passwords do not match
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const formDataObj = new FormData();
   Object.keys(formData).forEach(key => {
-    if (key === 'confirmPassword') {
-      // Skip confirmPassword, do not append to FormData
-      return;
-  }
+      if (key === 'confirmPassword') {
+          // Skip confirmPassword, do not append to FormData
+          return;
+      }
       if (key === 'taxForms' && formData[key]) {
-          formDataObj.append(key, formData[key]); // Ensure file is appended correctly
+          formData[key].forEach(file => {
+              formDataObj.append('taxForms', file); // Append each file to FormData
+          });
       } else {
-          // formDataObj.append(key, formData[key as keyof TechnicianForm].toString()); // Convert all values to string
-            formDataObj.append(key, String(formData[key as keyof TechnicianForm]));
-
+          formDataObj.append(key, String(formData[key as keyof TechnicianForm])); // Convert all values to string
       }
   }); 
   if (isEdit && formData.id) {
-    formDataObj.append('technicianId', formData.id);  // Append the ID correctly
+      formDataObj.append('technicianId', formData.id);  // Append the ID correctly
   }
   // Create headers object
   const headers: Record<string, string> = {};
   // If token exists, add it to Authorization header
   if (isEdit) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Token ${token}`;
-    }
+      const token = localStorage.getItem('token');
+      if (token) {
+          headers['Authorization'] = `Token ${token}`;
+      }
   }
 
   try {
-    setSubmitting(true);
-    const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
-      method: isEdit ? 'POST' : 'POST',
-      body: formDataObj, // Send the FormData object without setting Content-Type header
-      headers, 
-    });
+      setSubmitting(true);
+      const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
+          method: 'POST',
+          body: formDataObj, // Send the FormData object without setting Content-Type header
+          headers, 
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      if (data.errors) {
-        setErrors(prev => ({ ...prev, ...data.errors }));
-        Object.values(data.errors).forEach(error => {
-          toast.error(data.error);
-        });
-      } else if (data.error) {
-        setErrors(prev => ({ ...prev, general: data.error }));
-        toast.error(data.error);
+      if (!response.ok) {
+          if (data.errors) {
+              setErrors(prev => ({ ...prev, ...data.errors }));
+              Object.values(data.errors).forEach(error => {
+                  toast.error(data.error);
+              });
+          } else if (data.error) {
+              setErrors(prev => ({ ...prev, general: data.error }));
+              toast.error(data.error);
+          }
+      } else {
+          toast.success(data.message);
+          router.push('/technicians/listing');
       }
-    } else {
-      toast.success(data.message);
-      router.push('/technicians/listing');
-    }
   } catch (error: any) {
-    toast.error(error.message || 'An unexpected error occurred');
+      toast.error(error.message || 'An unexpected error occurred');
   }  finally {
-    setSubmitting(false);  // ✅ Hide loader when done
+      setSubmitting(false);  // ✅ Hide loader when done
   }
 };
+
 
   
   
@@ -522,23 +522,22 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange}   />
                 {/* onChange={handleFileChange} */}
               </div>
-              <div className='flex gap-4 items-center mt-5'>
-              {formData.taxForms && (
-                            <div className='flex gap-4 items-center mt-5' style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
-                                {formData.taxForms.type.includes('image') ? (
-                                    <img src={URL.createObjectURL(formData.taxForms)} alt="Uploaded file" className='shadow rounded' style={{ width: 50, height: 50, marginRight: '10px', objectFit: 'cover' }} />
-                                ) : (
-                                    <a href={URL.createObjectURL(formData.taxForms)} target="_blank" rel="noopener noreferrer" className='shadow rounded' style={{ marginRight: '10px', textDecoration: 'none' }}>{formData.taxForms.name}</a>
-                                )}
-                                <button onClick={handleRemoveFile} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        )}
-
-      </div>
+              <div className='flex flex-wrap gap-4 items-center mt-5'>
+  {formData.taxForms && formData.taxForms.map((file, index) => (
+    <div key={index} className='shadow rounded p-2'>
+      {file.type.includes('image') ? (
+        <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 100, height: 100, objectFit: 'cover' }} />
+      ) : (
+        <a href={URL.createObjectURL(file)} target="_blank" rel="noopener noreferrer">{file.name}</a>
+      )}
+      <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  ))}
+</div>
             </div>
            
          

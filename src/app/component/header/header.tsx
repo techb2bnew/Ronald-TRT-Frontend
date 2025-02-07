@@ -1,11 +1,20 @@
+import Link from 'next/link';
 import React, { useState } from 'react'; 
+import { useRouter } from "next/navigation";
+
 export default function Home() {
+      const router = useRouter(); 
+    
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [notificationOpen, setnotificationOpen] = useState(false);
 
     const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
     const toggleNotification = () => setnotificationOpen(!notificationOpen);
 
+    const logOut = async () => {
+        localStorage.removeItem('token');
+        router.push('/login'); 
+    }
     return (
         <>
             <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
@@ -50,9 +59,9 @@ export default function Home() {
                             </button>
                             {dropdownOpen && (
                                 <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20">
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log in</a>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</a>
+                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Settings</a> 
+                                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Profile</Link> 
+                                    <a  onClick={logOut} href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Log out</a>
                                 </div>
                             )}
                         </div>

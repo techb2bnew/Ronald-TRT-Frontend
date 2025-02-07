@@ -177,7 +177,30 @@ const handleDeleteSuccess = (deletedId: string) => {
   //     setCustomer([]); // Clear table on error
   //   }
   // };
+// CSV Export Functions
+const convertToCSV = (data:any) => {
+  const csvRows = [];
+  // Get headers
+  csvRows.push(Object.keys(data[0]).join(','));
+  // Convert data to csv
+  for (const row of data) {
+    csvRows.push(Object.values(row).join(','));
+  }
+  return csvRows.join('\n');
+};
 
+const downloadCSV = () => {
+  const csvData = convertToCSV(customer);
+  const blob = new Blob([csvData], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'customers.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
 
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
@@ -201,7 +224,7 @@ const handleDeleteSuccess = (deletedId: string) => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)} buttonLabel="Create IFS Customer" buttonLink="/client/create" />
+      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create IFS Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

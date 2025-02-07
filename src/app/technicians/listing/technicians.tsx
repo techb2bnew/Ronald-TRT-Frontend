@@ -21,7 +21,7 @@ const TechnicianTable: React.FC = () => {
   const router = useRouter(); 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   const toggleApproval = async (technicianId: number, currentApprovalStatus: boolean) => {
@@ -101,6 +101,11 @@ const TechnicianTable: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      if (!token){
+        localStorage.removeItem('token');
+        router.push('/login');
+        return;
+      }
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -114,14 +119,12 @@ const TechnicianTable: React.FC = () => {
         ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`
         : `${apiUrl}/fetchTechnician?page=${page}`;
 
-      const response = await fetch(endpoint, { method: 'GET', headers });
-      console.log(response.status,'responseresponseresponse')
+      const response = await fetch(endpoint, { method: 'GET', headers }); 
       if (response.status == 400) {
         localStorage.removeItem('token');
         router.push('/login');
       }
-      const data = await response.json();
-      console.log(data,'data>>>>>>>>>>>')
+      const data = await response.json(); 
       if (response.ok) {
          // Handle technicians array for both APIs correctly
          const fetchedTechnicians = query.trim()
@@ -257,9 +260,34 @@ const TechnicianTable: React.FC = () => {
     </tr>
   );
 
+
+   // CSV Export Functions
+   const convertToCSV = (data:any) => {
+    const csvRows = [];
+    // Get headers
+    csvRows.push(Object.keys(data[0]).join(','));
+    // Convert data to csv
+    for (const row of data) {
+      csvRows.push(Object.values(row).join(','));
+    }
+    return csvRows.join('\n');
+  };
+
+  const downloadCSV = () => {
+    const csvData = convertToCSV(technicians);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'technicians.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
 
     
         <SortableTable

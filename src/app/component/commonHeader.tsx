@@ -11,9 +11,11 @@ interface CommonHeaderProps {
   onSearch: (searchTerm: string) => void;
   buttonLabel: string;
   buttonLink: string;
+  onExport?: () => void; 
 }
+ 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonLabel, buttonLink   }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonLabel, buttonLink , onExport  }) => {
   return (
     <div className="px-1 mb-4">
       <div className="flex items-center justify-between  w-full">
@@ -27,7 +29,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonL
       <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search"  variant="outlined"   onChange={(e) => onSearch(e.target.value)}  />
         
       </div>
-          <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded">
+          <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded"  onClick={onExport}>
             Export
           </button>
           {buttonLink && buttonLabel && (

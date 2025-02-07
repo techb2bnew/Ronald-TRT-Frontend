@@ -11,12 +11,9 @@ import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox,
 // import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 
-// interface UploadedImage {
-//   id: number;
-//   file: File;
-//   previewUrl: string;
-// }
+ 
 interface JobPayload {
+  id?: string; 
   vin: string;
   make: string;
   model: string;
@@ -26,7 +23,8 @@ interface JobPayload {
   vehicleType: string;
   jobDescription: string;
   color: string;
-  assignTechnician: string[];
+  assignTechnicians: string[];
+  notes:string;
   assignCustomer: string;
   createdBy: string;
   plantCountry: string;
@@ -35,15 +33,42 @@ interface JobPayload {
   bodyClass: string;
   schedule: string;
   ip: string;
-  jobId?: string;  // Optional property for jobId 
+  jobId?: string;    
+  images: File[]; 
 }
+type VehicleDetailsMap = {
+  [key: string]: keyof JobPayload | undefined;
+};
+
+// Define the actual map based on your fields
+const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
+  vehicledescriptor: 'vehicleDescription',
+  make: 'make',
+  manufacturerName: 'manufactureName',
+  model: 'model',
+  modelyear: 'modelYear',
+  vehicletype: 'vehicleType',
+  plantcountry: 'plantCountry',
+  plantcompanyname: 'plantCompanyName',
+  plantstate: 'plantState',
+  bodyclass: 'bodyClass'
+};
+
+interface Technicians {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export default function Technicians() {
   const [vin, setVin] = useState('');
   const [vehicleData, setVehicleData] = useState<any>(null);
   const [color, setColor] = useState("");
-  const [assignTechnician, setAssignTechnician] = useState<string[]>([]);
+  const [assignTechnicians, setAssignTechnicians] = useState<string[]>([]);
   const [assignCustomer, setAssignCustomer] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [notes, setNotesDescription] = useState("");
   const [ip, setIpAddress] = useState('');
   const [createdBy, setRole] = useState('admin'); 
   const [technicians, setTechnicians] = useState<any[]>([]);
@@ -52,8 +77,32 @@ export default function Technicians() {
   const [isEdit, setIsEdit] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null); 
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
-  // const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  // const [imageCounter, setImageCounter] = useState(0); // To generate unique IDs
+  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); 
+
+    const [formData, setFormData] = useState<JobPayload>({
+      vin: '',
+      make: '',
+      model: '',
+      modelYear: '',
+      manufactureName: '',
+      vehicleDescription: '',
+      vehicleType: '',
+      jobDescription: '',
+      notes:'',
+      color: '',
+      assignTechnicians:[],
+      assignCustomer: '',
+      createdBy: 'admin',
+      plantCountry:'',
+      plantCompanyName : '',
+      plantState: '',
+      bodyClass: '',
+      schedule: '',
+      ip: '',
+      jobId:'', 
+      images: [], 
+    });
 
      const fetchJobData = async (jobid: string) => {
        
@@ -80,14 +129,42 @@ export default function Technicians() {
           const data = await response.json();
     
           if (response.ok && data.jobs) {
+            const jobData = data.jobs;
             // Assuming you have state setters like setVin, setVehicleData, etc.
-            setVin(data.jobs.vin);
-            setJobDescription(data.jobs.jobDescription);
-            setColor(data.jobs.color);
-            setAssignTechnician(data.jobs.assignTechnician.toString()); // Assuming it needs to be a string
-            setAssignCustomer(data.jobs.assignCustomer.toString());
-            // You might want to set additional fields based on your form needs
-           
+            // setVin(data.jobs.vin);
+            // setJobDescription(data.jobs.jobDescription);
+            // setNotesDescription(data.jobs.notes)
+            // setColor(data.jobs.color);
+            // setAssignTechnician(data.jobs.assignTechnician.toString()); // Assuming it needs to be a string
+            // setAssignCustomer(data.jobs.assignCustomer.toString());
+            // // You might want to set additional fields based on your form needs
+            setFormData((prev) => ({
+              ...prev,
+              vin: jobData.vin || '',
+              make: jobData.make || '',
+              model: jobData.model || '',
+              modelYear: jobData.modelYear || '',
+              manufacturerName: jobData.manufacturerName || '',
+              vehicledescriptor: jobData.vehicledescriptor || '',
+              vehicleType: jobData.vehicleType || '',
+              jobDescription: jobData.jobDescription || '',
+              notes: jobData.notes || '',
+              color: jobData.color || '',
+              // Assuming 'jobData.technicians' is an array of 'Technicians'
+              assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
+                    // Using Technician interface
+              assignCustomer: jobData.assignCustomer || '',
+              createdBy: jobData.createdBy || '',
+              plantCountry: jobData.plantCountry || '',
+              plantCompanyName: jobData.plantCompanyName || '',
+              plantState: jobData.plantState || '',
+              bodyClass: jobData.bodyClass || '',
+              schedule: jobData.schedule || '',
+              ip: jobData.ip || '',  // Assuming ip needs to be updated too
+              jobId: jobData.id || '',  // jobId might be necessary for updates
+              images: jobData.images || [],  // Assuming images are handled separately
+          }));
+         
           }else {
             toast.error(data.error || 'Error fetching technician data');
           }
@@ -95,24 +172,9 @@ export default function Technicians() {
           toast.error('An error occurred while fetching technician data');
         }
       };
-      // useEffect(() => {
-      //   if (vin) {  // Ensure that vin is not empty or undefined
-      //     fetchVehicleDetails();
-      //   }
-      // }, [vin]);
+      
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const jobId = searchParams.get('jobId') || '';
-    console.log(jobId, 'jobIdjobId')
-    if (jobId) {
-      setJobId(jobId);
-      setIsEdit(true);  // Set to true if `customerId` exists in the URL
-      fetchJobData(jobId);
-    } else {
-      setIsEdit(false); // Set to false if `customerId` is missing
-    } 
-  }, []);
+
   // Fetch Customers api
   const fetchData = async (endpoint: string, setState: (data: any) => void) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -145,27 +207,50 @@ export default function Technicians() {
         const response = await fetch('https://api.ipify.org?format=json');
         const data = await response.json();
         setIpAddress(data.ip);
+        setFormData(prev => ({ ...prev, ip: data.ip })); 
       } catch (error) {
         console.error('Error fetching IP address:', error);
       }
     };
     fetchIpAddress();
   }, []);
-
+  
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const jobId = searchParams.get('jobId') || '';
+    console.log(jobId, 'jobIdjobId')
+    if (jobId) {
+      setJobId(jobId);
+      setIsEdit(true);  // Set to true if `customerId` exists in the URL
+      fetchJobData(jobId); 
+    } else {
+      setIsEdit(false); // Set to false if `customerId` is missing
+    } 
+  }, []);
+  
+  useEffect(() => {
+    if (formData.vin && jobId) {
+      fetchVehicleDetails();
+    }
+  }, [formData.vin]);
   const fetchVehicleDetails = async () => {
     setSubmitting(true);
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${vin}?format=json`);
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${formData.vin}?format=json`);
       const data = await response.json();
-      if (response.ok && data.Results && Array.isArray(data.Results)) {
-        const relevantData = data.Results.filter((item: any) =>
-          ['Vehicle Descriptor', 'Make', 'Manufacturer Name', 'Model', 'Model Year', 'Vehicle Type'].includes(item.Variable) &&
-          item.Value != null && item.Value !== 'N/A'
-        );
-        setVehicleData(relevantData);
+      if (response.ok && data.Results) {
+        const vehicleDetails = data.Results.reduce((acc: Partial<JobPayload>, item: any) => {
+          const key = item.Variable.replace(/ /g, "").toLowerCase(); // Normalize key to ensure matching
+          const mappedKey = vehicleDetailsMap[key]; // Use mapped key from the predefined map
+          if (mappedKey && item.Value && item.Value !== 'N/A') {
+            acc[mappedKey] = item.Value;
+          }
+          return acc;
+        }, {});
+        setVehicleData(vehicleDetails);
+        setFormData(prev => ({ ...prev, ...vehicleDetails }));
       } else {
-        console.error('Invalid data structure:', data);
-        toast.error('Failed to fetch vehicle details due to unexpected data format.');
+        toast.error('Failed to fetch vehicle details.');
       }
     } catch (error) {
       console.error('Error fetching vehicle details:', error);
@@ -174,100 +259,212 @@ export default function Technicians() {
       setSubmitting(false);
     }
   };
+ 
+ 
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+//     const token = localStorage.getItem('token');
+//     const formDataObj = new FormData();
+
+//   // Append fields to FormData, handle arrays explicitly
+//   Object.entries(formData).forEach(([key, value]) => {
+//     if (key === 'images' && Array.isArray(value)) {
+//         value.forEach(file => formDataObj.append('images', file));
+//     } else if (key === 'assignTechnicians' && Array.isArray(value)) {
+//         // Convert each technician ID to a string and append it individually
+//         value.forEach(techId => formDataObj.append('assignTechnicians[]', String(techId)));
+//     } else {
+//         // Append non-array values directly
+//         if (value !== undefined && value !== '') {
+//             formDataObj.append(key, String(value));
+//         }
+//     }
+// });
+
+//     // Append non-file form data (e.g., vin, jobDescription, etc.)
+//     // formData.append('vin', vin);
+//     // formData.append('make', renderValue(vehicleData?.find((item: any) => item.Variable === "Make")?.Value) || "");
+//     // formData.append('model', renderValue(vehicleData?.find((item: any) => item.Variable === "Model")?.Value) || "");
+//     // formData.append('modelYear', renderValue(vehicleData?.find((item: any) => item.Variable === "Model Year")?.Value) || "");
+//     // formData.append('manufacturerName', renderValue(vehicleData?.find((item: any) => item.Variable === "Manufacturer Name")?.Value) || "");
+//     // formData.append('vehicledescriptor', renderValue(vehicleData?.find((item: any) => item.Variable === "Vehicle Descriptor")?.Value) || "");
+//     // formData.append('vehicleType', renderValue(vehicleData?.find((item: any) => item.Variable === "Vehicle Type")?.Value) || "");
+//     // formData.append('jobDescription', jobDescription);
+//     // formData.append('notes', notes);
+//     // formData.append('color', color);
+//     // formData.append('assignTechnician', assignTechnician.join(',')); // Join array values with commas if you need to store as a comma-separated string
+//     // formData.append('assignCustomer', assignCustomer);
+//     // formData.append('createdBy', createdBy);
+//     // formData.append('ip', ip);
+    
+//     // Append jobId if editing
+   
+//     if (isEdit && jobId) {
+//       formDataObj.append('jobId', jobId); // Append the jobId if editing
+//     }
+//     // Debugging: Check if uploadedImages are populated correctly
+//     console.log('Uploaded Images:', uploadedImages);
   
-  const renderValue = (value: any) => {
-    if (value === null || value === '' || value === 'N/A') {
-      return 'N/A';
-    }
-    return value;
-  };
+ 
+    
+//     try {
+//       setSubmitting(true);
+//       const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
+//       const method = isEdit ? "POST" : "POST"; // POST method, you can change to PUT for update if needed
+    
+//       const response = await fetch(endpoint, {
+//         method,
+//         headers: {
+//           "Authorization": `Bearer ${token}`,
+//         },
+//         body: formDataObj, // Send the FormData object directly in the body
+//       });
+  
+//       const data = await response.json();
+  
+//       if (response.ok) {
+//         toast.success(data.message);
+//         // Reset form fields after successful submission
+//         setVin("");
+//         setVehicleData(null);
+//         setColor("");
+//         setAssignTechnicians([]);
+//         setAssignCustomer('');
+//         setJobDescription("");
+//         setNotesDescription('');
+//         setUploadedImages([]); // Clear uploaded images
+//         router.push('/jobs/active-job');
+//       } else {
+//         toast.error(data.error || 'Error creating/updating job');
+//       }
+//     } catch (error: any) {
+//       toast.error('Error creating/updating job');
+//     } finally {
+//       setSubmitting(false); // ✅ Hide loader when done
+//     }
+//   };
+  
+  
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+// Update handlers for each field. Use a generic handler for simple fields:
+// const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, field: keyof JobPayload) => {
+//   const { name, value } = e.target;
+//   // Update the formData state directly
+//   setFormData(prev => ({ ...prev, [name]: value }));
+// };
+
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault(); 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const token = localStorage.getItem('token');
-    const payload: JobPayload = {
-      vin,
-      make: renderValue(vehicleData?.find((item: any) => item.Variable === "Make")?.Value) || "",
-      model: renderValue(vehicleData?.find((item: any) => item.Variable === "Model")?.Value) || "",
-      modelYear: renderValue(vehicleData?.find((item: any) => item.Variable === "Model Year")?.Value) || "",
-      manufactureName: renderValue(vehicleData?.find((item: any) => item.Variable === "Manufacturer Name")?.Value) || "",
-      vehicleDescription: renderValue(vehicleData?.find((item: any) => item.Variable === "Vehicle Descriptor")?.Value) || "",
-      vehicleType: renderValue(vehicleData?.find((item: any) => item.Variable === "Vehicle Type")?.Value) || "",
-      jobDescription,
-      color,
-      assignTechnician,
-      assignCustomer,
-      createdBy,
-      plantCountry: '',
-      plantCompanyName: '',
-      plantState: '',
-      bodyClass: '',
-      schedule: '',
-      ip
-    };
-    console.log('Is Edit:', isEdit, 'Job ID:', jobId);
+    const token = localStorage.getItem('token'); 
+  const formDataObj = new FormData();
+
+  // Manually append necessary fields
+  formDataObj.append('vin', formData.vin);
+  formDataObj.append('make', formData.make);
+  formDataObj.append('model', formData.model);
+  formDataObj.append('modelYear', formData.modelYear);
+  formDataObj.append('manufactureName', formData.manufactureName);
+  formDataObj.append('vehicleDescription', formData.vehicleDescription);
+  formDataObj.append('vehicleType', formData.vehicleType);
+  formDataObj.append('jobDescription', formData.jobDescription);
+  formDataObj.append('notes', formData.notes);
+  formDataObj.append('color', formData.color);
+  formDataObj.append('assignCustomer', formData.assignCustomer);
+  formDataObj.append('createdBy', formData.createdBy);
+  formDataObj.append('plantCountry', formData.plantCountry);
+  formDataObj.append('plantCompanyName', formData.plantCompanyName);
+  formDataObj.append('plantState', formData.plantState);
+  formDataObj.append('bodyClass', formData.bodyClass);
+  formDataObj.append('schedule', formData.schedule);
+  formDataObj.append('ip', formData.ip);
+
+  formData.assignTechnicians.forEach((techId) => {
+    formDataObj.append('assignTechnicians[]', techId);
+  });
+
+  formData.images.forEach((file) => {
+    formDataObj.append('images', file);
+  });
     if (isEdit && jobId) {
-      payload.jobId = jobId;  // Add jobId to the payload if editing
-      console.log('Adding Job ID to payload:', payload);
+      formDataObj.append('jobId', jobId); // Append the jobId if editing
     }
-    try {
-      setSubmitting(true);  
-      const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
-      const method = isEdit ? "POST" : "POST";
-      const response = await fetch(endpoint, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
-      if (response.ok) {
-        toast.success(data.message);
-        // alert("Job created successfully!");
-        // Reset form if needed
-        setVin("");
-        setVehicleData(null);
-        setColor("");
-        setAssignTechnician([]);
-        setAssignCustomer('');
-        setJobDescription("");
-        router.push('/jobs/active-job');
-      } else {
-        // alert("Error creating job.");
-      }
-    } catch (error: any) {
-      toast.success(error);
+  try {
+    setSubmitting(true); 
+    const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
+    const method = isEdit ? "POST" : "POST"; // POST method, you can change to PUT for update if needed
+  
+    const response = await fetch(endpoint, {
+      method,
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      body: formDataObj, // Send the FormData object directly in the body
+    });
 
-      // alert("Error creating job.");
-    } finally {
-      setSubmitting(false);  // ✅ Hide loader when done
+    const result = await response.json();
+    if (response.ok) {
+      toast.success('Job created successfully.');
+      router.push('/jobs/active-job');
+    } else {
+      toast.error(result.message || 'Failed to create job.');
     }
-  };
+  } catch (error) {
+    console.error('Error creating job:', error);
+    toast.error('An error occurred while creating the job.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
-  const handleTechnicianChange = (event: SelectChangeEvent<string[]>) => {
-    setAssignTechnician(event.target.value as string[]);
-  };
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
+  const { value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
 
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (e.target.files) {
-  //     const newFiles = Array.from(e.target.files).map((file) => ({
-  //       id: imageCounter + Math.random(), // Unique ID for each image
-  //       file,
-  //       previewUrl: URL.createObjectURL(file),
-  //     }));
 
-  //     setUploadedImages((prev) => [...prev, ...newFiles]);
-  //     setImageCounter((prev) => prev + newFiles.length);
-  //   }
-  // };
-  // // Remove a specific image
-  // const handleRemoveImage = (id: number) => {
-  //   setUploadedImages((prev) => prev.filter((img) => img.id !== id));
-  // };
+const handleSelectChange = (event: SelectChangeEvent<string>, field: string) => {
+  const value = event.target.value;
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+const handleSelectColor = (event: SelectChangeEvent<string>, field: string) => {
+  const value = event.target.value;
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+
+// Special handler for multiple select (technicians):
+const handleTechnicianChange = (event: SelectChangeEvent<string[]>) => {
+  const {
+      target: { value },
+  } = event;
+
+  // Ensure value is always an array of strings
+  setFormData(prev => ({
+      ...prev,
+      assignTechnicians: typeof value === 'string' ? value.split(',') : value.map(String)
+  }));
+};
+
+
+// To handle the image upload
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
+  setFormData(prev => ({ ...prev, images: files }));
+};
+
+  // Remove a specific image
+  const handleRemoveFile = (index:any) => {
+    const filteredImages = formData.images.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, images: filteredImages }));
+}; 
+
+
 
   return (
     <div className='main-container mb-5'>
@@ -290,7 +487,7 @@ export default function Technicians() {
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
               <div className='flex gap-3 items-center'>
-         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={vin}  onChange={(e) => setVin(e.target.value)} />
+         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={formData.vin}  onChange={(e) => handleChange(e, 'vin')} />
                 
                 {/* <input
                   type="text"
@@ -319,26 +516,14 @@ export default function Technicians() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Vehicle Descriptor')?.Value)}
-                      </td>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Make')?.Value)}
-                      </td>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Manufacturer Name')?.Value)}
-                      </td>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Model')?.Value)}
-                      </td>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Model Year')?.Value)}
-                      </td>
-                      <td className="text-xs">
-                        {renderValue(vehicleData.find((item: any) => item.Variable === 'Vehicle Type')?.Value)}
-                      </td>
-                    </tr>
+                  <tr>
+          <td className="text-xs">{vehicleData.vehicleDescription || 'N/A'}</td>
+          <td className="text-xs">{vehicleData.make || 'N/A'}</td>
+          <td className="text-xs">{vehicleData.manufactureName || 'N/A'}</td>
+          <td className="text-xs">{vehicleData.model || 'N/A'}</td>
+          <td className="text-xs">{vehicleData.modelyear || 'N/A'}</td>
+          <td className="text-xs">{vehicleData.vehicletype || 'N/A'}</td>
+        </tr>
                   </tbody>
                 </table>
               </div>
@@ -353,11 +538,11 @@ export default function Technicians() {
               <Select 
               labelId="color"
               id="select-color"
-              value={color}
+              value={formData.color}
               label="color"
               name="color"
-              color="warning"
-              onChange={(e) => setColor(e.target.value)}
+              color="warning" 
+              onChange={(event) => handleSelectColor(event, 'color')}
               >  
               <MenuItem value='black'>Black</MenuItem>
               <MenuItem value='gray'>Gray</MenuItem>
@@ -385,10 +570,10 @@ export default function Technicians() {
               labelId="assignCustomer"
               id="select-assignCustomer"
               color="warning"
-              value={assignCustomer}
+              value={formData.assignCustomer}
               label="assignCustomer"
               name="assignCustomer"
-              onChange={(e) => setAssignCustomer(e.target.value)}
+              onChange={(event) => handleSelectChange(event, 'assignCustomer')}
               > 
               {customer.map((customer: any) => (
               <MenuItem  key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
@@ -400,39 +585,37 @@ export default function Technicians() {
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
               <FormControl fullWidth>
-        <InputLabel id="assignTechnician" color="warning">Select technician *</InputLabel>
-        <Select
-                labelId="assignTechnician"
-                id="select-assignTechnician" 
-                name="assignTechnician"
-                label="assignTechnician"
-                color="warning"
-                multiple
-                value={assignTechnician}
-                onChange={handleTechnicianChange}
-                renderValue={(selected) =>
-                  selected.map((id) => {
-                    const tech = technicians.find((tech) => tech.id === id);
-                    return tech ? `${tech.firstName} ${tech.lastName}` : '';
-                  }).join(', ')
-                }
-              >
-                {technicians.map((tech) => (
-                  <MenuItem key={tech.id} value={tech.id}>
-                     <Checkbox checked={assignTechnician.indexOf(tech.id) > -1} />
-                     <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
-                  </MenuItem>
-                ))}
-              </Select>
-      </FormControl>
+  <InputLabel id="assignTechnicians-label" color="warning">Select technicians *</InputLabel>
+  
+  <Select
+    labelId="assignTechnicians"
+    id="select-assignTechnicians"
+    multiple
+    value={formData.assignTechnicians}
+    onChange={handleTechnicianChange}
+    renderValue={(selected) => selected.map(id => {
+        const tech = technicians.find(tech => String(tech.id) === id);
+        return tech ? `${tech.firstName} ${tech.lastName}` : undefined;
+    }).filter(Boolean).join(', ')}
+>
+    {technicians.map((tech) => (
+        <MenuItem key={tech.id} value={String(tech.id)}>
+            <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
+            <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+        </MenuItem>
+    ))}
+</Select>
+
+</FormControl>
+
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Job Description</p> */}
-              <textarea name="jobDescription" id="" value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
+              <textarea name="jobDescription" id="" value={formData.jobDescription}
+               onChange={(e) => handleChange(e, 'jobDescription')}
                 placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
           </div>
@@ -449,45 +632,37 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload File</p>
                   <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
                 </label>
-                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"     />
+                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0"   onChange={handleFileChange}  />
                 {/* onChange={handleFileChange} */}
               </div>
                {/* Thumbnails of selected images */}
-        {/* <div className="mt-4 grid grid-cols-3 gap-4">
-          {uploadedImages.map((image) => (
-            <div key={image.id} className="relative">
-              <img
-                src={image.previewUrl}
-                alt="Preview"
-                className="w-24 h-24 object-cover rounded-md"
-              />
-              <button
-                type="button"
-                className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
-                onClick={() => handleRemoveImage(image.id)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-red-500"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
+               <div className='flex flex-wrap gap-4 items-center mt-5'>
+    {formData.images.map((file, index) => (
+        <div key={index} className='shadow rounded p-2 relative'>
+            {/* Check if the file is an instance of File to create a URL */}
+            {file instanceof File ? (
+                <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            ) : (
+                <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            )}
+            <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position:'absolute', right:'0', top:'0' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </button>
-            </div>
-          ))}
-        </div> */}
+            </button>
+        </div>
+    ))}
+</div>
+
+
+
             </div>
             <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Note</p> */}
-              <textarea name="note" id=""  
+              <textarea name="notes" id=""  value={formData.notes}
+                onChange={(e) => handleChange(e, 'notes')} 
                 placeholder='Enter Note *'  className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
           </div>

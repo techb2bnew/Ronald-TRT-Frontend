@@ -173,13 +173,46 @@ const JobTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
+  // CSV Export Functions
+const convertToCSV = (data:any) => {
+  const csvRows = [];
+  // Get headers
+  csvRows.push(Object.keys(data[0]).join(','));
+  // Convert data to csv
+  for (const row of data) {
+    csvRows.push(Object.values(row).join(','));
+  }
+  return csvRows.join('\n');
+};
+
+const downloadCSV = () => {
+  const csvData = convertToCSV(activeJob);
+  const blob = new Blob([csvData], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'jobs.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
   const renderRow = (job: any) => (
     <tr key={job.id}>
       <td>{job.id}</td>
       <td>{job.jobDescription}</td>
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
-      <td>{job?.technician?.firstName} {job?.technician?.lastName}</td>
-      <td>{job?.technician?.phoneNumber}</td>
+      <td>  {job?.technicians?.map((tech: any) => (
+    <div key={tech.id}>
+      {tech.firstName} {tech.lastName}
+    </div>
+  ))}</td>
+      <td>{job?.technicians?.map((tech: any) => (
+    <div key={tech.id}>
+      {tech.phoneNumber}
+    </div>
+  ))}</td>
       <td>{job.vin}</td>
       <td>{job.make}</td> 
       <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
@@ -204,7 +237,7 @@ const JobTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Active Jobs" onSearch={handleSearch} buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Active Jobs" onSearch={handleSearch}  onExport={downloadCSV} buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
