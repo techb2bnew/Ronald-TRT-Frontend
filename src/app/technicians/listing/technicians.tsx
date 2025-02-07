@@ -237,7 +237,7 @@ const TechnicianTable: React.FC = () => {
         <span
           className={`badge ${tech.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
-          {tech.isApproved ? 'Active' : 'Inactive'}
+          {tech.isApproved ? 'Approved' : 'Disapproved'}
         </span>
       </td>
       <td className='w-[400px] font-sm'>
