@@ -76,7 +76,7 @@ export default function Login() {
             <form className="mt-6" onSubmit={handleSubmit}>
               <div className="mb-4">
                 {/* <label className="block text-[#161616] mb-2">E-mail / Phone Number</label> */}
-                <TextField fullWidth  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined"  onChange={(e) => setemailAddress(e.target.value)}  />
+                <TextField fullWidth className="text-xs"  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined"  onChange={(e) => setemailAddress(e.target.value)}  />
                
               </div>
 

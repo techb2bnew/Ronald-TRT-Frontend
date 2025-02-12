@@ -97,6 +97,79 @@ const TechnicianTable: React.FC = () => {
     }
   };
   
+    const toggleAccountStatus = async (technicianId: number, currentApprovalStatus: boolean) => {
+    // Show a confirmation dialog before proceeding
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to change the status of this account?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF502E',
+      cancelButtonColor: 'black',
+      confirmButtonText: 'Yes, change it!'
+    });
+  
+    // Check if the user confirmed the action
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem('token');
+  
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Token ${token}` })
+          }
+        };
+  
+        const response = await axios.post(`${apiUrl}/updateTechnicianAccountStatus`, {
+          technicianId,
+          accountStatus: !currentApprovalStatus
+        }, config);
+  
+        if (response.data.status ) {
+          // Optimistically update the local state
+          setTechnicians(prev => prev.map(tech => {
+            if (tech.id === technicianId) {
+              return { ...tech, accountStatus: !tech.accountStatus };
+            }
+            return tech;
+          }));
+          Swal.fire({
+            title: 'Success!',
+            text: 'Technician status updated successfully.',
+            confirmButtonColor:'#EF502E',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          });
+        } else {
+          console.error('Failed to update technician status');
+          Swal.fire({
+            title: 'Error!',
+            text: 'Failed to update technician status.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      } catch (error) {
+        console.error('Error updating technician status:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Error updating technician status.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
+    } else {
+      // User clicked 'Cancel', do nothing
+      Swal.fire({
+        title: 'Cancelled',
+        text: 'Technician status change was cancelled.',
+        icon: 'info',
+        confirmButtonText: 'OK'
+      });
+    }
+  };
+
   const fetchTechnicians = async (page = 1, query = '') => {
     setLoading(true);
     try {
@@ -153,42 +226,7 @@ const TechnicianTable: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm]);
 
-  // const handleSearch = async (query: string) => {
-  //   try {
-  //     const token = localStorage.getItem('token');
-  
-  //     const headers: Record<string, string> = {
-  //       'Content-Type': 'application/json',
-  //     };
-  
-  //     if (token) {
-  //       headers['Authorization'] = `Token ${token}`;
-  //     }
-  
-  //     // Determine API endpoint based on search term
-  //     const response = await fetch(
-  //       `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`,
-  //       {
-  //         method: 'GET',
-  //         headers,
-  //       }
-  //     );
-  
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch search results');
-  //     }
-  
-  //     const data = await response.json();
-  //     setTechnicians(data.technicians || []); // Set technicians or empty array if no data
-  //   } catch (error) {
-  //     console.error('Error fetching search results:', error);
-  //     setTechnicians([]); // Clear table on error
-  //   }
-  // };
-  
-  
-  
-
+ 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully'); 
     // ✅ Remove the deleted technician from the table
@@ -233,6 +271,13 @@ const TechnicianTable: React.FC = () => {
       <td>{tech.email}</td>
       <td>{tech.phoneNumber}</td>
       <td>{tech.payRate}</td>
+       <td onClick={() => toggleAccountStatus(tech.id, tech.accountStatus)} style={{ cursor: 'pointer' }}>
+        <span
+          className={`badge ${tech.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+        >
+          {tech.accountStatus ? 'Active' : 'Deactive'}
+        </span>
+      </td>
       <td onClick={() => toggleApproval(tech.id, tech.isApproved)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${tech.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -291,7 +336,7 @@ const TechnicianTable: React.FC = () => {
 
     
         <SortableTable
-          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Account Status', 'Create New Job', 'Action']}
+          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Status', 'Account Status', 'Create New Job', 'Action']}
           data={technicians}
           renderRow={renderRow}
           sortBy={sortBy}
