@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation';
 import TextField from '@mui/material/TextField';
 // import FormControl from '@mui/material/FormControl';
 // import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText, OutlinedInput, InputAdornment  } from '@mui/material';
 // import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Swal from 'sweetalert2';
+import Delete from '../../../../../public/delete.svg'
+import Image from 'next/image';
 
  
 interface JobPayload {
@@ -23,6 +25,7 @@ interface JobPayload {
   vehicleDescriptor: string;
   vehicleType: string;
   jobDescription: string;
+  cost:string;
   color: string;
   assignTechnicians: string[];
   notes:string;
@@ -36,10 +39,19 @@ interface JobPayload {
   ip: string;
   jobId?: string;    
   images: File[]; 
+  role: string;
+  enterprise: string;
+  workshop: string;
 }
 type VehicleDetailsMap = {
   [key: string]: keyof JobPayload | undefined;
 };
+
+interface DescriptionCostField {
+  id: string;
+  jobDescription: string;
+  cost: string;
+}
 
 // Define the actual map based on your fields
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
@@ -80,7 +92,9 @@ export default function Technicians() {
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); 
-
+   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
+      { id: crypto.randomUUID(), jobDescription: '', cost: '' },
+    ]);
     const [formData, setFormData] = useState<JobPayload>({
       vin: '',
       make: '',
@@ -90,6 +104,7 @@ export default function Technicians() {
       vehicleDescriptor: '',
       vehicleType: '',
       jobDescription: '',
+      cost:'',
       notes:'',
       color: '',
       assignTechnicians:[],
@@ -103,6 +118,9 @@ export default function Technicians() {
       ip: '',
       jobId:'', 
       images: [], 
+      role: '',
+      enterprise: '',
+      workshop: '',
     });
 
      const fetchJobData = async (jobid: string) => {
@@ -491,6 +509,30 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 }; 
 
 
+ const handleSelectRole = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const role = event.target.value as string;
+    setFormData({ ...formData, role, enterprise: '', workshop: '' });
+  };
+
+  const handleSelectEnterprise = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const enterprise = event.target.value as string;
+    setFormData({ ...formData, enterprise, workshop: '' });
+  };
+
+  const handleSelectWorkshop = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const workshop = event.target.value as string;
+    setFormData({ ...formData, workshop });
+  };
+
+ const handleAddMore = () => {
+    setDescriptionCostFields([...descriptionCostFields, { id: crypto.randomUUID(), jobDescription: '', cost: '' }]);
+  };
+ 
+  // Delete the Correct Field by ID
+  const handleDeleteField = (id: string) => {
+    setDescriptionCostFields((prev) => prev.filter((item) => item.id !== id));
+  };
+
 
   return (
     <div className='main-container mb-5'>
@@ -504,25 +546,70 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                           </div>
                         ) : (
         <form className="" onSubmit={handleSubmit}>
-          <div className="flex justify-between mb-4">
-            {/*<h2 className="text-lg leading-6 font-bold text-gray-900">Create New Job</h2>*/}
-            {/* <button className='bg-black p-2 text-sm text-white rounded'>Add Another Vehicle +</button> */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+              <FormControl fullWidth size="small">
+              <InputLabel id="role-label" color="warning">Select role*</InputLabel>
+              <Select
+                labelId="role-label"
+                id="select-role"
+                value={formData.role}
+                label="Select role"
+                name="role"
+                color="warning"
+                onChange={handleSelectRole}
+              >
+                <MenuItem value="IFS">IFS</MenuItem>
+                <MenuItem value="Enterpriceses">Enterpriceses</MenuItem>
+                <MenuItem value="Workshop">Workshop</MenuItem>
+              </Select>
+            </FormControl> 
+
+             {formData.role === 'Enterpriceses' && (
+        <FormControl fullWidth size="small">
+          <InputLabel id="enterprise-label" color="warning">Select Enterprise*</InputLabel>
+          <Select
+            labelId="enterprise-label"
+            id="select-enterprise"
+            value={formData.enterprise}
+            label="Select Enterprise"
+            name="enterprise"
+            color="warning"
+            onChange={handleSelectEnterprise}
+          >
+            <MenuItem value="Enterprise1">Enterprise 1</MenuItem>
+            <MenuItem value="Enterprise2">Enterprise 2</MenuItem>
+            <MenuItem value="Enterprise3">Enterprise 3</MenuItem>
+          </Select>
+        </FormControl>
+      )} 
+
+      {(formData.role === 'Workshop' || formData.enterprise) && (
+        <FormControl fullWidth size="small">
+          <InputLabel id="workshop-label" color="warning">Select Workshop*</InputLabel>
+          <Select
+            labelId="workshop-label"
+            id="select-workshop"
+            value={formData.workshop}
+            label="Select Workshop"
+            name="workshop"
+            color="warning"
+            onChange={handleSelectWorkshop}
+          >
+            <MenuItem value="Workshop1">Workshop 1</MenuItem>
+            <MenuItem value="Workshop2">Workshop 2</MenuItem>
+            <MenuItem value="Workshop3">Workshop 3</MenuItem>
+          </Select>
+        </FormControl>
+      )} 
           </div>
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-4'>
+            <div className='mb-2'>
               {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
               <div className='flex gap-3 items-center'>
-         <TextField fullWidth size="medium" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={formData.vin}  onChange={(e) => handleChange(e, 'vin')} />
+         <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={formData.vin}  onChange={(e) => handleChange(e, 'vin')} />
                 
-                {/* <input
-                  type="text"
-                  placeholder="5YJSA3DS*EF"
-                  value={vin}
-                  onChange={(e) => setVin(e.target.value)}
-                  className="input text-xs mt-1 input-bordered w-[40%] p-3 rounded border border-gray-400"
-                /> */}
-                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 text-sm pt-[18px] pb-[18px] w-[300px] rounded">Add new vehicle</button>
+                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add new vehicle</button>
               </div>
             </div>
           </div>
@@ -612,7 +699,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               labelId="color"
               id="select-color"
               value={formData.color}
-              label="color"
+              label="Select color"
               name="color"
               color="warning" 
               onChange={(event) => handleSelectColor(event, 'color')}
@@ -644,7 +731,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               id="select-assignCustomer"
               color="warning" 
               value={formData.assignCustomer}
-              label="assignCustomer"
+              label="Select customer"
               name="assignCustomer"
               onChange={(event) => handleSelectChange(event, 'assignCustomer')}
               > 
@@ -664,6 +751,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     labelId="assignTechnicians"
     id="select-assignTechnicians" 
     color="warning"
+    label="Select technicians"
     multiple
     value={formData.assignTechnicians}
     onChange={handleTechnicianChange}
@@ -684,15 +772,38 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            {/* Client Name and Business Name */}
-            <div className='mb-4'>
-              {/* <p className='text-sm mb-2'>Job Description</p> */}
-              <textarea name="jobDescription" id="" value={formData.jobDescription}
+           {descriptionCostFields.map((field, index) => (
+          <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4"> 
+            <div className='mb-2'> 
+              <textarea name="jobDescription" rows='1' id="" value={formData.jobDescription}
                onChange={(e) => handleChange(e, 'jobDescription')}
                 placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
+             <div className="mb-2 flex items-center gap-3">  
+               <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
+          <InputLabel htmlFor="outlined-adornment-amount">Cost</InputLabel>
+          <OutlinedInput
+            id="outlined-adornment-amount"
+            startAdornment={<InputAdornment position="start">$</InputAdornment>}
+            label="Amount"
+          />
+        </FormControl> 
+        {descriptionCostFields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteField(field.id)}
+                    className="border border-red-500 text-sm p-2 rounded"
+                  >
+                    <Image alt='delete' src={Delete} className='w-[14px]'/> 
+                  </button>
+                )}
           </div>
+          </div>
+           ))}
+          <button  
+            type="button"
+            onClick={handleAddMore} 
+            className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
          
 
           <div className='mb-4'>

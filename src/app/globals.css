@@ -142,3 +142,14 @@ table.table.w-full.table-fixed tbody tr {
     opacity: 0.5;
   }
 }
+
+.MuiInputBase-input, .MuiFormLabel-root {
+  font-size: 12px !important;
+} 
+.css-w1u3ce>span{
+  font-size: 9px !important;
+
+}
+.MuiSelect-select{
+      padding: 5.5px 14px !important;
+}
