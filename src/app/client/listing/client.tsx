@@ -246,7 +246,7 @@ const downloadCSV = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('email')}>
+              <th className="w-[200px]" onClick={() => handleSort('email')}>
                 Email
                 {sortBy === 'email' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
@@ -270,7 +270,7 @@ const downloadCSV = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('country')}>
+              <th className="w-[100px]" onClick={() => handleSort('country')}>
                 Country
                 {sortBy === 'country' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>

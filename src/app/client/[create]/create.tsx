@@ -182,12 +182,12 @@ export default function Technicians() {
             {/* Client Name and Business Name */}
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>First Name <span className='text-[red]'>*</span> </p> */}
-                <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
+                <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
               
             </div>
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Last Name <span className='text-[red]'>*</span></p> */}
-              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
               
             </div>
@@ -196,13 +196,13 @@ export default function Technicians() {
             {/* Client Phone and Email */}
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Phone <span className='text-[red]'>*</span></p> */}
-              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
 
               
             </div>
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Email <span className='text-[red]'>*</span></p> */}
-              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
 
              
             </div>
@@ -211,7 +211,7 @@ export default function Technicians() {
           {/* Address */}
           <div className='mb-4'>
             {/* <p className='text-sm mb-2'>Address <span className='text-[red]'>*</span></p> */}
-            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
+            <TextField fullWidth size="small" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
 
            
           </div>
@@ -221,13 +221,14 @@ export default function Technicians() {
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p> */}
 
-              <FormControl fullWidth>
-            <InputLabel id="country">Select country *</InputLabel>
+              <FormControl fullWidth size="small">
+            <InputLabel id="country" color="warning">Select country *</InputLabel>
             <Select
               labelId="country"
               id="country"
+              color="warning"
               value={formData.country}
-              label="country"
+              label="Select country"
               name="country"
               onChange={handleSelectChange}
             > 
@@ -242,13 +243,14 @@ export default function Technicians() {
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p> */}
 
-              <FormControl fullWidth>
-            <InputLabel id="demo-simple-select-label">Select state *</InputLabel>
+              <FormControl fullWidth size="small">
+            <InputLabel id="demo-simple-select-label" color="warning">Select state *</InputLabel>
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={formData.state}
-              label="State"
+              label="State state"
+              color="warning"
               name="state"
               onChange={handleSelectChange}
             > 
@@ -260,13 +262,13 @@ export default function Technicians() {
             </div>
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
+            <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
 
              
             </div>
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
-            <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
+            <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
 
              
             </div>
