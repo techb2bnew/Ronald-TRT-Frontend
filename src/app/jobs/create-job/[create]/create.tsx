@@ -52,7 +52,9 @@ interface DescriptionCostField {
   jobDescription: string;
   cost: string;
 }
-
+interface VehicleData {
+  [key: string]: any; // Allows dynamic properties
+}
 // Define the actual map based on your fields
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
   vehicledescriptor: 'vehicleDescriptor',
@@ -76,7 +78,7 @@ interface Technicians {
 
 export default function Technicians() {
   const [vin, setVin] = useState('');
-  const [vehicleData, setVehicleData] = useState<any>(null);
+  const [vehicleData, setVehicleData] = useState<VehicleData>({});
   const [color, setColor] = useState("");
   const [assignTechnicians, setAssignTechnicians] = useState<string[]>([]);
   const [assignCustomer, setAssignCustomer] = useState("");
@@ -264,8 +266,8 @@ const fetchVehicleDetails = async () => {
     const data = await response.json();
 
     if (response.ok && data.Results) {
-      let vehicleDetails = {};
-      data.Results.forEach(item => {
+      let vehicleDetails: Record<string, any> = {}; 
+      data.Results.forEach((item:any) => {
         const key = vehicleDetailsMap[item.Variable.toLowerCase().replace(/ /g, '')];
         if (key && item.Value && item.Value !== "N/A") {
           vehicleDetails[key] = item.Value;
@@ -404,12 +406,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 };
 
-const handleChange = (event, key, target = 'formData') => {
+const handleChange = (event:any, key:any, target = 'formData') => {
   const value = event.target.value;
   if (target === 'vehicleData') {
-    setVehicleData(prev => ({ ...prev, [key]: value }));
+    setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
   } else {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }
 };
 
@@ -441,13 +443,20 @@ const handleTechnicianChange = (event: SelectChangeEvent<string[]>) => {
       assignTechnicians: typeof value === 'string' ? value.split(',') : value.map(String)
   }));
 };
-function compressImage(file, maxWidth, maxHeight, quality) {
+function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
   return new Promise((resolve, reject) => {
-    const image = new Image();
+    const image = new window.Image();
     image.src = URL.createObjectURL(file);
+    
     image.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error("Canvas 2D context is not supported."));
+        return;
+      }
+
       let width = image.width;
       let height = image.height;
 
@@ -466,6 +475,7 @@ function compressImage(file, maxWidth, maxHeight, quality) {
       canvas.width = width;
       canvas.height = height;
       ctx.drawImage(image, 0, 0, width, height);
+
       canvas.toBlob(blob => {
         if (blob) {
           const compressedFile = new File([blob], file.name, {
@@ -478,9 +488,11 @@ function compressImage(file, maxWidth, maxHeight, quality) {
         }
       }, 'image/jpeg', quality);
     };
+
     image.onerror = () => reject(new Error('Image loading error'));
   });
 }
+
 
 
 // To handle the image upload
@@ -493,7 +505,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const compressions = files.map(file => compressImage(file, maxWidth, maxHeight, quality));
   Promise.all(compressions)
     .then(compressedFiles => {
-      setFormData(prev => ({ ...prev, images: compressedFiles }));
+      setFormData((prev:any) => ({ ...prev, images: compressedFiles }));
     })
     .catch(error => {
       console.error('Compression error:', error);
@@ -509,17 +521,17 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 }; 
 
 
- const handleSelectRole = (event: React.ChangeEvent<{ value: unknown }>) => {
+const handleSelectRole = (event: SelectChangeEvent<string>) => {
     const role = event.target.value as string;
     setFormData({ ...formData, role, enterprise: '', workshop: '' });
   };
 
-  const handleSelectEnterprise = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleSelectEnterprise = (event: SelectChangeEvent<string>) => {
     const enterprise = event.target.value as string;
     setFormData({ ...formData, enterprise, workshop: '' });
   };
 
-  const handleSelectWorkshop = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleSelectWorkshop = (event: SelectChangeEvent<string>) => {
     const workshop = event.target.value as string;
     setFormData({ ...formData, workshop });
   };
@@ -775,7 +787,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
            {descriptionCostFields.map((field, index) => (
           <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4"> 
             <div className='mb-2'> 
-              <textarea name="jobDescription" rows='1' id="" value={formData.jobDescription}
+              <textarea name="jobDescription" rows={1} id="" value={formData.jobDescription}
                onChange={(e) => handleChange(e, 'jobDescription')}
                 placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>

@@ -382,7 +382,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Select
               labelId="select-plan"
               id="select-plan"
-              value={formData.plan} 
+              value='plan'
               label="Select plan"
               color="warning"
               name="select-plan"
