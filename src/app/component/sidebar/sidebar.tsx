@@ -9,15 +9,18 @@ const Sidebar = () => {
   const [isUser1Open, setIsUser1Open] = useState(false);
   const [isUser2Open, setIsUser2Open] = useState(false);
   const [isUser3Open, setIsUser3Open] = useState(false);
+  const [isUser4Open, setIsUser4Open] = useState(false);
   const [activeLink, setActiveLink] = useState(''); 
   useEffect(() => {
     const usersOpenState = localStorage.getItem('isUsersOpen');
     const user1OpenState = localStorage.getItem('isUser1Open');
     const user3OpenState = localStorage.getItem('isUser3Open');
+    const user4OpenState = localStorage.getItem('isUser4Open');
     
     if (usersOpenState) setIsUsersOpen(JSON.parse(usersOpenState));
     if (user1OpenState) setIsUser1Open(JSON.parse(user1OpenState));
     if (user3OpenState) setIsUser3Open(JSON.parse(user3OpenState));
+    if (user4OpenState) setIsUser4Open(JSON.parse(user4OpenState));
     
   }, []);
 
@@ -55,6 +58,17 @@ const Sidebar = () => {
       return newState;
     });
   };
+    const handleEnterpriceDropdown = () => {
+    setIsUser4Open((prevState) => {
+      const newState = !prevState;
+      if (newState) {
+        // setIsUsersOpen(false);
+        // setIsUser1Open(false);
+      }
+      localStorage.setItem('isUser4Open', JSON.stringify(newState)); // Store in localStorage
+      return newState;
+    });
+  };
   
   const pathname = usePathname();
   React.useEffect(() => {
@@ -64,15 +78,15 @@ const Sidebar = () => {
 
 
   return (
-    <div className="w-[15%] bg-black text-white fixed top-[0]" style={{ height: '100vh' }}>
+    <div className="w-[15%] bg-black text-white fixed top-[0] overflowslidebar" style={{ height: '100vh', overflow: 'auto' }}>
       <div className="flex items-center justify-center h-16 border-b border-gray-700">
         <svg width="147" height="26" viewBox="0 0 147 26" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0.667969 12.9921H6.50396C7.83559 12.9921 9.2151 12.9087 10.3485 12.1907C11.2345 11.6295 11.9803 10.8628 12.5262 9.95196C13.2246 8.78677 13.3058 7.36858 13.3058 5.99962V0H4.65885C3.6004 0 2.58531 0.432255 1.83687 1.20167C1.08844 1.97109 0.667969 3.01465 0.667969 4.10277L0.667969 12.9921ZM31.5674 1.36759C31.5674 1.7303 31.4272 2.07815 31.1777 2.33462C30.9282 2.5911 30.5899 2.73518 30.2371 2.73518C29.8842 2.73518 29.5459 2.5911 29.2964 2.33462C29.0469 2.07815 28.9068 1.7303 28.9068 1.36759C28.9068 1.00488 29.0469 0.657031 29.2964 0.400558C29.5459 0.144085 29.8842 0 30.2371 0C30.5899 0 30.9282 0.144085 31.1777 0.400558C31.4272 0.657031 31.5674 1.00488 31.5674 1.36759ZM141.487 8.27666C145.206 8.27666 147 10.9469 147 14.0397V19.8485H143.108V14.729C143.108 13.3272 142.611 12.1702 141.184 12.1702C139.757 12.1702 139.282 13.3272 139.282 14.729V19.8478H135.39V14.729C135.39 13.3272 134.914 12.1702 133.487 12.1702C132.06 12.1702 131.563 13.3272 131.563 14.729V19.8478H127.672V14.039C127.672 10.9462 129.466 8.27598 133.184 8.27598C135.217 8.27598 136.687 9.09927 137.358 10.4566C138.071 9.09927 139.628 8.27529 141.487 8.27529V8.27666ZM120.678 16.288C121.932 16.288 122.473 15.1085 122.473 13.706V8.72113H126.364V14.1956C126.364 17.4669 124.505 20.1822 120.678 20.1822C116.851 20.1822 114.992 17.4676 114.992 14.1956V8.72113H118.884V13.706C118.884 15.1078 119.424 16.288 120.678 16.288ZM109.27 20.2041C106.827 20.2041 105.248 19.3364 104.318 17.6453L107.129 16.0206C107.518 16.7325 108.102 17.0887 109.075 17.0887C109.875 17.0887 110.242 16.7995 110.242 16.4432C110.242 15.0859 104.535 16.4658 104.535 12.149C104.535 10.0566 106.264 8.36555 109.205 8.36555C111.777 8.36555 113.183 9.65588 113.81 10.9024L110.999 12.549C110.762 11.8816 110.026 11.4809 109.291 11.4809C108.729 11.4809 108.426 11.7257 108.426 12.0594C108.426 13.4393 114.134 12.1709 114.134 16.3543C114.134 18.6909 111.907 20.2041 109.27 20.2041ZM95.6728 24.9667H91.7811V14.2626C91.7811 10.8573 94.2674 8.38743 97.7268 8.38743C101.1 8.38743 103.673 11.0358 103.673 14.2626C103.673 17.8231 101.38 20.1822 97.943 20.1822C97.1428 20.1822 96.3433 19.9374 95.6728 19.5586V24.9667ZM97.7268 16.4213C98.9593 16.4213 99.7808 15.4422 99.7808 14.2845C99.7808 13.1056 98.9593 12.1483 97.7268 12.1483C96.4943 12.1483 95.6728 13.1056 95.6728 14.2852C95.6728 15.4422 96.4943 16.4213 97.7268 16.4213ZM87.8826 7.54226C86.6069 7.54226 85.548 6.45161 85.548 5.13872C85.548 3.82584 86.6069 2.73518 87.8826 2.73518C89.1584 2.73518 90.218 3.82584 90.218 5.13872C90.218 6.45161 89.1584 7.54226 87.8826 7.54226ZM85.9371 8.72113H89.8289V19.8485H85.9371V8.72113ZM78.4702 20.1822C75.0972 20.1822 72.5244 17.512 72.5244 14.2626C72.5244 11.0358 75.0972 8.36555 78.4702 8.36555C81.8431 8.36555 84.4159 11.0358 84.4159 14.2626C84.4159 17.512 81.8431 20.1822 78.4702 20.1822ZM78.4702 16.4213C79.7027 16.4213 80.5241 15.4422 80.5241 14.2845C80.5241 13.1056 79.7027 12.1264 78.4702 12.1264C77.2376 12.1264 76.4162 13.1056 76.4162 14.2845C76.4162 15.4422 77.2376 16.4213 78.4702 16.4213ZM65.1759 25.3004C62.4953 25.3004 60.5491 24.0764 59.5547 21.8951L62.776 20.1152C63.1219 20.8722 63.7704 21.651 65.1107 21.651C66.5168 21.651 67.446 20.7381 67.5544 19.136C67.0356 19.6037 66.2135 19.9593 64.9817 19.9593C61.9759 19.9593 59.5541 17.5783 59.5541 14.24C59.5541 11.0139 62.1275 8.38743 65.5005 8.38743C68.9599 8.38743 71.4462 10.858 71.4462 14.2626V18.669C71.4462 22.6747 68.743 25.3004 65.1759 25.3004ZM65.4353 16.1991C66.6026 16.1991 67.4893 15.3751 67.4893 14.1511C67.4893 12.9497 66.6033 12.1483 65.4353 12.1483C64.2892 12.1483 63.3813 12.9497 63.3813 14.1518C63.3813 15.3758 64.2892 16.1984 65.4353 16.1984V16.1991ZM52.9531 20.1822C49.5802 20.1822 47.0067 17.512 47.0067 14.2626C47.0067 11.0358 49.5802 8.36555 52.9531 8.36555C56.3254 8.36555 58.8989 11.0358 58.8989 14.2626C58.8989 17.512 56.3261 20.1822 52.9531 20.1822ZM52.9531 16.4213C54.1857 16.4213 55.0071 15.4422 55.0071 14.2845C55.0071 13.1056 54.1857 12.1264 52.9531 12.1264C51.7206 12.1264 50.8992 13.1056 50.8992 14.2845C50.8992 15.4422 51.7206 16.4213 52.9531 16.4213ZM39.9203 4.8276V16.0651H46.3635V19.8485H39.3795C36.9151 19.8485 35.9207 18.5131 35.9207 16.3988V4.8276H39.9203Z" fill="currentColor" />
         </svg> 
       </div>
      
-      <ul className="flex flex-col py-4">
-        <li className='p-2'>
+      <ul className="flex flex-col py-4" style={{lineHeight:'1'}}>
+        <li className='p-1'>
           <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
@@ -86,7 +100,7 @@ const Sidebar = () => {
       
  
 
-        <li className='p-2'>
+        <li className='p-1'>
           <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUsersOpen ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
               <svg width="18" height="18" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -105,7 +119,7 @@ const Sidebar = () => {
           </button>
           {isUsersOpen && (
             <ul className="ml-4">
-              <li className='p-2'>
+              <li className='p-1'>
                 <button onClick={handleDropdownToggles} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser1Open ? 'active text-[#EF502E]' : ''}`}>
                   <span>IFS</span>
                   <svg className={`transform transition-transform ${isUser1Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -138,7 +152,40 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        <li className='p-2'>
+          <li className='p-1'>
+          <button onClick={handleEnterpriceDropdown} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser4Open ? 'active bg-white text-[#EF502E]' : ''}`}>
+            <div className='flex items-center gap-2'>  
+              <svg fill="currentColor" width="18px" height="18px" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"  ><path d="M8 2L8 6L4 6L4 48L46 48L46 14L30 14L30 6L26 6L26 2 Z M 10 4L24 4L24 8L28 8L28 46L19 46L19 39L15 39L15 46L6 46L6 8L10 8 Z M 10 10L10 12L12 12L12 10 Z M 14 10L14 12L16 12L16 10 Z M 18 10L18 12L20 12L20 10 Z M 22 10L22 12L24 12L24 10 Z M 10 15L10 19L12 19L12 15 Z M 14 15L14 19L16 19L16 15 Z M 18 15L18 19L20 19L20 15 Z M 22 15L22 19L24 19L24 15 Z M 30 16L44 16L44 46L30 46 Z M 32 18L32 20L34 20L34 18 Z M 36 18L36 20L38 20L38 18 Z M 40 18L40 20L42 20L42 18 Z M 10 21L10 25L12 25L12 21 Z M 14 21L14 25L16 25L16 21 Z M 18 21L18 25L20 25L20 21 Z M 22 21L22 25L24 25L24 21 Z M 32 22L32 24L34 24L34 22 Z M 36 22L36 24L38 24L38 22 Z M 40 22L40 24L42 24L42 22 Z M 32 26L32 28L34 28L34 26 Z M 36 26L36 28L38 28L38 26 Z M 40 26L40 28L42 28L42 26 Z M 10 27L10 31L12 31L12 27 Z M 14 27L14 31L16 31L16 27 Z M 18 27L18 31L20 31L20 27 Z M 22 27L22 31L24 31L24 27 Z M 32 30L32 32L34 32L34 30 Z M 36 30L36 32L38 32L38 30 Z M 40 30L40 32L42 32L42 30 Z M 10 33L10 37L12 37L12 33 Z M 14 33L14 37L16 37L16 33 Z M 18 33L18 37L20 37L20 33 Z M 22 33L22 37L24 37L24 33 Z M 32 34L32 36L34 36L34 34 Z M 36 34L36 36L38 36L38 34 Z M 40 34L40 36L42 36L42 34 Z M 32 38L32 40L34 40L34 38 Z M 36 38L36 40L38 40L38 38 Z M 40 38L40 40L42 40L42 38 Z M 10 39L10 44L12 44L12 39 Z M 22 39L22 44L24 44L24 39 Z M 32 42L32 44L34 44L34 42 Z M 36 42L36 44L38 44L38 42 Z M 40 42L40 44L42 44L42 42Z"/></svg>
+              <span>Enterprises</span>
+            </div>
+            <svg className={`transform transition-transform ${isUser4Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+
+
+
+          </button>
+          {isUser4Open && (
+            <ul className="ml-4">
+              <li >
+                <Link href="/enterprice/technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/enterprice/technicians/listing' ? 'active text-[#EF502E]' : ''}`} >
+                  <span>Technician</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`}  >
+                  <span>Customer</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'admin' ? 'active text-[#EF502E]' : ''}`}  >
+                  <span>Admin</span>
+                </Link>
+              </li>
+            </ul>
+          )}
+        </li>
+        <li className='p-1'>
           <button onClick={() => setIsUser2Open(!isUser2Open)} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser2Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
               <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -174,7 +221,7 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'clients' ? 'active text-[#EF502E]' : ''}`}  >
-                  <span>Clients</span>
+                  <span>Customer</span>
                 </Link>
               </li>
               <li >
@@ -185,7 +232,7 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        <li className='p-2'>
+        <li className='p-1'>
           <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser3Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>
               <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -237,7 +284,7 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        <li className='p-2'>
+        <li className='p-1'>
           <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M7.61623 7.10532H15.429C15.6986 7.10532 15.9173 6.88671 15.9173 6.61702C15.9173 6.34733 15.6986 6.12872 15.429 6.12872H7.61623C7.34654 6.12872 7.12793 6.34733 7.12793 6.61702C7.12793 6.88671 7.34654 7.10532 7.61623 7.10532Z" fill="currentColor" />
@@ -251,7 +298,7 @@ const Sidebar = () => {
             <span>Reporting</span>
           </Link>
         </li>
-        <li className='p-2'>
+        <li className='p-1'>
           <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18.2256 18.9668L17.1984 6.02411C17.1344 5.19027 16.4292 4.53706 15.593 4.53706H13.5642V4.44587C13.5642 1.9944 11.5698 0 9.11828 0C6.66681 0 4.67241 1.9944 4.67241 4.44587V4.53706H2.64365C1.80734 4.53706 1.10211 5.19023 1.03832 6.02236L0.0108676 18.9686C-0.0686441 20.0051 0.290955 21.0371 0.997397 21.7998C1.70384 22.5625 2.70528 23 3.74491 23H14.4916C15.5312 23 16.5327 22.5625 17.2392 21.7998C17.9456 21.0371 18.3052 20.0051 18.2256 18.9668ZM6.01962 4.44587C6.01962 2.73727 7.40973 1.34721 9.11828 1.34721C10.8268 1.34721 12.217 2.73731 12.217 4.44587V4.53706H6.01962V4.44587ZM16.2508 20.8844C15.7917 21.3799 15.1671 21.6528 14.4916 21.6528H3.74495C3.06951 21.6528 2.44482 21.3799 1.98581 20.8844C1.52685 20.3889 1.30251 19.7451 1.35408 19.0734L2.38144 6.12712C2.39186 5.99092 2.50704 5.88427 2.64365 5.88427H4.67241V7.54346C4.67241 7.91546 4.97402 8.21706 5.34601 8.21706C5.71801 8.21706 6.01962 7.91546 6.01962 7.54346V5.88427H12.217V7.54346C12.217 7.91546 12.5186 8.21706 12.8906 8.21706C13.2626 8.21706 13.5642 7.91546 13.5642 7.54346V5.88427H15.593C15.7295 5.88427 15.8447 5.99096 15.8553 6.12892L16.8824 19.0716C16.9341 19.7451 16.7097 20.3888 16.2508 20.8844Z" fill="currentColor" />
@@ -261,7 +308,7 @@ const Sidebar = () => {
             <span>Orders</span>
           </Link>
         </li>
-        <li className='p-2'>
+        <li className='p-1'>
         <Link href="/#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded" >
 
             <svg width="18" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -271,7 +318,7 @@ const Sidebar = () => {
             <span>Subscribers</span>
           </Link>
         </li>
-        <li className='p-2'>
+        <li className='p-1'>
           <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clipPath="url(#clip0_217_1077)">
@@ -290,8 +337,8 @@ const Sidebar = () => {
             <span>Invoice</span>
           </Link>
         </li>
-        <li className='p-2'>
-          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+        <li className='p-1'>
+          <Link href="/role" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] hover:bg-white rounded ${activeLink === '/role' ? 'active text-[#EF502E]' : ''}`}>
 
             <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
@@ -305,8 +352,8 @@ const Sidebar = () => {
             <span>Roles & Permissions</span>
           </Link>
         </li>
-        <li className='p-2'>
-          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
+        <li className='p-1'>
+          <Link href="/archive" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === '/archive' ? 'active text-[#EF502E]' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 20 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1 5.58337H3H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M17 5.58337V19.5834C17 20.1138 16.7893 20.6225 16.4142 20.9976C16.0391 21.3727 15.5304 21.5834 15 21.5834H5C4.46957 21.5834 3.96086 21.3727 3.58579 20.9976C3.21071 20.6225 3 20.1138 3 19.5834V5.58337M6 5.58337V3.58337C6 3.05294 6.21071 2.54423 6.58579 2.16916C6.96086 1.79409 7.46957 1.58337 8 1.58337H12C12.5304 1.58337 13.0391 1.79409 13.4142 2.16916C13.7893 2.54423 14 3.05294 14 3.58337V5.58337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" />
@@ -314,7 +361,7 @@ const Sidebar = () => {
               <path d="M12 10.5834V16.5834" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
-            <span>Trash</span>
+            <span>Archive</span>
           </Link>
         </li>
       </ul>

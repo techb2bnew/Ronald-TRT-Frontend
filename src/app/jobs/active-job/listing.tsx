@@ -46,7 +46,7 @@ const JobTable: React.FC = () => {
   
         const data = await response.json();
         if (response.ok) {
-          setActiveJob(data.jobs.jobs);
+          setActiveJob((prevJobs) => [...data.jobs.jobs, ...prevJobs]); 
           setTotalPages(data.jobs.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
@@ -68,6 +68,8 @@ const JobTable: React.FC = () => {
       fetchJobs();
     }, [fetchJobs]);
 
+
+
   // Function to handle sorting logic
   const handleSort = (column: string) => {
     const direction = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -81,9 +83,9 @@ const JobTable: React.FC = () => {
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
       if (column === 'technicianName') {
-        const nameA = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameB = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
+        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
+        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
       }
 
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
@@ -99,7 +101,7 @@ const JobTable: React.FC = () => {
     // Show a confirmation dialog before proceeding
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: 'Do you want to change the approval status of this account?',
+      text: 'Do you want to change the status of this job?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF502E',
@@ -200,9 +202,9 @@ const downloadCSV = () => {
 
   const renderRow = (job: any) => (
     <tr key={job.id}>
-      <td>{job.id}</td>
-      <td>{job.jobDescription}</td>
+      <td>{job.id}</td> 
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+      <td>{job?.customer?.phoneNumber}</td>
       <td>  {job?.technicians?.map((tech: any) => (
     <div key={tech.id}>
       {tech.firstName} {tech.lastName}
@@ -213,13 +215,12 @@ const downloadCSV = () => {
       {tech.phoneNumber}
     </div>
   ))}</td>
-      <td>{job.vin}</td>
-      <td>{job.make}</td> 
+      <td>{job.vin}</td> 
       <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
-          {job.jobStatus ? 'Active' : 'Inactive'}
+          {job.jobStatus ? 'Completed' : 'In Progress'}
         </span>
       </td> 
       <td>
@@ -246,53 +247,41 @@ const downloadCSV = () => {
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]" onClick={() => handleSort('jobDescription')}>
-                Job Description
-                {sortBy === 'jobDescription' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
-                Technician Name
-                {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
               </th> 
-              <th className="w-[100px]">Tech. Ph. Number</th>
-
-              <th className="w-[160px]">VIN</th>
-              <th className="w-[100px]">Vehicle Make</th>
-              <th className="w-[100px]">Status</th>
+              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+                Customer Name
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]">
+                Customer Number 
+              </th>
+              <th className="w-[120px]" >
+                Technician Name 
+              </th> 
+              <th className="w-[100px]">Tech. Number</th> 
+              <th className="w-[160px]">VIN</th> 
+              <th className="w-[120px]">Status</th>
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={8} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={8} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>

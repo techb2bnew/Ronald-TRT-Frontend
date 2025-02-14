@@ -85,7 +85,7 @@ export default function Login() {
                 <TextField fullWidth  type={showPassword ? "text" : "password"} id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined"   onChange={(e) => setPassword(e.target.value)} />
                   <button 
                     type="button" 
-                    style={{ position: 'absolute', right: '10px', top: '20px' }}
+                    style={{ position: 'absolute', right: '10px', top: '18px' }}
                     onClick={() => setShowPassword(!showPassword)}
                 >
                     {showPassword ? <Image src={EyeOff} width='18' height='18'   alt="eye"/>  : <Image src={Eye} width='18' height='18'   alt="eye"/>

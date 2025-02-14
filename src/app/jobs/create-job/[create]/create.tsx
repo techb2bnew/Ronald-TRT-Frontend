@@ -395,7 +395,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           }
         });
       } else {
-        toast.error(result.message || 'Failed to create job.');
+        toast.error(result.error || 'Failed to create job.');
       }
     }
   } catch (error) {
@@ -621,7 +621,7 @@ const handleSelectRole = (event: SelectChangeEvent<string>) => {
               <div className='flex gap-3 items-center'>
          <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *"  variant="outlined"  value={formData.vin}  onChange={(e) => handleChange(e, 'vin')} />
                 
-                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add new vehicle</button>
+                <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
               </div>
             </div>
           </div>

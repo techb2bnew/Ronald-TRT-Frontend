@@ -85,12 +85,20 @@ export default function ViewDetails() {
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p> 
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
-            {technician?.taxForms && (
-            <div className="mt-1 m-auto block mb-2  ">
-              {/* <strong className='inline-block'>Tax Form Image</strong> */}
-              <img onClick={() => window.open(technician?.taxForms, '_blank')} src={technician?.taxForms} alt="Technician Tax Form" className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer" />
-            </div>
-          )}
+          {technician?.taxForms && technician.taxForms.length > 0 && (
+          <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
+            {technician.taxForms.map((form, index) => (
+              <img
+                key={index}
+                onClick={() => window.open(form, '_blank')}
+                src={form}
+                alt={`Technician Tax Form ${index + 1}`}
+                className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
+              />
+            ))}
+          </div>
+        )}
+
           </div>
         </div>
       </div>

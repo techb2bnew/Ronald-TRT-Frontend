@@ -97,8 +97,8 @@ export default function Technicians() {
           ...prev,
           ...data.technician,
           id: technicianId,
-          password: '', 
-          taxForms: null, // Reset to null to allow new file uploads
+          password: '',  
+          taxForms: data.technician.taxForms || [],
         }));
       } else {
         toast.error(data.error || 'Error fetching technician data');
@@ -152,10 +152,79 @@ export default function Technicians() {
         }));
     }
 };
+
+function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.src = URL.createObjectURL(file);
+    
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        reject(new Error("Canvas 2D context is not supported."));
+        return;
+      }
+
+      let width = image.width;
+      let height = image.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(image, 0, 0, width, height);
+
+      canvas.toBlob(blob => {
+        if (blob) {
+          const compressedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        } else {
+          reject(new Error('Compression failed'));
+        }
+      }, 'image/jpeg', quality);
+    };
+
+    image.onerror = () => reject(new Error('Image loading error'));
+  });
+}
+
+// To handle the image upload
 const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
-  setFormData(prev => ({ ...prev, taxForms: files }));
+  const files = e.target.files ? Array.from(e.target.files) : [];
+  const maxWidth = 800; // Maximum image width
+  const maxHeight = 600; // Maximum image height
+  const quality = 0.7; // Compression quality
+
+  const compressions = files.map(file => compressImage(file, maxWidth, maxHeight, quality));
+  Promise.all(compressions)
+    .then(compressedFiles => {
+      setFormData((prev:any) => ({ ...prev, taxForms: compressedFiles }));
+    })
+    .catch(error => {
+      console.error('Compression error:', error);
+      toast.error('Failed to compress taxForms.');
+    });
 };
+
+// const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//   const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
+//   setFormData(prev => ({ ...prev, taxForms: files }));
+// };
 
 const handleRemoveFile = (index: number) => {
   const newFiles = formData.taxForms.filter((_, i) => i !== index);
@@ -522,15 +591,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange}   />
                 {/* onChange={handleFileChange} */}
               </div>
-              <div className='flex flex-wrap gap-4 items-center mt-5'>
+              <div className='flex flex-wrap gap-4 items-center relative mt-5'>
   {formData.taxForms && formData.taxForms.map((file, index) => (
-    <div key={index} className='shadow rounded p-2'>
-      {file.type.includes('image') ? (
-        <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 100, height: 100, objectFit: 'cover' }} />
-      ) : (
-        <a href={URL.createObjectURL(file)} target="_blank" rel="noopener noreferrer">{file.name}</a>
-      )}
-      <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+    <div key={index} className='shadow rounded p-2 relative'>
+      {file instanceof File ? (
+                <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            ) : (
+                <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            )}
+      <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position:'absolute', right:'0', top:'0' }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>

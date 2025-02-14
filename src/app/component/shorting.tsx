@@ -39,7 +39,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
                 >
                   {header}
                   {sortableColumns.includes(columnKey) && sortBy.toLowerCase() === columnKey && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
                       {sortDirection === 'asc' ? '↑' : '↓'}
                     </span>
                   )}

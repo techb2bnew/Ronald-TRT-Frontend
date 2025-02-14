@@ -11,9 +11,7 @@ import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
-import Image from 'next/image';
-import Banner from "../../../../public/signup.png";
-import Logo from "../../../../public/logo.svg";
+import Image from 'next/image'; 
 
 interface TechnicianForm {
   id?: string; 
@@ -185,18 +183,13 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <div className='main-container mb-5'>
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
-      <div className="flex">
-      <div className="w-1/2 md:block fixed">
-        <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
-          </div>
-         <div className="md:w-1/2 absolute right-[0] top-[3rem]" style={{ padding: '0px 5rem' }}> 
-             <div className="text-center mb-5 w-full">
-                             <Image src={Logo} className="m-auto" width='200' height='50' alt="page img" />
-                              <h2 className="text-2xl font-bold text-[#161616] mt-5">Create Enterprises Account</h2>
-                              {/*<p className="text-[#161616] mt-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque leo felis, volutpat in imperdiet id, vulputate ac odio.</p>*/}
-                       </div>
-      <div className='p-4 mt-5'>
+       
+      <h1 className="text-lg leading-6 font-bold text-gray-900"> Create New Technician</h1>
+   
+     
+         <div className="bg-white p-4 mt-5 w-[60%] m-auto"  > 
+             
+      <div className='p-4'>
       {submitting ? (
           <div className="flex justify-center items-center h-64">
             <Loader />  {/* ✅ Show loader during submission */}
@@ -206,7 +199,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="grid grid-cols-1 gap-4">
             {/* Client Name and Business Name */}
             <div className="mb-4">
-              {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small"  name="firstName" id="outlined-basic" color="warning" label="Enter your enterprise name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
                
             </div>
@@ -214,13 +206,11 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
           	  <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="ownerfirstName" id="outlined-basic" color="warning" label="Enter your owner first name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
             
             </div>
               <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="ownerlastName" id="outlined-basic" color="warning" label="Enter your owner last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
             
@@ -230,12 +220,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             {/* Client Name and Business Name */}
           
               <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
  
             </div>
             <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your business email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
  
             </div>
@@ -243,12 +231,10 @@ const handleSubmit = async (e: React.FormEvent) => {
          <div className="grid grid-cols-2 gap-4">
 
             <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
  
             </div>
                 <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your business phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
  
             </div>
@@ -295,7 +281,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
             <div className="mb-4"> 
-              {/* <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p> */}
 
                       <FormControl fullWidth size="small">
                       <InputLabel id="country"  color="warning">Select country *</InputLabel>
@@ -317,7 +302,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               
             </div>
             <div className="mb-4">
-            {/* <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p> */}
 
               <FormControl fullWidth size="small">
               <InputLabel id="state"  color="warning">Select state *</InputLabel>
@@ -340,12 +324,10 @@ const handleSubmit = async (e: React.FormEvent) => {
               
             </div>
             <div className="mb-4">
-                {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
             <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
               
             </div>
             <div className="mb-4">
-               {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
                 <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
             
             </div>
@@ -354,13 +336,11 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="grid grid-cols-3 gap-4">
 
             <div className="mb-4">
-              {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter your password *"  variant="outlined"  value={formData.password}  onChange={handleChange} />
 
              
             </div>
             <div className="mb-4">
-        {/* <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p> */}
         <TextField 
           fullWidth 
           size="small" 
@@ -441,7 +421,6 @@ const handleSubmit = async (e: React.FormEvent) => {
          )}
       </div>
     </div>
-    </div>
-    </div>
+    </div> 
   );
 }

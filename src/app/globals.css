@@ -143,6 +143,35 @@ table.table.w-full.table-fixed tbody tr {
   }
 }
 
+ 
+
+.overflowslidebar::-webkit-scrollbar-track
+{
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: #fcfcfc;
+  border-radius: 10px;
+}
+
+.overflowslidebar::-webkit-scrollbar
+{
+  width: 5px;
+  background-color: #fcfcfc;
+}
+
+.overflowslidebar::-webkit-scrollbar-thumb
+{
+  border-radius: 10px;
+  background-image: -webkit-gradient(linear,
+                     left bottom,
+                     left top,
+                     color-stop(0.44, #f89a86),
+                     color-stop(0.72, #ef502e),
+                     color-stop(0.86, #f62b00));
+}
+
+
+
+
 .MuiInputBase-input, .MuiFormLabel-root {
   font-size: 12px !important;
 } 

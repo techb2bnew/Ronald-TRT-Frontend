@@ -1,14 +1,14 @@
 // components/TechnicianTable.tsx
 import React, { useState, useEffect, useRef  } from 'react';
-import TableActions from '../../component/action';
-import CommonHeader from '../../component/commonHeader';
+import TableActions from '@/app/component/action';
+import CommonHeader from '@/app/component/commonHeader';
 import { useRouter } from "next/navigation";
-import SortableTable from '../../component/shorting'; // Import SortableTable
+import SortableTable from '@/app/component/shorting'; // Import SortableTable
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import Pagination from '../../component/pagination';
+import Pagination from '@/app/component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 
@@ -205,7 +205,6 @@ const TechnicianTable: React.FC = () => {
          : data.technician?.technicians || [];  // For pagination API response
 
         setTechnicians(fetchedTechnicians);
-        // setTechnicians((prevTechnicians) => [...fetchedTechnicians, ...prevTechnicians]);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
         console.error('Error fetching technicians:', );
@@ -279,14 +278,6 @@ const TechnicianTable: React.FC = () => {
           {tech.accountStatus ? 'Active' : 'Deactive'}
         </span>
       </td>
-        <td className='font-sm'>
-        <Link href='/jobs/create-job/create' className='flex gap-1 items-center border border-black rounded p-2 pl-2 pr-2 w-[120px] justify-center'>Create Job
-        <svg width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M12 8.5V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg></Link>
-        </td>
       <td onClick={() => toggleApproval(tech.id, tech.isApproved)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${tech.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -294,7 +285,14 @@ const TechnicianTable: React.FC = () => {
           {tech.isApproved ? 'Approved' : 'Disapproved'}
         </span>
       </td>
-      <td> 
+      <td className='font-sm'>
+        <Link href={`/jobs/create-job/create?jobId=${tech.id}`} className='flex gap-2 items-center border border-black rounded p-2 pl-4 pr-4 w-[135px] justify-center'>Create Job
+        <svg width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 8.5V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg></Link></td>
+      <td>
         <TableActions
           editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
           viewRoute={`/technicians/view?technicianId=${tech.id}`}
@@ -334,11 +332,11 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/enterprice/technicians/create" />
 
     
         <SortableTable
-          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Status','Create New Job', 'Account Status',  'Action']}
+          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Status', 'Account Status', 'Create New Job', 'Action']}
           data={technicians}
           renderRow={renderRow}
           sortBy={sortBy}
