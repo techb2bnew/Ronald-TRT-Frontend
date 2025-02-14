@@ -87,7 +87,7 @@ export default function ViewDetails() {
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
           {technician?.taxForms && technician.taxForms.length > 0 && (
           <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-            {technician.taxForms.map((form, index) => (
+            {technician.taxForms.map((form:any, index:any) => (
               <img
                 key={index}
                 onClick={() => window.open(form, '_blank')}

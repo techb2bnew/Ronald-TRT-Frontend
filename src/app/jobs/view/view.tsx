@@ -90,7 +90,7 @@ export default function ViewDetails() {
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </p>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-            {jobData.images.map((form, index) => (
+            {jobData.images.map((form:any, index:any) => (
               <img
                 key={index}
                 onClick={() => window.open(form, '_blank')}

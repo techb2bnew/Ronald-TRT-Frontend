@@ -2,12 +2,25 @@ import React, { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox } from '@mui/material';
 
+type Permissions = {
+  [role: string]: {
+    [action: string]: boolean;
+  };
+};
+
+type Permission = {
+  permissionName: string;
+  actions: string;
+  isActive: boolean;
+};
+
+
 const RolesForm: React.FC = () => {
   const [roleName, setRoleName] = useState('');
   const [roleType, setRoleType] = useState('');
   const [inactive, setInactive] = useState(false);
 
-  const [permissions, setPermissions] = useState({
+   const [permissions, setPermissions] = useState<Permissions>({
     technician: { create: false, edit: false, delete: false, approve: false },
     customer: { create: false, edit: false, delete: false, approve: false },
     workshop: { create: false, edit: false, delete: false, approve: false },
@@ -24,21 +37,20 @@ const RolesForm: React.FC = () => {
   };
 
   const preparePayload = () => {
-    const permissionsArray = [];
+   const permissionsArray: Permission[] = []; // Explicitly type the array
 
     // Loop over roles and their actions
     Object.keys(permissions).forEach((role) => {
       Object.keys(permissions[role]).forEach((action) => {
         if (permissions[role][action]) {
           permissionsArray.push({
-            permissionName: role.charAt(0).toUpperCase() + role.slice(1),
+            permissionName: role.charAt(0).toUpperCase() + role.slice(1), // Capitalize the first letter of the role
             actions: action,
             isActive: true,
           });
         }
       });
     });
-
     const payload = {
       name: roleName || 'defaultRoleName',
       type: roleType,
