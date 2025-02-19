@@ -218,7 +218,7 @@ export default function Technicians() {
     payRate: '',
     taxForms: null,
     amountPercentage: '',
-    role:'technician',
+    role:'',
     agreeTerms:'true',
   });
 
@@ -361,53 +361,76 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         ) : (
       <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
+            <div className='mb-4'> 
+        <FormControl fullWidth size="small">
+              <InputLabel id="role" color="warning">Select role *</InputLabel>
+              <Select
+              labelId="role"
+              id="select-role"
+              color="warning"
+              value={formData.role}
+              label="State role"
+              name="role"
+              onChange={handleSelectChange}
+              >  
+              <MenuItem value='enterprice'>Enterprice</MenuItem>
+              <MenuItem value='enterprice-workshop'>Enterprice Workshop</MenuItem>
+              <MenuItem value='workshop'>Workshop</MenuItem>
+                 
+              </Select>
+              </FormControl>
+              </div>
+              {formData.role !=='enterprice' && (
+
+                <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth size="medium" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"  variant="outlined"  value={formData.firstName}  onChange={handleChange} />
                
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth size="medium" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"  variant="outlined"  value={formData.lastName}  onChange={handleChange} />
 
             
             </div>
           </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth size="medium" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *"  variant="outlined"  value={formData.phoneNumber}  onChange={handleChange} />
  
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"  value={formData.email}  onChange={handleChange} />
  
             </div>
           </div>
           {/* Address and Email */}
-          <div className='mb-2'>
+          <div className='mb-4'>
             {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
-            <TextField fullWidth size="medium" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
+            <TextField fullWidth size="small" name="address" id="outlined-basic" color="warning" label="Enter your address *"  variant="outlined"  value={formData.address}  onChange={handleChange} />
 
             
           </div>
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
-            <div className='mb-2'> 
+            <div className='mb-4'> 
               {/* <p className='text-sm mb-2'>Country <span className='text-[red]'>*</span></p> */}
 
-                      <FormControl fullWidth>
-                      <InputLabel id="country">Select country *</InputLabel>
+                      <FormControl fullWidth size="small">
+                      <InputLabel id="country" color="warning">Select country *</InputLabel>
                       <Select
                       labelId="country"
                       id="country"
                       value={formData.country}
-                      label="country"
+                      label="Select country"
                       name="country"
+                      color="warning"
                       onChange={handleSelectChange}
                       > 
                       {countries.map((country: ICountry) => ( 
@@ -418,16 +441,17 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
             {/* <p className='text-sm mb-2'>State <span className='text-[red]'>*</span></p> */}
 
-              <FormControl fullWidth>
-              <InputLabel id="state">Select state *</InputLabel>
+              <FormControl fullWidth size="small">
+              <InputLabel id="state" color="warning">Select state *</InputLabel>
               <Select
               labelId="state"
               id="select-state"
+              color="warning"
               value={formData.state}
-              label="State"
+              label="Select State"
               name="state"
               onChange={handleSelectChange}
               > 
@@ -440,44 +464,44 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
                 {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-            <TextField fullWidth size="medium" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
+            <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city *"  variant="outlined"  value={formData.city}  onChange={handleChange} />
               
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
                {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
-                <TextField fullWidth size="medium" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
+                <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *"  variant="outlined"  value={formData.zipCode}  onChange={handleChange} />
             
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p   className='text-sm mb-2'>Secondary phone number</p> */}
-              <TextField fullWidth size="medium" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
 
                
             </div> 
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Secondary Email</p> */}
-              <TextField fullWidth size="medium" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
 
                
             </div>
             </div>
           <div className="grid grid-cols-2 gap-4">
 
-            <div className='mb-2'>
+            <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth size="medium" name="password" id="outlined-basic" color="warning" label="Enter your password *"  variant="outlined"  value={formData.password}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter your password *"  variant="outlined"  value={formData.password}  onChange={handleChange} />
 
              
             </div>
-            <div className='mb-2'>
+            <div className='mb-4'>
         {/* <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p> */}
         <TextField 
           fullWidth 
-          size="medium" 
+          size="small" 
           name="confirmPassword" 
           id="confirmPassword" 
           color="warning" 
@@ -524,7 +548,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             </div>
             </div>
-           <p className='mb-4'><b>Role:</b> IFS Admin</p>
+           {/* <p className='mb-4'><b>Role:</b> IFS Admin</p> */}
          
           </div>
         
