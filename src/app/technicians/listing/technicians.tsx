@@ -184,7 +184,7 @@ const TechnicianTable: React.FC = () => {
       };
 
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       // Determine correct endpoint
@@ -271,7 +271,7 @@ const TechnicianTable: React.FC = () => {
       <td>{tech.firstName} {tech.lastName}</td>
       <td>{tech.email}</td>
       <td>{tech.phoneNumber}</td>
-      <td>{tech.payRate}</td>
+      {/* <td>{tech.payRate}</td> */}
        <td onClick={() => toggleAccountStatus(tech.id, tech.accountStatus)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${tech.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -338,7 +338,7 @@ const TechnicianTable: React.FC = () => {
 
     
         <SortableTable
-          headers={['ID', 'Name', 'Email', 'Phone Number', 'Pay Rate', 'Status','Create New Job', 'Account Status',  'Action']}
+          headers={['ID', 'Name', 'Email', 'Phone Number', 'Status','Create New Job', 'Account Status',  'Action']}
           data={technicians}
           renderRow={renderRow}
           sortBy={sortBy}

@@ -18,7 +18,7 @@ export default function ViewDetails() {
       };
 
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {

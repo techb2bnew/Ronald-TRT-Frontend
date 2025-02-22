@@ -73,7 +73,7 @@ const handleDeleteSuccess = (deletedId: string) => {
         };
   
         if (token) {
-          headers['Authorization'] = `Token ${token}`;
+          headers['Authorization'] = `Bearer ${token}`;
         }
   
         // Determine correct endpoint

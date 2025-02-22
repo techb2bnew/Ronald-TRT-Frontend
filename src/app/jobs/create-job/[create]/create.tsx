@@ -24,8 +24,8 @@ interface JobPayload {
   manufacturerName: string;
   vehicleDescriptor: string;
   vehicleType: string;
-  jobDescription: string;
-  cost:string;
+  jobDescription: string[];
+  cost:string[];
   color: string;
   assignTechnicians: string[];
   notes:string;
@@ -105,8 +105,8 @@ export default function Technicians() {
       manufacturerName: '',
       vehicleDescriptor: '',
       vehicleType: '',
-      jobDescription: '',
-      cost:'',
+      jobDescription: [],
+      cost:[],
       notes:'',
       color: '',
       assignTechnicians:[],
@@ -138,7 +138,7 @@ export default function Technicians() {
     
           // If token exists, add it to Authorization header
           if (token) {
-            headers['Authorization'] = `Token ${token}`;
+            headers['Authorization'] = `Bearer ${token}`;
           }
     
           // Make GET request with technicianId as query parameter
@@ -202,7 +202,7 @@ export default function Technicians() {
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Token ${token}`;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await fetch(`${apiUrl}/${endpoint}`, { method: 'GET', headers });
       if (response.status == 400) {
@@ -292,6 +292,14 @@ const fetchVehicleDetails = async () => {
 };
 
  
+const handleDescriptionCostChange = (index: number, field: keyof DescriptionCostField, value: string) => {
+  setDescriptionCostFields(prevFields =>
+    prevFields.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    )
+  );
+};
+
 
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -307,8 +315,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   formDataObj.append('modelYear', formData.modelYear);
   formDataObj.append('manufacturerName', formData.manufacturerName);
   formDataObj.append('vehicleDescriptor', formData.vehicleDescriptor);
-  formDataObj.append('vehicleType', formData.vehicleType);
-  formDataObj.append('jobDescription', formData.jobDescription);
+  formDataObj.append('vehicleType', formData.vehicleType); 
   formDataObj.append('notes', formData.notes);
   formDataObj.append('color', formData.color);
   formDataObj.append('assignCustomer', formData.assignCustomer);
@@ -332,7 +339,16 @@ const handleSubmit = async (e: React.FormEvent) => {
   //     formDataObj.append(key, formData[key]);
   //   }
   // });
+  const jobDescriptionsArray = descriptionCostFields.map((item) => ({
+    description: item.jobDescription,
+    cost: item.cost,
+  }));
 
+  // ✅ Append `jobDescription` as an array
+  jobDescriptionsArray.forEach((desc, index) => {
+    formDataObj.append(`jobDescription[${index}][jobDescription]`, desc.description);
+    formDataObj.append(`jobDescription[${index}][cost]`, desc.cost);
+  });
   formData.assignTechnicians.forEach((techId) => {
     formDataObj.append('assignTechnicians[]', techId);
   });
@@ -787,8 +803,10 @@ const handleSelectRole = (event: SelectChangeEvent<string>) => {
            {descriptionCostFields.map((field, index) => (
           <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4"> 
             <div className='mb-2'> 
-              <textarea name="jobDescription" rows={1} id="" value={formData.jobDescription}
-               onChange={(e) => handleChange(e, 'jobDescription')}
+              <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
+                onChange={(e) =>
+                  handleDescriptionCostChange(index, "jobDescription", e.target.value)
+                }
                 placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
              <div className="mb-2 flex items-center gap-3">  
@@ -796,6 +814,10 @@ const handleSelectRole = (event: SelectChangeEvent<string>) => {
           <InputLabel htmlFor="outlined-adornment-amount">Cost</InputLabel>
           <OutlinedInput
             id="outlined-adornment-amount"
+            value={field.cost}
+            onChange={(e) =>
+              handleDescriptionCostChange(index, "cost", e.target.value)
+            }
             startAdornment={<InputAdornment position="start">$</InputAdornment>}
             label="Amount"
           />

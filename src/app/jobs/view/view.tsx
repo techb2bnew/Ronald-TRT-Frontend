@@ -18,7 +18,7 @@ export default function ViewDetails() {
       };
 
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobId}`, {
@@ -83,7 +83,21 @@ export default function ViewDetails() {
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong> {jobData.technicians[0]?.email}</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong> {jobData.technicians[0]?.phoneNumber} </p>
-            <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Description:</strong> {jobData?.jobDescription}</p>
+            <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+  <strong className="w-[200px] inline-block">Job Description:</strong>
+  {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
+    <ul className="list-none pl-5">
+      {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
+        <li key={index}>
+          <p className="font-semibold">{item.jobDescription}</p> 
+          <p><span>${item.cost}</span></p>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    "No job descriptions available"
+  )}
+</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</p>
             <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</p>

@@ -41,7 +41,7 @@ const JobTable: React.FC = () => {
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-        if (token) headers['Authorization'] = `Token ${token}`;
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const response = await fetch(`${apiUrl}/fetchCompleteJobStatus`, {
           method: 'GET',
@@ -106,7 +106,7 @@ const JobTable: React.FC = () => {
   const renderRow = (completejob: any) => (
     <tr key={completejob.id}>
       <td>{completejob.id}</td>
-      <td>{completejob.jobDescription}</td>
+      {/* <td>{completejob.jobDescription}</td> */}
       <td>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</td>
       <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td> 
       <td>{completejob.vin}</td>
@@ -142,14 +142,14 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('jobDescription')}>
+              {/* <th className="w-[150px]" onClick={() => handleSort('jobDescription')}>
                 Job Description
                 {sortBy === 'jobDescription' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
-              </th>
+              </th> */}
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (

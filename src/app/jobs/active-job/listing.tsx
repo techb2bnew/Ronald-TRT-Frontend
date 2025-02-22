@@ -37,7 +37,7 @@ const JobTable: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Token ${token}`;
+        if (token) headers['Authorization'] = `Bearer ${token}`;
   
         const response = await fetch(`${apiUrl}/fetchAllJobs?page=${currentPage}`, {
           method: 'GET',
@@ -117,7 +117,7 @@ const JobTable: React.FC = () => {
         const config = {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Token ${token}` })
+            ...(token && { 'Authorization': `Bearer ${token}` })
           }
         };
   
