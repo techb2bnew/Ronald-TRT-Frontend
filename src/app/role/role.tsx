@@ -63,21 +63,33 @@ const RolesForm: React.FC = () => {
 
   const handleSave = async () => {
     const payload = preparePayload();
-    return;
-    // try {
-    //   const response = await fetch('/your-api-endpoint', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(payload),
-    //   });
-    //   const data = await response.json();
-    //   console.log(data); // Handle success response
-    // } catch (error) {
-    //   console.error('Error sending data:', error); // Handle error response
-    // }
-  };
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''; // Use environment variable or empty string
+    const endpoint = `${apiUrl}/createRole`; // API Endpoint
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem("token") || ""}` // Optional Auth Token
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Success:", data); // Handle success response
+
+        alert("Role updated successfully!");
+    } catch (error) {
+        console.error("Error updating role:", error);
+        alert("Failed to update role. Please try again.");
+    }
+};
+
 
   return (
     <div className="container mx-auto p-6 bg-gray-50">
@@ -114,8 +126,8 @@ const RolesForm: React.FC = () => {
                 color="warning"
                 onChange={(e) => setRoleType(e.target.value)}
               >
-                <MenuItem value="Enterprise">Enterprise</MenuItem>
-                <MenuItem value="Workshop">Workshop</MenuItem>
+                <MenuItem value="enterprise">Enterprise</MenuItem>
+                <MenuItem value="workshop">Workshop</MenuItem>
               </Select>
             </FormControl>
           </div>

@@ -14,7 +14,10 @@ import Swal from 'sweetalert2';
 import Delete from '../../../../../public/delete.svg'
 import Image from 'next/image';
 
- 
+interface JobDescriptionItem {
+  jobDescription: string;
+  cost: string;
+}
 interface JobPayload {
   id?: string; 
   vin: string;
@@ -23,9 +26,8 @@ interface JobPayload {
   modelYear: string;
   manufacturerName: string;
   vehicleDescriptor: string;
-  vehicleType: string;
-  jobDescription: string[];
-  cost:string[];
+  vehicleType: string; 
+  jobDescription: JobDescriptionItem[];
   color: string;
   assignTechnicians: string[];
   notes:string;
@@ -106,7 +108,6 @@ export default function Technicians() {
       vehicleDescriptor: '',
       vehicleType: '',
       jobDescription: [],
-      cost:[],
       notes:'',
       color: '',
       assignTechnicians:[],
@@ -151,14 +152,17 @@ export default function Technicians() {
     
           if (response.ok && data.jobs) {
             const jobData = data.jobs;
-            // Assuming you have state setters like setVin, setVehicleData, etc.
-            // setVin(data.jobs.vin);
-            // setJobDescription(data.jobs.jobDescription);
-            // setNotesDescription(data.jobs.notes)
-            // setColor(data.jobs.color);
-            // setAssignTechnician(data.jobs.assignTechnician.toString()); // Assuming it needs to be a string
-            // setAssignCustomer(data.jobs.assignCustomer.toString());
-            // // You might want to set additional fields based on your form needs
+             // ✅ Ensure jobDescription is an array of objects
+             const jobDescriptionsArray = Array.isArray(jobData.jobDescription)
+             ? jobData.jobDescription.map((item: any) => ({
+                 id: crypto.randomUUID(), // Assign unique IDs
+                 jobDescription: item.jobDescription || '',
+                 cost: item.cost || '',
+               }))
+             : [{ id: crypto.randomUUID(), jobDescription: '', cost: '' }];
+     
+           // ✅ Update `descriptionCostFields` for UI display
+           setDescriptionCostFields(jobDescriptionsArray);
             setFormData((prev) => ({
               ...prev,
               vin: jobData.vin || '',
@@ -168,7 +172,7 @@ export default function Technicians() {
               manufacturerName: jobData.manufacturerName || '',
               vehicleDescriptor: jobData.vehicleDescriptor || '',
               vehicleType: jobData.vehicleType || '',
-              jobDescription: jobData.jobDescription || '',
+              jobDescription: jobDescriptionsArray, 
               notes: jobData.notes || '',
               color: jobData.color || '',
               // Assuming 'jobData.technicians' is an array of 'Technicians'
@@ -292,13 +296,22 @@ const fetchVehicleDetails = async () => {
 };
 
  
-const handleDescriptionCostChange = (index: number, field: keyof DescriptionCostField, value: string) => {
-  setDescriptionCostFields(prevFields =>
-    prevFields.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    )
+const handleDescriptionCostChange = (index: number, field: keyof JobDescriptionItem, value: string) => {
+  setDescriptionCostFields((prevFields) =>
+    prevFields.map((item, i) => (i === index ? { ...item, [field]: value } : item))
   );
+
+  // ✅ Sync changes with formData
+  setFormData((prev) => ({
+    ...prev,
+    jobDescription: descriptionCostFields.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ),
+  }));
 };
+
+
+
 
 
 
@@ -811,9 +824,9 @@ const handleSelectRole = (event: SelectChangeEvent<string>) => {
             </div>
              <div className="mb-2 flex items-center gap-3">  
                <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
-          <InputLabel htmlFor="outlined-adornment-amount">Cost</InputLabel>
+          <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
           <OutlinedInput
-            id="outlined-adornment-amount"
+             id={`cost-${index}`}
             value={field.cost}
             onChange={(e) =>
               handleDescriptionCostChange(index, "cost", e.target.value)

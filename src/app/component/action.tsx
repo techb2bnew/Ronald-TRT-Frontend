@@ -42,7 +42,7 @@ const TableActions: React.FC<TableActionsProps> = ({ viewRoute, editRoute, delet
         'Content-Type': 'application/json',
       };
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
       const body = JSON.stringify({ [idKey]: itemId });
       // ✅ Send the itemId in the body of the request
