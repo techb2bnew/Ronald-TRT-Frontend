@@ -149,17 +149,17 @@ const RolesForm: React.FC = () => {
 
           <div className="space-y-4">
             <div className="grid grid-cols-5 gap-4 text-left">
-              <div className="font-medium text-gray-700 text-left"> </div>
-              <div className="font-medium text-gray-700 text-left">Create</div>
-              <div className="font-medium text-gray-700 text-left">Edit</div>
-              <div className="font-medium text-gray-700 text-left">Delete</div>
-              <div className="font-medium text-gray-700 text-left">Approve</div>
+              <div className="font-medium text-gray-700 text-left text-sm"> </div>
+              <div className="font-medium text-gray-700 text-left text-sm">Create</div>
+              <div className="font-medium text-gray-700 text-left text-sm">Edit</div>
+              <div className="font-medium text-gray-700 text-left text-sm">Delete</div>
+              <div className="font-medium text-gray-700 text-left text-sm">Approve</div>
             </div>
 
             {/* Repeat for other roles */}
             {['technician', 'customer', 'workshop', 'workshopAdmin', 'jobs', 'enterprises'].map((role) => (
-              <div key={role} className="grid grid-cols-5 gap-4 text-left items-center">
-                <div>{role.charAt(0).toUpperCase() + role.slice(1)}</div>
+              <div key={role} className="grid grid-cols-5 gap-5 text-left items-center">
+                <div className='text-sm'>{role.charAt(0).toUpperCase() + role.slice(1)}</div>
                 {['create', 'edit', 'delete', 'approve'].map((action) => (
                   <label key={`${role}-${action}`} className="flex items-center cursor-pointer relative">
                     <input

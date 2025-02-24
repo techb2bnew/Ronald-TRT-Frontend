@@ -188,8 +188,8 @@ interface TechnicianForm {
   secondaryEmail?: string;
   password: string;
   confirmPassword:string;
-  payRate: string;
-  taxForms: File | null;
+  payRate: string; 
+  taxForms: File[];
   amountPercentage: string;
   role:string;
   agreeTerms:string;
@@ -216,7 +216,7 @@ export default function Technicians() {
     password: '',
     confirmPassword:'',
     payRate: '',
-    taxForms: null,
+    taxForms: [],
     amountPercentage: '',
     role:'',
     agreeTerms:'true',
@@ -256,14 +256,76 @@ export default function Technicians() {
         }));
     }
 };
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files ? e.target.files[0] : null; // Get the first file
-  setFormData(prev => ({ ...prev, taxForms: file }));
-};
+function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.src = URL.createObjectURL(file);
+    
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
 
-const handleRemoveFile = () => {
-  // Set the taxForms to null to effectively remove the file
-  setFormData({ ...formData, taxForms: null });
+      if (!ctx) {
+        reject(new Error("Canvas 2D context is not supported."));
+        return;
+      }
+
+      let width = image.width;
+      let height = image.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(image, 0, 0, width, height);
+
+      canvas.toBlob(blob => {
+        if (blob) {
+          const compressedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        } else {
+          reject(new Error('Compression failed'));
+        }
+      }, 'image/jpeg', quality);
+    };
+
+    image.onerror = () => reject(new Error('Image loading error'));
+  });
+}
+
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files ? Array.from(e.target.files) : [];
+  const maxWidth = 800; // Maximum image width
+  const maxHeight = 600; // Maximum image height
+  const quality = 0.7; // Compression quality
+
+  const compressions = files.map(file => compressImage(file, maxWidth, maxHeight, quality));
+  Promise.all(compressions)
+    .then(compressedFiles => {
+      setFormData((prev:any) => ({ ...prev, taxForms: compressedFiles }));
+    })
+    .catch(error => {
+      console.error('Compression error:', error);
+      toast.error('Failed to compress taxForms.');
+    });
+};
+ 
+const handleRemoveFile = (index: number) => {
+  const newFiles = formData.taxForms.filter((_, i) => i !== index);
+  setFormData(prev => ({ ...prev, taxForms: newFiles }));
 };
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -279,19 +341,34 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const formDataObj = new FormData();
-  Object.keys(formData).forEach(key => {
+  Object.keys(formData).forEach((key) => {
     if (key === 'confirmPassword') {
-      // Skip confirmPassword, do not append to FormData
-      return;
-  }
-      if (key === 'taxForms' && formData[key]) {
-          formDataObj.append(key, formData[key]); // Ensure file is appended correctly
-      } else {
-          // formDataObj.append(key, formData[key as keyof TechnicianForm].toString()); // Convert all values to string
-            formDataObj.append(key, String(formData[key as keyof TechnicianForm]));
+        // Skip confirmPassword, do not append to FormData
+        return;
+    }
 
-      }
-  }); 
+    const value = formData[key as keyof TechnicianForm];
+
+    if (key === 'taxForms' && value) {
+        // Handle the case where `taxForms` is a File array
+        if (Array.isArray(value)) {
+            value.forEach((file, index) => {
+                if (file && typeof file === 'object' && 'name' in file) {
+                    // Safer way to check for File objects
+                    formDataObj.append(`${key}[${index}]`, file as File);
+                }
+            });
+        } else if (value && typeof value === 'object' && 'name' in value) {
+            // Handle single file
+            formDataObj.append(key, value as File);
+        }
+    } else if (value !== undefined && value !== null) {
+        // Convert other values to string and append
+        formDataObj.append(key, String(value));
+    }
+});
+
+
   // Create headers object
   const headers: Record<string, string> = {};
   // If token exists, add it to Authorization header
@@ -531,20 +608,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {/* onChange={handleFileChange} */}
               </div>
               <div className='flex gap-4 items-center mt-5'>
-              {formData.taxForms && (
-                            <div className='flex gap-1 items-center mt-5' style={{ display: 'flex', alignItems: 'start', marginBottom: '10px' }}>
-                                {formData.taxForms.type.includes('image') ? (
-                                    <img src={URL.createObjectURL(formData.taxForms)} alt="Uploaded file" className='shadow rounded' style={{ width: 50, height: 50, marginRight: '10px', objectFit: 'cover' }} />
-                                ) : (
-                                    <a href={URL.createObjectURL(formData.taxForms)} target="_blank" rel="noopener noreferrer" className='shadow rounded' style={{ marginRight: '10px', textDecoration: 'none' }}>{formData.taxForms.name}</a>
-                                )}
-                                <button onClick={handleRemoveFile} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        )}
+              {formData.taxForms && formData.taxForms.map((file, index) => (
+    <div key={index} className='shadow rounded p-2 relative'>
+      {file instanceof File ? (
+                <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            ) : (
+                <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+            )}
+      <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position:'absolute', right:'0', top:'0' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  ))}
 
             </div>
             </div>
