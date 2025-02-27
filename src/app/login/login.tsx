@@ -47,7 +47,8 @@ export default function Login() {
             } else {
                 console.log('Login successful:', data);
                 toast.success("Login successful!");
-                localStorage.setItem('token', data.token); 
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userID', data.user.id);
                 router.push('/technicians/listing');
                 // Handle success (e.g., clearing form, redirecting)
             }

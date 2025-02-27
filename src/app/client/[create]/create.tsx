@@ -23,6 +23,7 @@ interface CustomerForm {
   state: string;
   city: string;
   zipCode: string;
+  userId: string;
 }
 
 export default function Technicians() {
@@ -35,7 +36,8 @@ export default function Technicians() {
     country: '',
     state: '',
     city: '',
-    zipCode: ''
+    zipCode: '',
+    userId:''
   }); 
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const router = useRouter();
@@ -113,29 +115,40 @@ export default function Technicians() {
     e.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-
-    // Create headers object
-    const headers: Record<string, string> = {};
-    // If token exists, add it to Authorization header
-   
+    const userId = localStorage.getItem('userID'); // ✅ Local storage se userId fetch kiya
+  
+    if (!userId) {
+      toast.error("User ID not found in localStorage!");
+      return;
+    }
+  
     try {
-    setSubmitting(true);
-
+      setSubmitting(true);
+  
+      const payload = {
+        ...formData,
+        userId, // ✅ userId ko payload mein include kiya
+        ...(isEdit && { customerId: formData.id }) // Edit case mein customerId bhi bhejna hai
+      };
+  
       const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, 
+          "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(isEdit ? { ...formData, customerId: formData.id } : formData), 
+        body: JSON.stringify(payload), // ✅ Updated payload with userId
       });
-      if (response.status  == 400) {
-        localStorage.removeItem('token');
-        router.push('/login');
-      }
+  
+      // if (response.status == 400) {
+      //   localStorage.removeItem('token');
+      //   router.push('/login');
+      //   return;
+      // }
+  
       const data = await response.json();
       if (response.ok) {
-          toast.success(data.message);
+        toast.success(data.message);
         setFormData({
           firstName: '',
           lastName: '',
@@ -145,22 +158,22 @@ export default function Technicians() {
           country: '',
           state: '',
           city: '',
-          zipCode: ''
+          zipCode: '',
+          userId: '' // ✅ Clear userId as well
         });
-        setTimeout(() => {
-        router.push('/client/listing');
-      }, 1000);
-
+   
+          router.push('/client/listing');
+        
       } else {
         toast.error(data.error);
-
       }
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');
     } finally {
-      setSubmitting(false);  // ✅ Hide loader when done
+      setSubmitting(false);
     }
   };
+  
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];

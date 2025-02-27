@@ -44,7 +44,7 @@ const TechnicianTable: React.FC = () => {
         const config = {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Token ${token}` })
+            ...(token && { 'Authorization': `Bearer ${token}` })
           }
         };
   
@@ -117,7 +117,7 @@ const TechnicianTable: React.FC = () => {
         const config = {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Token ${token}` })
+            ...(token && { 'Authorization': `Bearer ${token}` })
           }
         };
   

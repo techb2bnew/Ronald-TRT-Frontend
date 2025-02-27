@@ -68,6 +68,7 @@ const handleDeleteSuccess = (deletedId: string) => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userID');
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
@@ -79,7 +80,7 @@ const handleDeleteSuccess = (deletedId: string) => {
         // Determine correct endpoint
         const endpoint = query.trim()
           ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-          : `${apiUrl}/fetchCustomer?page=${page}`;
+          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {

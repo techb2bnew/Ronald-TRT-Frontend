@@ -78,7 +78,7 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'customerName') {
+      if (column === 'assignCustomer') {
         const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
@@ -107,8 +107,8 @@ const JobTable: React.FC = () => {
     <tr key={completejob.id}>
       <td>{completejob.id}</td>
       {/* <td>{completejob.jobDescription}</td> */}
-      <td>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</td>
-      <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td> 
+      <td>{completejob?.assignCustomer}</td>
+      {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
       <td>{completejob.vin}</td>
       <td>{completejob.make}</td>  
       <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>
@@ -151,21 +151,21 @@ const JobTable: React.FC = () => {
                 )}
               </th> */}
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
+                Assign Customer
+                {sortBy === 'assignCustomer' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
+              {/* <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
                 {sortBy === 'technicianName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
-              </th>  
+              </th>   */}
 
               <th className="w-[160px]">VIN</th>
               <th className="w-[100px]">Vehicle Make</th> 
