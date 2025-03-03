@@ -99,6 +99,7 @@ const TechnicianTable: React.FC = () => {
       });
     }
   };
+  
 
   const fetchTechnicians = async (page = 1, query = '') => {
     setLoading(true);
@@ -120,7 +121,7 @@ const TechnicianTable: React.FC = () => {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchTechnician?page=${page}`;
+        : `${apiUrl}/fetchIndividualTechnician?page=${page}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers }); 
       if (response.status == 400) {
@@ -226,9 +227,9 @@ const TechnicianTable: React.FC = () => {
       </td>
       <td> 
         <TableActions
-          editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
-          viewRoute={`/technicians/view?technicianId=${tech.id}`}
-          deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
+          editRoute={`/single-technicians/create-technician?technicianId=${tech.id}`}
+          viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
+          deleteRoute={`${apiUrl}/deleteIndividualTechnician`}  // Pass the correct endpoint
           itemId={tech.id}  // Pass the technician ID
           idKey="technicianId"
           onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
@@ -264,7 +265,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/single-technicians/create-technician" />
 
     
         <SortableTable

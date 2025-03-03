@@ -21,11 +21,9 @@ const JobTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
+  const [searchTerm, setSearchTerm] = useState(''); 
 
-  const handleSearch = (searchTerm: string) => {
-    console.log('Searching for:', searchTerm);
-    // Implement search logic here
-  };
+ 
   const handleDeleteSuccess = (deletedId: string) => {
       toast.success('Technician deleted successfully');
   
@@ -33,9 +31,9 @@ const JobTable: React.FC = () => {
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
 
-  useEffect(() => {
+  
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const fetchCompleteJobs = async () => {
+    const fetchCompleteJobs = async (page = 1, query = '') => {
       setLoading(true); 
       try {
         const token = localStorage.getItem('token');
@@ -43,15 +41,22 @@ const JobTable: React.FC = () => {
 
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const response = await fetch(`${apiUrl}/fetchCompleteJobStatus`, {
-          method: 'GET',
-          headers,
-        });
+        const endpoint = query.trim()
+        ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}`
+        : `${apiUrl}/fetchCompleteJobStatus?page=${page}`;
+
+      const response = await fetch(endpoint, { method: 'GET', headers }); 
+      
+         
 
         const data = await response.json();
 
         if (response.ok) {
-          setActiveJob(data.jobs);
+          const fetchedCustomers = query.trim()
+          ? data.jobs || []  // For search API response
+          : data.jobs || [];  // For pagination API response 
+          setTotalPages(data.admins?.totalPages || 1);
+          setActiveJob(fetchedCustomers);
           // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
           // setCurrentPage(data.jobs.currentPage); // Update current page from API
         } else {
@@ -67,9 +72,15 @@ const JobTable: React.FC = () => {
         setLoading(false);  // Hide loader after fetching
       }
     };
+ 
+  
 
-    fetchCompleteJobs();
-  }, [router]);
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+          fetchCompleteJobs(currentPage, searchTerm);
+        }, 500);
+        return () => clearTimeout(timeoutId);
+      }, [currentPage, searchTerm]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -128,7 +139,7 @@ const JobTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Completed Jobs" onSearch={handleSearch} buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Jobs"onSearch={(term) => setSearchTerm(term)} buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -177,13 +188,13 @@ const JobTable: React.FC = () => {
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={7} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={7} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>

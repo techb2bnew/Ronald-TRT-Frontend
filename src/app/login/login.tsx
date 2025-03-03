@@ -49,7 +49,12 @@ export default function Login() {
                 toast.success("Login successful!");
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userID', data.user.id);
-                router.push('/technicians/listing');
+                localStorage.setItem('types', data.user.types);
+                if (data.user.types === 'single-technician') {
+                  router.push('/client/listing');
+              } else {
+                  router.push('/technicians/listing');
+              }
                 // Handle success (e.g., clearing form, redirecting)
             }
         } catch (error) {

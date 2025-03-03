@@ -67,7 +67,7 @@ export default function IFSAdmin() {
   });
 
 
-  const fetchTechnicianData = async (technicianId: string) => {
+  const fetchTechnicianData = async (adminId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
     try {
@@ -80,12 +80,12 @@ export default function IFSAdmin() {
 
       // If token exists, add it to Authorization header
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       // Make GET request with technicianId as query parameter
-      const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
-        method: 'POST',
+      const response = await fetch(`${apiUrl}/fetchIfsSingleAdmin?adminId=${adminId}`, {
+        method: 'GET',
         headers,
       });
       if (response.status == 400) {
@@ -97,10 +97,10 @@ export default function IFSAdmin() {
       if (response.ok) {
         setFormData(prev => ({
           ...prev,
-          ...data.technician,
-          id: technicianId,
+          ...data.admins,
+          adminId: data.admins.id,
           password: '',  
-          taxForms: data.technician.taxForms || [],
+          taxForms: data.admins.taxForms || [],
         }));
       } else {
         toast.error(data.error || 'Error fetching technician data');
@@ -112,7 +112,7 @@ export default function IFSAdmin() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
     const searchParams = new URLSearchParams(window.location.search);
-    const techId = searchParams.get('technicianId') || '';
+    const techId = searchParams.get('adminId') || '';
     if (techId) {
       setIsEdit(true);  // Set to true if `technicianId` exists in the URL
       fetchTechnicianData(techId);
@@ -267,13 +267,13 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (isEdit) {
       const token = localStorage.getItem('token');
       if (token) {
-          headers['Authorization'] = `Token ${token}`;
+          headers['Authorization'] = `Bearer ${token}`;
       }
   }
 
   try {
       setSubmitting(true);
-      const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
+      const response = await fetch(`${apiUrl}/${isEdit ? 'updateIfsAdmin' : 'register'}`, {
           method: 'POST',
           body: formDataObj, // Send the FormData object without setting Content-Type header
           headers, 
@@ -423,13 +423,13 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="grid grid-cols-2 gap-4">
             <div className='mb-4'>
               {/* <p   className='text-sm mb-2'>Secondary phone number</p> */}
-              <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter secondary phone number"  variant="outlined"  value={formData.secondaryContactName}  onChange={handleChange} />
 
               
             </div> 
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Secondary Email</p> */}
-              <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
+              <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter secondary email address"  variant="outlined"  value={formData.secondaryEmail}  onChange={handleChange} />
 
                
             </div>

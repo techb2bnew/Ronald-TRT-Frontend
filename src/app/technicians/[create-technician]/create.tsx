@@ -78,7 +78,7 @@ export default function Technicians() {
 
       // If token exists, add it to Authorization header
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       // Make GET request with technicianId as query parameter
@@ -265,7 +265,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   if (isEdit) {
       const token = localStorage.getItem('token');
       if (token) {
-          headers['Authorization'] = `Token ${token}`;
+          headers['Authorization'] = `Bearer ${token}`;
       }
   }
 
