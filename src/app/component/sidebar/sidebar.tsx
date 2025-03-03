@@ -359,7 +359,8 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        {/* <li className='p-1'>
+        {userType !== 'single-technician' && (
+        <li className='p-1'>
           <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] hover:bg-white rounded ${activeLink === '/single-technicians/listing' || activeLink === '/single-technicians/create' ? 'active text-[#EF502E]' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
@@ -372,8 +373,8 @@ const Sidebar = () => {
 
             <span>Single Technician</span>
           </Link>
-        </li> */}
- 
+        </li>
+        )}
         {/* <li className='p-1'>
           <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded">
             <svg width="18" height="18" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">

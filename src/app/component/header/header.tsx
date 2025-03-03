@@ -1,6 +1,10 @@
-import Link from 'next/link';
-import React, { useState } from 'react'; 
+"use client";
+import Link from 'next/link'; 
 import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Loading from '@/app/component/loader'; 
 
 export default function Home() {
       const router = useRouter(); 
@@ -10,6 +14,49 @@ export default function Home() {
 
     const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
     const toggleNotification = () => setnotificationOpen(!notificationOpen);
+     const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
+      const [isEdit, setIsEdit] = useState<boolean>(false);
+    
+      const fetchTechnicianData = async (technicianId: string) => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    
+        try {
+          const token = localStorage.getItem('token');
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+    
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+    
+          const response = await fetch(`${apiUrl}/fetchTechnicianProfile?technicianId=${technicianId}`, {
+            method: 'GET',
+            headers,
+          });
+    
+          const data = await response.json();
+    
+          if (response.ok) {  
+            setTechnician(data.technician);  // Set the technician data
+          } else {
+            toast.error(data.error || 'Error fetching technician data');
+          }
+        } catch (error) {
+          toast.error('An error occurred while fetching technician data');
+        }
+      };
+ useEffect(() => {
+    const userID = localStorage.getItem('userID');
+
+
+    if (userID) {
+      setIsEdit(true);  // Set to true if `technicianId` exists in the URL
+      fetchTechnicianData(userID);
+    } else {
+      setIsEdit(false);
+    }
+  }, []);
 
     const logOut = async () => {
         localStorage.removeItem('token');
@@ -51,10 +98,10 @@ export default function Home() {
 
                         <div className="relative">
                             <button onClick={toggleDropdown} className="flex gap-2 items-center bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 text-sm pl-2 pr-2 pt-1 pb-1">
-                                <img width='30' height='30' src='https://i.postimg.cc/BvNYhMHS/user-img.jpg' alt='user' className='rounded-full' />
+                                <img width='30' height='30' src={technician?.taxForms?.[0] || 'https://i.postimg.cc/BvNYhMHS/user-img.jpg'} alt='user' className='rounded-full h-[30px]' />
                                 <div className='text-left'>
-                                <span className='text-sm'>Alex Mlean</span>
-                                <p className='text-xs text-gray-500'>Super Admin</p>
+                                <span className='text-sm'>{technician ? `${technician.firstName} ${technician.lastName}` : 'User'}</span>
+                                <p className='text-xs text-gray-500'>{technician?.types}</p>
                                 </div>
                             </button>
                             {dropdownOpen && (
