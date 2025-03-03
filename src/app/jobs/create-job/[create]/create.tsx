@@ -337,8 +337,12 @@ export default function Technicians() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const formDataObj = new FormData();
+    const roleType = localStorage.getItem('types');
 
     // Manually append necessary fields
+    if (roleType !== null) {
+      formDataObj.append('roleType', roleType);
+    }
     formDataObj.append('vin', formData.vin);
     formDataObj.append('make', formData.make);
     formDataObj.append('model', formData.model);
