@@ -47,9 +47,7 @@ export default function Home() {
         }
       };
  useEffect(() => {
-    const userID = localStorage.getItem('userID');
-
-
+    const userID = localStorage.getItem('userID'); 
     if (userID) {
       setIsEdit(true);  // Set to true if `technicianId` exists in the URL
       fetchTechnicianData(userID);
@@ -81,7 +79,7 @@ export default function Home() {
                         />
                     </div> */}
                     <div className="flex items-center gap-3">
-                        <div className="relative">
+                        {/* <div className="relative">
                             <button onClick={toggleNotification} className="ml-4 bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 p-3">
                             <svg width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fillRule="evenodd" clipRule="evenodd" d="M4.83066 8.16748C4.83066 4.75362 7.60429 1.97998 11.0182 1.97998C14.4229 1.97998 17.2057 4.76278 17.2057 8.16748V10.8166C17.2057 11.0136 17.2502 11.3019 17.3347 11.6099C17.4182 11.9142 17.526 12.1847 17.6241 12.3564L18.6752 14.1021C19.5053 15.4856 18.8417 17.2878 17.3125 17.7941C13.2205 19.161 8.80552 19.1608 4.71363 17.7937L4.71108 17.7929C3.93887 17.5315 3.35976 16.9911 3.10083 16.2918C2.8416 15.5917 2.92979 14.8037 3.3524 14.1014L4.40513 12.3529C4.40536 12.3525 4.40559 12.3522 4.40583 12.3518C4.50621 12.183 4.61616 11.9135 4.70102 11.6079C4.78613 11.3013 4.83066 11.0134 4.83066 10.8166V8.16748ZM11.0182 3.35498C8.36369 3.35498 6.20566 5.51301 6.20566 8.16748V10.8166C6.20566 11.1791 6.13102 11.597 6.02592 11.9756C5.92076 12.3545 5.76978 12.7491 5.58618 13.057L5.58464 13.0596L4.53057 14.8103C4.53054 14.8103 4.53061 14.8102 4.53057 14.8103C4.30246 15.1895 4.28973 15.5428 4.39027 15.8144C4.49104 16.0865 4.73197 16.348 5.15068 16.49C8.95974 17.7623 13.0688 17.7622 16.8778 16.4896L16.8799 16.4889C17.5681 16.2614 17.8757 15.4428 17.4964 14.81C17.4963 14.8099 17.4965 14.8102 17.4964 14.81L16.4359 13.0486C16.2598 12.7434 16.1123 12.3515 16.0087 11.9736C15.9052 11.5964 15.8307 11.1789 15.8307 10.8166V8.16748C15.8307 5.52218 13.6635 3.35498 11.0182 3.35498Z" fill="#1A1818"/>
@@ -94,7 +92,7 @@ export default function Home() {
                                     <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Show Notifications</a> 
                                 </div>
                             )}
-                        </div>
+                        </div> */}
 
                         <div className="relative">
                             <button onClick={toggleDropdown} className="flex gap-2 items-center bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 text-sm pl-2 pr-2 pt-1 pb-1">

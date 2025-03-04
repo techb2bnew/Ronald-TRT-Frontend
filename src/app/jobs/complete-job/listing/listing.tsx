@@ -45,12 +45,8 @@ const JobTable: React.FC = () => {
         ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}`
         : `${apiUrl}/fetchCompleteJobStatus?page=${page}`;
 
-      const response = await fetch(endpoint, { method: 'GET', headers }); 
-      
-         
-
-        const data = await response.json();
-
+      const response = await fetch(endpoint, { method: 'GET', headers });  
+        const data = await response.json(); 
         if (response.ok) {
           const fetchedCustomers = query.trim()
           ? data.jobs || []  // For search API response

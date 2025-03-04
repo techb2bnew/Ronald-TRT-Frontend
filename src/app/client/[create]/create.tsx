@@ -75,7 +75,7 @@ export default function Technicians() {
   
         // If token exists, add it to Authorization header
         if (token) {
-          headers['Authorization'] = `Token ${token}`;
+          headers['Authorization'] = `Bearer ${token}`;
         }
   
         // Make GET request with technicianId as query parameter
@@ -88,8 +88,8 @@ export default function Technicians() {
         if (response.ok) {
           setFormData(prev => ({
             ...prev,
-            ...data.customers,
-            id: data.customers.id, 
+            ...data.customers.customer,
+            id: data.customers.customer.id, 
           }));
         } else {
           toast.error(data.error || 'Error fetching technician data');
@@ -105,6 +105,7 @@ export default function Technicians() {
       console.log(customerId, 'customerIdcustomerId')
       if (customerId) {
         setIsEdit(true);  // Set to true if `customerId` exists in the URL
+        setFormData(prev => ({ ...prev, id: customerId }));
         fetchCustomerData(customerId);
       } else {
         setIsEdit(false); // Set to false if `customerId` is missing
@@ -127,8 +128,8 @@ export default function Technicians() {
   
       const payload = {
         ...formData,
-        userId, // ✅ userId ko payload mein include kiya
-        ...(isEdit && { customerId: formData.id }) // Edit case mein customerId bhi bhejna hai
+        userId,
+        ...(isEdit && { customerId: formData.id })
       };
   
       const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {

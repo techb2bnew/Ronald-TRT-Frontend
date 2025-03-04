@@ -256,12 +256,14 @@ const handleSubmit = async (e: React.FormEvent) => {
           formDataObj.append(key, String(formData[key as keyof TechnicianForm])); // Convert all values to string
       }
   }); 
+ 
   if (isEdit && formData.id) {
       formDataObj.append('technicianId', formData.id);  // Append the ID correctly
   }
   // Create headers object
   const headers: Record<string, string> = {};
   // If token exists, add it to Authorization header
+
   if (isEdit) {
       const token = localStorage.getItem('token');
       if (token) {

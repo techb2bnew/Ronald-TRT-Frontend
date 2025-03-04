@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox } from '@mui/material';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useRouter } from 'next/navigation';
 
 type Permissions = {
   [role: string]: {
@@ -14,12 +17,22 @@ type Permission = {
   isActive: boolean;
 };
 
+interface RolePayload {
+  name: string;
+  type: string;
+  permissions: { PermissionId: number; permissionName: string; isActive: boolean }[];
+  id?: string; // 👈 Make `id` optional
+}
+
 
 const RolesForm: React.FC = () => {
   const [roleName, setRoleName] = useState('');
   const [roleType, setRoleType] = useState('');
+    const router = useRouter();
   const [inactive, setInactive] = useState(false);
-
+  const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
+  const [roleId, setRoleId] = useState<string | null>(null);
+  const [allPermissions, setAllPermissions] = useState<any[]>([]);
    const [permissions, setPermissions] = useState<Permissions>({
     technician: { create: false, edit: false, delete: false, approve: false },
     customer: { create: false, edit: false, delete: false, approve: false },
@@ -28,7 +41,7 @@ const RolesForm: React.FC = () => {
     jobs: { create: false, edit: false, delete: false, approve: false },
     enterprises: { create: false, edit: false, delete: false, approve: false },
   });
-
+  console.log(permissions, 'permissionspermissions')
   const handlePermissionChange = (role: string, action: string) => {
     setPermissions((prev) => ({
       ...prev,
@@ -37,34 +50,57 @@ const RolesForm: React.FC = () => {
   };
 
   const preparePayload = () => {
-   const permissionsArray: Permission[] = []; // Explicitly type the array
-
+    const permissionsArray: { 
+      RoleId?: number; 
+      PermissionId: number; 
+      permissionName: string; 
+      actions: string; 
+      isActive: boolean; 
+    }[] = []; // Explicitly type the array with RoleId & PermissionId
+  
     // Loop over roles and their actions
     Object.keys(permissions).forEach((role) => {
       Object.keys(permissions[role]).forEach((action) => {
         if (permissions[role][action]) {
+          // Find the corresponding permission from `allPermissions`
+          const permissionObj = allPermissions.find(
+            (p) => p.permissionName.toLowerCase().trim() === role.toLowerCase().trim()
+          );
+  
+          // Push the permission object with RoleId & PermissionId
           permissionsArray.push({
-            permissionName: role.charAt(0).toUpperCase() + role.slice(1), // Capitalize the first letter of the role
+            RoleId: isEdit && roleId ? Number(roleId) : undefined, // Only send RoleId in edit mode
+            PermissionId: permissionObj ? permissionObj.id : 0, // Get ID from API response
+            permissionName: role.charAt(0).toUpperCase() + role.slice(1), // Capitalize role
             actions: action,
             isActive: true,
           });
         }
       });
     });
+  
     const payload = {
       name: roleName || 'defaultRoleName',
       type: roleType,
       permissions: permissionsArray,
+      id: isEdit ? roleId : undefined, // Send roleId only in edit mode
     };
-
-    console.log(payload); // This is the payload you'd send to your API
+  
+    console.log("📤 Final Payload:", payload);
     return payload;
   };
+  
+  
+  
+  
+  
+  
+
 
   const handleSave = async () => {
     const payload = preparePayload();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''; // Use environment variable or empty string
-    const endpoint = `${apiUrl}/createRole`; // API Endpoint
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''; // Use environment variable or empty string 
+    const endpoint = isEdit ? `${apiUrl}/roles/updateRole` : `${apiUrl}/createRole`;
 
     try {
         const response = await fetch(endpoint, {
@@ -81,22 +117,114 @@ const RolesForm: React.FC = () => {
         }
 
         const data = await response.json();
-        console.log("Success:", data); // Handle success response
-
-        alert("Role updated successfully!");
-    } catch (error) {
-        console.error("Error updating role:", error);
-        alert("Failed to update role. Please try again.");
+        console.log("Success:", data); // Handle success response 
+         toast.success(`Role ${isEdit ? 'updated' : 'created'} successfully!`);
+         router.push('/role/listing');
+    } catch (error) { 
+        toast.error(`Failed to ${isEdit ? 'update' : 'create'} role. Please try again.`);
     }
 };
 
+
+const fetchRoleData = async (roleId: string) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  try {
+    const token = localStorage.getItem('token');
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${apiUrl}/roles/getRoleById?roleId=${roleId}`, {
+      method: 'GET',
+      headers,
+    });
+
+    const data = await response.json();
+    console.log('API Response:', data); // ✅ Check full API response
+
+    if (!response.ok) throw new Error(data.error || 'Error fetching role data');
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.error('❌ API response is not an array or is empty:', data);
+      return;
+    }
+
+    const roleData = data[0]; // ✅ Extract first object from the array
+    console.log('Extracted Role Data:', roleData);
+
+    setRoleName(roleData.name || ''); 
+    setRoleType(roleData.type || ''); 
+    setRoleId(roleData.id || ''); 
+    setAllPermissions(roleData.Permissions || []);
+    if (!roleData.Permissions || !Array.isArray(roleData.Permissions)) {
+      console.error('❌ Permissions array is missing or invalid:', roleData.Permissions);
+      return;
+    }
+
+    // ✅ Default permissions structure
+    const updatedPermissions: Permissions = {
+      technician: { create: false, edit: false, delete: false, approve: false },
+      customer: { create: false, edit: false, delete: false, approve: false },
+      workshop: { create: false, edit: false, delete: false, approve: false },
+      workshopAdmin: { create: false, edit: false, delete: false, approve: false },
+      jobs: { create: false, edit: false, delete: false, approve: false },
+      enterprises: { create: false, edit: false, delete: false, approve: false },
+    };
+
+    roleData.Permissions.forEach((perm: any) => {
+      console.log('🔹 Permission Object:', perm);
+
+      if (!perm.permissionName || !perm.RolePermissions) {
+        console.warn('⚠️ Missing permissionName or RolePermissions:', perm);
+        return;
+      }
+
+      const roleKey = perm.permissionName.toLowerCase();
+      console.log(roleKey, 'rolekey >>>>>>');
+
+      if (perm.RolePermissions.isActive) {
+        const action = perm.RolePermissions.action;
+        console.log(`✅ Setting Permission: ${roleKey} -> ${action}`);
+
+        if (updatedPermissions[roleKey]) {
+          updatedPermissions[roleKey][action] = true;
+        }
+      }
+    });
+
+    setPermissions(updatedPermissions);
+  } catch (error) {
+    console.error('❌ Error fetching role data:', error);
+    toast.error('An error occurred while fetching role data');
+  }
+};
+
+
+
+ useEffect(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const roleId = searchParams.get('roleId') || '';
+      console.log(roleId, 'roleIdroleId')
+      if (roleId) {
+        setIsEdit(true);  // Set to true if `roleId` exists in the URL 
+        setRoleId(roleId);
+        fetchRoleData(roleId);
+      } else {
+        setIsEdit(false); // Set to false if `roleId` is missing
+      } 
+    }, []);
 
   return (
     <div className="container mx-auto p-6 bg-gray-50">
       <div className="flex gap-12">
         {/* Create Roles */}
         <div className="w-[40%] bg-white p-6 shadow-lg rounded-lg">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Create Roles</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">{isEdit ? 'Edit Role' : 'Create Role'}</h2>
 
           <div className="mb-5">
             <TextField

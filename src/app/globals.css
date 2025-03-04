@@ -182,3 +182,12 @@ table.table.w-full.table-fixed tbody tr {
 .MuiSelect-select{
       padding: 5.5px 14px !important;
 }
+.edit_img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50px;
+}

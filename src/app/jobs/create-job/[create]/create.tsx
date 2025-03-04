@@ -96,6 +96,7 @@ export default function Technicians() {
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [userType, setUserType] = useState<string | null>(null);
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
   ]);
@@ -198,7 +199,10 @@ export default function Technicians() {
     }
   };
 
-
+  React.useEffect(() => { 
+    const type = localStorage.getItem('types');
+    setUserType(type); 
+  });
 
   // Fetch Customers api
   const fetchData = async (endpoint: string, setState: (data: any) => void, params: Record<string, string> = {}) => {
@@ -338,7 +342,7 @@ export default function Technicians() {
     const token = localStorage.getItem('token');
     const formDataObj = new FormData();
     const roleType = localStorage.getItem('types');
-
+    const userId = localStorage.getItem('userID');
     // Manually append necessary fields
     if (roleType !== null) {
       formDataObj.append('roleType', roleType);
@@ -383,7 +387,13 @@ export default function Technicians() {
       formDataObj.append(`jobDescription[${index}][jobDescription]`, desc.description);
       formDataObj.append(`jobDescription[${index}][cost]`, desc.cost);
     });
-    formData.assignTechnicians.forEach((techId) => {
+    let assignTechnicians = [...(formData.assignTechnicians || [])];
+    if (roleType === "single-technician" && userId) {
+      if (!assignTechnicians.includes(userId)) {
+        assignTechnicians.push(userId); // Add the logged-in technician's ID
+      }
+    }
+    assignTechnicians.forEach((techId) => {
       formDataObj.append('assignTechnicians[]', techId);
     });
 
@@ -804,6 +814,7 @@ export default function Technicians() {
                 </FormControl>
 
               </div>
+              {userType !== 'single-technician' && (
               <div className='mb-4'>
                 {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
                 <FormControl fullWidth size="small">
@@ -833,6 +844,7 @@ export default function Technicians() {
                 </FormControl>
 
               </div>
+              )}
             </div>
             {descriptionCostFields.map((field, index) => (
               <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">

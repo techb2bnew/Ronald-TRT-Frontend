@@ -163,11 +163,11 @@ const Sidebar = () => {
                         </Link>
                       </li> 
                       
-                      <li  >
+                      {/* <li  >
                         <Link href="/admin/listing"  className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/admin/listing' || activeLink === '/admin/create' ? 'active text-[#EF502E]' : ''}`}  >
                           Admin 
                         </Link>
-                      </li> 
+                      </li>  */}
                       
                       <li >
                         <Link href="/client/listing"   className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#EF502E]' : ''}`}   >
@@ -181,7 +181,7 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        {userType !== 'single-technician' && (
+        {/* {userType !== 'single-technician' && (
           <li className='p-1'>
           <button onClick={handleEnterpriceDropdown} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser4Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>  
@@ -264,7 +264,7 @@ const Sidebar = () => {
             </ul>
           )}
         </li>
-        )}
+        )} */}
         <li className='p-1'>
           <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded w-full ${isUser3Open ? 'active bg-white text-[#EF502E]' : ''}`}>
             <div className='flex items-center gap-2'>

@@ -46,7 +46,7 @@ const JobTable: React.FC = () => {
   
         const data = await response.json();
         if (response.ok) {
-          setActiveJob((prevJobs) => [...data.jobs.jobs, ...prevJobs]); 
+          setActiveJob(data.jobs.jobs); 
           setTotalPages(data.jobs.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
