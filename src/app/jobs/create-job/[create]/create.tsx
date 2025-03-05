@@ -618,7 +618,7 @@ export default function Technicians() {
           </div>
         ) : (
           <form className="" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 mb-4" style={{ display:'none'}}>
               <FormControl fullWidth size="small">
                 <InputLabel id="role-label" color="warning">Select role*</InputLabel>
                 <Select

@@ -51,7 +51,7 @@ const handleDeleteSuccess = (deletedId: string) => {
         // Determine correct endpoint
         const endpoint = query.trim()
           ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
+          : `${apiUrl}/fetchAllCustomer?page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
@@ -197,7 +197,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create IFS Customer" buttonLink="/client/create" />
+      <CommonHeader heading='All Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create IFS Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

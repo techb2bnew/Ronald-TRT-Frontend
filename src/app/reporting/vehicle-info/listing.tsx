@@ -12,13 +12,8 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-interface Jobs {
-  id: string;
-  name: string;
-  email: string;
-  deletedStatus?: boolean;
-}
-const JobTable: React.FC = () => {
+
+const VehicleTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
@@ -26,7 +21,6 @@ const JobTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
-  const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -38,29 +32,22 @@ const JobTable: React.FC = () => {
       // ✅ Remove the deleted technician from the table
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
-    const fetchJobs = async (page = 1, query = '') => {
+    const fetchJobs = useCallback(async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-
-        const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchAllJobs?page=${page}`;
-
-        const response = await fetch(endpoint, { method: 'GET', headers });
+  
+        const response = await fetch(`${apiUrl}/fetchVehicalInfo?page=${currentPage}`, {
+          method: 'GET',
+          headers,
+        });
   
         const data = await response.json();
         if (response.ok) {
-          const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.ActiveJob || []
-          : data.jobs?.jobs || [];
-         const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
-
-         setActiveJob(filteredTechnicians);
-        setTotalPages(data.jobs?.totalPages || 1); 
- 
+          setActiveJob(data.jobs.jobs); 
+          setTotalPages(data.jobs.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
             router.push('/login');
@@ -73,18 +60,13 @@ const JobTable: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
+    }, [currentPage, router]);
  
   
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
 
-
-  
+    useEffect(() => {
+      fetchJobs();
+    }, [fetchJobs]);
 
 
 
@@ -114,79 +96,7 @@ const JobTable: React.FC = () => {
     setActiveJob(sortedJobs);
   };
 
-
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#EF502E',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-  
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-  
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-  
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-  
-        if (response.data.status ) {
-          // Optimistically update the local state
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === jobId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor:'#EF502E',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
+ 
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -234,13 +144,8 @@ const downloadCSV = () => {
     </div>
   ))}</td>
       <td>{job.vin}</td> 
-      <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
-        <span
-          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-        >
-          {job.jobStatus ? 'Completed' : 'In Progress'}
-        </span>
-      </td> 
+       <td>red</td>
+       <td>red</td>
       <td>
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
@@ -256,14 +161,14 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Active Jobs" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Vehicle Info" onSearch={handleSearch}  onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
+              <th className="w-[100px]" onClick={() => handleSort('id')}>
+                Vehicle ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -271,7 +176,7 @@ const downloadCSV = () => {
                 )}
               </th> 
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Customer Name
+                Job ID
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
@@ -279,27 +184,28 @@ const downloadCSV = () => {
                 )}
               </th>
               <th className="w-[150px]">
-                Customer Number 
+              VIN
               </th>
               <th className="w-[120px]" >
-                Technician Name 
+              Make
               </th> 
-              <th className="w-[100px]">Tech. Number</th> 
-              <th className="w-[160px]">VIN</th> 
-              <th className="w-[120px]">Status</th>
+              <th className="w-[100px]">Model</th> 
+              <th className="w-[60px]">Year</th> 
+              <th className="w-[50px]">Color</th>
+              <th className="w-[120px]">Stock Number</th>
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-10">
+                            <td colSpan={9} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-10">
+                            <td colSpan={9} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>
@@ -314,4 +220,4 @@ const downloadCSV = () => {
   );
 };
 
-export default JobTable;
+export default VehicleTable;

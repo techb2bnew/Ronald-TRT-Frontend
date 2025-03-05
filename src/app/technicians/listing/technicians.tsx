@@ -13,7 +13,12 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-
+interface Technicians {
+  id: string;
+  name: string;
+  email: string;
+  deletedStatus?: boolean;
+}
 const TechnicianTable: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
@@ -24,7 +29,7 @@ const TechnicianTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const toggleTechnicianStatus = async (technicianId: number, currentApprovalStatus: boolean) => {
+  const toggleTechnicianStatus = async (technicianId: number, newStatus: boolean) => {
     // Show confirmation dialog
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -50,11 +55,11 @@ const TechnicianTable: React.FC = () => {
         const [approvalResponse, statusResponse] = await Promise.all([
           axios.post(`${apiUrl}/technicianActiveUnactiveAccount`, {
             technicianId,
-            isApproved: !currentApprovalStatus
+            isApproved: newStatus
           }, config),
           axios.post(`${apiUrl}/updateTechnicianAccountStatus`, {
             technicianId,
-            accountStatus: !currentApprovalStatus
+            accountStatus: newStatus
           }, config)
         ]);
   
@@ -129,14 +134,15 @@ const TechnicianTable: React.FC = () => {
       }
       const data = await response.json(); 
       if (response.ok) {
-         // Handle technicians array for both APIs correctly
-         const fetchedTechnicians = query.trim()
-         ? data.technicians || []  // For search API response
-         : data.technician?.technicians || [];  // For pagination API response
+         // Handle technicians array for both APIs correctly 
 
-        setTechnicians(fetchedTechnicians);
-        // setTechnicians((prevTechnicians) => [...fetchedTechnicians, ...prevTechnicians]);
-        setTotalPages(data.technician?.totalPages || 1);
+         const fetchedTechnicians: Technicians[] = query.trim()
+            ? data.technicians || []
+            : data.technician?.technicians || [];
+           const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
+
+           setTechnicians(filteredTechnicians);
+          setTotalPages(data.technician?.totalPages || 1); 
       } else {
         console.error('Error fetching technicians:', );
       } 
@@ -195,14 +201,50 @@ const TechnicianTable: React.FC = () => {
  
 
   // Render row function for SortableTable
-  const renderRow = (tech: any) => (
+  const renderRow = (tech: any) => {
+
+        const [status, setStatus] = useState("");
+      
+          useEffect(() => {
+            // Check if status is already set in localStorage
+            const storedStatus = localStorage.getItem(`techStatus_${tech.id}`);
+            if (storedStatus) {
+              setStatus(storedStatus);
+            } else {
+              // Set initial status based on accountStatus
+              if (tech.accountStatus === false) {
+                setStatus("Accept");
+              } else if (tech.accountStatus === true) {
+                setStatus("Approved");
+              } else {
+                setStatus("Restricted");
+              }
+            }
+          }, [tech.accountStatus, tech.id]);
+        
+          const handleStatusChange = async () => {
+            let newStatus;
+            if (status === "Accept") {
+              newStatus = "Approved";
+            } else {
+              newStatus = status === "Approved" ? "Restricted" : "Approved";
+            }
+        
+            // Update status in the backend
+            await toggleTechnicianStatus(tech.id, newStatus === "Approved");
+        
+            // Update status in localStorage and state
+            localStorage.setItem(`techStatus_${tech.id}`, newStatus);
+            setStatus(newStatus);
+          };
+        return (
     <tr key={tech.id}>
       <td>{tech.id}</td>
       <td>{tech.firstName} {tech.lastName}</td>
       <td>{tech.email}</td>
       <td>{tech.phoneNumber}</td>
       {/* <td>{tech.payRate}</td> */}
-       <td onClick={() => toggleTechnicianStatus(tech.id, tech.accountStatus)} style={{ cursor: 'pointer' }}>
+       <td onClick={handleStatusChange} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${tech.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -217,11 +259,17 @@ const TechnicianTable: React.FC = () => {
           <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg></Link>
         </td>
-      <td onClick={() => toggleTechnicianStatus(tech.id, tech.isApproved)} style={{ cursor: 'pointer' }}>
-        <span
-          className={`badge ${tech.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+      <td onClick={handleStatusChange} style={{ cursor: 'pointer' }}>
+      <span
+          className={`badge ${
+            status === "Accept"
+              ? "bg-blue-100 text-blue-700 p-2 pl-4 pr-4 rounded shadow"
+              : status === "Approved"
+              ? "bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow"
+              : "bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow"
+          }`}
         >
-          {tech.isApproved ? 'Approved' : 'Disapproved'}
+          {status}
         </span>
       </td>
       <td> 
@@ -236,6 +284,7 @@ const TechnicianTable: React.FC = () => {
       </td>
     </tr>
   );
+}
 
 
    // CSV Export Functions

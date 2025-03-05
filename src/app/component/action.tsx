@@ -44,7 +44,10 @@ const TableActions: React.FC<TableActionsProps> = ({ viewRoute, editRoute, delet
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const body = JSON.stringify({ [idKey]: itemId });
+      const body = JSON.stringify({ 
+        [idKey]: itemId, 
+        deletedStatus: true // ✅ Sending deletedStatus as true 
+      });
       // ✅ Send the itemId in the body of the request
       const response = await fetch(deleteRoute, {
         method: 'POST',

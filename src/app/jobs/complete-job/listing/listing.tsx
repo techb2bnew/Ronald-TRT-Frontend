@@ -12,7 +12,12 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-
+interface Jobs {
+  id: string;
+  name: string;
+  email: string;
+  deletedStatus?: boolean;
+}
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
@@ -48,11 +53,14 @@ const JobTable: React.FC = () => {
       const response = await fetch(endpoint, { method: 'GET', headers });  
         const data = await response.json(); 
         if (response.ok) {
-          const fetchedCustomers = query.trim()
+        
+
+           const fetchedTechnicians: Jobs[] = query.trim()
           ? data.jobs || []  // For search API response
           : data.jobs || [];  // For pagination API response 
+          const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
           setTotalPages(data.admins?.totalPages || 1);
-          setActiveJob(fetchedCustomers);
+          setActiveJob(filteredJobs);
           // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
           // setCurrentPage(data.jobs.currentPage); // Update current page from API
         } else {

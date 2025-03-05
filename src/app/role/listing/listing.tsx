@@ -12,7 +12,12 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-
+interface Roles {
+  id: string;
+  name: string;
+  email: string;
+  deletedStatus?: boolean;
+}
 const RoleTable: React.FC = () => {
   const [activeRole, setActiveRoles] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
@@ -21,6 +26,7 @@ const RoleTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -32,7 +38,7 @@ const RoleTable: React.FC = () => {
       // ✅ Remove the deleted technician from the table
       setActiveRoles((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
-    const fetchRoles = useCallback(async () => {
+    const fetchRoles = async (page = 1, query = '') => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
@@ -46,8 +52,13 @@ const RoleTable: React.FC = () => {
     
         const data = await response.json();
         if (response.ok) {
-          setActiveRoles(data.roles || []); // ✅ Ensure roles is an array
-          setTotalPages(data.totalPages);
+
+          const fetchedTechnicians: Roles[] = query.trim()
+          ? data.roles || []  // For search API response
+          : data.roles || [];  // For pagination API response
+          const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
+          setActiveRoles(filteredSingleTechnician); 
+         setTotalPages(data.totalPages || 1); 
         } else {
           if (data.error === 'Invalid Token') {
             router.push('/login');
@@ -60,14 +71,17 @@ const RoleTable: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    }, [currentPage, router]);
+    };
     
  
-  
-
-    useEffect(() => {
-        fetchRoles();
-    }, [fetchRoles]);
+   
+ // Unified useEffect to handle both search and pagination
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchRoles(currentPage, searchTerm);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm]);
 
 
 
@@ -98,79 +112,7 @@ const RoleTable: React.FC = () => {
   };
 
 
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#EF502E',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-  
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-  
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-  
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-  
-        if (response.data.status ) {
-          // Optimistically update the local state
-          setActiveRoles(prev => prev.map(role => {
-            if (role.id === jobId) {
-              return { ...role, jobStatus: !role.jobStatus };
-            }
-            return role;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor:'#EF502E',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
-
+ 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
     setCurrentPage(data.selected + 1);
@@ -229,7 +171,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Roles" onSearch={handleSearch}  onExport={downloadCSV} buttonLabel="Create role" buttonLink="/role/create" />
+      <CommonHeader heading="Roles" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} buttonLabel="Create role" buttonLink="/role/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

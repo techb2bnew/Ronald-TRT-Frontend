@@ -29,7 +29,7 @@ export default function ViewDetails() {
       const data = await response.json();
 
       if (response.ok) {  
-        setCustomerData(data.customers);  // Set the  CustomerData data
+        setCustomerData(data.customers.customer);  // Set the  CustomerData data
       } else {
         toast.error(data.error || 'Error fetching technician data');
       }

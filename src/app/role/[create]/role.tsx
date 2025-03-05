@@ -260,7 +260,7 @@ const fetchRoleData = async (roleId: string) => {
               </Select>
             </FormControl>
           </div>
-
+{/* 
           <div className="flex items-center mb-4">
             <input
               type="checkbox"
@@ -269,7 +269,7 @@ const fetchRoleData = async (roleId: string) => {
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
             />
             <label className="ml-2 text-sm text-gray-700">Inactive</label>
-          </div>
+          </div> */}
         </div>
 
         {/* Permissions */}

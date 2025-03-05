@@ -96,7 +96,7 @@ export default function Home() {
 
                         <div className="relative">
                             <button onClick={toggleDropdown} className="flex gap-2 items-center bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 text-sm pl-2 pr-2 pt-1 pb-1">
-                                <img width='30' height='30' src={technician?.taxForms?.[0] || 'https://i.postimg.cc/BvNYhMHS/user-img.jpg'} alt='user' className='rounded-full h-[30px]' />
+                                <img width='30' height='30' src={technician?.image || 'https://i.postimg.cc/BvNYhMHS/user-img.jpg'} alt='user' className='rounded-full h-[30px]' />
                                 <div className='text-left'>
                                 <span className='text-sm'>{technician ? `${technician.firstName} ${technician.lastName}` : 'User'}</span>
                                 <p className='text-xs text-gray-500'>{technician?.types}</p>

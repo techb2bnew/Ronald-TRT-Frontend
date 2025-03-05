@@ -190,9 +190,10 @@ interface registerForm {
   confirmPassword: string;
   payRate: string;
   taxForms: File[];
+  image: File | null;
   amountPercentage: string;
   role: string;
-  types:string;
+  types: string;
   agreeTerms: string;
 }
 export default function Role() {
@@ -203,6 +204,8 @@ export default function Role() {
   const [loading, setLoading] = useState<boolean>(true);
   const [roles, setRoles] = useState<any[]>([]);
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<registerForm>({
     firstName: '',
@@ -220,9 +223,10 @@ export default function Role() {
     confirmPassword: '',
     payRate: '',
     taxForms: [],
+    image: null,
     amountPercentage: '',
     role: '',
-    types:'',
+    types: '',
     agreeTerms: 'true',
   });
 
@@ -242,7 +246,7 @@ export default function Role() {
         types: selectedRole ? selectedRole.type : "", // Auto-fill role type
       }));
     }
-   
+
 
   };
 
@@ -338,72 +342,97 @@ export default function Role() {
     setFormData(prev => ({ ...prev, taxForms: newFiles }));
   };
 
-  
+
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; // Sirf ek file lene ke liye
+    if (!file) return;
+
+    const maxWidth = 800; // Maximum image width
+    const maxHeight = 600; // Maximum image height
+    const quality = 0.7; // Compression quality
+
+    try {
+      const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
+      setFormData((prev: any) => ({ ...prev, image: compressedFile }));
+    } catch (error) {
+      console.error('Compression error:', error);
+      toast.error('Failed to compress image.');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev: any) => ({ ...prev, image: null }));
+  };
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.confirmPassword !== formData.password) {
-        setErrors(prev => ({
-            ...prev,
-            confirmPassword: 'Passwords do not match'
-        }));
-        return; // Stop the function if passwords do not match
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: 'Passwords do not match'
+      }));
+      return; // Stop the function if passwords do not match
     }
-  
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const formDataObj = new FormData();
     Object.keys(formData).forEach(key => {
-        if (key === 'confirmPassword') {
-            // Skip confirmPassword, do not append to FormData
-            return;
-        }
-        if (key === 'taxForms' && formData[key]) {
-            formData[key].forEach(file => {
-                formDataObj.append('taxForms', file); // Append each file to FormData
-            });
-        } else {
-            formDataObj.append(key, String(formData[key as keyof registerForm])); // Convert all values to string
-        }
-    });  
+      if (key === 'confirmPassword') {
+        // Skip confirmPassword, do not append to FormData
+        return;
+      }
+      if (key === 'taxForms' && formData[key]) {
+        formData[key].forEach(file => {
+          formDataObj.append('taxForms', file); // Append each file to FormData
+        });
+      } else if (key !== 'image'){
+        formDataObj.append(key, String(formData[key as keyof registerForm])); // Convert all values to string
+      }
+    });
+    if (formData.image) {
+      formDataObj.append('image', formData.image);
+    }
     // Create headers object
     const headers: Record<string, string> = {};
     // If token exists, add it to Authorization header
     if (isEdit) {
-        const token = localStorage.getItem('token');
-        if (token) {
-            headers['Authorization'] = `Token ${token}`;
-        }
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
     }
-  
+
     try {
-        setSubmitting(true);
-        const response = await fetch(`${apiUrl}/${'register'}`, {
-            method: 'POST',
-            body: formDataObj, // Send the FormData object without setting Content-Type header
-            headers, 
-        });
-  
-        const data = await response.json();
-  
-        if (!response.ok) {
-            if (data.errors) {
-                setErrors(prev => ({ ...prev, ...data.errors }));
-                Object.values(data.errors).forEach(error => {
-                    toast.error(data.error);
-                });
-            } else if (data.error) {
-                setErrors(prev => ({ ...prev, general: data.error }));
-                toast.error(data.error);
-            }
-        } else {
-            toast.success(data.message);
-            router.push('/login');
+      setSubmitting(true);
+      const response = await fetch(`${apiUrl}/${'register'}`, {
+        method: 'POST',
+        body: formDataObj, // Send the FormData object without setting Content-Type header
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(prev => ({ ...prev, ...data.errors }));
+          Object.values(data.errors).forEach(error => {
+            toast.error(data.error);
+          });
+        } else if (data.error) {
+          setErrors(prev => ({ ...prev, general: data.error }));
+          toast.error(data.error);
         }
+      } else {
+        toast.success(data.message);
+        router.push('/login');
+      }
     } catch (error: any) {
-        toast.error(error.message || 'An unexpected error occurred');
-    }  finally {
-        setSubmitting(false);  // ✅ Hide loader when done
+      toast.error(error.message || 'An unexpected error occurred');
+    } finally {
+      setSubmitting(false);  // ✅ Hide loader when done
     }
   };
 
@@ -498,9 +527,9 @@ export default function Role() {
                         name="role"
                         onChange={handleSelectChange}
                       >
-                         {roles.map((role, index) => (
-                            <MenuItem key={index} value={role.name}>{role.name}</MenuItem> // Adjust role.name if the role object has a different structure
-                          ))}
+                        {roles.map((role, index) => (
+                          <MenuItem key={index} value={role.name}>{role.name}</MenuItem> // Adjust role.name if the role object has a different structure
+                        ))}
                       </Select>
                     </FormControl>
                   </div>
@@ -517,7 +546,7 @@ export default function Role() {
                         disabled
                         onChange={handleSelectChange}
                       >
-                         {formData.types ? (
+                        {formData.types ? (
                           <MenuItem value={formData.types}>{formData.types}</MenuItem>
                         ) : (
                           <MenuItem value="">Select a role first</MenuItem>
@@ -658,7 +687,7 @@ export default function Role() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1">
+                <div className="grid grid-cols-2 gap-4">
 
                   <div className='mb-0'>
                     {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
@@ -682,7 +711,7 @@ export default function Role() {
                           ) : (
                             <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
                           )}
-                          <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                          <button type='button' onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
@@ -692,7 +721,35 @@ export default function Role() {
 
                     </div>
                   </div>
-                  {/* <p className='mb-4'><b>Role:</b> IFS Admin</p> */}
+
+                  <div className='mb-0'>
+                    <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
+                      <label className="label text-center">
+                        <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="..." fill="#EF502E" />
+                        </svg>
+                        <p className='text-sm mb-1 mt-1'>Upload Profile Image</p>
+                        <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                      </label>
+                      <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
+                    </div>
+
+                    {formData.image && (
+                      <div className='flex items-center mt-5 shadow rounded p-2 relative'>
+                        {formData.image instanceof File ? (
+                          <img src={URL.createObjectURL(formData.image)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                        ) : (
+                          <img src={formData.image} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                        )}
+                        <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
 
                 </div>
 

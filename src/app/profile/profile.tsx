@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import user from '../../../public/user.png';
-import Edit from '../../../public/edit.svg'
+import Edit from '../../../public/upload.png'
 
 export default function ProfileCard() { 
         const [selectedImage, setSelectedImage] = useState<string | null>(null); 
@@ -184,7 +184,7 @@ export default function ProfileCard() {
       <div className="flex items-center space-x-4 bg-white shadow-lg p-6">
         <div className="relative h-[80px] w-[80px]"> 
           {technician && technician.image ? (
-              <img src={technician.image} alt="Profile image"  className="rounded-full object-cover h-[80px]" />
+              <img src={technician.image} alt="Profile image"  className="rounded-full object-cover h-[80px] w-[80px]" />
             ) : (
               <Image src={user} alt="Default profile image" layout="fill" className="rounded-full" />
             )}
@@ -204,21 +204,21 @@ export default function ProfileCard() {
         <h3 className="font-semibold text-lg">Personal Information</h3>
         <div className="mt-4">
           <div className="grid grid-cols-6 gap-4">
-            <div><p className='text-gray-600'>First Name:</p> <p>{technician?.firstName}</p></div>
-            <div><p className='text-gray-600'>Last Name:</p> <p>{technician?.lastName}</p></div>
+            <div><p className='text-gray-600'>First Name:</p> <p className='text-sm'>{technician?.firstName}</p></div>
+            <div><p className='text-gray-600'>Last Name:</p> <p className='text-sm'>{technician?.lastName}</p></div>
             <div><p className='text-gray-600'>Date of Birth:</p> <p>12-10-1991</p></div>
-            <div><p className='text-gray-600'>Email Address:</p> <p>{technician?.email}</p></div>
-            <div><p className='text-gray-600'>Phone Number:</p> <p>{technician?.phoneNumber}</p></div>
-            <div><p className='text-gray-600'>User Role:</p> <p>{technician?.types}</p></div>
+            <div><p className='text-gray-600'>Email Address:</p> <p className='text-sm'>{technician?.email}</p></div>
+            <div><p className='text-gray-600'>Phone Number:</p> <p className='text-sm'>{technician?.phoneNumber}</p></div>
+            <div><p className='text-gray-600'>User Role:</p> <p className='text-sm'>{technician?.types}</p></div>
           </div>
         </div>
         </div>
         <div className="mt-4 bg-white shadow-lg p-6 rounded-lg">
           <h3 className="font-semibold text-lg">Address</h3>
-          <div className="grid grid-cols-6 gap-4">
-            <div><p className='text-gray-600'>Country:</p> <p>{technician?.country}</p></div>
-            <div><p className='text-gray-600'>City:</p> <p>{technician?.city}</p></div>
-            <div><p className='text-gray-600'>Zip Code:</p> <p>{technician?.zipCode}</p></div>
+          <div className="grid grid-cols-6 gap-4 mt-4">
+            <div><p className='text-gray-600'>Country:</p> <p className='text-sm'>{technician?.country}</p></div>
+            <div><p className='text-gray-600'>City:</p> <p className='text-sm'>{technician?.city}</p></div>
+            <div><p className='text-gray-600'>Zip Code:</p> <p className='text-sm'>{technician?.zipCode}</p></div>
           </div>
         </div> 
     </div>
