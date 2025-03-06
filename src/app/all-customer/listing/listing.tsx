@@ -64,9 +64,9 @@ const handleDeleteSuccess = (deletedId: string) => {
            const fetchedCustomers: Customer[] = query.trim()
             ? data.customers || []
             : data.customers?.customers || [];
-           const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
+          //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
 
-           setCustomer(filteredCustomers);
+           setCustomer(fetchedCustomers);
           setTotalPages(data.customers?.totalPages || 1);
         } else {
           if (data.error === 'Invalid Token') {

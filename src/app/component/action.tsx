@@ -63,7 +63,7 @@ const TableActions: React.FC<TableActionsProps> = ({ viewRoute, editRoute, delet
           onDeleteSuccess();  // Execute callback after deletion 
         }
       } else {
-        Swal.fire('Error!', data.error || 'Failed to delete the item.', 'error');
+        Swal.fire('Error!', data.message || 'Failed to delete the item.', 'error');
       }
     } catch (error) {
       Swal.fire('Error!', 'An error occurred while deleting the item.', 'error');

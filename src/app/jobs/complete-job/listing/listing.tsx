@@ -18,7 +18,7 @@ interface Jobs {
   email: string;
   deletedStatus?: boolean;
 }
-const JobTable: React.FC = () => {
+const CompletedJobs: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
@@ -56,11 +56,11 @@ const JobTable: React.FC = () => {
         
 
            const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.jobs || []  // For search API response
-          : data.jobs || [];  // For pagination API response 
-          const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
-          setTotalPages(data.admins?.totalPages || 1);
-          setActiveJob(filteredJobs);
+          ? data.ActiveJob || []  // For search API response
+          : data.jobs.jobs || [];  // For pagination API response 
+          // const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
+          setTotalPages(data.jobs.totalPages);
+          setActiveJob(fetchedTechnicians);
           // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
           // setCurrentPage(data.jobs.currentPage); // Update current page from API
         } else {
@@ -113,17 +113,32 @@ const JobTable: React.FC = () => {
   };
 
  
-  // const handlePageChange = (data: { selected: number }) => {
-  //   console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
-  //   setCurrentPage(data.selected + 1);
-  // };
+  const handlePageChange = (data: { selected: number }) => {
+    console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
+    setCurrentPage(data.selected + 1);
+  };
 
-  const renderRow = (completejob: any) => (
+  const renderRow = (completejob: any) => {
+
+  const totalCost = completejob.jobDescription.reduce((sum: number, job: any) => {
+    const parsedJob = JSON.parse(job);
+    return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
+  }, 0);
+
+
+    return (
+      <>
     <tr key={completejob.id}>
       <td>{completejob.id}</td>
       {/* <td>{completejob.jobDescription}</td> */}
-      <td>{completejob?.assignCustomer}</td>
+      <td>{completejob?.customer.firstName} {completejob?.customer.lastName}</td>
+      <td>  {completejob?.technicians?.map((tech: any) => (
+        <div key={tech.id}>
+      {tech.firstName} {tech.lastName}
+    </div>
+  ))}</td>
       {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
+      <td> ${totalCost}</td>
       <td>{completejob.vin}</td>
       <td>{completejob.make}</td>  
       <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>
@@ -131,19 +146,21 @@ const JobTable: React.FC = () => {
       <td>
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${completejob.id}`}   
-         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/technicians/view?technicianId=${completejob.id}`} 
+         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint 
+         viewRoute={`/jobs/view?jobId=${completejob.id}`} 
          idKey="jobid"
           itemId={completejob.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(completejob.id)} 
            />
       </td>
     </tr>
-  );
+    </>
+    );
+  };
 
   return (
-    <div className="container mx-auto mt-4">
-      <CommonHeader heading="Completed Jobs"onSearch={(term) => setSearchTerm(term)} buttonLabel=" " buttonLink="" />
+    <div className="container mx-auto mt-4 mb-5">
+      <CommonHeader heading="Completed Jobs" onSearch={(term) => setSearchTerm(term)} buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -166,22 +183,23 @@ const JobTable: React.FC = () => {
                 )}
               </th> */}
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Assign Customer
+                  Customer Name
                 {sortBy === 'assignCustomer' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
               </th>
-              {/* <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
+              <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
                 {sortBy === 'technicianName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
-              </th>   */}
+              </th>  
 
+              <th className="w-[100px]">Total Cost</th> 
               <th className="w-[160px]">VIN</th>
               <th className="w-[100px]">Vehicle Make</th> 
               <th className="w-[100px]">Start Date</th>
@@ -192,13 +210,13 @@ const JobTable: React.FC = () => {
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={7} className="text-center py-10">
+                            <td colSpan={9} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="text-center py-10">
+                            <td colSpan={9} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>
@@ -208,9 +226,9 @@ const JobTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {/* <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} /> */}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 };
 
-export default JobTable;
+export default CompletedJobs;

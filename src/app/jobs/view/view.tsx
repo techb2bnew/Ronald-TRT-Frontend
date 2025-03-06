@@ -89,8 +89,8 @@ export default function ViewDetails() {
     <ul className="list-none pl-5">
       {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
         <li key={index}>
-          <p className="font-semibold">{item.jobDescription}</p> 
-          <p><span>${item.cost}</span></p>
+          <span className="font-semibold block">{item.jobDescription}</span> 
+           <span className='block'>${item.cost}</span> 
         </li>
       ))}
     </ul>

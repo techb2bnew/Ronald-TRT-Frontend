@@ -37,7 +37,7 @@ export default function ClientListing() {
         // Determine correct endpoint
         const endpoint = query.trim()
           ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-          : `${apiUrl}/fetchCustomer?page=${page}`;
+          : `${apiUrl}/recoverRecords?page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {

@@ -64,9 +64,9 @@ const handleDeleteSuccess = (deletedId: string) => {
            const fetchedCustomers: Customer[] = query.trim()
             ? data.customers || []
             : data.customers?.customers || [];
-           const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
+          //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
 
-           setCustomer(filteredCustomers);
+           setCustomer(fetchedCustomers);
           setTotalPages(data.customers?.totalPages || 1);
         } else {
           if (data.error === 'Invalid Token') {
@@ -197,7 +197,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create IFS Customer" buttonLink="/client/create" />
+      <CommonHeader heading='IFS Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

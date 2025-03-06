@@ -139,9 +139,9 @@ const TechnicianTable: React.FC = () => {
          const fetchedTechnicians: Technicians[] = query.trim()
             ? data.technicians || []
             : data.technician?.technicians || [];
-           const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
+          //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
-           setTechnicians(filteredTechnicians);
+           setTechnicians(fetchedTechnicians);
           setTotalPages(data.technician?.totalPages || 1); 
       } else {
         console.error('Error fetching technicians:', );

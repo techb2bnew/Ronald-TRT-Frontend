@@ -141,8 +141,8 @@ const TechnicianTable: React.FC = () => {
           const fetchedTechnicians: Singletechnician[] = query.trim()
          ? data.technicians || []  // For search API response
          : data.technician?.technicians || [];  // For pagination API response
-         const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
-        setTechnicians(filteredSingleTechnician); 
+        //  const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
+        setTechnicians(fetchedTechnicians); 
         setTotalPages(data.technician?.totalPages || 1);
       } else {
         console.error('Error fetching technicians:', );

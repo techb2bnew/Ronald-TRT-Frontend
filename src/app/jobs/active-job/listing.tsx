@@ -56,9 +56,9 @@ const JobTable: React.FC = () => {
           const fetchedTechnicians: Jobs[] = query.trim()
           ? data.ActiveJob || []
           : data.jobs?.jobs || [];
-         const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
+        //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
-         setActiveJob(filteredTechnicians);
+         setActiveJob(fetchedTechnicians);
         setTotalPages(data.jobs?.totalPages || 1); 
  
         } else {
@@ -218,7 +218,14 @@ const downloadCSV = () => {
   document.body.removeChild(a);
 };
 
-  const renderRow = (job: any) => (
+
+  const renderRow = (job: any) => {
+
+    const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
+      const parsedJob = (job);
+      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
+    }, 0);
+    return (
     <tr key={job.id}>
       <td>{job.id}</td> 
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
@@ -233,7 +240,7 @@ const downloadCSV = () => {
       {tech.phoneNumber}
     </div>
   ))}</td>
-      <td>{job.vin}</td> 
+      <td>${totalCost}</td> 
       <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -252,7 +259,8 @@ const downloadCSV = () => {
            />
       </td>
     </tr>
-  );
+    )
+  };
 
   return (
     <div className="container mx-auto mt-4">
@@ -285,7 +293,7 @@ const downloadCSV = () => {
                 Technician Name 
               </th> 
               <th className="w-[100px]">Tech. Number</th> 
-              <th className="w-[160px]">VIN</th> 
+              <th className="w-[160px]">Total Cost</th> 
               <th className="w-[120px]">Status</th>
               <th className="w-[160px]">Action</th>
             </tr>

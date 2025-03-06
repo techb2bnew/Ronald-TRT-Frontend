@@ -56,8 +56,8 @@ const RoleTable: React.FC = () => {
           const fetchedTechnicians: Roles[] = query.trim()
           ? data.roles || []  // For search API response
           : data.roles || [];  // For pagination API response
-          const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
-          setActiveRoles(filteredSingleTechnician); 
+          // const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
+          setActiveRoles(fetchedTechnicians); 
          setTotalPages(data.totalPages || 1); 
         } else {
           if (data.error === 'Invalid Token') {
@@ -160,7 +160,7 @@ const downloadCSV = () => {
         <TableActions   
           editRoute={`/role/create?roleId=${role.id}`}   
          deleteRoute={`${apiUrl}/roles/deleteRole`}  // Pass the correct endpoint
-         viewRoute={`/jobs/view?jobId=${role.id}`}
+         viewRoute={`/role/view?roleId=${role.id}`}
            idKey="roleId"
           itemId={role.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(role.id)} 

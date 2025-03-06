@@ -21,6 +21,7 @@ const VehicleTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
+  const [searchTerm, setSearchTerm] = useState(''); 
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -32,7 +33,7 @@ const VehicleTable: React.FC = () => {
       // ✅ Remove the deleted technician from the table
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
-    const fetchJobs = useCallback(async () => {
+    const fetchJobs = async (page = 1, query = '') => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
@@ -46,8 +47,8 @@ const VehicleTable: React.FC = () => {
   
         const data = await response.json();
         if (response.ok) {
-          setActiveJob(data.jobs.jobs); 
-          setTotalPages(data.jobs.totalPages);
+          setActiveJob(data.vehicles); 
+          setTotalPages(data.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
             router.push('/login');
@@ -60,15 +61,16 @@ const VehicleTable: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    }, [currentPage, router]);
+    };
  
   
-
-    useEffect(() => {
-      fetchJobs();
-    }, [fetchJobs]);
-
-
+ 
+  useEffect(() => {
+        const timeoutId = setTimeout(() => {
+          fetchJobs(currentPage, searchTerm);
+        }, 500);
+        return () => clearTimeout(timeoutId);
+      }, [currentPage, searchTerm]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -131,21 +133,17 @@ const downloadCSV = () => {
   const renderRow = (job: any) => (
     <tr key={job.id}>
       <td>{job.id}</td> 
-      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
-      <td>{job?.customer?.phoneNumber}</td>
+      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td> 
       <td>  {job?.technicians?.map((tech: any) => (
-    <div key={tech.id}>
+        <div key={tech.id}>
       {tech.firstName} {tech.lastName}
     </div>
   ))}</td>
-      <td>{job?.technicians?.map((tech: any) => (
-    <div key={tech.id}>
-      {tech.phoneNumber}
-    </div>
-  ))}</td>
       <td>{job.vin}</td> 
-       <td>red</td>
-       <td>red</td>
+      <td>{job.make} </td>
+       <td>{job.model}</td>
+       <td>{job.modelYear}</td>
+       <td>{job.color}</td> 
       <td>
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
@@ -176,12 +174,15 @@ const downloadCSV = () => {
                 )}
               </th> 
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Job ID
+              Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
+              </th>
+              <th className="w-[150px]">
+              Technicians Name
               </th>
               <th className="w-[150px]">
               VIN
@@ -191,8 +192,7 @@ const downloadCSV = () => {
               </th> 
               <th className="w-[100px]">Model</th> 
               <th className="w-[60px]">Year</th> 
-              <th className="w-[50px]">Color</th>
-              <th className="w-[120px]">Stock Number</th>
+              <th className="w-[50px]">Color</th> 
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>
