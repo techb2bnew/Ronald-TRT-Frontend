@@ -85,19 +85,41 @@ export default function ViewDetails() {
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p> 
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
-          {technician?.taxForms && technician.taxForms.length > 0 && (
-          <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-            {technician.taxForms.map((form:any, index:any) => (
-              <img
-                key={index}
-                onClick={() => window.open(form, '_blank')}
-                src={form}
-                alt={`Technician Tax Form ${index + 1}`}
-                className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
-              />
-            ))}
-          </div>
-        )}
+            {technician?.taxForms && technician.taxForms.length > 0 && (
+  <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
+    {technician.taxForms.map((form: any, index: number) => {
+      // Check if it's a PDF
+      const isPDF = form.endsWith('.pdf'); // Assuming URL or filename ends with ".pdf"
+
+      return (
+        <div key={index} className="relative flex items-center gap-2">
+          {isPDF ? (
+            // PDF Display with Icon
+            <button 
+              onClick={() => window.open(form, '_blank')} 
+              className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded shadow cursor-pointer"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="orange" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 2H14L20 8V22H6V2Z" stroke="orange" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2V8H20" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-sm text-black-600">View PDF</span>
+            </button>
+          ) : (
+            // Image Display
+            <img
+              onClick={() => window.open(form, '_blank')}
+              src={form}
+              alt={`Technician Tax Form ${index + 1}`}
+              className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer"
+            />
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
 
           </div>
         </div>

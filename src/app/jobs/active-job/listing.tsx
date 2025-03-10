@@ -42,12 +42,13 @@ const JobTable: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
+        const roleType = localStorage.getItem('types') || "";
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchAllJobs?page=${page}`;
+        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
         const response = await fetch(endpoint, { method: 'GET', headers });
   
@@ -63,7 +64,7 @@ const JobTable: React.FC = () => {
  
         } else {
           if (data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching job data:', data.error);
           }

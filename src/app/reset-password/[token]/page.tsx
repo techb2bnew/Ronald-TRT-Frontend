@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Banner from "../../../../public/forgot.png";
 import Logo from "../../../../public/logo.svg";
 import { NextResponse, NextRequest } from "next/server";
+import TextField from '@mui/material/TextField';
 
 interface ResetForm {
     password: string;
@@ -56,7 +57,7 @@ export default function Reset() {
                 toast.error(data.error || 'Error resetting password.');
             } else {
                 toast.success('Password reset successfully!');
-                router.push('/login'); // Redirect to login page or wherever appropriate
+                router.push('/'); // Redirect to login page or wherever appropriate
                 return NextResponse.json(data);
             }
         } catch (error) {
@@ -79,22 +80,14 @@ export default function Reset() {
                             <p className="text-[#161616] mt-3">Please enter your new password below.</p>
                         </div>
                         <form onSubmit={handleSubmit} className="mt-6">
-                            <div>
-                                <label className="block text-[#161616]">New Password</label>
-                                <input type="password" name="password" onChange={handleChange} placeholder="Enter new password" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" required />
+                            <div> 
+                                <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter new password *"  variant="outlined"  onChange={handleChange} />
+                                
                             </div>
-                            <div>
-                                <label className="block text-[#161616]">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={input.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="Confirm new password"
-                                    className={`w-full px-4 py-2 rounded-lg bg-white mt-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-400'} focus:border-black-500 focus:bg-white focus:outline-none`}
-                                    required
-                                />
-                                {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
+                            <div className="mt-4"> 
+                               <TextField fullWidth size="small" name="confirmPassword" id="outlined-basic" color="warning" label="Confirm new password *"  variant="outlined" value={input.confirmPassword} onChange={handleChange} />
+
+                                
                             </div>
                             <button type="submit" className="w-full block hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg px-4 py-3 mt-6">
                                 Reset Password

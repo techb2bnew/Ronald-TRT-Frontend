@@ -14,7 +14,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
     if (!token) {
       // If no token, redirect to login page and show loading
       setIsLoading(true);
-      router.push("/login");
+      router.push("/");
     } else {
       // If token is found, stop loading
       setIsLoading(false);

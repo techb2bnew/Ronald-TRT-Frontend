@@ -176,7 +176,7 @@ const TechnicianTable: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token){
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
         return;
       }
       const headers: Record<string, string> = {
@@ -195,7 +195,7 @@ const TechnicianTable: React.FC = () => {
       const response = await fetch(endpoint, { method: 'GET', headers }); 
       if (response.status == 400) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
       }
       const data = await response.json(); 
       if (response.ok) {
@@ -211,7 +211,7 @@ const TechnicianTable: React.FC = () => {
       } 
     }
       catch (error) {
-      // router.push('/login');
+      // router.push('/');
       console.error('Error fetching technicians:', error);
     } finally {
       setLoading(false);

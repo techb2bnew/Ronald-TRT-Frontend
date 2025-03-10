@@ -1,3 +1,4 @@
+"use client";
 // components/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link'; 
@@ -24,7 +25,7 @@ const Sidebar = () => {
     if (user1OpenState) setIsUser1Open(JSON.parse(user1OpenState));
     if (user3OpenState) setIsUser3Open(JSON.parse(user3OpenState));
     if (user4OpenState) setIsUser4Open(JSON.parse(user4OpenState));
-    if (user5OpenState) setIsUser4Open(JSON.parse(user5OpenState));
+    if (user5OpenState) setIsUser5Open(JSON.parse(user5OpenState));
     
   }, []);
 

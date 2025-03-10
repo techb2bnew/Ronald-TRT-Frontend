@@ -9,7 +9,7 @@ export default function Dashbaord() {
     <>
     <AuthCheck>
     <div className='main-container'>
-        <Sidebar />
+        {/* <Sidebar /> */}
         <div className="right_section w-[85%] pl-6 pr-8 ml-auto mt-[7rem]">
             <Dashboard />
         </div>

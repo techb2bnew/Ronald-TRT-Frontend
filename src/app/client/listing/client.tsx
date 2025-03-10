@@ -40,6 +40,7 @@ const handleDeleteSuccess = (deletedId: string) => {
       try {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userID');
+        const roleType = localStorage.getItem('types') || "";
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
@@ -50,13 +51,13 @@ const handleDeleteSuccess = (deletedId: string) => {
   
         // Determine correct endpoint
         const endpoint = query.trim()
-          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
+          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
           localStorage.removeItem('token');
-          router.push('/login');
+          router.push('/');
         }
         const data = await response.json();
         if (response.ok) {
@@ -70,7 +71,7 @@ const handleDeleteSuccess = (deletedId: string) => {
           setTotalPages(data.customers?.totalPages || 1);
         } else {
           if (data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching customers:', data.error);
           }

@@ -109,9 +109,10 @@ const TechnicianTable: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || "";
       if (!token){
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
         return;
       }
       const headers: Record<string, string> = {
@@ -124,13 +125,13 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`
+        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : `${apiUrl}/fetchTechnician?page=${page}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers }); 
       if (response.status == 400) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
       }
       const data = await response.json(); 
       if (response.ok) {
@@ -148,7 +149,7 @@ const TechnicianTable: React.FC = () => {
       } 
     }
       catch (error) {
-      // router.push('/login');
+      // router.push('/');
       console.error('Error fetching technicians:', error);
     } finally {
       setLoading(false);

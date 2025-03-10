@@ -61,7 +61,7 @@ const RoleTable: React.FC = () => {
          setTotalPages(data.totalPages || 1); 
         } else {
           if (data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching roles:', data.error);
           }

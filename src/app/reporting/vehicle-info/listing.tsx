@@ -37,10 +37,11 @@ const VehicleTable: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
+        const roleType = localStorage.getItem('types') || ""; 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
   
-        const response = await fetch(`${apiUrl}/fetchVehicalInfo?page=${currentPage}`, {
+        const response = await fetch(`${apiUrl}/fetchVehicalInfo?page=${currentPage}&roleType=${encodeURIComponent(roleType)}`, {
           method: 'GET',
           headers,
         });
@@ -51,7 +52,7 @@ const VehicleTable: React.FC = () => {
           setTotalPages(data.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching job data:', data.error);
           }

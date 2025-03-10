@@ -257,6 +257,8 @@ const fetchRoleData = async (roleId: string) => {
                 <MenuItem value="enterprise">Enterprise</MenuItem>
                 <MenuItem value="workshop">Workshop</MenuItem>
                 <MenuItem value="ifs">IFS</MenuItem> 
+                <MenuItem value="singletechnician">Single Technician</MenuItem>
+
               </Select>
             </FormControl>
           </div>

@@ -164,7 +164,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
     } else {
       toast.success(data.message);
-      router.push('/login');
+      router.push('/');
     }
   } catch (error: any) {
     toast.error(error.message || 'An unexpected error occurred');

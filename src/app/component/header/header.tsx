@@ -58,7 +58,7 @@ export default function Home() {
 
     const logOut = async () => {
         localStorage.removeItem('token');
-        router.push('/login'); 
+        router.push('/'); 
     }
     return (
         <>
@@ -106,7 +106,7 @@ export default function Home() {
                                 <div className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20">
                                     <Link href="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Settings</Link> 
                                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Profile</Link> 
-                                    <a  onClick={logOut} href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Log out</a>
+                                    <p  onClick={logOut}   className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#EF502E] hover:text-white">Log out</p>
                                 </div>
                             )}
                         </div>

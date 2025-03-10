@@ -24,6 +24,7 @@ interface CustomerForm {
   city: string;
   zipCode: string;
   userId: string;
+  roleType: string;
 }
 
 export default function Technicians() {
@@ -37,7 +38,8 @@ export default function Technicians() {
     state: '',
     city: '',
     zipCode: '',
-    userId:''
+    userId:'',
+    roleType:'',
   }); 
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const router = useRouter();
@@ -116,10 +118,12 @@ export default function Technicians() {
     e.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userID'); // ✅ Local storage se userId fetch kiya
+    const userId = localStorage.getItem('userID');
+    const roleType = localStorage.getItem('types');
+    console.log(roleType,'role>>>>')
   
-    if (!userId) {
-      toast.error("User ID not found in localStorage!");
+    if (!userId && !roleType) {
+      toast.error("User ID not found!");
       return;
     }
   
@@ -129,6 +133,7 @@ export default function Technicians() {
       const payload = {
         ...formData,
         userId,
+        roleType,
         ...(isEdit && { customerId: formData.id })
       };
   
@@ -143,7 +148,7 @@ export default function Technicians() {
   
       // if (response.status == 400) {
       //   localStorage.removeItem('token');
-      //   router.push('/login');
+      //   router.push('/');
       //   return;
       // }
   
@@ -160,6 +165,7 @@ export default function Technicians() {
           state: '',
           city: '',
           zipCode: '',
+          roleType:'',
           userId: '' // ✅ Clear userId as well
         });
    

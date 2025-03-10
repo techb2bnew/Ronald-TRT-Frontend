@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image";
 import Banner from "../../../public/login.png";
 import Logo from "../../../public/logo.svg";
@@ -50,6 +51,7 @@ export default function Login() {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userID', data.user.id);
                 localStorage.setItem('types', data.user.types);
+                localStorage.setItem('roleId',data?.user?.roleId)
                 if (data.user.types === 'single-technician') {
                   router.push('/client/listing');
               } else {

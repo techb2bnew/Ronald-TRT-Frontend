@@ -56,7 +56,7 @@ const handleDeleteSuccess = (deletedId: string) => {
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
           localStorage.removeItem('token');
-          router.push('/login');
+          router.push('/');
         }
         const data = await response.json();
         if (response.ok) {
@@ -70,7 +70,7 @@ const handleDeleteSuccess = (deletedId: string) => {
           setTotalPages(data.customers?.totalPages || 1);
         } else {
           if (data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching customers:', data.error);
           }

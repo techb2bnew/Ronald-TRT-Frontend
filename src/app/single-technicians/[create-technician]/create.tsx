@@ -418,7 +418,7 @@ export default function Role() {
       const token = localStorage.getItem('token');
       if (!token) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
         return;
       }
 
@@ -437,7 +437,7 @@ export default function Role() {
 
       if (response.status === 400) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
         return;
       }
 
@@ -479,7 +479,7 @@ export default function Role() {
       });
       if (response.status == 400) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
       }
       const data = await response.json();
 

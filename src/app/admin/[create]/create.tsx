@@ -90,7 +90,7 @@ export default function IFSAdmin() {
       });
       if (response.status == 400) {
         localStorage.removeItem('token');
-        router.push('/login');
+        router.push('/');
       }
       const data = await response.json();
 

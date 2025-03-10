@@ -42,13 +42,14 @@ const CompletedJobs: React.FC = () => {
       setLoading(true); 
       try {
         const token = localStorage.getItem('token');
+        const roleType = localStorage.getItem('types') || "";
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
         ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchCompleteJobStatus?page=${page}`;
+        : `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });  
         const data = await response.json(); 
@@ -65,7 +66,7 @@ const CompletedJobs: React.FC = () => {
           // setCurrentPage(data.jobs.currentPage); // Update current page from API
         } else {
           if (data.error && data.error === 'Invalid Token') {
-            router.push('/login');
+            router.push('/');
           } else {
             console.error('Error fetching technician data:', data.error);
           }
@@ -127,13 +128,13 @@ const CompletedJobs: React.FC = () => {
 
 
     return (
-      <>
+      <React.Fragment key={completejob.id}> 
     <tr key={completejob.id}>
       <td>{completejob.id}</td>
       {/* <td>{completejob.jobDescription}</td> */}
-      <td>{completejob?.customer.firstName} {completejob?.customer.lastName}</td>
-      <td>  {completejob?.technicians?.map((tech: any) => (
-        <div key={tech.id}>
+      <td>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</td>
+      <td>  {completejob?.technicians?.map((tech: any, index: number) => (
+        <div key={`${tech.id}-${index}`}>
       {tech.firstName} {tech.lastName}
     </div>
   ))}</td>
@@ -154,7 +155,7 @@ const CompletedJobs: React.FC = () => {
            />
       </td>
     </tr>
-    </>
+    </React.Fragment>
     );
   };
 
