@@ -37,10 +37,16 @@ export default function Home() {
     
           const data = await response.json();
     
-          if (response.ok) {  
-            setTechnician(data.technician);  // Set the technician data
+          if (response.ok) {
+            setTechnician(data.technician); // Set the technician data
           } else {
-            toast.error(data.error || 'Error fetching technician data');
+            if (data.message === 'Unauthorized: User not found') {
+              toast.error('Session expired. Please log in again.');
+              localStorage.removeItem('token'); // Clear invalid token
+              router.push('/'); // Redirect to login page
+            } else {
+              toast.error(data.error || 'Error fetching technician data');
+            }
           }
         } catch (error) {
           toast.error('An error occurred while fetching technician data');

@@ -43,6 +43,7 @@ const handleDeleteSuccess = (deletedId: string) => {
       try {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userID');
+        const roleType = localStorage.getItem('types') || "";
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
@@ -53,8 +54,8 @@ const handleDeleteSuccess = (deletedId: string) => {
   
         // Determine correct endpoint
         const endpoint = query.trim()
-          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-          : `${apiUrl}/fetchAllCustomer?page=${page}`;
+          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
@@ -192,19 +193,18 @@ const downloadCSV = () => {
          deleteRoute={`${apiUrl}/deleteCustomer`} 
          viewRoute={`/client/view?customerId=${cust.id}`}
          idKey="customerId"
-          itemId={cust.id}   
+          itemId={cust.id}  
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} /> */}
-
-<Link className="p-1" href={`/client/view?customerId=${cust.id}`}>
-         <Image alt='eye' src={Eye} className='w-[16px]' /> 
-         </Link>
+         <Link className="p-1" href={`/client/view?customerId=${cust.id}`}>
+      <Image alt='eye' src={Eye} className='w-[16px]' /> 
+      </Link>
       </td>
     </tr>
   );
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='All Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="" buttonLink="" />
+      <CommonHeader heading='Single Technician Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

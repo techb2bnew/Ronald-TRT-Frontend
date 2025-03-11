@@ -11,13 +11,17 @@ import Swal from 'sweetalert2';
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import Eye from '../../../../public/eye.svg'
+import Image from 'next/image';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+ 
 interface Singletechnician {
   id: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
+  Role: { name: string };
 }
 const TechnicianTable: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
@@ -28,6 +32,7 @@ const TechnicianTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   
   const toggleTechnicianStatus = async (technicianId: number, newStatus: boolean) => {
@@ -142,7 +147,8 @@ const TechnicianTable: React.FC = () => {
          ? data.technicians || []  // For search API response
          : data.technician?.technicians || [];  // For pagination API response
         //  const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
-        setTechnicians(fetchedTechnicians); 
+        const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin");
+        setTechnicians(filteredSingleTechnician); 
         setTotalPages(data.technician?.totalPages || 1);
       } else {
         console.error('Error fetching technicians:', );
@@ -199,7 +205,11 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
- 
+  useEffect(() => {
+    // Get user role from localStorage (or API)
+    const storedRole = localStorage.getItem("types");
+    setUserRole(storedRole);
+  }, []);
 
   // Render row function for SortableTable
   const renderRow = (tech: any) => {
@@ -274,14 +284,21 @@ const TechnicianTable: React.FC = () => {
         </span>
       </td>
       <td> 
+      {userRole !== "ifs" ? (
         <TableActions
           editRoute={`/single-technicians/create-technician?technicianId=${tech.id}`}
           viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
-          deleteRoute={`${apiUrl}/deleteIndividualTechnician`}  // Pass the correct endpoint
-          itemId={tech.id}  // Pass the technician ID
+          deleteRoute={`${apiUrl}/deleteIndividualTechnician`}
+          itemId={tech.id}
           idKey="technicianId"
           onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
         />
+      ) : ( 
+         <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
+         <Image alt='eye' src={Eye} className='w-[16px]' /> 
+         </Link>
+      )}
+
       </td>
     </tr>
     )
@@ -314,7 +331,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/single-technicians/create-technician" />
+      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="" buttonLink="" />
 
     
         <SortableTable

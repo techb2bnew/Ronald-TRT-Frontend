@@ -25,7 +25,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // ✅ Check exact match or start with "/reset-password/"
-  const hideSidebarRoutes = ["/", "/signup", "/forgot"];
+  const hideSidebarRoutes = ["/","/login", "/signup", "/forgot"];
   const shouldShowSidebar =
     !hideSidebarRoutes.includes(pathname) && !pathname.startsWith("/reset-password");
 

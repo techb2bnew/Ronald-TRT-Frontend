@@ -48,7 +48,7 @@ const CompletedJobs: React.FC = () => {
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}`
+        ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });  
@@ -60,7 +60,7 @@ const CompletedJobs: React.FC = () => {
           ? data.ActiveJob || []  // For search API response
           : data.jobs.jobs || [];  // For pagination API response 
           // const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
-          setTotalPages(data.jobs.totalPages);
+          setTotalPages(data?.jobs?.totalPages);
           setActiveJob(fetchedTechnicians);
           // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
           // setCurrentPage(data.jobs.currentPage); // Update current page from API

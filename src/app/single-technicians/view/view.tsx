@@ -68,7 +68,6 @@ export default function ViewDetails() {
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</p> 
             <p><strong className='w-[200px] inline-block'>Status:</strong><span
           className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -78,26 +77,49 @@ export default function ViewDetails() {
 
           {/* Right Section */}
           <div className='shadow-lg p-5 bg-white rounded'> 
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Pay Rate:</strong> {technician?.payRate}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> {technician?.amountPercentage}</p>
+          <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</p> 
+
+            {/* <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Pay Rate:</strong> {technician?.payRate}</p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> {technician?.amountPercentage}</p> */}
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Country:</strong> {technician?.country}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p> 
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
-          {technician?.taxForms && technician.taxForms.length > 0 && (
-          <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-            {technician.taxForms.map((form:any, index:any) => (
-              <img
-                key={index}
-                onClick={() => window.open(form, '_blank')}
-                src={form}
-                alt={`Technician Tax Form ${index + 1}`}
-                className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
-              />
-            ))}
-          </div>
-        )}
+            {technician?.taxForms?.length > 0 && (
+  <div className="mt-1 m-auto block mb-2 flex flex-wrap gap-4 items-center">
+    {technician.taxForms.map((form: string, index: number) => {
+      const isPDF = form.toLowerCase().endsWith(".pdf"); // Ensure case-insensitivity
+
+      return (
+        <div key={index} className="relative flex items-center gap-2">
+          {isPDF ? (
+            // PDF Button
+            <button 
+              onClick={() => window.open(form, "_blank")} 
+              className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded shadow hover:bg-gray-300 transition"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="orange" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 2H14L20 8V22H6V2Z" stroke="orange" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2V8H20" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-sm text-gray-700 font-medium">View PDF</span>
+            </button>
+          ) : (
+            // Image Thumbnail
+            <img
+              onClick={() => window.open(form, "_blank")}
+              src={form}
+              alt={`Tax Form ${index + 1}`}
+              className="w-[60px] h-[60px] rounded-lg border border-gray-300 shadow-md cursor-pointer hover:scale-105 transition"
+            />
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
+
 
           </div>
         </div>

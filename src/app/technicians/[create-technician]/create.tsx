@@ -11,7 +11,11 @@ import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
-
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css' // For basic styling
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import Share from '../../../../public/share.png';
+import Image from 'next/image';
 interface TechnicianForm {
   id?: string;
   firstName: string;
@@ -43,6 +47,7 @@ export default function Technicians() {
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
+  const [copied, setCopied] = useState(false);
 
 
   const [formData, setFormData] = useState<TechnicianForm>({
@@ -103,7 +108,7 @@ export default function Technicians() {
           password: '',
           taxForms: data.technician.taxForms || [],
         }));
-        console.log(formData,'formDataformData')
+        console.log(formData, 'formDataformData')
       } else {
         toast.error(data.error || 'Error fetching technician data');
       }
@@ -210,34 +215,34 @@ export default function Technicians() {
   // To handle the image upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-  
+
     const files = Array.from(e.target.files);
     const maxWidth = 800; // Maximum image width
     const maxHeight = 600; // Maximum image height
     const quality = 0.7; // Compression quality
-  
+
     const imageFiles = files.filter(file => file instanceof File && file.type.startsWith('image/'));
     const pdfFiles = files.filter(file => file instanceof File && file.type === 'application/pdf');
 
-  
+
     try {
       // Compress image files
       const compressedImages = await Promise.all(
         imageFiles.map(async (file) => {
           const compressedBlob = await compressImage(file, maxWidth, maxHeight, quality);
-  
+
           if (!(compressedBlob instanceof Blob)) {
             throw new Error("Compression failed: Not a Blob");
           }
-  
+
           // Convert Blob back to File
           return new File([compressedBlob], file.name, { type: file.type });
         })
       );
-  
+
       // Combine compressed images and PDFs into one array
       const allFiles = [...compressedImages, ...pdfFiles];
-  
+
       // Update state with new files
       setFormData((prev: any) => ({ ...prev, taxForms: [...(prev.taxForms || []), ...allFiles] }));
     } catch (error) {
@@ -245,7 +250,7 @@ export default function Technicians() {
       toast.error('Failed to process files.');
     }
   };
-  
+
 
   // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
@@ -359,10 +364,34 @@ export default function Technicians() {
   };
 
 
+  const handlePhoneChange = (value: string | undefined) => {
+    if (!value) return;
+    
+    // Extracting country code and formatting phone number
+    const parsedNumber = parsePhoneNumberFromString(value);
+    if (parsedNumber) {
+      const countryCode = parsedNumber.countryCallingCode; // Example: "91" for India
+      const nationalNumber = parsedNumber.nationalNumber; // Example: "983274663"
+  
+      // Formatting as "+91-983274663"
+      const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
+  
+      setFormData((prev) => ({
+        ...prev,
+        phoneNumber: formattedPhoneNumber,
+      }));
+    }
+  };
 
 
-
-
+  const handleCopy = () => {
+    const link = "http://localhost:3000/signup"; // Apna actual link dalen
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      toast.success('Link Copied!');
+      setTimeout(() => setCopied(false), 2000); // 2 sec baad reset
+    });
+  };
 
 
   const countries = Country.getAllCountries();
@@ -376,6 +405,7 @@ export default function Technicians() {
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+        <div onClick={handleCopy} className='text-right mb-4 flex items-center gap-4 justify-end cursor-pointer'>Share Registration Form <Image src={Share} className='w-[20px]' alt='share' /> </div>
         {submitting ? (
           <div className="flex justify-center items-center h-64">
             <Loader />  {/* ✅ Show loader during submission */}
@@ -415,29 +445,22 @@ export default function Technicians() {
               {/* Client Name and Business Name */}
               <div className='mb-4'>
                 {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
-                <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="outlined" value={formData.phoneNumber} onChange={handleChange} />
+                {/* <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="outlined" value={formData.phoneNumber} onChange={handleChange} /> */}
+                <PhoneInput
+                  international
+                  defaultCountry="IN"
+                  value={formData.phoneNumber}
+                  onChange={handlePhoneChange}
+                  className="input text-xs input-bordered w-full p-2 rounded border border-gray-400"
+                />
 
-                {/* <input
-                type="number"
-                name="phoneNumber"
-                placeholder="Enter your phone number"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              /> */}
+                 
               </div>
               <div className='mb-4'>
                 {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
                 <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email *" variant="outlined" value={formData.email} onChange={handleChange} />
 
-                {/* <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              /> */}
+                 
               </div>
             </div>
             {/* Address and Email */}
@@ -648,37 +671,37 @@ export default function Technicians() {
                   {/* onChange={handleFileChange} */}
                 </div>
                 <div className="flex flex-wrap gap-5 items-center relative mt-5">
-  {formData.taxForms?.map((file: string | File, index: number) => {
-    let fileSrc = "";
-    let fileType = "";
+                  {formData.taxForms?.map((file: string | File, index: number) => {
+                    let fileSrc = "";
+                    let fileType = "";
 
-    if (typeof file === "string") {
-      fileSrc = file;
-      fileType = /\.(png|jpe?g|webp)$/i.test(file) ? "image" : file.toLowerCase().endsWith(".pdf") ? "application/pdf" : "";
-    } else if (file instanceof File) {
-      fileSrc = URL.createObjectURL(file);
-      fileType = file.type;
-    }
+                    if (typeof file === "string") {
+                      fileSrc = file;
+                      fileType = /\.(png|jpe?g|webp)$/i.test(file) ? "image" : file.toLowerCase().endsWith(".pdf") ? "application/pdf" : "";
+                    } else if (file instanceof File) {
+                      fileSrc = URL.createObjectURL(file);
+                      fileType = file.type;
+                    }
 
-    return (
-      <div key={index} className="shadow rounded p-2 relative flex items-center gap-2">
-        {fileType === "image" || fileType.startsWith("image/") ? (
-          <img src={fileSrc} alt="Uploaded file" className="w-12 h-12 object-cover" />
-        ) : fileType === "application/pdf" ? (
-          <a href={fileSrc} target="_blank" className="text-sm text-blue-600 underline">
-            View PDF
-          </a>
-        ) : null}
+                    return (
+                      <div key={index} className="shadow rounded p-2 relative flex items-center gap-2">
+                        {fileType === "image" || fileType.startsWith("image/") ? (
+                          <img src={fileSrc} alt="Uploaded file" className="w-12 h-12 object-cover" />
+                        ) : fileType === "application/pdf" ? (
+                          <a href={fileSrc} target="_blank" className="text-sm text-blue-600 underline">
+                            View PDF
+                          </a>
+                        ) : null}
 
-        <button onClick={() => handleRemoveFile(index)} className="absolute right-0 top-0">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      </div>
-    );
-  })}
-</div>
+                        <button onClick={() => handleRemoveFile(index)} className="absolute right-0 top-0">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
 
 
 

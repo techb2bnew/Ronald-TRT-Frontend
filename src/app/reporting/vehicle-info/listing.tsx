@@ -13,6 +13,14 @@ import Loader from '@/app/component/loader';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
+interface VehcileInfo {
+  id: string;
+  name: string;
+  email: string;
+  deletedStatus?: boolean;
+  Role: { name: string };
+}
+
 const VehicleTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
@@ -23,10 +31,7 @@ const VehicleTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true); 
   const [searchTerm, setSearchTerm] = useState(''); 
 
-  const handleSearch = (searchTerm: string) => {
-    console.log('Searching for:', searchTerm);
-    // Implement search logic here
-  };
+  
   const handleDeleteSuccess = (deletedId: string) => {
       // toast.success('Technician deleted successfully');
   
@@ -41,14 +46,18 @@ const VehicleTable: React.FC = () => {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
   
-        const response = await fetch(`${apiUrl}/fetchVehicalInfo?page=${currentPage}&roleType=${encodeURIComponent(roleType)}`, {
-          method: 'GET',
-          headers,
-        });
-  
+        const endpoint = query.trim()
+        ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}`;
+
+      const response = await fetch(endpoint, { method: 'GET', headers });  
         const data = await response.json();
         if (response.ok) {
-          setActiveJob(data.vehicles); 
+          const fetchedTechnicians: VehcileInfo[] = query.trim()
+          ? data.VehicalInfo || []
+          : data.vehicles || [];
+
+          setActiveJob(fetchedTechnicians); 
           setTotalPages(data.totalPages);
         } else {
           if (data.error === 'Invalid Token') {
@@ -149,7 +158,7 @@ const downloadCSV = () => {
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/jobs/view?jobId=${job.id}`}
+         viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
            idKey="jobid"
           itemId={job.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
@@ -160,7 +169,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Vehicle Info" onSearch={handleSearch}  onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicle Info" onSearch={(term) => setSearchTerm(term)}   onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

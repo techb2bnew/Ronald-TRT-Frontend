@@ -18,6 +18,7 @@ interface Technicians {
   name: string;
   email: string;
   deletedStatus?: boolean;
+  Role: { name: string };
 }
 const TechnicianTable: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
@@ -125,7 +126,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
         : `${apiUrl}/fetchTechnician?page=${page}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers }); 
@@ -140,9 +141,9 @@ const TechnicianTable: React.FC = () => {
          const fetchedTechnicians: Technicians[] = query.trim()
             ? data.technicians || []
             : data.technician?.technicians || [];
-          //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
+            const filteredTechnicians = fetchedTechnicians.filter(technician => technician?.Role?.name !== "super admin");
 
-           setTechnicians(fetchedTechnicians);
+           setTechnicians(filteredTechnicians);
           setTotalPages(data.technician?.totalPages || 1); 
       } else {
         console.error('Error fetching technicians:', );

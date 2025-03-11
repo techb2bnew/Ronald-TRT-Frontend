@@ -18,10 +18,12 @@
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
+    "libphonenumber-js": "^1.12.5",
     "next": "15.1.4",
-    "react": "^19.0.0", 
+    "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-paginate": "^8.3.0",
+    "react-phone-number-input": "^3.4.12",
     "react-toastify": "^11.0.3",
     "sweetalert2": "^11.15.10"
   },
