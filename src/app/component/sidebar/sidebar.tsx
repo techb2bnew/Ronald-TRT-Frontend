@@ -361,15 +361,10 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li >
-                <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#EF502E]' : ''}`} >
+                <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Job Status</span>
                 </Link>
-              </li>
-              <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`}  >
-                  <span>Vehicle List</span>
-                </Link>
-              </li>
+              </li> 
             </ul>
           )}
         </li>
@@ -495,7 +490,7 @@ const Sidebar = () => {
           </li>
         )}
         <li className='p-1'>
-          <Link href="/archive" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === '/archive' ? 'active text-[#EF502E]' : ''}`}>
+          <Link href="/archive/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === '/archive/listing' ? 'active text-[#EF502E]' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 20 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1 5.58337H3H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M17 5.58337V19.5834C17 20.1138 16.7893 20.6225 16.4142 20.9976C16.0391 21.3727 15.5304 21.5834 15 21.5834H5C4.46957 21.5834 3.96086 21.3727 3.58579 20.9976C3.21071 20.6225 3 20.1138 3 19.5834V5.58337M6 5.58337V3.58337C6 3.05294 6.21071 2.54423 6.58579 2.16916C6.96086 1.79409 7.46957 1.58337 8 1.58337H12C12.5304 1.58337 13.0391 1.79409 13.4142 2.16916C13.7893 2.54423 14 3.05294 14 3.58337V5.58337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" />

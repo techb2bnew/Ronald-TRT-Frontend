@@ -121,10 +121,10 @@ export default function Login() {
               <button type="submit" className="w-[40%] m-auto block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Log In</button>
             </form>
-            {/* <div className="text-sm text-center mt-5">
+            <div className="text-sm text-center mt-5">
               <p>Don&apos;t have account?
                 <Link href='/signup' className="primary-text"> Sign Up</Link> </p>
-            </div> */}
+            </div>
             {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />
               <p className="text-center text-black text-sm">OR</p>

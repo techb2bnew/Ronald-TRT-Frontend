@@ -41,8 +41,9 @@ const handleDeleteSuccess = (deletedId: string) => {
     const fetchCustomer = async (page = 1, query = '') => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
-        const userId = localStorage.getItem('userID');
+        const token = localStorage.getItem('token'); 
+        const searchParams = new URLSearchParams(window.location.search); 
+        const userId = searchParams.get('technicianId') || '';
         const roleType = localStorage.getItem('types') || "";
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -54,8 +55,8 @@ const handleDeleteSuccess = (deletedId: string) => {
   
         // Determine correct endpoint
         const endpoint = query.trim()
-          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
+          ? `${apiUrl}/searchIndividualTechnicianCustomers?searchQuery=${encodeURIComponent(query)}`
+          : `${apiUrl}/fetchIndividualTechnicianCustomers?userId=${userId}&page=${page}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
@@ -66,12 +67,12 @@ const handleDeleteSuccess = (deletedId: string) => {
         if (response.ok) {
            // Handle customers array for both APIs correctly
            const fetchedCustomers: Customer[] = query.trim()
-            ? data.customers || []
-            : data.customers?.customers || [];
+            ? data.IndividualTechnicianCustomers || []
+            : data.IndividualTechnicianCustomers || [];
           //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
 
            setCustomer(fetchedCustomers);
-          setTotalPages(data.customers?.totalPages || 1);
+          setTotalPages(data.totalPages || 1);
         } else {
           if (data.error === 'Invalid Token') {
             router.push('/');
