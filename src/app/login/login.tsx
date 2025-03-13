@@ -52,6 +52,9 @@ export default function Login() {
                 localStorage.setItem('userID', data.user.id);
                 localStorage.setItem('types', data.user.types);
                 localStorage.setItem('roleId',data?.user?.roleId)
+                if (data.user.permissions) {
+                  localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
+              }
                 if (data.user.types === 'single-technician') {
                   router.push('/client/listing');
               } else {

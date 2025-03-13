@@ -160,6 +160,7 @@ const downloadCSV = () => {
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
          viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
            idKey="jobid"
+           userRole='Vehicleinfo'
           itemId={job.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
            />
@@ -169,7 +170,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Vehicle Info" onSearch={(term) => setSearchTerm(term)}   onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicle Info" onSearch={(term) => setSearchTerm(term)}   onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

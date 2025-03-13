@@ -281,6 +281,7 @@ const TechnicianTable: React.FC = () => {
           deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
           itemId={tech.id}  // Pass the technician ID
           idKey="technicianId"
+          userRole='Technician'
           onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
         />
       </td>
@@ -315,7 +316,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Technician'  buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
 
     
         <SortableTable

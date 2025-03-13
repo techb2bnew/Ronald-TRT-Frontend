@@ -209,7 +209,7 @@ export default function ClientListing() {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='Archive' onSearch={(term) => setSearchTerm(term)} buttonLabel='' buttonLink='' onExport={downloadCSV} />
+      <CommonHeader heading='Archive' onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel='' buttonLink='' onExport={downloadCSV} />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

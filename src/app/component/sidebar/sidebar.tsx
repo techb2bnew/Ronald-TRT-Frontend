@@ -154,7 +154,7 @@ const Sidebar = () => {
               {userType == 'single-technician' && (
                 <li className='mt-3'>
                   <Link href="/client/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#EF502E]' : ''}`}   >
-                    Customer
+                    Customers
                   </Link>
                 </li>
               )}
@@ -173,7 +173,7 @@ const Sidebar = () => {
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/technicians/listing' || activeLink === '/technicians/create-technician' ? 'active text-[#EF502E]' : ''}`}
                         >
-                          Technician
+                          Technicians
                         </Link>
                       </li>
 
@@ -185,7 +185,7 @@ const Sidebar = () => {
 
                       <li >
                         <Link href="/client/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#EF502E]' : ''}`}   >
-                          Customer
+                          Customers
                         </Link>
                       </li>
                     </ul>
@@ -315,17 +315,17 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Active Job</span>
+                  <span>Active Jobs</span>
                 </Link>
               </li>
               <li >
                 <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#EF502E]' : ''}`}>
-                  <span>Complete Job</span>
+                  <span>Complete Jobs</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === 'job' ? 'active text-[#EF502E]' : ''}`}  >
-                  <span>Job by Group</span>
+                <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#EF502E]' : ''}`}  >
+                  <span>Jobs by Group</span>
                 </Link>
               </li>
             </ul>
@@ -344,7 +344,7 @@ const Sidebar = () => {
                 <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                 <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
               </svg>
-              <span>Reporting</span>
+              <span>Reports</span>
             </div>
             <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -357,12 +357,12 @@ const Sidebar = () => {
             <ul className="ml-4">
               <li  >
                 <Link href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Vehicle Info</span>
+                  <span>Vehicles Info</span>
                 </Link>
               </li>
               <li >
                 <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Job Status</span>
+                  <span>Jobs Status</span>
                 </Link>
               </li> 
             </ul>
@@ -417,7 +417,7 @@ const Sidebar = () => {
             </svg>
 
 
-              <span>Single Technician</span>
+              <span>Single Technicians</span>
             </Link>
           </li>
         )}
@@ -429,7 +429,7 @@ const Sidebar = () => {
                 <path d="M11.8125 6.5625H9.1875C8.8394 6.5625 8.50556 6.70078 8.25942 6.94692C8.01328 7.19306 7.875 7.5269 7.875 7.875V17.7188C7.875 18.0668 8.01328 18.4007 8.25942 18.6468C8.50556 18.893 8.8394 19.0312 9.1875 19.0312H11.8125C12.1606 19.0312 12.4944 18.893 12.7406 18.6468C12.9867 18.4007 13.125 18.0668 13.125 17.7188V7.875C13.125 7.5269 12.9867 7.19306 12.7406 6.94692C12.4944 6.70078 12.1606 6.5625 11.8125 6.5625ZM9.1875 17.7188V7.875H11.8125V17.7188H9.1875ZM18.375 1.96875H15.75C15.4019 1.96875 15.0681 2.10703 14.8219 2.35317C14.5758 2.59931 14.4375 2.93315 14.4375 3.28125V17.7188C14.4375 18.0668 14.5758 18.4007 14.8219 18.6468C15.0681 18.893 15.4019 19.0312 15.75 19.0312H18.375C18.7231 19.0312 19.0569 18.893 19.3031 18.6468C19.5492 18.4007 19.6875 18.0668 19.6875 17.7188V3.28125C19.6875 2.93315 19.5492 2.59931 19.3031 2.35317C19.0569 2.10703 18.7231 1.96875 18.375 1.96875ZM15.75 17.7188V3.28125H18.375V17.7188H15.75ZM5.25 11.1562H2.625C2.2769 11.1562 1.94306 11.2945 1.69692 11.5407C1.45078 11.7868 1.3125 12.1207 1.3125 12.4688V17.7188C1.3125 18.0668 1.45078 18.4007 1.69692 18.6468C1.94306 18.893 2.2769 19.0312 2.625 19.0312H5.25C5.5981 19.0312 5.93194 18.893 6.17808 18.6468C6.42422 18.4007 6.5625 18.0668 6.5625 17.7188V12.4688C6.5625 12.1207 6.42422 11.7868 6.17808 11.5407C5.93194 11.2945 5.5981 11.1562 5.25 11.1562ZM2.625 17.7188V12.4688H5.25V17.7188H2.625Z" fill="currentColor" />
               </svg>
 
-              <span>All Customer</span>
+              <span>All Customers</span>
             </Link>
           </li>
         )}
@@ -498,7 +498,7 @@ const Sidebar = () => {
               <path d="M12 10.5834V16.5834" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
-            <span>Archive</span>
+            <span>Archives</span>
           </Link>
         </li>
       </ul>

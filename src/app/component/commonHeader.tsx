@@ -1,6 +1,6 @@
 // components/CommonHeader.tsx
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import plusIcon from '../../../public/plus-circle.png'
 import Image from 'next/image'; 
 import TextField from '@mui/material/TextField';
@@ -11,11 +11,40 @@ interface CommonHeaderProps {
   onSearch: (searchTerm: string) => void;
   buttonLabel: string;
   buttonLink: string;
+  userRole: string; 
   onExport?: () => void; 
 }
  
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonLabel, buttonLink , onExport  }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonLabel, buttonLink , userRole, onExport  }) => {
+
+const [permissions, setPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+      const storedPermissions = localStorage.getItem("permissions");
+  
+      if (storedPermissions) {
+        try {
+          const parsedPermissions = JSON.parse(storedPermissions);
+          setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+          console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+        } catch (error) {
+          console.error("❌ Failed to parse permissions:", error);
+        }
+      } else {
+        console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      }
+    }, []);
+  
+    // ✅ Function to check permission based on role and action
+    const hasPermission = (action: string) => {
+      if (permissions.length === 0) return true; // If no permissions exist, show all icons
+  
+      return permissions.some(
+        (perm) => perm.permissionName === userRole && perm.action === action && perm.isActive
+      );
+    };
+    const canCreate = hasPermission("create");
   return (
     <div className="px-1 mb-4">
       <div className="flex items-center justify-between  w-full">
@@ -32,7 +61,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({  heading, onSearch, buttonL
           <button className="text-xs border border-gray-300 p-2 pl-5 pr-5 bg-white rounded"  onClick={onExport}>
             Export
           </button>
-          {buttonLink && buttonLabel && (
+          {buttonLink && buttonLabel && canCreate && (
           <Link href={buttonLink} className="text-xs border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
           {buttonLabel}
           <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">

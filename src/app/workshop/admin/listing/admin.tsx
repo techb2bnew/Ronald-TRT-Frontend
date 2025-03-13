@@ -20,7 +20,7 @@ const TechnicianTable: React.FC = () => {
       };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Admin' onSearch={handleSearch} buttonLabel="Create IFS Admin" buttonLink="/workshop/admin/create" />
+      <CommonHeader heading='IFS Admin' onSearch={handleSearch} userRole='Customer' buttonLabel="Create IFS Admin" buttonLink="/workshop/admin/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

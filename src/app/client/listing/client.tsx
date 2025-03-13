@@ -190,6 +190,7 @@ const downloadCSV = () => {
          deleteRoute={`${apiUrl}/deleteCustomer`} 
          viewRoute={`/client/view?customerId=${cust.id}`}
          idKey="customerId"
+         userRole="Customer"
           itemId={cust.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
       </td>
@@ -198,7 +199,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create Customer" buttonLink="/client/create" />
+      <CommonHeader heading='Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

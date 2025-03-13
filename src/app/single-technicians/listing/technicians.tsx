@@ -284,21 +284,11 @@ const TechnicianTable: React.FC = () => {
         </span>
       </td>
       <td> 
-      {userRole !== "ifs" ? (
-        <TableActions
-          editRoute={`/single-technicians/create-technician?technicianId=${tech.id}`}
-          viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
-          deleteRoute={`${apiUrl}/deleteIndividualTechnician`}
-          itemId={tech.id}
-          idKey="technicianId"
-          onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
-        />
-      ) : ( 
+      
          <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
          <Image alt='eye' src={Eye} className='w-[16px]' /> 
          </Link>
-      )}
-
+      
       </td>
     </tr>
     )
@@ -331,7 +321,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}   buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='SingleTechnician'  buttonLabel="" buttonLink="" />
 
     
         <SortableTable

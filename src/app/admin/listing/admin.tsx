@@ -243,6 +243,7 @@ const toggleTechnicianStatus = async (adminId: number, currentApprovalStatus: bo
          deleteRoute={`${apiUrl}/deleteIfsAdmin`} 
          viewRoute={`/admin/view?adminId=${cust.id}`}
          idKey="adminId"
+         userRole='Admin' 
           itemId={cust.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
       </td>
@@ -251,7 +252,7 @@ const toggleTechnicianStatus = async (adminId: number, currentApprovalStatus: bo
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='IFS Admin' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="Create IFS Admin" buttonLink="/admin/create" />
+      <CommonHeader heading='IFS Admin' onSearch={(term) => setSearchTerm(term)} userRole='Admin' onExport={downloadCSV}  buttonLabel="Create IFS Admin" buttonLink="/admin/create" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

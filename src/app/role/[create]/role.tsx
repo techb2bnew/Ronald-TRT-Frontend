@@ -35,14 +35,17 @@ const RolesForm: React.FC = () => {
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const [roleId, setRoleId] = useState<string | null>(null);
   const [allPermissions, setAllPermissions] = useState<any[]>([]);
-    const [loading, setLoading] = useState<boolean>(true); 
+    const [loading, setLoading] = useState<boolean>(false); 
   
    const [permissions, setPermissions] = useState<Permissions>({
     technician: { create: false, edit: false, delete: false, approve: false },
     customer: { create: false, edit: false, delete: false, approve: false },
     workshop: { create: false, edit: false, delete: false, approve: false },
     workshopadmin: { create: false, edit: false, delete: false, approve: false },
-    jobs: { create: false, edit: false, delete: false, approve: false },
+    activejobs: { create: false, edit: false, delete: false, approve: false },
+    completedjobs: { create: false, edit: false, delete: false, approve: false },
+    jobbygroup: { create: false, edit: false, delete: false, approve: false },
+    vehicleinfo: { create: false, edit: false, delete: false, approve: false },
     enterprises: { create: false, edit: false, delete: false, approve: false },
   });
   console.log(permissions, 'permissionspermissions')
@@ -180,8 +183,11 @@ const fetchRoleData = async (roleId: string) => {
       technician: { create: false, edit: false, delete: false, approve: false },
       customer: { create: false, edit: false, delete: false, approve: false },
       workshop: { create: false, edit: false, delete: false, approve: false },
-      workshopadmin: { create: false, edit: false, delete: false, approve: false },
-      jobs: { create: false, edit: false, delete: false, approve: false },
+      workshopadmin: { create: false, edit: false, delete: false, approve: false }, 
+      activejobs: { create: false, edit: false, delete: false, approve: false },
+      completedjobs: { create: false, edit: false, delete: false, approve: false },
+      jobbygroup: { create: false, edit: false, delete: false, approve: false },
+      vehicleinfo: { create: false, edit: false, delete: false, approve: false },
       enterprises: { create: false, edit: false, delete: false, approve: false },
     };
 
@@ -305,7 +311,7 @@ const fetchRoleData = async (roleId: string) => {
             </div>
 
             {/* Repeat for other roles */}
-            {['technician', 'customer', 'workshop', 'workshopadmin', 'jobs', 'enterprises'].map((role) => (
+            {[ 'workshop', 'workshopadmin', 'enterprises', 'technician', 'customer', 'activejobs', 'completedjobs', 'jobbygroup', 'vehicleinfo' ].map((role) => (
               <div key={role} className="grid grid-cols-5 gap-5 text-left items-center">
                 <div className='text-sm'>{role.charAt(0).toUpperCase() + role.slice(1)}</div>
                 {['create', 'edit', 'delete', 'approve'].map((action) => (

@@ -58,7 +58,7 @@ const JobTable: React.FC = () => {
         const data = await response.json();
         if (response.ok) {
           const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.ActiveJob || []
+          ? data.JobStatus || []
           : data.JobStatus || [];
         //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
@@ -251,7 +251,7 @@ const downloadCSV = () => {
     </div>
   ))}</td>
       <td>${totalCost}</td> 
-      <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
+      <td   style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -270,7 +270,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Jobs Status" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Jobs Status" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

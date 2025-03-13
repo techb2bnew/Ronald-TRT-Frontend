@@ -220,6 +220,36 @@ const downloadCSV = () => {
 };
 
 
+
+const [permissions, setPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+      const storedPermissions = localStorage.getItem("permissions");
+  
+      if (storedPermissions) {
+        try {
+          const parsedPermissions = JSON.parse(storedPermissions);
+          setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+          console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+        } catch (error) {
+          console.error("❌ Failed to parse permissions:", error);
+        }
+      } else {
+        console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      }
+    }, []);
+  
+    // ✅ Function to check permission based on role and action
+    const hasPermission = (action: string) => {
+      if (permissions.length === 0) return true; // If no permissions exist, show all icons
+  
+      return permissions.some(
+        (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
+      );
+    };
+    const canCreate = hasPermission("approve");
+
+
   const renderRow = (job: any) => {
 
     const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
@@ -242,12 +272,16 @@ const downloadCSV = () => {
     </div>
   ))}</td>
       <td>${totalCost}</td> 
-      <td onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}>
-        <span
+      <td>
+        {canCreate && (
+
+        <span onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
           {job.jobStatus ? 'Completed' : 'In Progress'}
         </span>
+        )}
+
       </td> 
       <td>
         <TableActions   
@@ -255,6 +289,7 @@ const downloadCSV = () => {
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
          viewRoute={`/jobs/view?jobId=${job.id}`}
            idKey="jobid"
+           userRole='Activejobs'
           itemId={job.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
            />
@@ -265,7 +300,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Active Jobs" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Active Jobs" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

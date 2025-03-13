@@ -141,7 +141,7 @@ const downloadCSV = () => {
   const a = document.createElement('a');
   a.setAttribute('hidden', '');
   a.setAttribute('href', url);
-  a.setAttribute('download', 'jobs.csv');
+  a.setAttribute('download', 'roles.csv');
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -166,6 +166,7 @@ const downloadCSV = () => {
          deleteRoute={`${apiUrl}/roles/deleteRole`}  // Pass the correct endpoint
          viewRoute={`/role/view?roleId=${role.id}`}
            idKey="roleId"
+           userRole='Roles'
           itemId={role.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(role.id)} 
            />
@@ -175,7 +176,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Roles" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} buttonLabel="Create role" buttonLink="/role/create" />
+      <CommonHeader heading="Roles" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Role' buttonLabel="Create role" buttonLink="/role/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

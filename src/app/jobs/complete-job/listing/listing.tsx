@@ -150,6 +150,7 @@ const CompletedJobs: React.FC = () => {
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint 
          viewRoute={`/jobs/view?jobId=${completejob.id}`} 
          idKey="jobid"
+         userRole='Completedjobs'
           itemId={completejob.id}  // Pass the technician ID
           onDeleteSuccess={() => handleDeleteSuccess(completejob.id)} 
            />
@@ -161,7 +162,7 @@ const CompletedJobs: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4 mb-5">
-      <CommonHeader heading="Completed Jobs" onSearch={(term) => setSearchTerm(term)} buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Jobs" onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
