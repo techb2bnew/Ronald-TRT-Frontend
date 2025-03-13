@@ -405,7 +405,7 @@ export default function Technicians() {
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
-        <div onClick={handleCopy} className='text-right mb-4 flex items-center gap-4 justify-end cursor-pointer'>Share Registration Form <Image src={Share} className='w-[20px]' alt='share' /> </div>
+        <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Share Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
         {submitting ? (
           <div className="flex justify-center items-center h-64">
             <Loader />  {/* ✅ Show loader during submission */}
@@ -560,7 +560,7 @@ export default function Technicians() {
             <div className="grid grid-cols-2 gap-4">
               <div className='mb-4'>
                 {/* <p   className='text-sm mb-2'>Secondary phone number</p> */}
-                <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
+                <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
 
                 {/* <input
                 type="number"
@@ -573,7 +573,7 @@ export default function Technicians() {
               </div>
               <div className='mb-4'>
                 {/* <p className='text-sm mb-2'>Secondary Email</p> */}
-                <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
+                <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
 
                 {/* <input
                 type="email"

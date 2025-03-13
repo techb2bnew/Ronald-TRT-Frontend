@@ -570,9 +570,13 @@ export default function Role() {
                         name="role"
                         onChange={handleSelectChange}
                       >
-                        {roles.map((role, index) => (
-                          <MenuItem key={index} value={role.name}>{role.name}</MenuItem> // Adjust role.name if the role object has a different structure
-                        ))}
+                         {roles
+                          .filter((role) => role.name !== "super admin") // Filter out "super admin"
+                          .map((role, index) => (
+                            <MenuItem key={index} value={role.name}>
+                              {role.name}
+                            </MenuItem>
+                          ))}
                       </Select>
                     </FormControl>
                   </div>
@@ -623,7 +627,7 @@ export default function Role() {
                   defaultCountry="IN"
                   value={formData.phoneNumber}
                   onChange={handlePhoneChange}
-                  className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+                  className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
                 />
                   </div>
                   <div className='mb-4'>
@@ -700,13 +704,13 @@ export default function Role() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className='mb-4'>
                     {/* <p   className='text-sm mb-2'>Secondary phone number</p> */}
-                    <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
+                    <TextField fullWidth size="small" name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
 
 
                   </div>
                   <div className='mb-4'>
                     {/* <p className='text-sm mb-2'>Secondary Email</p> */}
-                    <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
+                    <TextField fullWidth size="small" name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
 
 
                   </div>

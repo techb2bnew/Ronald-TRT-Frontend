@@ -320,7 +320,7 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#EF502E]' : ''}`}>
-                  <span>Complete Jobs</span>
+                  <span>Completed Jobs</span>
                 </Link>
               </li>
               <li >

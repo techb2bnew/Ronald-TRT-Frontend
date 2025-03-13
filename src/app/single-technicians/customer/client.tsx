@@ -205,7 +205,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='Single Technician Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  buttonLabel="" buttonLink="" />
+      <CommonHeader heading='Single Technician Customers' onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV}  buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
