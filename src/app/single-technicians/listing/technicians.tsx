@@ -210,44 +210,47 @@ const TechnicianTable: React.FC = () => {
     const storedRole = localStorage.getItem("types");
     setUserRole(storedRole);
   }, []);
+ const [statuses, setStatuses] = useState<{ [key: string]: string }>({});
+  useEffect(() => {
+    const loadedStatuses: { [key: string]: string } = {};
+    technicians.forEach((tech) => {
+      const storedStatus = localStorage.getItem(`techStatus_${tech.id}`);
+      if (storedStatus) {
+        loadedStatuses[tech.id] = storedStatus;
+      } else {
+        loadedStatuses[tech.id] = tech.accountStatus ? "Approved" : "Accept";
+      }
+    });
+    setStatuses(loadedStatuses);
+  }, [technicians]);
+  
+  const handleStatusChange = async (techId: number, currentStatus: string) => {
+    let newStatus;
+    let isApproved;
+  
+    if (currentStatus === "Accept") {
+      newStatus = "Approved";
+      isApproved = true; // ✅ Correctly setting to true
+    } else if (currentStatus === "Approved") {
+      newStatus = "Restricted";
+      isApproved = false; // ✅ Correctly setting to false
+    } else {
+      newStatus = "Approved"; // Switching from Restricted to Approved
+      isApproved = true;
+    }
+  
+    // Send correct status to backend
+    await toggleTechnicianStatus(techId, isApproved);
+  
+    // Update status locally
+    localStorage.setItem(`techStatus_${techId}`, newStatus);
+    setStatuses((prev) => ({ ...prev, [techId]: newStatus }));
+  };
 
   // Render row function for SortableTable
   const renderRow = (tech: any) => {
-    const [status, setStatus] = useState("");
-
-    useEffect(() => {
-      // Check if status is already set in localStorage
-      const storedStatus = localStorage.getItem(`techStatus_${tech.id}`);
-      if (storedStatus) {
-        setStatus(storedStatus);
-      } else {
-        // Set initial status based on accountStatus
-        if (tech.accountStatus === false) {
-          setStatus("Accept");
-        } else if (tech.accountStatus === true) {
-          setStatus("Approved");
-        } else {
-          setStatus("Restricted");
-        }
-      }
-    }, [tech.accountStatus, tech.id]);
-  
-    const handleStatusChange = async () => {
-      let newStatus;
-      if (status === "Accept") {
-        newStatus = "Approved";
-      } else {
-        newStatus = status === "Approved" ? "Restricted" : "Approved";
-      }
-  
-      // Update status in the backend
-      await toggleTechnicianStatus(tech.id, newStatus === "Approved");
-  
-      // Update status in localStorage and state
-      localStorage.setItem(`techStatus_${tech.id}`, newStatus);
-      setStatus(newStatus);
-    };
-    
+ const status = statuses[tech.id] || "Accept"; 
+ 
     return (
     <tr key={tech.id}>
       <td>{tech.id}</td>
@@ -255,7 +258,7 @@ const TechnicianTable: React.FC = () => {
       <td>{tech.email}</td>
       <td>{tech.phoneNumber}</td>
       {/* <td>{tech.payRate}</td> */}
-       <td onClick={handleStatusChange} style={{ cursor: 'pointer' }}>
+       <td onClick={() => handleStatusChange(tech.id, status)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${tech.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -270,7 +273,7 @@ const TechnicianTable: React.FC = () => {
           <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg></Link>
         </td> */}
-      <td onClick={handleStatusChange} style={{ cursor: 'pointer' }}>
+      <td onClick={() => handleStatusChange(tech.id, status)} style={{ cursor: 'pointer' }}>
       <span
           className={`badge ${
             status === "Accept"

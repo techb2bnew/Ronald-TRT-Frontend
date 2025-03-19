@@ -6,7 +6,7 @@ import Loading from '@/app/component/loader';
 
 export default function ViewDetails() { 
   const [CustomerData, setCustomerData] = useState<any>(null);  // Using `any` type for flexibility
-  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [isEdit, setIsEdit] = useState<boolean>(false); 
 
   const fetchCustomerData = async (customerId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -71,11 +71,11 @@ export default function ViewDetails() {
 
           {/* Right Section */}
           <div className='shadow-lg p-5 bg-white rounded'> 
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Role Type:</strong> {CustomerData?.roleType}</p>
              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Country:</strong> {CustomerData?.country}</p>
              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>State:</strong> {CustomerData?.state}</p>
              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>City:</strong> {CustomerData?.city}</p>
-             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p>
-             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(CustomerData.updatedAt).toLocaleDateString('en-GB')} </p>
+             <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p> 
           </div>
         </div>
       </div>

@@ -142,7 +142,7 @@ const downloadCSV = () => {
 
   const renderRow = (job: any) => (
     <tr key={job.id}>
-      <td>{job.id}</td> 
+      <td>{job?.vehicalId}</td> 
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td> 
       <td>  {job?.technicians?.map((tech: any) => (
         <div key={tech.id}>

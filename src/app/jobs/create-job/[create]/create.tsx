@@ -774,6 +774,7 @@ export default function Technicians() {
                     label="Select color"
                     name="color"
                     color="warning"
+                    required
                     onChange={(event) => handleSelectColor(event, 'color')}
                   >
                     <MenuItem value='black'>Black</MenuItem>
@@ -805,6 +806,7 @@ export default function Technicians() {
                     value={formData.assignCustomer}
                     label="Select customer"
                     name="assignCustomer"
+                    required
                     onChange={(event) => handleSelectChange(event, 'assignCustomer')}
                   >
                     {customer.map((customer: any) => (
@@ -826,6 +828,7 @@ export default function Technicians() {
                     color="warning"
                     label="Select technicians"
                     multiple
+                    required
                     value={formData.assignTechnicians}
                     onChange={handleTechnicianChange}
                     renderValue={(selected) => selected.map(id => {
@@ -853,7 +856,7 @@ export default function Technicians() {
                     onChange={(e) =>
                       handleDescriptionCostChange(index, "jobDescription", e.target.value)
                     }
-                    placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+                    placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
                 </div>
                 <div className="mb-2 flex items-center gap-3">
                   <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
@@ -866,6 +869,7 @@ export default function Technicians() {
                       }
                       startAdornment={<InputAdornment position="start">$</InputAdornment>}
                       label="Amount"
+                      required
                     />
                   </FormControl>
                   {descriptionCostFields.length > 1 && (

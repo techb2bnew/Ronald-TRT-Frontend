@@ -175,7 +175,9 @@ import Logo from "../../../public/logo.svg";
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css' // For basic styling
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-
+import Link from 'next/link';
+import Eye from "../../../public/eye.svg";
+import EyeOff from '../../../public/eye-off.svg'
 interface registerForm {
   id?: string;
   firstName: string;
@@ -206,7 +208,8 @@ export default function Role() {
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const [loading, setLoading] = useState<boolean>(true);
   const [roles, setRoles] = useState<any[]>([]);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConformPassword, setShowConformPassword] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -513,23 +516,23 @@ export default function Role() {
 
 
   const handlePhoneChange = (value: string | undefined) => {
-      if (!value) return;
-      
-      // Extracting country code and formatting phone number
-      const parsedNumber = parsePhoneNumberFromString(value);
-      if (parsedNumber) {
-        const countryCode = parsedNumber.countryCallingCode; // Example: "91" for India
-        const nationalNumber = parsedNumber.nationalNumber; // Example: "983274663"
-    
-        // Formatting as "+91-983274663"
-        const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
-    
-        setFormData((prev) => ({
-          ...prev,
-          phoneNumber: formattedPhoneNumber,
-        }));
-      }
-    };
+    if (!value) return;
+
+    // Extracting country code and formatting phone number
+    const parsedNumber = parsePhoneNumberFromString(value);
+    if (parsedNumber) {
+      const countryCode = parsedNumber.countryCallingCode; // Example: "91" for India
+      const nationalNumber = parsedNumber.nationalNumber; // Example: "983274663"
+
+      // Formatting as "+91-983274663"
+      const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
+
+      setFormData((prev) => ({
+        ...prev,
+        phoneNumber: formattedPhoneNumber,
+      }));
+    }
+  };
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
@@ -570,7 +573,7 @@ export default function Role() {
                         name="role"
                         onChange={handleSelectChange}
                       >
-                         {roles
+                        {roles
                           .filter((role) => role.name !== "super admin") // Filter out "super admin"
                           .map((role, index) => (
                             <MenuItem key={index} value={role.name}>
@@ -623,12 +626,12 @@ export default function Role() {
                     {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
                     {/* <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="outlined" value={formData.phoneNumber} onChange={handleChange} /> */}
                     <PhoneInput
-                  international
-                  defaultCountry="IN"
-                  value={formData.phoneNumber}
-                  onChange={handlePhoneChange}
-                  className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
-                />
+                      international
+                      defaultCountry="IN"
+                      value={formData.phoneNumber}
+                      onChange={handlePhoneChange}
+                      className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
+                    />
                   </div>
                   <div className='mb-4'>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
@@ -717,17 +720,25 @@ export default function Role() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
 
-                  <div className='mb-4'>
+                  <div className='mb-4 relative'>
                     {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter your password *" variant="outlined" value={formData.password} onChange={handleChange} />
-
+                    <TextField fullWidth size="small" type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Enter your password *" variant="outlined" value={formData.password} onChange={handleChange} />
+                    <button
+                      type="button"
+                      style={{ position: 'absolute', right: '10px', top: '10px' }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
+                      }
+                    </button>
 
                   </div>
-                  <div className='mb-4'>
+                  <div className='mb-4 relative'>
                     {/* <p className='text-sm mb-2'>Confirm Password <span className='text-red-500'>*</span></p> */}
                     <TextField
                       fullWidth
                       size="small"
+                      type={showConformPassword ? "text" : "password"}
                       name="confirmPassword"
                       id="confirmPassword"
                       color="warning"
@@ -738,6 +749,14 @@ export default function Role() {
                       error={!!errors.confirmPassword}
                       helperText={errors.confirmPassword}
                     />
+                    <button
+                      type="button"
+                      style={{ position: 'absolute', right: '10px', top: '10px' }}
+                      onClick={() => setShowConformPassword(!showConformPassword)}
+                    >
+                      {showConformPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
+                      }
+                    </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -826,6 +845,10 @@ export default function Role() {
                 {/* Submit Button */}
                 <div className="text-left">
                   <button type="submit" className="primary-bg pl-5 pr-5 p-2 rounded">Register</button>
+                </div>
+                <div className="text-sm text-center mt-5">
+                  <p>Already have an account?
+                    <Link href='/' className="primary-text"> Login</Link> </p>
                 </div>
               </form>
             )}

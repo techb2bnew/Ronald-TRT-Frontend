@@ -297,7 +297,7 @@ const Sidebar = () => {
                   </clipPath>
                 </defs>
               </svg>
-              <span>Jobs</span>
+              <span>All Jobs</span>
             </div>
             <svg className={`transform transition-transform ${isUser3Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -344,7 +344,7 @@ const Sidebar = () => {
                 <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                 <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
               </svg>
-              <span>Reports</span>
+              <span>All Reports</span>
             </div>
             <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -363,6 +363,11 @@ const Sidebar = () => {
               <li >
                 <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#EF502E]' : ''}`} >
                   <span>Jobs Status</span>
+                </Link>
+              </li> 
+              <li >
+                <Link href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#EF502E]' : ''}`} >
+                  <span>Vehicles List</span>
                 </Link>
               </li> 
             </ul>

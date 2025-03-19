@@ -22,7 +22,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
   loading,
 }) => {
   // Define sortable columns
-  const sortableColumns = ['id', 'name', 'email', 'phone number', 'account status'];
+  const sortableColumns = ['id', 'name', 'email', 'phone number','status','create new job', 'account status','action'];
 
   return (
     <div className="overflow-x-auto rounded-md">
