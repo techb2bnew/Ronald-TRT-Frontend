@@ -67,11 +67,11 @@ export default function ViewDetails() {
       {jobData.map((job, index) => (
         <div key={index} className="bg-[#F6F6F6] rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">
-            Job Id - {job?.id}
+          Work Order Id - {job?.id}
           </h2>
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
-            <div className="shadow-lg p-5 bg-white rounded">
+            <div className="  p-5   rounded">
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className="w-[200px] inline-block">
@@ -106,20 +106,29 @@ export default function ViewDetails() {
                 {job?.manufacturerName}
               </div>
              
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] inline-block">Job Description:</strong>
+              <div className="text-sm"> 
                 {job?.jobDescription && Array.isArray(job.jobDescription) ? (
-                  <ul className="list-none pl-5">
+                  <div className="list-none">
                     {job.jobDescription.map((item: any, index: any) => {
                       try {
                         const parsedItem = JSON.parse(item); // ✅ Parse the JSON string
                         return (
-                          <li key={index}>
-                            <span className="font-semibold block">
-                              {parsedItem.jobDescription}
-                            </span>
-                            <span className="block">${parsedItem.cost}</span>
-                          </li>
+                          <>
+                          <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                        <strong className="w-[200px] inline-block">Job Description:</strong>{" "}
+                        {parsedItem.jobDescription}
+                      </div>
+                      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                      <strong className="w-[200px] inline-block">Job Cost:</strong>{" "}
+                      ${parsedItem.cost}
+                    </div>
+                    </>
+                          // <li key={index}>
+                          //   <span className="font-semibold block">
+                          //     {parsedItem.jobDescription}
+                          //   </span>
+                          //   <span className="block">${parsedItem.cost}</span>
+                          // </li>
                         );
                       } catch (error) {
                         return (
@@ -129,7 +138,7 @@ export default function ViewDetails() {
                         );
                       }
                     })}
-                  </ul>
+                  </div>
                 ) : (
                   "No job descriptions available"
                 )}
@@ -143,7 +152,7 @@ export default function ViewDetails() {
                         key={index}
                         src={image}
                         alt={`Job Image ${index + 1}`}
-                        className="w-[100px] h-[100px] rounded-lg shadow cursor-pointer hover:scale-105 transition"
+                        className="w-[70px] h-[70px] rounded-lg shadow cursor-pointer hover:scale-105 transition"
                         onClick={() => window.open(image, '_blank')} // Opens image in a new tab
                       />
                     ))}
@@ -156,25 +165,28 @@ export default function ViewDetails() {
             </div>
 
             {/* Right Section */}
-            <div className="shadow-lg p-5 bg-white rounded">
+            <div className="  p-5   rounded">
               {/* Technicians Section */}
               {job.technicians?.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-semibold mb-2">Technicians</h3>
+                <div className=""> 
                   {job.technicians.map((tech: any, techIndex: any) => (
                     <div
                       key={techIndex}
-                      className="p-3 mb-3 bg-gray-100 rounded"
+                      className="  mb-3 bg-gray-100 rounded"
                     >
-                      <div className="text-sm">
-                        <strong>Name:</strong> {tech.firstName} {tech.lastName}
+                       <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                        <strong className="w-[200px] inline-block">Technician Name:</strong>{" "}
+                        {tech.firstName} {tech.lastName}
                       </div>
-                      <div className="text-sm">
-                        <strong>Email:</strong> {tech.email}
+                      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                        <strong className="w-[200px] inline-block">Technician Email:</strong>{" "}
+                        {tech.email}
                       </div>
-                      <div className="text-sm">
-                        <strong>Phone Number:</strong> {tech.phoneNumber}
+                      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                        <strong className="w-[200px] inline-block">Technician Phone Number:</strong>{" "}
+                        {tech.phoneNumber}
                       </div>
+                       
                     </div>
                   ))}
                 </div>

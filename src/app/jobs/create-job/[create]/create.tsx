@@ -609,7 +609,7 @@ export default function Technicians() {
   return (
     <div className='main-container mb-5'>
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Job</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Work Order</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
         {submitting ? (

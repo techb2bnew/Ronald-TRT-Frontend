@@ -162,7 +162,7 @@ const CompletedJobs: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4 mb-5">
-      <CommonHeader heading="Completed Jobs" onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Work Orders" onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

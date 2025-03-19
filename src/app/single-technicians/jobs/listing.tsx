@@ -306,7 +306,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Single Technician Jobs" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Single Technician Work Order" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

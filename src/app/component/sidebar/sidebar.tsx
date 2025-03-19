@@ -310,22 +310,22 @@ const Sidebar = () => {
             <ul className="ml-4">
               <li  >
                 <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Create Job</span>
+                  <span>Create Work Order</span>
                 </Link>
               </li>
               <li >
                 <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Active Jobs</span>
+                  <span>Active Work Order</span>
                 </Link>
               </li>
               <li >
                 <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#EF502E]' : ''}`}>
-                  <span>Completed Jobs</span>
+                  <span>Completed Work Order</span>
                 </Link>
               </li>
               <li >
                 <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#EF502E]' : ''}`}  >
-                  <span>Jobs by Group</span>
+                  <span>Work Order by Customers</span>
                 </Link>
               </li>
             </ul>
@@ -362,7 +362,7 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#EF502E]' : ''}`} >
-                  <span>Jobs Status</span>
+                  <span>Work Orders Status</span>
                 </Link>
               </li> 
               <li >
@@ -411,7 +411,7 @@ const Sidebar = () => {
     </li>
     <li >
       <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#EF502E]' : ''}`} >
-        <span>Jobs</span>
+        <span>Work Orders</span>
       </Link>
     </li> 
      

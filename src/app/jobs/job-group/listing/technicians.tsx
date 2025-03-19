@@ -227,8 +227,10 @@ const downloadCSV = () => {
     
     return (
     <tr key={job.vin}>
-      <td>{job.vinCount}</td> 
+      {/* <td>{job.vinCount}</td>  */}
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>  
+      <td>{job?.customer?.email}</td>  
+      <td>{job?.customer?.phoneNumber}</td>  
       <td>{job?.vin}</td> 
        
       <td>
@@ -250,20 +252,20 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Jobs By Group" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Work Order By Customers" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th   onClick={() => handleSort('id')}>
+              {/* <th   onClick={() => handleSort('id')}>
                 Count
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
-              </th> 
+              </th>  */}
               <th   onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
@@ -272,6 +274,8 @@ const downloadCSV = () => {
                   </span>
                 )}
               </th>  
+              <th  >Email</th>  
+              <th  >Phone Number</th>  
               <th  >VIN</th>  
               <th>Status</th>
               <th  >Action</th>
@@ -280,13 +284,13 @@ const downloadCSV = () => {
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={4} className="text-center py-10">
+                            <td colSpan={6} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="text-center py-10">
+                            <td colSpan={6} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>
