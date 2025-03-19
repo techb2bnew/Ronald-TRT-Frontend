@@ -34,7 +34,7 @@ const TableActions: React.FC<TableActionsProps> = ({
       try {
         const parsedPermissions = JSON.parse(storedPermissions);
         setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
-        console.log("✅ Loaded Permissions:", parsedPermissions);
+        // console.log("✅ Loaded Permissions:", parsedPermissions);
       } catch (error) {
         console.error("❌ Failed to parse permissions:", error);
       }

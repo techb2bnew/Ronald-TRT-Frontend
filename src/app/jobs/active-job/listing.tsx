@@ -151,6 +151,7 @@ const JobTable: React.FC = () => {
             if (job.id === jobId) {
               return { ...job, jobStatus: !job.jobStatus };
             }
+            fetchJobs(currentPage, searchTerm);
             return job;
           }));
           Swal.fire({

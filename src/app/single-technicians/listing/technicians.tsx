@@ -287,10 +287,18 @@ const TechnicianTable: React.FC = () => {
         </span>
       </td>
       <td> 
-      
-         <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
+      <TableActions
+          editRoute={`/technicians/create-technician?technicianId=${tech.id}&singletechnician`}
+          viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
+          deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
+          itemId={tech.id}  // Pass the technician ID
+          idKey="technicianId"
+          userRole='Technician'
+          onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
+        />
+         {/* <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
          <Image alt='eye' src={Eye} className='w-[16px]' /> 
-         </Link>
+         </Link> */}
       
       </td>
     </tr>
@@ -311,6 +319,7 @@ const TechnicianTable: React.FC = () => {
   };
 
   const downloadCSV = () => {
+    if (typeof window !== "undefined") {
     const csvData = convertToCSV(technicians);
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -321,10 +330,11 @@ const TechnicianTable: React.FC = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    }
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='SingleTechnician'  buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='SingleTechnician'  buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
 
     
         <SortableTable

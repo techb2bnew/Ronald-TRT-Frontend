@@ -27,7 +27,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
         try {
           const parsedPermissions = JSON.parse(storedPermissions);
           setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
-          console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+          // console.log("✅ Loaded Permissions:ssss", parsedPermissions);
         } catch (error) {
           console.error("❌ Failed to parse permissions:", error);
         }

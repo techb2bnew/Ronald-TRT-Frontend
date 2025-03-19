@@ -4,7 +4,7 @@ import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams  } from "next/navigation";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
@@ -38,6 +38,7 @@ interface TechnicianForm {
   image: File | null;
   amountPercentage: string;
   role: string;
+  types:string;
   agreeTerms: string;
 
 }
@@ -52,7 +53,9 @@ export default function Technicians() {
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConformPassword, setShowConformPassword] = useState(false);
-
+  const searchParams = useSearchParams();
+    const [roles, setRoles] = useState<any[]>([]);
+  console.log(searchParams.toString(), 'searchParams');
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
     lastName: '',
@@ -72,6 +75,7 @@ export default function Technicians() {
     image: null,
     amountPercentage: '',
     role: 'technician',
+    types:'',
     agreeTerms: 'true',
   });
 
@@ -141,7 +145,14 @@ export default function Technicians() {
       ...prev,
       [name]: value
     }));
-
+    if (name === "role") {
+      const selectedRole = roles.find((role) => role.name === value);
+      setFormData((prev) => ({
+        ...prev,
+        role: value,
+        types: selectedRole ? selectedRole.type : "", // Auto-fill role type
+      }));
+    }
   };
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
@@ -295,7 +306,7 @@ export default function Technicians() {
     }
     const types = localStorage.getItem('types');
     if (types) {
-      formDataObj.set('types', types); // `set` replaces if exists, preventing duplicates
+      formDataObj.set('types', formData.types || ''); // `set` replaces if exists, preventing duplicates
     } else {
       toast.error("User types not found!");
       return;
@@ -335,8 +346,12 @@ export default function Technicians() {
           toast.error(data.error);
         }
       } else {
-        toast.success(data.message);
-        router.push('/technicians/listing');
+        toast.success(data.message); 
+        if (searchParams.has('singletechnician')) {
+          router.push('/single-technicians/listing');
+        } else {
+          router.push('/technicians/listing');
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');
@@ -400,6 +415,64 @@ export default function Technicians() {
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
+ const fetchRoles = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL from env variable
+   
+
+    try {
+      const token = localStorage.getItem('token');
+      // if (!token) {
+      //   localStorage.removeItem('token');
+      //   router.push('/');
+      //   return;
+      // }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/getRoles`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (response.status === 400) {
+        localStorage.removeItem('token');
+        router.push('/');
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data.roles || []);
+  
+        // ✅ Auto-select and disable role if 'singletechnician' is in URL
+        if (searchParams.has('singletechnician')) {
+          const singleTechnicianRole = data.roles.find((role:any) => role.name === 'singletechnician');
+          if (singleTechnicianRole) {
+            setFormData((prev) => ({
+              ...prev,
+              role: singleTechnicianRole.name,
+              types: singleTechnicianRole.type || '',
+            }));
+          }
+        }
+      } else {
+        console.error('Error fetching roles:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  // Call the fetchTechnicians function if needed
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   return (
     <div className='main-container mb-5'>
@@ -415,6 +488,55 @@ export default function Technicians() {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
+            {searchParams.has('singletechnician') && (
+            <div className="grid grid-cols-2 gap-4">
+            
+                              <div className='mb-4'>
+                                <FormControl fullWidth size="small">
+                                  <InputLabel id="role" color="warning">Select role name *</InputLabel>
+                                  <Select
+                                    labelId="role"
+                                    id="select-role-name"
+                                    color="warning"
+                                    value={formData.role}
+                                    label="State role name"
+                                    name="role"
+                                    onChange={handleSelectChange}
+                                    disabled={searchParams.has('singletechnician')}
+                                  >
+                                    {roles
+                                      .filter((role) => role.name !== "super admin") // Filter out "super admin"
+                                      .map((role, index) => (
+                                        <MenuItem key={index} value={role.name}>
+                                          {role.name}
+                                        </MenuItem>
+                                      ))}
+                                  </Select>
+                                </FormControl>
+                              </div>
+                              <div className='mb-4'>
+                                <FormControl fullWidth size="small">
+                                  <InputLabel id="types" color="warning">Select role type *</InputLabel>
+                                  <Select
+                                    labelId="types"
+                                    id="select-role-type"
+                                    color="warning"
+                                    value={formData.types}
+                                    label="State role type"
+                                    name="types"
+                                    disabled
+                                    onChange={handleSelectChange}
+                                  >
+                                    {formData.types ? (
+                                      <MenuItem value={formData.types}>{formData.types}</MenuItem>
+                                    ) : (
+                                      <MenuItem value="">Select a role first</MenuItem>
+                                    )}
+                                  </Select>
+                                </FormControl>
+                              </div>
+                            </div>
+              )}
             <div className="grid grid-cols-2 gap-4">
               {/* Client Name and Business Name */}
               <div className='mb-4'>

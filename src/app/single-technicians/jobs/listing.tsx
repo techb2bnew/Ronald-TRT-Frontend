@@ -1,17 +1,18 @@
 // components/JobTable.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';  
-import CommonHeader from '../../../component/commonHeader';
-import { useRouter } from "next/navigation"; 
-import Pagination from '../../../component/pagination';
+import React, { useState, useEffect, useCallback } from 'react'; 
+import TableActions from '../../component/action';
+import CommonHeader from '../../component/commonHeader';
+import { useRouter } from "next/navigation";
+import { toast } from 'react-toastify';
+import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
-import Eye from '../../../../../public/eye.svg'
-import Image from 'next/image';
 import Link from 'next/link';
-
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
   id: string;
@@ -43,21 +44,21 @@ const JobTable: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const roleType = localStorage.getItem('types') || "";
+        const roleType =  "single-technician";
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
-        ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}`;
+        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
         const response = await fetch(endpoint, { method: 'GET', headers });
   
         const data = await response.json();
         if (response.ok) {
           const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.searchGroup || []
-          : data.GroupJob || [];
+          ? data.ActiveJob || []
+          : data.jobs?.jobs || [];
         //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
          setActiveJob(fetchedTechnicians);
@@ -221,28 +222,83 @@ const downloadCSV = () => {
 };
 
 
+
+const [permissions, setPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+      const storedPermissions = localStorage.getItem("permissions");
+  
+      if (storedPermissions) {
+        try {
+          const parsedPermissions = JSON.parse(storedPermissions);
+          setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+          console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+        } catch (error) {
+          console.error("❌ Failed to parse permissions:", error);
+        }
+      } else {
+        console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      }
+    }, []);
+  
+    // ✅ Function to check permission based on role and action
+    const hasPermission = (action: string) => {
+      if (permissions.length === 0) return true; // If no permissions exist, show all icons
+  
+      return permissions.some(
+        (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
+      );
+    };
+    const canCreate = hasPermission("approve");
+
+
   const renderRow = (job: any) => {
 
-    
-    
+    const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
+      const parsedJob = (job);
+      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
+    }, 0);
     return (
-    <tr key={job.vin}>
-      <td>{job.vinCount}</td> 
-      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>  
-      <td>{job?.vin}</td> 
-       
+    <tr key={job.id}>
+      <td>{job.id}</td> 
+      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+      <td>{job?.customer?.phoneNumber}</td>
+      <td>  {job?.technicians?.map((tech: any) => (
+    <div key={tech.id}>
+      {tech.firstName} {tech.lastName}
+    </div>
+  ))}</td>
+      <td>{job?.technicians?.map((tech: any) => (
+    <div key={tech.id}>
+      {tech.phoneNumber}
+    </div>
+  ))}</td>
+      <td>${totalCost}</td> 
       <td>
-        <span
+        {canCreate && (
+
+        <span 
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
           {job.jobStatus ? 'Completed' : 'In Progress'}
         </span>
-      </td> 
-      <td> 
+        )}
 
-            <Link className="p-1" href={`/jobs/job-group/view?vin=${job?.vin}`}>
-                 <Image alt='eye' src={Eye} className='w-[16px]' /> 
-                 </Link>
+      </td> 
+      <td>
+        {/* <TableActions   
+          editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
+         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
+         viewRoute={`/jobs/view?jobId=${job.id}`}
+           idKey="jobid"
+           userRole='Activejobs'
+          itemId={job.id}  // Pass the technician ID
+          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
+           /> */}
+
+<Link className="p-1" href={`/jobs/view?jobId=${job.id}`}>
+         <Image alt='eye' src={Eye} className='w-[16px]' /> 
+         </Link> 
       </td>
     </tr>
     )
@@ -250,43 +306,50 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Jobs By Group" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Single Technician Jobs" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th   onClick={() => handleSort('id')}>
-                Count
+              <th className="w-[50px]" onClick={() => handleSort('id')}>
+                ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
               </th> 
-              <th   onClick={() => handleSort('customerName')}>
+              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
-              </th>  
-              <th  >VIN</th>  
-              <th>Status</th>
-              <th  >Action</th>
+              </th>
+              <th className="w-[150px]">
+                Customer Number 
+              </th>
+              <th className="w-[120px]" >
+                Technician Name 
+              </th> 
+              <th className="w-[100px]">Tech. Number</th> 
+              <th className="w-[160px]">Total Cost</th> 
+              <th className="w-[120px]">Status</th>
+              <th className="w-[160px]">Action</th>
             </tr>
           </thead>
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={4} className="text-center py-10">
+                            <td colSpan={8} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="text-center py-10">
+                            <td colSpan={8} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>
