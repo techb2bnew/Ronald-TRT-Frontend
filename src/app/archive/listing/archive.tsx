@@ -295,7 +295,7 @@ const ArchivePage = () => {
     <div className="container mx-auto mt-4">
       <CommonHeader heading='Archive' onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel='' buttonLink='' onExport={downloadCSV} />
       {loading ? (
-        <p className="text-center">Loading...</p>
+       <Loader />
       ) : (
         <>
           {renderAllTables()}
