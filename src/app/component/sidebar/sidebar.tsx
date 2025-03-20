@@ -474,7 +474,7 @@ const Sidebar = () => {
             <span>Invoice</span>
           </Link>
         </li>  */}
-        {userType !== 'single-technician' && (
+        {/* {userType !== 'single-technician' && (
           <li className='p-1'>
             <Link href="/role/listing" className={`flex items-center p-2 space-x-2 hover:text-[#EF502E] hover:bg-white rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#EF502E]' : ''}`}>
 
@@ -490,7 +490,7 @@ const Sidebar = () => {
               <span>Roles & Permissions</span>
             </Link>
           </li>
-        )}
+        )} */}
         <li className='p-1'>
           <Link href="/archive/listing" className={`flex items-center p-2 space-x-2 hover:bg-white hover:text-[#EF502E] rounded ${activeLink === '/archive/listing' ? 'active text-[#EF502E]' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 20 23" fill="none" xmlns="http://www.w3.org/2000/svg">
