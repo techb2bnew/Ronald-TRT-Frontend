@@ -51,8 +51,8 @@ const handleDeleteSuccess = (deletedId: string) => {
   
         // Determine correct endpoint
         const endpoint = query.trim()
-          ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}`;
+          ? `${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {

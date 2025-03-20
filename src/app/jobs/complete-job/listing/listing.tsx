@@ -43,13 +43,19 @@ const CompletedJobs: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const roleType = localStorage.getItem('types') || "";
+        const userId = localStorage.getItem('userID');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
+        ? roleType === 'superadmin'
         ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`;
+        : `${apiUrl}/searchTechnicianCompleteJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : roleType === 'superadmin'
+          ? `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/fetchCompleteJobStatus?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+ 
 
       const response = await fetch(endpoint, { method: 'GET', headers });  
         const data = await response.json(); 

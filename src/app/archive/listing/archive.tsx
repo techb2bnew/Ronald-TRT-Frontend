@@ -216,6 +216,15 @@ const ArchivePage = () => {
   };
  
   const renderAllTables = () => {
+    const recordKeys = Object.keys(groupedRecords);
+
+    if (recordKeys.length === 0) {
+      return (
+        <div className="text-center py-10">
+          <Empty />
+        </div>
+      );
+    }
     return Object.keys(groupedRecords).map((type) => (
       <div key={type} className="overflow-x-auto mb-8 rounded-md">
         <h3 className="text-lg font-bold mb-4 capitalize">{type} Records</h3>
@@ -230,7 +239,7 @@ const ArchivePage = () => {
             </tr>
           </thead>
           <tbody>
-            {groupedRecords[type].length === 0 ? (
+            {groupedRecords[type]?.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-10">
                   <Empty />

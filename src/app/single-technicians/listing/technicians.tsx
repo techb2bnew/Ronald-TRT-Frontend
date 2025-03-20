@@ -116,6 +116,7 @@ const TechnicianTable: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || ""; 
       if (!token){
         localStorage.removeItem('token');
         router.push('/');
@@ -131,7 +132,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}`
+        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=single-technician`
         : `${apiUrl}/fetchIndividualTechnician?page=${page}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers }); 

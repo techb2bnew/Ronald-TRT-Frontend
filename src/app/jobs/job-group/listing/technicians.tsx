@@ -44,12 +44,19 @@ const JobTable: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const roleType = localStorage.getItem('types') || "";
+        const userId = localStorage.getItem('userID');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
+     
         const endpoint = query.trim()
+        ? roleType === 'superadmin'
         ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}`;
+        :`${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : roleType === 'superadmin'
+          ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+
 
         const response = await fetch(endpoint, { method: 'GET', headers });
   
@@ -233,13 +240,13 @@ const downloadCSV = () => {
       <td>{job?.customer?.phoneNumber}</td>  
       <td>{job?.vin}</td> 
        
-      <td>
+      {/* <td>
         <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
           {job.jobStatus ? 'Completed' : 'In Progress'}
         </span>
-      </td> 
+      </td>  */}
       <td> 
 
             <Link className="p-1" href={`/jobs/job-group/view?vin=${job?.vin}`}>
@@ -277,20 +284,20 @@ const downloadCSV = () => {
               <th  >Email</th>  
               <th  >Phone Number</th>  
               <th  >VIN</th>  
-              <th>Status</th>
+              {/* <th>Status</th> */}
               <th  >Action</th>
             </tr>
           </thead>
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={6} className="text-center py-10">
+                            <td colSpan={5} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="text-center py-10">
+                            <td colSpan={5} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>

@@ -43,12 +43,17 @@ const JobTable: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const roleType = localStorage.getItem('types') || "";
+        const userId = localStorage.getItem('userID');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`;
+        ? roleType === 'superadmin'
+          ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchTechnicianActiveJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : roleType === 'superadmin'
+            ? `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`
+            : `${apiUrl}/fetchAllJobs?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
         const response = await fetch(endpoint, { method: 'GET', headers });
   
