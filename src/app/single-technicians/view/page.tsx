@@ -2,7 +2,7 @@
 import View from '../view/view'
 import React, { useState } from 'react'; 
 import AuthCheck from '@/app/component/AuthCheck';
-import Customer from '../customer/client'
+import Customer from '../../all-customer/listing';
 export default function ViewTechnicians() { 
   
   return (

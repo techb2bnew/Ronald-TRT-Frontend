@@ -10,12 +10,9 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
-import Eye from '../../../../public/eye.svg'
-import Image from 'next/image';
 import Link from 'next/link';
-import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
-
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
   id: string;
@@ -47,27 +44,21 @@ const JobTable: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const roleType = localStorage.getItem('types') || "";
-        const userId = localStorage.getItem('userID');
+        const roleType =  "single-technician";
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-       
         const endpoint = query.trim()
-        ? roleType === 'superadmin'
-        ? `${apiUrl}/searchJobStatus?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/searchJobStatus?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'superadmin'
-          ? `${apiUrl}/fetchJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchJobStatus?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`;
 
         const response = await fetch(endpoint, { method: 'GET', headers });
   
         const data = await response.json();
         if (response.ok) {
           const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.JobStatus || []
-          : data.JobStatus || [];
+          ? data.ActiveJob || []
+          : data.jobs?.jobs || [];
         //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
          setActiveJob(fetchedTechnicians);
@@ -231,18 +222,42 @@ const downloadCSV = () => {
 };
 
 
+
+const [permissions, setPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+      const storedPermissions = localStorage.getItem("permissions");
+  
+      if (storedPermissions) {
+        try {
+          const parsedPermissions = JSON.parse(storedPermissions);
+          setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+          console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+        } catch (error) {
+          console.error("❌ Failed to parse permissions:", error);
+        }
+      } else {
+        console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      }
+    }, []);
+  
+    // ✅ Function to check permission based on role and action
+    const hasPermission = (action: string) => {
+      if (permissions.length === 0) return true; // If no permissions exist, show all icons
+  
+      return permissions.some(
+        (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
+      );
+    };
+    const canCreate = hasPermission("approve");
+
+
   const renderRow = (job: any) => {
 
-    const totalCost = job.jobDescription.reduce((sum: number, jobString: string) => {
-      try {
-        const parsedJob = JSON.parse(jobString); // Convert string to object
-        return sum + Number(parsedJob.cost || 0); // Ensure cost is a valid number
-      } catch (error) {
-        console.error("Invalid jobDescription format:", jobString);
-        return sum; // Skip invalid data
-      }
+    const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
+      const parsedJob = (job);
+      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
     }, 0);
-    
     return (
     <tr key={job.id}>
       <td>{job.id}</td> 
@@ -259,20 +274,31 @@ const downloadCSV = () => {
     </div>
   ))}</td>
       <td>${totalCost}</td> 
-      <td   style={{ cursor: 'pointer' }}>
-        <span
+      <td>
+        {canCreate && (
+
+        <span 
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
           {job.jobStatus ? 'Completed' : 'In Progress'}
         </span>
-      </td> 
-      <td className='text-left'>
+        )}
 
-            <Link className="p-1" href={`/jobs/view?jobId=${job.id}`} >
-                 <Image alt='eye' src={Eye} className='w-[16px]'data-tooltip-id="view"
-                      data-tooltip-content="View" /> 
-                 </Link>
-                 <Tooltip id="view" place="top" />
+      </td> 
+      <td>
+        {/* <TableActions   
+          editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
+         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
+         viewRoute={`/jobs/view?jobId=${job.id}`}
+           idKey="jobid"
+           userRole='Activejobs'
+          itemId={job.id}  // Pass the technician ID
+          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
+           /> */}
+
+<Link className="p-1" href={`/jobs/view?jobId=${job.id}`}>
+         <Image alt='eye' src={Eye} className='w-[16px]' /> 
+         </Link> 
       </td>
     </tr>
     )
@@ -280,7 +306,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Work Order Status" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Single Technician Work Order" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

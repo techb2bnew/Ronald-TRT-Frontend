@@ -75,7 +75,7 @@ export default function Technicians() {
     image: null,
     amountPercentage: '',
     role: 'technician',
-    types:'',
+    types:'superadmin',
     agreeTerms: 'true',
   });
 

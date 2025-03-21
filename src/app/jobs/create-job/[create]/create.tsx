@@ -13,6 +13,9 @@ import Loader from '@/app/component/loader';
 import Swal from 'sweetalert2';
 import Delete from '../../../../../public/delete.svg'
 import Image from 'next/image';
+import Link from 'next/link';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 interface JobDescriptionItem {
   jobDescription: string;
@@ -199,49 +202,57 @@ export default function Technicians() {
     }
   };
 
-  React.useEffect(() => { 
+  React.useEffect(() => {
     const type = localStorage.getItem('types');
-    setUserType(type); 
+    setUserType(type);
   });
 
   // Fetch Customers api
   const fetchData = async (endpoint: string, setState: (data: any) => void, params: Record<string, string> = {}) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
-        const token = localStorage.getItem('token');
-        const userId = localStorage.getItem('userID');
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
 
-        if (endpoint === 'fetchCustomer' && !userId) {
-            console.error("User ID not found in localStorage!");
-            return;
-        }
+      if (endpoint === 'fetchCustomer' && !userId && !roleType) {
+        console.error("User ID not found in localStorage!");
+        return;
+      }
 
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        // Construct query params
-        const queryParams = new URLSearchParams(params).toString();
-        const url = `${apiUrl}/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
+      // Construct query params
+      const queryParams = new URLSearchParams(params).toString();
+      const url = `${apiUrl}/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
 
-        const response = await fetch(url, { method: 'GET', headers });
+      const response = await fetch(url, { method: 'GET', headers });
 
-        if (response.status == 400) {
-            localStorage.removeItem('token');
-            router.push('/');
-        }
+      if (response.status == 400) {
+        localStorage.removeItem('token');
+        router.push('/');
+      }
 
-        const data = await response.json();
-        setState(endpoint === 'fetchTechnician' ? data.technician.technicians : data.customers.customers);
+      const data = await response.json();
+      setState(endpoint === 'fetchTechnician' ? data.technician.technicians : data.customers.customers);
     } catch (error) {
-        console.error(`Error fetching ${endpoint}:`, error);
+      console.error(`Error fetching ${endpoint}:`, error);
     }
-};
+  };
 
   useEffect(() => {
-    fetchData('fetchTechnician', setTechnicians);
+    const roleType = localStorage.getItem('types');
+    const types = localStorage.getItem('types');
+
+    if (types) {
+      fetchData('fetchTechnician', setTechnicians, { types }); // Pass roleType to fetchTechnician
+    } else {
+      console.error("Role type is missing for fetching technicians!");
+    }
     const userId = localStorage.getItem('userID');
     if (userId) {
-        fetchData('fetchCustomer', setCustomer, { userId }); // ✅ Pass userId as query param
+      fetchData('fetchCustomer', setCustomer, { userId }); // ✅ Pass userId as query param
     }
   }, []);
 
@@ -290,7 +301,7 @@ export default function Technicians() {
       const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${formData.vin}?format=json`);
       const data = await response.json();
 
-      if (response.ok && data.Results) { 
+      if (response.ok && data.Results) {
         let vehicleDetails: Record<string, any> = {};
         data.Results.forEach((item: any) => {
           const key = vehicleDetailsMap[item.Variable.toLowerCase().replace(/ /g, '')];
@@ -304,7 +315,7 @@ export default function Technicians() {
           ...prev,
           ...vehicleDetails,
           vin: formData.vin  // Retain manually entered VIN
-        })); 
+        }));
       } else {
         toast.error("Failed to fetch vehicle details.");
       }
@@ -388,7 +399,7 @@ export default function Technicians() {
       formDataObj.append(`jobDescription[${index}][cost]`, desc.cost);
     });
     let assignTechnicians = [...(formData.assignTechnicians || [])];
-    if (roleType === "single-technician" && userId) {
+    if (roleType === "single-technician" && userId || roleType === "ifs" && userId) {
       if (!assignTechnicians.includes(userId)) {
         assignTechnicians.push(userId); // Add the logged-in technician's ID
       }
@@ -618,7 +629,7 @@ export default function Technicians() {
           </div>
         ) : (
           <form className="" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-3 gap-4 mb-4" style={{ display:'none'}}>
+            <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
               <FormControl fullWidth size="small">
                 <InputLabel id="role-label" color="warning">Select role*</InputLabel>
                 <Select
@@ -795,7 +806,7 @@ export default function Technicians() {
                 </FormControl>
               </div>
               {/* Client Name and Business Name */}
-              <div className='mb-4'>
+              <div className='mb-4 flex gap-3'>
                 {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
                 <FormControl fullWidth size="small">
                   <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
@@ -814,39 +825,56 @@ export default function Technicians() {
                     ))}
                   </Select>
                 </FormControl>
+                <Link href='/client/create' data-tooltip-id="create-customer"
+                  data-tooltip-content="Create Customer" className='primary-bg text-sm p-1 rounded mb-4'>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="2" />
+                    <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="2" />
+                  </svg>
+
+                </Link>
+                <Tooltip id="create-customer" place="top" />
 
               </div>
-              {userType !== 'single-technician' && (
-              <div className='mb-4'>
-                {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
-                <FormControl fullWidth size="small">
-                  <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
+              {userType !== 'single-technician' && userType !== 'ifs' && (
+                <div className='mb-4 flex gap-3'>
+                  {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
 
-                  <Select
-                    labelId="assignTechnicians"
-                    id="select-assignTechnicians"
-                    color="warning"
-                    label="Select technicians"
-                    multiple
-                    required
-                    value={formData.assignTechnicians}
-                    onChange={handleTechnicianChange}
-                    renderValue={(selected) => selected.map(id => {
-                      const tech = technicians.find(tech => String(tech.id) === id);
-                      return tech ? `${tech.firstName} ${tech.lastName}` : undefined;
-                    }).filter(Boolean).join(', ')}
-                  >
-                    {technicians.map((tech) => (
-                      <MenuItem key={tech.id} value={String(tech.id)}>
-                        <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
-                        <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
-                      </MenuItem>
-                    ))}
-                  </Select>
+                    <Select
+                      labelId="assignTechnicians"
+                      id="select-assignTechnicians"
+                      color="warning"
+                      label="Select technicians"
+                      multiple
+                      required
+                      value={formData.assignTechnicians}
+                      onChange={handleTechnicianChange}
+                      renderValue={(selected) => selected.map(id => {
+                        const tech = technicians.find(tech => String(tech.id) === id);
+                        return tech ? `${tech.firstName} ${tech.lastName}` : undefined;
+                      }).filter(Boolean).join(', ')}
+                    >
+                      {technicians.map((tech) => (
+                        <MenuItem key={tech.id} value={String(tech.id)}>
+                          <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
+                          <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                        </MenuItem>
+                      ))}
+                    </Select>
 
-                </FormControl>
+                  </FormControl>
+                  <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
+                    data-tooltip-content="Create Technician" className='primary-bg text-sm p-1 rounded mb-4'>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                      <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="2" />
+                      <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="2" />
+                    </svg>
 
-              </div>
+                  </Link>
+                  <Tooltip id="create-technician" place="top" />
+                </div>
               )}
             </div>
             {descriptionCostFields.map((field, index) => (

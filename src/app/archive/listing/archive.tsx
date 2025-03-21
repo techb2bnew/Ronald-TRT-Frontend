@@ -11,6 +11,8 @@ import Swal from "sweetalert2";
 import Eye from '../../../../public/eye.svg'
 import Link from 'next/link';
 import Image from 'next/image';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -259,7 +261,8 @@ const ArchivePage = () => {
                   </td>
                   <td>
                     <div className="flex gap-3">
-                      <button onClick={() => handleRecoverRecord(item.id, item.type)}>
+                      <button onClick={() => handleRecoverRecord(item.id, item.type)} data-tooltip-id="undo"
+                      data-tooltip-content="Undo">
                         <svg
                           width="14"
                           height="14"
@@ -277,7 +280,10 @@ const ArchivePage = () => {
                           />
                         </svg>
                       </button>
+                      <Tooltip id="undo" place="top" />
                       <Link
+                      data-tooltip-id="view"
+                       data-tooltip-content="View"
                         className="p-1"
                         href={`/archive/view?${
                           item.type === "User"
@@ -289,6 +295,8 @@ const ArchivePage = () => {
                       >
                         <Image alt="eye" src={Eye} className="w-[16px]" />
                       </Link>
+
+                      <Tooltip id="view" place="top" />
                     </div>
                   </td>
                 </tr>

@@ -5,6 +5,8 @@ import Swal from "sweetalert2";
 import Edit from "../../../public/edit.svg";
 import Eye from "../../../public/eye.svg";
 import Delete from "../../../public/delete.svg";
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 interface TableActionsProps {
   editRoute: string;
@@ -107,20 +109,26 @@ const TableActions: React.FC<TableActionsProps> = ({
   return (
     <div className="flex items-center space-x-1">
       
-        <Link className="p-1" href={viewRoute}>
+        <Link className="p-1" href={viewRoute} data-tooltip-id="view"
+        data-tooltip-content="View">
           <Image alt="eye" src={Eye} className="w-[16px]" />
         </Link>
-       
+        <Tooltip id="view" place="top" />
       {canEdit && (
-        <Link className="p-1" href={editRoute}>
+        <Link className="p-1" href={editRoute} data-tooltip-id="edit"
+        data-tooltip-content="Edit">
           <Image alt="edit" src={Edit} className="w-[14px]" />
         </Link>
       )}
+      <Tooltip id="edit" place="top" />
       {canDelete && (
-        <button className="p-2" onClick={handleDelete}>
+        <button className="p-2" onClick={handleDelete} data-tooltip-id="delete"
+        data-tooltip-content="Delete">
           <Image alt="delete" src={Delete} className="w-[14px]" />
         </button>
       )}
+      <Tooltip id="delete" place="top" />
+
     </div>
   );
 };

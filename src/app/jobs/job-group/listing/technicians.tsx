@@ -11,6 +11,8 @@ import Loader from '@/app/component/loader';
 import Eye from '../../../../../public/eye.svg'
 import Image from 'next/image';
 import Link from 'next/link';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -250,8 +252,10 @@ const downloadCSV = () => {
       <td> 
 
             <Link className="p-1" href={`/jobs/job-group/view?vin=${job?.vin}`}>
-                 <Image alt='eye' src={Eye} className='w-[16px]' /> 
+                 <Image alt='eye' src={Eye} className='w-[16px]' data-tooltip-id="view"
+                      data-tooltip-content="View"/> 
                  </Link>
+                 <Tooltip id="view" place="top" />
       </td>
     </tr>
     )
