@@ -50,6 +50,16 @@ export default function ViewDetails() {
     }
   }, []);
 
+  const calculateTotalCost = () => {
+    if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
+      return jobData.jobDescription.reduce((total: number, item: { cost: string }) => {
+        return total + parseFloat(item.cost || '0');
+      }, 0);
+    }
+    return 0;
+  };
+
+  
   if (!jobData) {
     return <div><Loading /></div>;
   }
@@ -69,6 +79,7 @@ export default function ViewDetails() {
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
+            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
               <span
                 className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -76,6 +87,7 @@ export default function ViewDetails() {
                 {jobData.jobStatus ? 'Completed' : 'Inprogress'}
               </span>
             </div> 
+
           </div>
 
           {/* Right Section */}
@@ -86,23 +98,26 @@ export default function ViewDetails() {
             <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
   <strong className="w-[200px] inline-block">Job Description:</strong>
   {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-    <ul className="list-none pl-5">
+    <ul className="list-none">
       {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
         <li key={index}>
-          <span className="font-semibold block">{item.jobDescription}</span> 
-           <span className='block'>${item.cost}</span> 
+          <span className=" block">{item.jobDescription}</span> 
+           {/* <span className='block'>${item.cost}</span>  */}
         </li>
       ))}
     </ul>
   ) : (
     "No job descriptions available"
   )}
+ 
 </div>
+<div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+<strong className='w-[200px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
+      </div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
             {jobData.images.map((form:any, index:any) => (
               <img
