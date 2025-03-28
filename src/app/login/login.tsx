@@ -9,7 +9,7 @@ import Eye from "../../../public/eye.svg";
 import EyeOff from '../../../public/eye-off.svg'
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
@@ -20,6 +20,8 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({ email: '', password: '' });
+    const [rememberMe, setRememberMe] = useState(false);
+
   
   
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -55,6 +57,13 @@ export default function Login() {
                 if (data.user.permissions) {
                   localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
               }
+                if (rememberMe) {
+                  localStorage.setItem('rememberedEmail', email);
+                  localStorage.setItem('rememberedPassword', password);
+              } else {
+                  localStorage.removeItem('rememberedEmail');
+                  localStorage.removeItem('rememberedPassword');
+              }
                 if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
                   router.push('/client/listing');
               } else {
@@ -68,7 +77,18 @@ export default function Login() {
         }
     }
 
+    useEffect(() => {
+      const rememberedEmail = localStorage.getItem('rememberedEmail');
+      const rememberedPassword = localStorage.getItem('rememberedPassword');
+  
+      if (rememberedEmail && rememberedPassword) {
+          setemailAddress(rememberedEmail);
+          setPassword(rememberedPassword);
+          setRememberMe(true); // ✅ Auto-check "Remember Me"
+      }
+  }, []);
 
+  
   return (
     <div className="items-center justify-items-center">
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
@@ -99,7 +119,7 @@ export default function Login() {
                     style={{ position: 'absolute', right: '10px', top: '18px' }}
                     onClick={() => setShowPassword(!showPassword)}
                 >
-                    {showPassword ? <Image src={EyeOff} width='18' height='18'   alt="eye"/>  : <Image src={Eye} width='18' height='18'   alt="eye"/>
+                    {showPassword ? <Image src={Eye} width='18' height='18'   alt="eye"/>  : <Image src={ EyeOff} width='18' height='18'   alt="eye"/>
                 }
                  </button> 
               </div>
@@ -107,7 +127,7 @@ export default function Login() {
               <div className="flex justify-between items-center mt-4">
                 <div className="inline-flex items-center">
                   <label className="flex items-center cursor-pointer relative">
-                    <input type="checkbox" className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#EF502E] checked:border-[#EF502E]" id="check" required />
+                    <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#EF502E] checked:border-[#EF502E]" id="check" />
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>

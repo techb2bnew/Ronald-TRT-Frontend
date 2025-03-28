@@ -4,9 +4,9 @@
 
 :root {
   --background: #F7F7FD;
-  --foreground: #171717;
-  --primaryColor: #EF502E;
-  --primaryBg: #EF502E;
+  --foreground: #383D71;
+  --primaryColor: #383D71;
+  --primaryBg: #383D71;
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -29,7 +29,7 @@ body {
   color: #fff;
 }
 table.table.w-full.table-fixed thead {
-  background: #161616;
+  background: var(--foreground);
   color: #fff;
   text-align: left;
   border-radius: 10px;
@@ -62,9 +62,9 @@ table.table.w-full.table-fixed tbody tr {
 }
 
 .pagination > li.active a{
-  background-color: #FF0000;
+  background-color: var(--foreground);
   color: white;
-  border: 1px solid #FF0000;
+  border: 1px solid var(--foreground);
 }
 
 .pagination > li a:hover {
@@ -95,7 +95,7 @@ table.table.w-full.table-fixed tbody tr {
 .bar {
   width: 8px;
   height: 30px;
-  background: linear-gradient(45deg, #ff0080, #ff8c00);
+  background: linear-gradient(45deg, #383D71, #989ff0);
   border-radius: 5px;
   animation: bounce 1.2s infinite ease-in-out;
 }
@@ -166,9 +166,9 @@ table.table.w-full.table-fixed tbody tr {
   background-image: -webkit-gradient(linear,
                      left bottom,
                      left top,
-                     color-stop(0.44, #f89a86),
-                     color-stop(0.72, #ef502e),
-                     color-stop(0.86, #f62b00));
+                     color-stop(0.44, #383D71),
+                     color-stop(0.72, #383D71),
+                     color-stop(0.86, #383D71));
 }
 
 
@@ -195,4 +195,10 @@ table.table.w-full.table-fixed tbody tr {
 }
 .invert_logo{
   filter: invert(1);
+}
+.bg-color{
+  background: var(--foreground);
+}
+table.table.w-full.table-fixed tbody tr td {
+  color: #000;
 }

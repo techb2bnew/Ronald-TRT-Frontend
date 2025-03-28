@@ -20,6 +20,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import Link from 'next/link';
 import Eye from "../../../public/eye.svg";
 import EyeOff from '../../../public/eye-off.svg'
+import Swal from "sweetalert2"; 
 interface registerForm {
   id?: string;
   firstName: string;
@@ -295,15 +296,24 @@ export default function Role() {
           toast.error(data.error);
         }
       } else {
-        toast.success(data.message);
-        router.push('/');
+        Swal.fire({
+          title: "Registration Successful!",
+          text: "You have successfully registered. Your account will be approved soon. You will be notified via email when you can log in.",
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push("/login"); // ✅ Redirect to login page on button click
+          }
+        });
       }
     } catch (error: any) {
-      toast.error(error.message || 'An unexpected error occurred');
+      toast.error(error.message || "An unexpected error occurred");
     } finally {
-      setSubmitting(false);  // ✅ Hide loader when done
+      setSubmitting(false); // ✅ Hide loader when done
     }
   };
+     
 
 
   const fetchRoles = async () => {
@@ -664,7 +674,7 @@ export default function Role() {
                     </div>
 
                     {formData.image && (
-                      <div className='flex items-center mt-5 shadow rounded p-2 relative'>
+                      <div className='flex items-center mt-5 shadow rounded p-2 relative w-[fit-content]'>
                         {formData.image instanceof File ? (
                           <img src={URL.createObjectURL(formData.image)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
                         ) : (

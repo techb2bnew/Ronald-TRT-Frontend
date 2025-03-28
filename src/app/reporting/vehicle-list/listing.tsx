@@ -150,27 +150,23 @@ const downloadCSV = () => {
     <tr key={job.id}>
       <td>{job?.id}</td> 
       <td>{job?.customer?.firstName} {job?.customer?.lastName}</td> 
-      <td>  {job?.technicians?.map((tech: any) => (
-        <div key={tech.id}>
-      {tech.firstName} {tech.lastName}
-    </div>
-  ))}</td>
-      <td>{job.vin}</td> 
+      
       <td>{job.make} </td>
        <td>{job.model}</td>
        <td>{job.modelYear}</td>
        <td>{job.color}</td> 
-      <td>
-        <TableActions   
-          editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
-         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
-           idKey="jobid"
-           userRole='Vehicleinfo'
-          itemId={job.id}  // Pass the technician ID
-          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
-           />
-      </td>
+       <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
+       <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td>
+       <td> <span
+          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+        >
+          {job.jobStatus ? 'Completed' : 'In Progress'}
+        </span></td>
+       <td>  {job?.technicians?.map((tech: any) => (
+        <div key={tech.id}>
+      {tech.firstName} {tech.lastName}
+    </div>
+  ))}</td>
     </tr>
   );
 
@@ -198,31 +194,30 @@ const downloadCSV = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]">
-              Technicians Name
-              </th>
-              <th className="w-[150px]">
-              VIN
-              </th>
+              
+             
               <th className="w-[120px]" >
               Make
               </th> 
               <th className="w-[100px]">Model</th> 
               <th className="w-[60px]">Year</th> 
               <th className="w-[50px]">Color</th> 
-              <th className="w-[160px]">Action</th>
+              <th className="w-[100px]">Start Date</th> 
+              <th className="w-[100px]">Completion Date</th> 
+              <th className="w-[100px]">Status</th>
+              <th className="w-[160px]">Assigned Technician</th>
             </tr>
           </thead>
           <tbody>
               {loading ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={10} className="text-center py-10">
                               <Loader />
                             </td>
                           </tr>
                         ) : activeJob.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="text-center py-10">
+                            <td colSpan={10} className="text-center py-10">
                               <Empty />
                             </td>
                           </tr>

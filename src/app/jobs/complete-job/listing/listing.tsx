@@ -125,12 +125,85 @@ const CompletedJobs: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
+  const convertToCSV = (data: any) => {
+    const csvRows = [];
+  
+    // ✅ Updated headers (removed "Tech. Number")
+    const headers = [
+      "ID",
+      "Customer Name",
+      "Customer Number",
+      "Technician Name",
+      "Total Cost",
+      "VIN",
+      "Vehicle Make",
+      "Start Date",
+      "Completion Date",
+      "Status"
+    ];
+    csvRows.push(headers.join(",")); // Add headers to the first row
+  
+    // ✅ Convert data to CSV format
+    for (const row of data) {
+      // ✅ Combine multiple technician names into one string
+      const technicianNames = row?.technicians
+        ?.map((tech: any) => `${tech.firstName} ${tech.lastName}`)
+        .join(", ");
+  
+      // ✅ Parse jobDescription properly and calculate total cost
+      const totalCost = row.jobDescription.reduce((sum: number, job: any) => {
+        const parsedJob = typeof job === "string" ? JSON.parse(job) : job;
+        return sum + Number(parsedJob.cost || 0);
+      }, 0);
+  
+      // ✅ Updated CSV row with values wrapped in double quotes
+      csvRows.push(
+        [
+          `"${row.id}"`,
+          `"${row?.customer?.firstName} ${row?.customer?.lastName}"`,
+          `"${row?.customer?.phoneNumber}"`,
+          `"${technicianNames}"`, // Correctly formatted with quotes
+          `"$${totalCost}"`,
+          `"${row.vin}"`,
+          `"${row.make}"`,
+          `"${new Date(row.createdAt).toLocaleDateString("en-GB")}"`,
+          `"${new Date(row.updatedAt).toLocaleDateString("en-GB")}"`,
+          `"${row.jobStatus ? "Completed" : "In Progress"}"`
+        ].join(",")
+      );
+    }
+  
+    return csvRows.join("\n");
+  };
+  
+  
+  
+  
+  const downloadCSV = () => {
+    if (activeJob.length === 0) {
+      toast.error("No data available to export!");
+      return;
+    }
+    const csvData = convertToCSV(activeJob); // ✅ Use activeJob directly
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "jobs.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const renderRow = (completejob: any) => {
 
   const totalCost = completejob.jobDescription.reduce((sum: number, job: any) => {
     const parsedJob = JSON.parse(job);
     return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
   }, 0);
+
+
 
 
     return (
@@ -168,7 +241,7 @@ const CompletedJobs: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4 mb-5">
-      <CommonHeader heading="Completed Work Orders" onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Work Orders" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

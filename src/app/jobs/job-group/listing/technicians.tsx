@@ -205,16 +205,34 @@ const JobTable: React.FC = () => {
   };
 
   // CSV Export Functions
-const convertToCSV = (data:any) => {
+// ✅ Corrected CSV conversion function
+const convertToCSV = (data: any) => {
   const csvRows = [];
-  // Get headers
-  csvRows.push(Object.keys(data[0]).join(','));
-  // Convert data to csv
+  
+  // ✅ Define headers based on the displayed table columns
+  const headers = [
+    "Customer Name",
+    "Email",
+    "Phone Number",
+    "VIN"
+  ];
+  csvRows.push(headers.join(",")); // Add headers to the first row
+
+  // ✅ Convert table data to CSV format
   for (const row of data) {
-    csvRows.push(Object.values(row).join(','));
+    csvRows.push(
+      [
+        `"${row?.customer?.firstName} ${row?.customer?.lastName}"`,
+        `"${row?.customer?.email}"`,
+        `"${row?.customer?.phoneNumber}"`,
+        `"${row?.vin}"`
+      ].join(",")
+    );
   }
-  return csvRows.join('\n');
+
+  return csvRows.join("\n");
 };
+
 
 const downloadCSV = () => {
   const csvData = convertToCSV(activeJob);

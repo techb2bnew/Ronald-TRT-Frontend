@@ -831,6 +831,7 @@ export default function Technicians() {
                       <TextField
                         fullWidth
                         label="Model Year"
+                        type='number'
                         variant="outlined"
                         color="warning"
                         size="small"

@@ -201,29 +201,58 @@ const JobTable: React.FC = () => {
   };
 
   // CSV Export Functions
-const convertToCSV = (data:any) => {
-  const csvRows = [];
-  // Get headers
-  csvRows.push(Object.keys(data[0]).join(','));
-  // Convert data to csv
-  for (const row of data) {
-    csvRows.push(Object.values(row).join(','));
-  }
-  return csvRows.join('\n');
-};
-
-const downloadCSV = () => {
-  const csvData = convertToCSV(activeJob);
-  const blob = new Blob([csvData], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('hidden', '');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'jobs.csv');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
+  const convertToCSV = (data: any) => {
+    const csvRows = [];
+    
+    // ✅ Define headers based on the table columns
+    const headers = [
+      "ID",
+      "Customer Name",
+      "Customer Number",
+      "Technician Name",
+      "Tech. Number",
+      "Total Cost",
+      "Status"
+    ];
+    csvRows.push(headers.join(",")); // Add headers to the first row
+  
+    // ✅ Convert data to CSV format
+    for (const row of data) {
+      const technicianNames = row?.technicians?.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(", ");
+      const technicianNumbers = row?.technicians?.map((tech: any) => tech.phoneNumber).join(", ");
+      const totalCost = row.jobDescription.reduce((sum: number, job: any) => sum + Number(job.cost), 0);
+  
+      csvRows.push([
+        row.id,
+        `${row?.customer?.firstName} ${row?.customer?.lastName}`,
+        row?.customer?.phoneNumber,
+        technicianNames,
+        technicianNumbers,
+        `$${totalCost}`,
+        row.jobStatus ? "Completed" : "In Progress"
+      ].join(","));
+    }
+  
+    return csvRows.join("\n");
+  };
+  
+  const downloadCSV = () => {
+    if (activeJob.length === 0) {
+      toast.error("No data available to export!");
+      return;
+    }
+    const csvData = convertToCSV(activeJob); // ✅ Use activeJob directly
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "jobs.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  
 
 
 

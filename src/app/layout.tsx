@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"; // ✅ State aur Effect import karo
 import "./globals.css";
 import Sidebar from "@/app/component/sidebar/page";
 import Loading from "@/app/component/loader";
+import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; // ✅ Correct import
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,10 +43,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <TechnicianProvider>
         <div className="flex">
           {shouldShowSidebar && (  <Sidebar />)}
           <main className="flex-1">{children}</main>
         </div>
+        </TechnicianProvider>
       </body>
     </html>
   );

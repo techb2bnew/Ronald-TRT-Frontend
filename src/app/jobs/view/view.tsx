@@ -118,6 +118,7 @@ export default function ViewDetails() {
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</div>
+            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Notes:</strong> {jobData?.notes}</div>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
             {jobData.images.map((form:any, index:any) => (
               <img
