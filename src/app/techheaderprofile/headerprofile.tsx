@@ -1,5 +1,3 @@
-// ✅ Add `localStorage` sync logic in TechnicianProvider
-
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
@@ -14,24 +12,66 @@ interface TechnicianContextType {
   technician: Technician | null;
   setTechnician: (tech: Technician | null) => void;
   isLoading: boolean;
-  updateProfileImage: (image: string) => void; // ✅ Add function to update image
+  updateProfileImage: (image: string) => void;
 }
 
-const TechnicianContext = createContext<TechnicianContextType | undefined>(
-  undefined
-);
+const TechnicianContext = createContext<TechnicianContextType | undefined>(undefined);
 
 export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-  // ✅ Fetch Technician from API or localStorage
+  // ✅ Fetch profile from API if local data is missing or incomplete
+  const fetchTechnicianProfile = async (technicianId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await fetch(`${apiUrl}/fetchTechnicianProfile?technicianId=${technicianId}`, {
+        method: "GET",
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTechnician(data.technician);
+        localStorage.setItem("technicianData", JSON.stringify(data.technician));
+      }
+    } catch (error) {
+      console.error("Error fetching technician profile:", error);
+    }
+  };
+
   useEffect(() => {
     const cachedData = localStorage.getItem("technicianData");
+    const userID = localStorage.getItem("userID");
+    console.log("UserID after login:", userID); // ✅ Check if userID is stored after login
+  
     if (cachedData) {
-      setTechnician(JSON.parse(cachedData));
-     }  
+      const parsedData = JSON.parse(cachedData);
+      setTechnician(parsedData);
+  
+      if (!parsedData.image && userID) {
+        console.log("Image missing, fetching profile...");
+        fetchTechnicianProfile(userID);
+      } else {
+        setIsLoading(false);
+      }
+    } else if (userID) {
+      console.log("No cached data, fetching profile...");
+      fetchTechnicianProfile(userID);
+    } else {
+      setIsLoading(false);
+    }
   }, []);
+  
+  
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -40,7 +80,7 @@ export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
         setTechnician(JSON.parse(cachedData));
       }
     };
-  
+
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
@@ -60,7 +100,7 @@ export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
         technician,
         setTechnician,
         isLoading,
-        updateProfileImage, // ✅ Pass the function
+        updateProfileImage,
       }}
     >
       {children}

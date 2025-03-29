@@ -13,7 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Image from 'next/image';
 import Banner from "../../../public/signup.png";
-import Logo from "../../../public/logo.svg";
+import Logo from "../../../public/trt-logo.png";
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css' // For basic styling
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
@@ -400,7 +400,7 @@ export default function Role() {
         </div>
         <div className="md:w-1/2 absolute right-[0] top-[3rem]" style={{ padding: '0px 5rem' }}>
           <div className="text-center mb-5 w-full">
-            <Image src={Logo} className="m-auto" width='200' height='50' alt="page img" />
+            <Image src={Logo} className="m-auto" width='100' height='50' alt="page img" />
             <h2 className="text-2xl font-bold text-[#161616] mt-5">Create Account</h2>
             <p className="text-[#161616] mt-3">Create your account to unlock exclusive features and start your journey with us today!</p>
           </div>

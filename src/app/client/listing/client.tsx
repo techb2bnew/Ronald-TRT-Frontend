@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { ExportToCsv } from 'export-to-csv-file';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Customer {
@@ -19,7 +20,7 @@ interface Customer {
 export default function ClientListing() {
   const [customer, setCustomer] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Default sorting column is 'id'
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -119,63 +120,40 @@ const handleDeleteSuccess = (deletedId: string) => {
 
  
 
-  // const handleSearch = async (query: string) => {
-  //   try {
-  //     const token = localStorage.getItem('token');
   
-  //     const headers: Record<string, string> = {
-  //       'Content-Type': 'application/json',
-  //     };
-  
-  //     if (token) {
-  //       headers['Authorization'] = `Token ${token}`;
-  //     }
-  
-  //     // Determine API endpoint based on search term
-  //     const response = await fetch(
-  //       `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`,
-  //       {
-  //         method: 'GET',
-  //         headers,
-  //       }
-  //     );
-  
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch search results');
-  //     }
-  
-  //     const data = await response.json();
-  //     setCustomer(data.customers || []); // Set technicians or empty array if no data
-  //   } catch (error) {
-  //     console.error('Error fetching search results:', error);
-  //     setCustomer([]); // Clear table on error
-  //   }
-  // };
 // CSV Export Functions
-const convertToCSV = (data:any) => {
-  const csvRows = [];
-  // Get headers
-  csvRows.push(Object.keys(data[0]).join(','));
-  // Convert data to csv
-  for (const row of data) {
-    csvRows.push(Object.values(row).join(','));
-  }
-  return csvRows.join('\n');
-};
+ 
 
-const downloadCSV = () => {
-  const csvData = convertToCSV(customer);
-  const blob = new Blob([csvData], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('hidden', '');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'customers.csv');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
-
+ const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Customer Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
+    };
+  
+    const csvExporter = new ExportToCsv(csvOptions);
+  
+    const formattedData = customer.map((customerData) => ({
+      ID: customerData.id,
+      Name: `${customerData.firstName} ${customerData.lastName}`,
+      Email: customerData.email,
+      Phone: customerData.phoneNumber,
+      Address: customerData.address,
+      Country: customerData.country,
+      City: customerData.city,
+      State: customerData.state,
+      Status: customerData.isApproved ? 'Active' : 'Inactive',
+      'Account Status': customerData.accountStatus ? 'Approved' : 'Accept',
+    }));
+  
+    csvExporter.generateCsv(formattedData);
+  };
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
       <td>{cust.id}</td>
@@ -209,7 +187,7 @@ const downloadCSV = () => {
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -217,7 +195,7 @@ const downloadCSV = () => {
                 Name
                 {sortBy === 'name' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -225,7 +203,7 @@ const downloadCSV = () => {
                 Email
                 {sortBy === 'email' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -233,7 +211,7 @@ const downloadCSV = () => {
                 Phone Number
                 {sortBy === 'phoneNumber' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -241,7 +219,7 @@ const downloadCSV = () => {
                 Address
                 {sortBy === 'address' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -249,7 +227,7 @@ const downloadCSV = () => {
                 Country
                 {sortBy === 'country' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>

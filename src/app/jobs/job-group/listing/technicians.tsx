@@ -13,6 +13,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import { ExportToCsv } from 'export-to-csv-file';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -24,7 +25,7 @@ interface Jobs {
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -111,11 +112,7 @@ const JobTable: React.FC = () => {
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
-      }
+     
 
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
@@ -205,47 +202,30 @@ const JobTable: React.FC = () => {
   };
 
   // CSV Export Functions
-// ✅ Corrected CSV conversion function
-const convertToCSV = (data: any) => {
-  const csvRows = [];
-  
-  // ✅ Define headers based on the displayed table columns
-  const headers = [
-    "Customer Name",
-    "Email",
-    "Phone Number",
-    "VIN"
-  ];
-  csvRows.push(headers.join(",")); // Add headers to the first row
-
-  // ✅ Convert table data to CSV format
-  for (const row of data) {
-    csvRows.push(
-      [
-        `"${row?.customer?.firstName} ${row?.customer?.lastName}"`,
-        `"${row?.customer?.email}"`,
-        `"${row?.customer?.phoneNumber}"`,
-        `"${row?.vin}"`
-      ].join(",")
-    );
-  }
-
-  return csvRows.join("\n");
-};
-
-
-const downloadCSV = () => {
-  const csvData = convertToCSV(activeJob);
-  const blob = new Blob([csvData], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('hidden', '');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'jobs.csv');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
+ const downloadCSV = () => {
+      const csvOptions = {
+        fieldSeparator: ',',
+        quoteStrings: '"',
+        decimalSeparator: '.',
+        showLabels: true,
+        showTitle: true,
+        title: 'Work Group Data',
+        useTextFile: false,
+        useBom: true,
+        useKeysAsHeaders: true, // Use object keys as headers
+      };
+    
+      const csvExporter = new ExportToCsv(csvOptions);
+    
+      const formattedData = activeJob.map((jobData) => ({
+        VIN: jobData.vin,  
+        Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        Email: jobData?.customer?.email,
+        Number: jobData?.customer?.phoneNumber,
+      }));
+    
+      csvExporter.generateCsv(formattedData);
+    };
 
 
   const renderRow = (job: any) => {
@@ -295,14 +275,24 @@ const downloadCSV = () => {
                   </span>
                 )}
               </th>  */}
-              <th   onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </th>  
+             <th
+  onClick={() => handleSort('customerName')}
+  className="cursor-pointer flex items-center gap-2"
+>
+  Customer Name
+  <span>
+    {sortBy === 'customerName' ? (
+      sortDirection === 'asc' ? (
+        <span className="text-white-500">▲</span> // Ascending
+      ) : (
+        <span className="text-white-500">▼</span> // Descending
+      )
+    ) : (
+      <span className="text-white-400">▼</span> // Neutral state
+    )}
+  </span>
+</th>
+ 
               <th  >Email</th>  
               <th  >Phone Number</th>  
               <th  >VIN</th>  

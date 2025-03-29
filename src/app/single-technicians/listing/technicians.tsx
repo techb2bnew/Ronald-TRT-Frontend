@@ -1,5 +1,5 @@
 // components/TechnicianTable.tsx
-import React, { useState, useEffect, useRef  } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
@@ -13,9 +13,10 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import Eye from '../../../../public/eye.svg'
 import Image from 'next/image';
+import { ExportToCsv } from 'export-to-csv-file';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
- 
+
 interface Singletechnician {
   id: string;
   name: string;
@@ -26,25 +27,26 @@ interface Singletechnician {
 const TechnicianTable: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
-  const router = useRouter(); 
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);  
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
 
+
+  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
   
-  const toggleTechnicianStatus = async (technicianId: number, newStatus: boolean) => {
-    // Show confirmation dialog
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: 'Do you want to change the status of this account?',
+      text: `Do you want to change the account status to ${newStatus}?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#EF502E',
       cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
+      confirmButtonText: 'Yes, change it!',
     });
   
     if (result.isConfirmed) {
@@ -53,71 +55,112 @@ const TechnicianTable: React.FC = () => {
         const config = {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` })
-          }
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         };
   
-        // Call both APIs simultaneously
-        const [approvalResponse, statusResponse] = await Promise.all([
-          axios.post(`${apiUrl}/technicianActiveUnactiveAccount`, {
-            technicianId,
-            isApproved: newStatus
-          }, config),
-          axios.post(`${apiUrl}/updateTechnicianAccountStatus`, {
-            technicianId,
-            accountStatus: newStatus
-          }, config)
-        ]);
+        const response = await axios.post(
+          `${apiUrl}/updateTechnicianAccountStatus`, // Correct API
+          {
+            technicianId: techId,
+            accountStatus: accountStatus, // Corrected here
+          },
+          config
+        );
   
-        if (approvalResponse.data.status && statusResponse.data.status) {
-          // Optimistically update local state
-          setTechnicians(prev => prev.map(tech => {
-            if (tech.id === technicianId) {
-              return { 
-                ...tech, 
-                isApproved: !tech.isApproved, 
-                accountStatus: !tech.accountStatus 
-              };
-            }
-            return tech;
-          }));
-  
+        if (response.data.status) {
           Swal.fire({
             title: 'Success!',
-            text: 'Technician status updated successfully.',
+            text: `Account status changed to ${newStatus}.`,
             icon: 'success',
             confirmButtonColor: '#EF502E',
-            confirmButtonText: 'OK'
+            confirmButtonText: 'OK',
           });
+          fetchTechnicians();
         } else {
-          throw new Error('One of the API calls failed');
+          throw new Error('Account status API failed');
         }
       } catch (error) {
-        console.error('Error updating technician status:', error);
+        console.error('Error updating account status:', error);
         Swal.fire({
           title: 'Error!',
-          text: 'Error updating technician status.',
+          text: 'Error updating account status.',
           icon: 'error',
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
         });
       }
-    } else {
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
+    }
+  };
+
+  const handleApprovalChange = async (techId: number, isApproved: boolean) => {
+    const newStatus = isApproved ? 'Approved' : 'Accept';
+  
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to change the status to ${newStatus}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF502E',
+      cancelButtonColor: 'black',
+      confirmButtonText: 'Yes, change it!',
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        };
+  
+        const response = await axios.post(
+          `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
+          {
+            technicianId: techId,
+            isApproved: isApproved, // Corrected here
+          },
+          config
+        );
+  
+        if (response.data.status) {
+          Swal.fire({
+            title: 'Success!',
+            text: `Technician status changed to ${newStatus}.`,
+            icon: 'success',
+            confirmButtonColor: '#EF502E',
+            confirmButtonText: 'OK',
+          });
+          fetchTechnicians();
+        } else {
+          throw new Error('Approval API failed');
+        }
+      } catch (error) {
+        console.error('Error updating approval status:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Error updating approval status.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
+      }
     }
   };
   
+
+
+
+
+
+
 
   const fetchTechnicians = async (page = 1, query = '') => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const roleType = localStorage.getItem('types') || ""; 
-      if (!token){
+      const roleType = localStorage.getItem('types') || "";
+      if (!token) {
         localStorage.removeItem('token');
         router.push('/');
         return;
@@ -135,27 +178,27 @@ const TechnicianTable: React.FC = () => {
         ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=single-technician`
         : `${apiUrl}/fetchIndividualTechnician?page=${page}`;
 
-      const response = await fetch(endpoint, { method: 'GET', headers }); 
+      const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
         localStorage.removeItem('token');
         router.push('/');
       }
-      const data = await response.json(); 
+      const data = await response.json();
       if (response.ok) {
- 
-         // Handle technicians array for both APIs correctly
-          const fetchedTechnicians: Singletechnician[] = query.trim()
-         ? data.technicians || []  // For search API response
-         : data.technician?.technicians || [];  // For pagination API response
+
+        // Handle technicians array for both APIs correctly
+        const fetchedTechnicians: Singletechnician[] = query.trim()
+          ? data.technicians || []  // For search API response
+          : data.technician?.technicians || [];  // For pagination API response
         //  const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
         const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin");
-        setTechnicians(filteredSingleTechnician); 
+        setTechnicians(filteredSingleTechnician);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
-        console.error('Error fetching technicians:', );
-      } 
+        console.error('Error fetching technicians:',);
+      }
     }
-      catch (error) {
+    catch (error) {
       // router.push('/');
       console.error('Error fetching technicians:', error);
     } finally {
@@ -171,7 +214,7 @@ const TechnicianTable: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm]);
 
- 
+
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully'); 
     // ✅ Remove the deleted technician from the table
@@ -211,7 +254,9 @@ const TechnicianTable: React.FC = () => {
     const storedRole = localStorage.getItem("types");
     setUserRole(storedRole);
   }, []);
- const [statuses, setStatuses] = useState<{ [key: string]: string }>({});
+
+
+  const [statuses, setStatuses] = useState<{ [key: string]: string }>({});
   useEffect(() => {
     const loadedStatuses: { [key: string]: string } = {};
     technicians.forEach((tech) => {
@@ -224,132 +269,118 @@ const TechnicianTable: React.FC = () => {
     });
     setStatuses(loadedStatuses);
   }, [technicians]);
-  
-  const handleStatusChange = async (techId: number, currentStatus: string) => {
-    let newStatus;
-    let isApproved;
-  
-    if (currentStatus === "Accept") {
-      newStatus = "Approved";
-      isApproved = true; // ✅ Correctly setting to true
-    } else if (currentStatus === "Approved") {
-      newStatus = "Restricted";
-      isApproved = false; // ✅ Correctly setting to false
-    } else {
-      newStatus = "Approved"; // Switching from Restricted to Approved
-      isApproved = true;
-    }
-  
-    // Send correct status to backend
-    await toggleTechnicianStatus(techId, isApproved);
-  
-    // Update status locally
-    localStorage.setItem(`techStatus_${techId}`, newStatus);
-    setStatuses((prev) => ({ ...prev, [techId]: newStatus }));
-  };
 
+
+
+  // CSV Export Functions
+  const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Single Technician Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
+    };
+
+    const csvExporter = new ExportToCsv(csvOptions);
+
+    const formattedData = technicians.map((singletechnicians) => ({
+      ID: singletechnicians.id,
+      Name: `${singletechnicians.firstName} ${singletechnicians.lastName}`,
+      Email: singletechnicians.email,
+      Phone: singletechnicians.phoneNumber,
+      Address: singletechnicians.address,
+      Country: singletechnicians.country,
+      City: singletechnicians.city,
+      State: singletechnicians.state,
+      ZipCode: singletechnicians.zipCode,
+    }));
+
+    csvExporter.generateCsv(formattedData);
+  };
   // Render row function for SortableTable
   const renderRow = (tech: any) => {
- const status = statuses[tech.id] || "Accept"; 
- 
+    const status = statuses[tech.id] || "Accept";
+
     return (
-    <tr key={tech.id}>
-      <td>{tech.id}</td>
-      <td>{tech.firstName} {tech.lastName}</td>
-      <td>{tech.email}</td>
-      <td>{tech.phoneNumber}</td>
-      {/* <td>{tech.payRate}</td> */}
-       <td onClick={() => handleStatusChange(tech.id, status)} style={{ cursor: 'pointer' }}>
-        <span
-          className={`badge ${tech.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-        >
-          {tech.accountStatus ? 'Active' : 'Inactive'}
-        </span>
-      </td>
-        {/* <td className='font-sm'>
-        <Link href='/jobs/create-job/create' className='flex gap-1 items-center border border-black rounded p-2 pl-2 pr-2 w-[120px] justify-center'>Create Job
-        <svg width="20" height="20" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M12 8.5V16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M8 12.5H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg></Link>
-        </td> */}
-      <td onClick={() => handleStatusChange(tech.id, status)} style={{ cursor: 'pointer' }}>
-      <span
-          className={`badge ${
-            status === "Accept"
-              ? "bg-blue-100 text-blue-700 p-2 pl-4 pr-4 rounded shadow"
-              : status === "Approved"
-              ? "bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow"
-              : "bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow"
-          }`}
-        >
-          {status}
-        </span>
-      </td>
-      <td> 
-      <TableActions
-          editRoute={`/technicians/create-technician?technicianId=${tech.id}&singletechnician`}
-          viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
-          deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
-          itemId={tech.id}  // Pass the technician ID
-          idKey="technicianId"
-          userRole='Technician'
-          onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
-        />
-         {/* <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
+      <tr key={tech.id}>
+        <td>{tech.id}</td>
+        <td>{tech.firstName} {tech.lastName}</td>
+        <td>{tech.email}</td>
+        <td>{tech.phoneNumber}</td>
+        {/* <td>{tech.payRate}</td> */}
+        <td
+  onClick={() => handleAccountStatusChange(tech.id, !tech.accountStatus)} // Corrected here
+  style={{ cursor: 'pointer' }}
+>
+  <span
+    className={`badge ${
+      tech.accountStatus
+        ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+        : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+    }`}
+  >
+    {tech.accountStatus ? 'Active' : 'Inactive'}
+  </span>
+</td>
+
+<td
+  onClick={() => handleApprovalChange(tech.id, !tech.isApproved)} // Corrected here
+  style={{ cursor: 'pointer' }}
+>
+  <span
+    className={`badge ${
+      tech.isApproved
+        ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+        : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+    }`}
+  >
+    {tech.isApproved ? 'Approved' : 'Accept'}
+  </span>
+</td>
+
+        <td>
+          <TableActions
+            editRoute={`/technicians/create-technician?technicianId=${tech.id}&singletechnician`}
+            viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
+            deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
+            itemId={tech.id}  // Pass the technician ID
+            idKey="technicianId"
+            userRole='Technician'
+            onDeleteSuccess={() => handleDeleteSuccess(tech.id)}
+          />
+          {/* <Link className="p-1" href={`/single-technicians/view?technicianId=${tech.id}`}>
          <Image alt='eye' src={Eye} className='w-[16px]' /> 
          </Link> */}
-      
-      </td>
-    </tr>
+
+        </td>
+      </tr>
     )
   };
 
 
-   // CSV Export Functions
-   const convertToCSV = (data:any) => {
-    const csvRows = [];
-    // Get headers
-    csvRows.push(Object.keys(data[0]).join(','));
-    // Convert data to csv
-    for (const row of data) {
-      csvRows.push(Object.values(row).join(','));
-    }
-    return csvRows.join('\n');
-  };
 
-  const downloadCSV = () => {
-    if (typeof window !== "undefined") {
-    const csvData = convertToCSV(technicians);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'technicians.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    }
-  };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='SingleTechnician'  buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
+      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
 
-    
-        <SortableTable
-          headers={['ID', 'Name', 'Email', 'Phone Number', 'Status',  'Account Status',  'Action']}
-          data={technicians}
-          renderRow={renderRow}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          handleSort={handleSort}
-          loading={loading}
-        />
-     
 
-<Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      <SortableTable
+        headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Account Status', 'Action']}
+        data={technicians}
+        renderRow={renderRow}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        handleSort={handleSort}
+        loading={loading}
+      />
+
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
 
     </div>
   );

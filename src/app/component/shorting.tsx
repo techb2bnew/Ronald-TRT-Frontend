@@ -22,7 +22,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
   loading,
 }) => {
   // Define sortable columns
-  const sortableColumns = ['id', 'name', 'email', 'phone number','status','create new job', 'account status','action'];
+  const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status', 'action'];
 
   return (
     <div className="overflow-x-auto rounded-md">
@@ -38,12 +38,13 @@ const SortableTable: React.FC<SortableTableProps> = ({
                   className="cursor-pointer first:w-[50px] [&:nth-child(3)]:w-[230px]"
                 >
                   {header}
-                  {sortableColumns.includes(columnKey) && sortBy.toLowerCase() === columnKey && (
+                  {sortableColumns.includes(columnKey) && sortBy === columnKey && (
                     <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                      {sortDirection === 'asc' ? '↑' : '↓'}
+                     {sortDirection === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
                 </th>
+
               );
             })}
           </tr>

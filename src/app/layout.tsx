@@ -1,12 +1,11 @@
-"use client";  // ✅ Client component
-
+"use client";
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react"; // ✅ State aur Effect import karo
+import { useState, useEffect } from "react";
 import "./globals.css";
 import Sidebar from "@/app/component/sidebar/page";
 import Loading from "@/app/component/loader";
-import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; // ✅ Correct import
+import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +25,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // ✅ Check exact match or start with "/reset-password/"
-  const hideSidebarRoutes = ["/","/login", "/signup", "/forgot"];
+  const hideSidebarRoutes = ["/", "/login", "/signup", "/forgot"];
   const shouldShowSidebar =
     !hideSidebarRoutes.includes(pathname) && !pathname.startsWith("/reset-password");
 
@@ -34,7 +33,7 @@ export default function RootLayout({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLoading(false);  
+      setLoading(false);
     }, 100);
 
     return () => clearTimeout(timer); // ✅ Cleanup
@@ -42,13 +41,23 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      <TechnicianProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <div className="flex">
-          {shouldShowSidebar && (  <Sidebar />)}
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            {shouldShowSidebar ? (
+              <TechnicianProvider>
+                <div className="flex">
+                  <Sidebar /> {/* ✅ Sidebar bhi TechnicianProvider ke andar hai */}
+                  <div className="flex-1">{children}</div>
+                </div>
+              </TechnicianProvider>
+            ) : (
+              children
+            )}
+          </main>
         </div>
-        </TechnicianProvider>
       </body>
     </html>
   );

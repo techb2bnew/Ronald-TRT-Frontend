@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Banner from "../../../../public/forgot.png";
-import Logo from "../../../../public/logo.svg";
+import Logo from "../../../../public/trt-logo.png";
 import { NextResponse, NextRequest } from "next/server";
 import TextField from '@mui/material/TextField';
 
@@ -75,7 +75,7 @@ export default function Reset() {
                     </div>
                     <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
                         <div className="text-center mb-5 w-full">
-                            <Image src={Logo} className="m-auto pb-8" width='200' height='50' alt="logo" />
+                            <Image src={Logo} className="m-auto pb-8" width='100' height='50' alt="logo" />
                             <h2 className="text-2xl font-bold text-[#161616] mt-8">Reset Your Password</h2>
                             <p className="text-[#161616] mt-3">Please enter your new password below.</p>
                         </div>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Banner from "../../../public/forgot.png";
-import Logo from "../../../public/logo.svg"; 
+import Logo from "../../../public/trt-logo.png"; 
 import { useState, FormEvent } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -59,7 +59,7 @@ export default function Forgot() {
           </div>
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
-              <Image src={Logo} className="m-auto pb-8" width='200' height='50' alt="page img" />
+              <Image src={Logo} className="m-auto pb-8" width='100' height='50' alt="page img" />
               <h2 className="text-2xl font-bold text-[#161616] mt-8">Forgot Your Password</h2>
               <p className="text-[#161616] mt-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque leo felis, volutpat in imperdiet id, vulputate ac odio.</p>
             </div> 

@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { ExportToCsv } from 'export-to-csv-file';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -24,7 +25,7 @@ interface VehcileInfo {
 const VehicleTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -124,29 +125,44 @@ const VehicleTable: React.FC = () => {
   };
 
   // CSV Export Functions
-const convertToCSV = (data:any) => {
-  const csvRows = [];
-  // Get headers
-  csvRows.push(Object.keys(data[0]).join(','));
-  // Convert data to csv
-  for (const row of data) {
-    csvRows.push(Object.values(row).join(','));
-  }
-  return csvRows.join('\n');
-};
-
-const downloadCSV = () => {
-  const csvData = convertToCSV(activeJob);
-  const blob = new Blob([csvData], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('hidden', '');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'jobs.csv');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
+ const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Vehicles Info Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
+    };
+  
+    const csvExporter = new ExportToCsv(csvOptions);
+  
+    const formattedData = activeJob.map((jobData) => ({
+      ID: jobData.id,
+      Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+      BodyClass: jobData.bodyClass,
+      Color: jobData.color,
+      Make: jobData.make,
+      Model: jobData.model,
+      'Model Year': jobData.modelYear,
+      'Manufacturer Name': jobData.manufacturerName,
+      'Plant Company Name': jobData.plantCompanyName,
+      'Plant Country': jobData.plantCountry,
+      'Plant State': jobData.plantState, 
+      'Account Status': jobData.accountStatus ? 'Approved' : 'Accept',
+      Notes: jobData.notes,
+      CreatedAt: new Date(jobData.createdAt).toLocaleDateString(),  
+      JobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
+      Technicians: jobData.technicians
+        .map((tech:any) => `${tech.firstName} ${tech.lastName}`)
+        .join(', '), // Multiple technicians in one column
+    }));
+  
+    csvExporter.generateCsv(formattedData);
+  };
 
   const renderRow = (job: any) => (
     <tr key={job.id}>
@@ -188,7 +204,7 @@ const downloadCSV = () => {
                 Vehicle ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                      {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th> 
@@ -196,7 +212,7 @@ const downloadCSV = () => {
               Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                      {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>

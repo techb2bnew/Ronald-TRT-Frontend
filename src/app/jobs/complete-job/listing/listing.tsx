@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { ExportToCsv } from 'export-to-csv-file';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -21,7 +22,7 @@ interface Jobs {
 const CompletedJobs: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -95,29 +96,35 @@ const CompletedJobs: React.FC = () => {
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
-    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
+    const direction = sortDirection === "asc" ? "desc" : "asc";
     setSortDirection(direction);
     setSortBy(column);
-
+  
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'assignCustomer') {
+      if (column === "customerName") {
         const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        return direction === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
-      if (column === 'technicianName') {
-        const nameA = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameB = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+  
+      if (column === "technicianName") {
+        const nameA = a?.technicians
+          ?.map((tech: any) => `${tech.firstName} ${tech.lastName}`)
+          .join(", ");
+        const nameB = b?.technicians
+          ?.map((tech: any) => `${tech.firstName} ${tech.lastName}`)
+          .join(", ");
+        return direction === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
-
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+  
+      if (a[column] < b[column]) return direction === "asc" ? -1 : 1;
+      if (a[column] > b[column]) return direction === "asc" ? 1 : -1;
       return 0;
     });
-
+  
     setActiveJob(sortedJobs);
   };
+  
 
  
   const handlePageChange = (data: { selected: number }) => {
@@ -125,76 +132,45 @@ const CompletedJobs: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  const convertToCSV = (data: any) => {
-    const csvRows = [];
   
-    // ✅ Updated headers (removed "Tech. Number")
-    const headers = [
-      "ID",
-      "Customer Name",
-      "Customer Number",
-      "Technician Name",
-      "Total Cost",
-      "VIN",
-      "Vehicle Make",
-      "Start Date",
-      "Completion Date",
-      "Status"
-    ];
-    csvRows.push(headers.join(",")); // Add headers to the first row
-  
-    // ✅ Convert data to CSV format
-    for (const row of data) {
-      // ✅ Combine multiple technician names into one string
-      const technicianNames = row?.technicians
-        ?.map((tech: any) => `${tech.firstName} ${tech.lastName}`)
-        .join(", ");
-  
-      // ✅ Parse jobDescription properly and calculate total cost
-      const totalCost = row.jobDescription.reduce((sum: number, job: any) => {
-        const parsedJob = typeof job === "string" ? JSON.parse(job) : job;
-        return sum + Number(parsedJob.cost || 0);
-      }, 0);
-  
-      // ✅ Updated CSV row with values wrapped in double quotes
-      csvRows.push(
-        [
-          `"${row.id}"`,
-          `"${row?.customer?.firstName} ${row?.customer?.lastName}"`,
-          `"${row?.customer?.phoneNumber}"`,
-          `"${technicianNames}"`, // Correctly formatted with quotes
-          `"$${totalCost}"`,
-          `"${row.vin}"`,
-          `"${row.make}"`,
-          `"${new Date(row.createdAt).toLocaleDateString("en-GB")}"`,
-          `"${new Date(row.updatedAt).toLocaleDateString("en-GB")}"`,
-          `"${row.jobStatus ? "Completed" : "In Progress"}"`
-        ].join(",")
-      );
-    }
-  
-    return csvRows.join("\n");
-  };
-  
-  
-  
-  
-  const downloadCSV = () => {
-    if (activeJob.length === 0) {
-      toast.error("No data available to export!");
-      return;
-    }
-    const csvData = convertToCSV(activeJob); // ✅ Use activeJob directly
-    const blob = new Blob([csvData], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "jobs.csv");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+    const downloadCSV = () => {
+      const csvOptions = {
+        fieldSeparator: ',',
+        quoteStrings: '"',
+        decimalSeparator: '.',
+        showLabels: true,
+        showTitle: true,
+        title: 'Completed Work Order Data',
+        useTextFile: false,
+        useBom: true,
+        useKeysAsHeaders: true, // Use object keys as headers
+      };
+    
+      const csvExporter = new ExportToCsv(csvOptions);
+    
+      const formattedData = activeJob.map((jobData) => ({
+        ID: jobData.id,
+        Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        BodyClass: jobData.bodyClass,
+        Color: jobData.color,
+        Make: jobData.make,
+        Model: jobData.model,
+        'Model Year': jobData.modelYear,
+        'Manufacturer Name': jobData.manufacturerName,
+        'Plant Company Name': jobData.plantCompanyName,
+        'Plant Country': jobData.plantCountry,
+        'Plant State': jobData.plantState,
+        'Account Status': jobData.accountStatus ? 'Approved' : 'Accept',
+        Notes: jobData.notes,
+        CreatedAt: new Date(jobData.createdAt).toLocaleDateString(),
+        JobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
+        Technicians: jobData.technicians
+          .map((tech:any) => `${tech.firstName} ${tech.lastName}`)
+          .join(', '), // Multiple technicians in one column
+      }));
+    
+      csvExporter.generateCsv(formattedData);
+    };
 
   const renderRow = (completejob: any) => {
 
@@ -250,8 +226,8 @@ const CompletedJobs: React.FC = () => {
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
+                   {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -259,23 +235,23 @@ const CompletedJobs: React.FC = () => {
                 Job Description
                 {sortBy === 'jobDescription' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                   {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th> */}
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                   Customer Name
-                {sortBy === 'assignCustomer' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
+                   {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
               <th className="w-[120px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
                 {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
+                   {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>  

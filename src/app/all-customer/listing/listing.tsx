@@ -10,7 +10,9 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import Link from 'next/link';
 import Image from 'next/image';
-import Eye from '../../../../public/eye.svg'
+import Eye from '../../../../public/eye.svg';
+import { ExportToCsv } from 'export-to-csv-file';
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Customer {
@@ -22,7 +24,7 @@ interface Customer {
 export default function ClientListing() {
   const [customer, setCustomer] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Default sorting column is 'id'
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -154,29 +156,35 @@ const handleDeleteSuccess = (deletedId: string) => {
   //   }
   // };
 // CSV Export Functions
-const convertToCSV = (data:any) => {
-  const csvRows = [];
-  // Get headers
-  csvRows.push(Object.keys(data[0]).join(','));
-  // Convert data to csv
-  for (const row of data) {
-    csvRows.push(Object.values(row).join(','));
-  }
-  return csvRows.join('\n');
-};
-
-const downloadCSV = () => {
-  const csvData = convertToCSV(customer);
-  const blob = new Blob([csvData], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('hidden', '');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'customers.csv');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
+ const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'All TRT Customers Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
+    };
+  
+    const csvExporter = new ExportToCsv(csvOptions);
+  
+    const formattedData = customer.map((customerData) => ({
+      ID: customerData.id,
+      Name: `${customerData.firstName} ${customerData.lastName}`,
+      Email: customerData.email,
+      Phone: customerData.phoneNumber,
+      Address: customerData.address,
+      Country: customerData.country,
+      City: customerData.city,
+      State: customerData.state,
+      ZipCode: customerData.zipCode, 
+    }));
+  
+    csvExporter.generateCsv(formattedData);
+  };
 
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
@@ -214,7 +222,7 @@ const downloadCSV = () => {
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -222,7 +230,7 @@ const downloadCSV = () => {
                 Name
                 {sortBy === 'name' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -230,7 +238,7 @@ const downloadCSV = () => {
                 Email
                 {sortBy === 'email' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -238,7 +246,7 @@ const downloadCSV = () => {
                 Phone Number
                 {sortBy === 'phoneNumber' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -246,7 +254,7 @@ const downloadCSV = () => {
                 Address
                 {sortBy === 'address' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
@@ -254,7 +262,7 @@ const downloadCSV = () => {
                 Country
                 {sortBy === 'country' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>

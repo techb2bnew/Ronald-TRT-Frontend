@@ -51,7 +51,7 @@ const ArchivePage = () => {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchRecoverRecord?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/recoverRecordsList?roleType=${roleType}&page=${page}`;
+        : `${apiUrl}/recoverRecordsList?page=${page}`;
   
       const response = await fetch(endpoint, { method: 'GET', headers });
   
@@ -310,21 +310,31 @@ const ArchivePage = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading='Archive' onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel='' buttonLink='' onExport={downloadCSV} />
+      <CommonHeader
+        heading="Archive"
+        onSearch={(term) => setSearchTerm(term)}
+        userRole=""
+        buttonLabel=""
+        buttonLink=""
+        onExport={downloadCSV}
+      />
       {loading ? (
-       <Loader />
+        <Loader />
       ) : (
         <>
           {renderAllTables()}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          {archive.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </>
       )}
     </div>
   );
+  
 };
 
 export default ArchivePage;

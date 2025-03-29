@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image";
 import Banner from "../../../public/login.png";
-import Logo from "../../../public/logo.svg";
+import Logo from "../../../public/trt-logo.png";
 import Facebook from "../../../public/facebook.svg";
 import Google from "../../../public/google.svg";
 import Apple from "../../../public/apple.svg";
@@ -100,7 +100,7 @@ export default function Login() {
           </div>
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
-              <Image src={Logo} className="m-auto" width='200' height='50' alt="page img" />
+              <Image src={Logo} className="m-auto rounded object-cover" width='100' height='50' alt="page img" />
               <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Tech Repair Tracker</h2>
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
@@ -127,7 +127,7 @@ export default function Login() {
               <div className="flex justify-between items-center mt-4">
                 <div className="inline-flex items-center">
                   <label className="flex items-center cursor-pointer relative">
-                    <input type="checkbox" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#EF502E] checked:border-[#EF502E]" id="check" />
+                    <input type="checkbox" checked  onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#EF502E] checked:border-[#EF502E]" id="check" />
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>

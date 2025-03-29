@@ -10,6 +10,8 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { ExportToCsv } from 'export-to-csv-file';
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -21,7 +23,7 @@ interface Jobs {
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Sorting direction state
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);  
@@ -200,57 +202,43 @@ const JobTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  // CSV Export Functions
-  const convertToCSV = (data: any) => {
-    const csvRows = [];
-    
-    // ✅ Define headers based on the table columns
-    const headers = [
-      "ID",
-      "Customer Name",
-      "Customer Number",
-      "Technician Name",
-      "Tech. Number",
-      "Total Cost",
-      "Status"
-    ];
-    csvRows.push(headers.join(",")); // Add headers to the first row
-  
-    // ✅ Convert data to CSV format
-    for (const row of data) {
-      const technicianNames = row?.technicians?.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(", ");
-      const technicianNumbers = row?.technicians?.map((tech: any) => tech.phoneNumber).join(", ");
-      const totalCost = row.jobDescription.reduce((sum: number, job: any) => sum + Number(job.cost), 0);
-  
-      csvRows.push([
-        row.id,
-        `${row?.customer?.firstName} ${row?.customer?.lastName}`,
-        row?.customer?.phoneNumber,
-        technicianNames,
-        technicianNumbers,
-        `$${totalCost}`,
-        row.jobStatus ? "Completed" : "In Progress"
-      ].join(","));
-    }
-  
-    return csvRows.join("\n");
-  };
-  
   const downloadCSV = () => {
-    if (activeJob.length === 0) {
-      toast.error("No data available to export!");
-      return;
-    }
-    const csvData = convertToCSV(activeJob); // ✅ Use activeJob directly
-    const blob = new Blob([csvData], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "jobs.csv");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Work Order Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
+    };
+  
+    const csvExporter = new ExportToCsv(csvOptions);
+  
+    const formattedData = activeJob.map((jobData) => ({
+      ID: jobData.id,
+      Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+      BodyClass: jobData.bodyClass,
+      Color: jobData.color,
+      Make: jobData.make,
+      Model: jobData.model,
+      'Model Year': jobData.modelYear,
+      'Manufacturer Name': jobData.manufacturerName,
+      'Plant Company Name': jobData.plantCompanyName,
+      'Plant Country': jobData.plantCountry,
+      'Plant State': jobData.plantState, 
+      'Account Status': jobData.accountStatus ? 'Approved' : 'Accept',
+      Notes: jobData.notes,
+      CreatedAt: new Date(jobData.createdAt).toLocaleDateString(),  
+      JobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
+      Technicians: jobData.technicians
+        .map((tech:any) => `${tech.firstName} ${tech.lastName}`)
+        .join(', '), // Multiple technicians in one column
+    }));
+  
+    csvExporter.generateCsv(formattedData);
   };
   
 
@@ -345,7 +333,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th> 
@@ -353,7 +341,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
