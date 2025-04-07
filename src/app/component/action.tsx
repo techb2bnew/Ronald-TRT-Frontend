@@ -62,7 +62,7 @@ const TableActions: React.FC<TableActionsProps> = ({
   const handleDelete = async () => {
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "You won’t be able to undo this action!",
+      text: "You can undo this action!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",

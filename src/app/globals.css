@@ -27,7 +27,31 @@ body {
 .primary-bg{
   background: var(--primaryBg);
   color: #fff;
+  position: relative;
+  z-index: 2;
 }
+.primary-bg::after {
+  content: "";
+  position: absolute;
+  transition: 0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.primary-bg::after {
+  width: 0;
+  height: 100%;
+  background: #0e0e16;
+  border-radius: 5px;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  transition: 0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.primary-bg:hover {
+  color: whitesmoke;
+}
+.primary-bg:hover::after {
+  width: 100%; 
+}
+
 table.table.w-full.table-fixed thead {
   background: var(--foreground);
   color: #fff;
@@ -201,4 +225,14 @@ table.table.w-full.table-fixed tbody tr {
 }
 table.table.w-full.table-fixed tbody tr td {
   color: #000;
+}
+
+@media screen and (max-width: 1420px) {
+.laptop_size li a , .laptop_size li span{
+  font-size: 12px;
+}
+table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody tr td {
+  padding: 10px;
+  font-size: 12px;
+}
 }

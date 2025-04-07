@@ -132,7 +132,7 @@ const Sidebar = () => {
         <Image src={logo} alt="logo" className='w-[90px] object-cover mt-3 mb-3' />
       </div>
 
-      <ul className="flex flex-col py-4" style={{ lineHeight: '1' }}>
+      <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
         {/* <li className='p-1'>
           <Link href="/dashboard" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/dashboard' ? 'active text-[#fff900]' : ''}`}  >
             <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -349,7 +349,7 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
-                  <span>Work Order by Customers</span>
+                  <span>Group Work Orders</span>
                 </Link>
               </li>
             </ul>
@@ -386,7 +386,7 @@ const Sidebar = () => {
               </li>
               <li >
                 <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff900]' : ''}`} >
-                  <span>Work Orders Status</span>
+                  <span>All IFS Work Orders</span>
                 </Link>
               </li>
               <li >
@@ -435,7 +435,7 @@ const Sidebar = () => {
                 </li>
                 <li >
                   <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
-                    <span>Work Orders</span>
+                    <span>All Work Orders</span>
                   </Link>
                 </li>
 

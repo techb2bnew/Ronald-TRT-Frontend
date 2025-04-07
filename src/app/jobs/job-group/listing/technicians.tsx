@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import { ExportToCsv } from 'export-to-csv-file';
+import TableActions from '@/app/component/action';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -248,6 +250,15 @@ const JobTable: React.FC = () => {
         </span>
       </td>  */}
       <td> 
+      {/* <TableActions 
+          editRoute={`/jobs/create-job/create?jobId=${job.id}&vehicleInfo`}   
+         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
+         viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
+           idKey="jobid"
+           userRole='Vehicleinfo'
+          itemId={job.id}  // Pass the technician ID
+          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
+           /> */}
 
             <Link className="p-1" href={`/jobs/job-group/view?vin=${job?.vin}`}>
                  <Image alt='eye' src={Eye} className='w-[16px]' data-tooltip-id="view"
@@ -261,7 +272,12 @@ const JobTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Work Order By Customers" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <Breadcrumb
+              items={[
+                { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
+              ]}
+            />
+      <CommonHeader heading="Group Work Orders" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -310,7 +311,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
         <TableActions   
           editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
          deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/jobs/view?jobId=${job.id}`}
+         viewRoute={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`}
            idKey="jobid"
            userRole='Activejobs'
           itemId={job.id}  // Pass the technician ID
@@ -323,6 +324,12 @@ const [permissions, setPermissions] = useState<any[]>([]);
 
   return (
     <div className="container mx-auto mt-4">
+       <Breadcrumb
+                    items={[
+                      { label: 'Active Work Orders', href: '/jobs/active-job' }
+                    ]}
+                  />
+
       <CommonHeader heading="Active Work Orders" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
 
       <div className="overflow-auto rounded-md">
@@ -337,7 +344,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
                   </span>
                 )}
               </th> 
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+              <th className="w-[150px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -345,16 +352,16 @@ const [permissions, setPermissions] = useState<any[]>([]);
                   </span>
                 )}
               </th>
-              <th className="w-[150px]">
+              <th className="w-[120px]">
                 Customer Number 
               </th>
-              <th className="w-[120px]" >
+              <th className="w-[150px]" >
                 Technician Name 
               </th> 
               <th className="w-[100px]">Tech. Number</th> 
-              <th className="w-[160px]">Total Cost</th> 
+              <th className="w-[120px]">Total Cost</th> 
               <th className="w-[120px]">Status</th>
-              <th className="w-[160px]">Action</th>
+              <th className="w-[100px]">Action</th>
             </tr>
           </thead>
           <tbody>

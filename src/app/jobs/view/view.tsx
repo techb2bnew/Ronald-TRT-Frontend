@@ -3,10 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import Breadcrumb from '@/app/component/breadcrumb';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+   
+  const isSingleTechnician = searchParams.has('ActiveWorkOrder');
 
   const fetchCustomerData = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -59,81 +66,126 @@ export default function ViewDetails() {
     return 0;
   };
 
-  
+
   if (!jobData) {
     return <div><Loading /></div>;
   }
+  const getBaseBreadcrumb = () => {
+    const isCompletedJob = searchParams.has('completedJob');
+    const isActiveJob = searchParams.has('activeJob');
+    const isJobStatus = searchParams.has('jobStatus');
+  
+    if (isCompletedJob) {
+      return { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' };
+    }
+  
+    if (isActiveJob) {
+      return { label: 'Active Work Orders', href: '/jobs/active-job' };
+    }
+  
+    if (isJobStatus) {
+      const jobStatus = searchParams.get('jobStatus');
+      return {
+        label: `${jobStatus?.charAt(0).toUpperCase()}${jobStatus?.slice(1)} All IFS Work Orders`,
+        href: `/reporting/job-status`,
+      };
+    }
+  
+    if (pathname.includes('/reporting/job-status')) {
+      return { label: 'All IFS Work Orders', href: '/reporting/job-status' };
+    }
+  
+    return {
+      label: isSingleTechnician ? 'Active Work Order' : 'Single Technician Work Order',
+      href: isSingleTechnician
+        ? '/jobs/active-job'
+        : '/single-technicians/jobs',
+    };
+  };
+  
 
   return (
-    <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
-      <div className="bg-[#F6F6F6] rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Work Order Detail</h2>
-        <div className="grid grid-cols-2 gap-3 p-6">
-          {/* Left Section */}
-          <div className='shadow-lg p-5 bg-white rounded'>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Id:</strong> {jobData?.id}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>VIN:</strong> {jobData?.vin}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
-              <span
-                className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-              >
-                {jobData.jobStatus ? 'Completed' : 'Inprogress'}
-              </span>
-            </div> 
+    <div>
+   <Breadcrumb
+  items={[
+    getBaseBreadcrumb(),
+    isEdit
+      ? { label: 'View Details' }
+      : { label: 'Create Technician', href: '/technicians/create-technician' },
+  ]}
+/>
 
-          </div>
+      <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
 
-          {/* Right Section */}
-          <div className='shadow-lg p-5 bg-white rounded'>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong> {jobData.technicians[0]?.email}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong> {jobData.technicians[0]?.phoneNumber} </div>
-            <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-  <strong className="w-[200px] inline-block">Job Description:</strong>
-  {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-    <ul className="list-none">
-      {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
-        <li key={index}>
-          <span className=" block">{item.jobDescription}</span> 
-           {/* <span className='block'>${item.cost}</span>  */}
-        </li>
-      ))}
-    </ul>
-  ) : (
-    "No job descriptions available"
-  )}
- 
-</div>
-<div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-<strong className='w-[200px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
-      </div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</div>
-            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Notes:</strong> {jobData?.notes}</div>
+        <div className="bg-[#F6F6F6] rounded-lg shadow-md">
+          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Work Order Detail</h2>
+          <div className="grid grid-cols-2 gap-3 p-6">
+            {/* Left Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Id:</strong> {jobData?.id}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>VIN:</strong> {jobData?.vin}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
+                <span
+                  className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+                >
+                  {jobData.jobStatus ? 'Completed' : 'Inprogress'}
+                </span>
+              </div>
+
+            </div>
+
+            {/* Right Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong> {jobData.technicians[0]?.email}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong> {jobData.technicians[0]?.phoneNumber} </div>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+                <strong className="w-[200px] inline-block">Job Description:</strong>
+                {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
+                  <ul className="list-none">
+                    {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
+                      <li key={index}>
+                        <span className=" block">{item.jobDescription}</span>
+                        {/* <span className='block'>${item.cost}</span>  */}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No job descriptions available"
+                )}
+
+              </div>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                <strong className='w-[200px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Notes:</strong> {jobData?.notes}</div>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-            {jobData.images.map((form:any, index:any) => (
-              <img
-                key={index}
-                onClick={() => window.open(form, '_blank')}
-                src={form}
-                alt={`Technician Tax Form ${index + 1}`}
-                className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
-              />
-            ))}
-          </div>
+                {jobData.images.map((form: any, index: any) => (
+                  <img
+                    key={index}
+                    onClick={() => window.open(form, '_blank')}
+                    src={form}
+                    alt={`Technician Tax Form ${index + 1}`}
+                    className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+        <ToastContainer />
       </div>
-      <ToastContainer />
     </div>
   );
 }

@@ -3,11 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader'; 
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Breadcrumb from '@/app/component/breadcrumb';
 
 export default function ViewDetails() { 
   const [CustomerData, setCustomerData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false); 
-
+    const searchParams = useSearchParams(); 
+  const isSingleTechnician = searchParams.has('allTrtCustomer');
   const fetchCustomerData = async (customerId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -55,6 +58,19 @@ export default function ViewDetails() {
   }
 
   return (
+    <>
+    
+     <Breadcrumb
+            items={[
+              {
+                label: isSingleTechnician ? 'All TRT Customer' : 'Customer',
+                href: isSingleTechnician
+                  ? '/all-customer/listing'
+                  : '/client/listing',
+              },
+              { label: 'View Detail', href: '' } 
+            ]}
+          />
     <div className='max-w-5xl mx-auto p-4 rounded-lg shadow bg-white'>
       <div className="bg-[#F6F6F6] rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4 pt-4 pl-6 border-b border-[#ccc] mb-2 pb-3">Customer Detail</h2>
@@ -81,5 +97,6 @@ export default function ViewDetails() {
       </div>
       <ToastContainer />
     </div>
+    </>
   );
 }

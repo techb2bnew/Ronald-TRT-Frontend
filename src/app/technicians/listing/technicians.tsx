@@ -13,7 +13,7 @@ import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
-
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Technicians {
@@ -287,13 +287,17 @@ const TechnicianTable: React.FC = () => {
         {/* <td>{tech.payRate}</td> */}
 
         <td
-          onClick={() => handleAccountStatusChange(tech.id, !tech.accountStatus)} // Corrected here
-          style={{ cursor: 'pointer' }}
+           onClick={() => {
+            if (tech.accountStatus || tech.isApproved) {
+              handleAccountStatusChange(tech.id, !tech.accountStatus);
+            }
+          }} // Corrected here
+          style={{ cursor: tech.isApproved || tech.accountStatus  ? 'pointer' : 'not-allowed' }}
         >
           <span
             className={`badge ${tech.accountStatus
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]' 
               }`}
           >
             {tech.accountStatus ? 'Active' : 'Inactive'}
@@ -304,8 +308,8 @@ const TechnicianTable: React.FC = () => {
         <td className='font-sm'>
           <Link
             href={tech.accountStatus === true && tech.isApproved === true ? '/jobs/create-job/create' : '#'}
-            className={`flex gap-1 items-center border border-black rounded p-2 pl-2 pr-2 w-[120px] justify-center ${tech.accountStatus === true && tech.isApproved === true
-              ? 'cursor-pointer bg-white hover:bg-gray-100'  // Active styles
+            className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-2 pr-2 text-[#383d71] w-[140px] justify-center ${tech.accountStatus === true && tech.isApproved === true
+              ? 'cursor-pointer bg-white hover:bg-[#383d71] hover:text-[#fff] '  // Active styles
               : 'cursor-not-allowed bg-gray-200' // Disabled styles
               }`}
             onClick={(e) => {
@@ -314,7 +318,7 @@ const TechnicianTable: React.FC = () => {
               }
             }}
           >
-            Create Job
+            Create Order
             <svg
               width="20"
               height="20"
@@ -353,8 +357,8 @@ const TechnicianTable: React.FC = () => {
         >
           <span
             className={`badge ${tech.isApproved
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.isApproved ? 'Approved' : 'Accept'}
@@ -411,11 +415,16 @@ const TechnicianTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
+       <Breadcrumb
+        items={[
+          { label: 'IFS Technicians', href: '/technicians/listing' }
+        ]}
+      />
       <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
 
 
       <SortableTable
-        headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create New Job', 'Account Status', 'Action']}
+        headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}

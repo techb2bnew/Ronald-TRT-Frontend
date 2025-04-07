@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
@@ -55,6 +56,14 @@ export default function ViewDetails() {
   }
 
   return (
+    <>
+    <Breadcrumb
+                    items={[
+                      { label: 'IFS Technicians', href: '/technicians/listing' },
+                      { label: 'View Detail', href: '/jobs/job-group/listing' }
+                    ]}
+                  />
+   
     <div className='max-w-6xl mx-auto p-4 rounded-lg shadow bg-white'>
       <div className="bg-[#F6F6F6] rounded-lg shadow-md">
         <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Technician Details</h2>
@@ -147,5 +156,6 @@ export default function ViewDetails() {
       </div>
       <ToastContainer />
     </div>
+    </>
   );
 }

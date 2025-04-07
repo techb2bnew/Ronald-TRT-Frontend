@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -285,7 +286,7 @@ const JobTable: React.FC = () => {
       </td> 
       <td className='text-left'>
 
-            <Link className="p-1" href={`/jobs/view?jobId=${job.id}`} >
+            <Link className="p-1" href={`/jobs/view?jobId=${job.id}&jobStatus`} >
                  <Image alt='eye' src={Eye} className='w-[16px]'data-tooltip-id="view"
                       data-tooltip-content="View" /> 
                  </Link>
@@ -297,7 +298,12 @@ const JobTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Work Order Status" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <Breadcrumb
+        items={[
+          { label: 'All IFS Work Orders', href: '/reporting/job-status' }
+        ]}
+      />
+      <CommonHeader heading="All IFS Work Orders" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

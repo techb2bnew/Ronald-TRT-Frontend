@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/app/component/loader";
+import Breadcrumb from "@/app/component/breadcrumb";
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
@@ -63,6 +64,13 @@ export default function ViewDetails() {
   }
 
   return (
+    <>
+     <Breadcrumb
+            items={[
+              { label: 'Group Work Orders', href: '/jobs/job-group/listing' },
+              { label: 'View Detail', href: '/jobs/job-group/listing' }
+            ]}
+          />
     <div className="max-w-7xl mx-auto p-4 rounded-lg shadow bg-white">
       {jobData.map((job, index) => (
         <div key={index} className="bg-[#F6F6F6] rounded-lg shadow-md mb-6">
@@ -234,5 +242,8 @@ export default function ViewDetails() {
       ))}
       <ToastContainer />
     </div>
+    </>
+ 
   );
+
 }

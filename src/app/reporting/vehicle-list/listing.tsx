@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -189,6 +190,11 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
+      <Breadcrumb
+              items={[
+                { label: 'Vehicles List', href: '/reporting/vehicle-list' }
+              ]}
+            />
       <CommonHeader heading="Vehicles List" onSearch={(term) => setSearchTerm(term)}   onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">

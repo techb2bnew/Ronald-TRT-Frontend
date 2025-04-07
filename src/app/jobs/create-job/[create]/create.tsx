@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams  } from "next/navigation";
 // import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 // import FormControl from '@mui/material/FormControl';
@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import { BrowserMultiFormatReader } from '@zxing/browser';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 interface JobDescriptionItem {
   jobDescription: string;
@@ -102,6 +103,7 @@ export default function Technicians() {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
+    const searchParams = useSearchParams();
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
   ]);
@@ -292,15 +294,15 @@ export default function Technicians() {
 
   // Assuming vehicleDetailsMap and JobPayload are aligned correctly
 
-  const fetchVehicleDetails = async () => {
-    if (!formData.vin) {
+  const fetchVehicleDetails = async (vin: string) => {
+    if (!vin) {
       toast.error("Please enter a VIN to fetch vehicle details.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${formData.vin}?format=json`);
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${vin}?format=json`);
       const data = await response.json();
 
       if (response.ok && data.Results) {
@@ -316,7 +318,7 @@ export default function Technicians() {
         setFormData(prev => ({
           ...prev,
           ...vehicleDetails,
-          vin: formData.vin  // Retain manually entered VIN
+          vin: vin  // Retain manually entered VIN
         }));
       } else {
         toast.error("Failed to fetch vehicle details.");
@@ -432,7 +434,13 @@ export default function Technicians() {
       const result = await response.json();
       if (response.ok) {
         toast.success('Job created successfully.');
-        router.push('/jobs/active-job');
+        if (searchParams.has('completeOrder')) {
+          router.push('/jobs/complete-job/listing');
+        } else if(searchParams.has('vehicleInfo')) {
+          router.push('/reporting/vehicle-info')
+        } else{  
+          router.push('/jobs/active-job');
+        }
       } else {
         if (result.error && result.error.includes("Duplicate VIN")) {
           setSubmitting(false);
@@ -570,21 +578,38 @@ export default function Technicians() {
 
   // To handle the image upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const files = e.target.files ? Array.from(e.target.files) : [];
-    const maxWidth = 800; // Maximum image width
-    const maxHeight = 600; // Maximum image height
-    const quality = 0.7; // Compression quality
-
-    const compressions = files.map(file => compressImage(file, maxWidth, maxHeight, quality));
+  
+    // Filter out unwanted file types
+    const validImageFiles = files.filter(file => acceptedTypes.includes(file.type));
+  
+    if (validImageFiles.length === 0) {
+      toast.error("Please upload only JPEG, PNG, or WEBP images.");
+      return;
+    }
+  
+    const maxWidth = 800;
+    const maxHeight = 600;
+    const quality = 0.7;
+  
+    const compressions = validImageFiles.map(file =>
+      compressImage(file, maxWidth, maxHeight, quality)
+    );
+  
     Promise.all(compressions)
       .then(compressedFiles => {
-        setFormData((prev: any) => ({ ...prev, images: compressedFiles }));
+        setFormData((prev: any) => ({
+          ...prev,
+          images: [...prev.images, ...compressedFiles], // Append instead of replace
+        }));
       })
       .catch(error => {
         console.error('Compression error:', error);
         toast.error('Failed to compress images.');
       });
   };
+  
 
 
   // Remove a specific image
@@ -640,11 +665,16 @@ export default function Technicians() {
               const result = await codeReader.decodeFromImageElement(img);
 
               if (result) {
-                console.log('Barcode Detected:', result.getText()); // ✅ Use getText()
+                const detectedVin = result.getText();
+                console.log('Barcode Detected:', detectedVin); // ✅ Use getText()
                 setFormData((prev) => ({
                   ...prev,
-                  vin: result.getText(), // ✅ Corrected
+                  vin: detectedVin, // ✅ Corrected
                 }));
+                console.log(detectedVin,'formData.vinformData.vin')
+                setTimeout(() => {
+                  fetchVehicleDetails(detectedVin);
+                }, 100);
               } else {
                 alert('VIN not found in the barcode. Try another image!');
               }
@@ -661,19 +691,23 @@ export default function Technicians() {
     }
   };
 
+  console.log(formData.vin,'formData.vin')
 
 
   return (
     <div className='main-container mb-5'>
+      <Breadcrumb
+              items={[ 
+                isEdit
+                ? { label: 'Edit Work Order' }
+                :{ label: 'Create New Work Order', href: '/jobs/create-job/create' },
+              ]}
+            />
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Work Order</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
-        {submitting ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader />  {/* ✅ Show loader during submission */}
-          </div>
-        ) : (
+        
           <form className="" onSubmit={handleSubmit}>
             <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
               <FormControl fullWidth size="small">
@@ -738,7 +772,7 @@ export default function Technicians() {
                 <div className='flex gap-3 items-center'>
                  <div className="flex gap-3 items-center w-[70%]">
                   <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="outlined" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
-                  <button type="button" onClick={fetchVehicleDetails} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
+                  <button type="button"   onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
                  </div>
 
                   <div className="relative">
@@ -1013,7 +1047,7 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload File</p>
                   <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
                 </label>
-                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
+                <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
                 {/* onChange={handleFileChange} */}
               </div>
               {/* Thumbnails of selected images */}
@@ -1049,10 +1083,43 @@ export default function Technicians() {
             </div>
 
             <div className="text-right mt-4 mb-4">
-              <button type="submit" className="primary-bg pl-5 pr-5 text-sm p-2 rounded">Submit</button>
-            </div>
+              
+              <button
+                type="submit"
+                className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      ></path>
+                    </svg>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  'Submit'
+                )}
+              </button>
+            </div> 
           </form>
-        )}
+       
 
       </div>
     </div>

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -323,6 +324,11 @@ const [permissions, setPermissions] = useState<any[]>([]);
 
   return (
     <div className="container mx-auto mt-4">
+       <Breadcrumb
+              items={[
+                { label: 'Single Technician Work Order', href: '/single-technicians/jobs' }
+              ]}
+            />
       <CommonHeader heading="Single Technician Work Order" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">

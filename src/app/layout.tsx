@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import "./globals.css";
 import Sidebar from "@/app/component/sidebar/page";
 import Loading from "@/app/component/loader";
-import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile";
+import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+ 
 
 export default function RootLayout({
   children,
@@ -41,10 +42,14 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+      <link rel="icon" href="/fav.ico" sizes="any" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex">
+        
           <main className="flex-1">
             {shouldShowSidebar ? (
               <TechnicianProvider>
@@ -56,7 +61,7 @@ export default function RootLayout({
             ) : (
               children
             )}
-          </main>
+          </main> 
         </div>
       </body>
     </html>

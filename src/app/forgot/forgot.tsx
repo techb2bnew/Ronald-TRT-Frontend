@@ -5,11 +5,14 @@ import { useState, FormEvent } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
+import Swal from "sweetalert2";
+import { useRouter } from 'next/navigation';
 
 interface ForgotForm {
     emailOrPhone: string;
   }
 export default function Forgot() {
+  const router = useRouter()
     const [input, setInput] = useState<ForgotForm>({ emailOrPhone: '' });
     const [loading, setLoading] = useState(false); 
     const [errors, setErrors] = useState({ emailOrPhone: '', });
@@ -40,8 +43,14 @@ export default function Forgot() {
                         toast.error(data.error);
                     }
                 } else { 
-                    toast.success('Password reset email sent successfully'); 
-                    // Handle success (e.g., clearing form, redirecting)
+                  await Swal.fire({
+                    title: 'Success',
+                    text: 'Password reset email sent successfully',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                  }).then(() => {
+                    router.push('/login'); // Redirect to login page after confirmation
+                  });
                 }
             } catch (error) { 
                 toast.error('Please try again.');
@@ -61,7 +70,7 @@ export default function Forgot() {
             <div className="text-center mb-5 w-full">
               <Image src={Logo} className="m-auto pb-8" width='100' height='50' alt="page img" />
               <h2 className="text-2xl font-bold text-[#161616] mt-8">Forgot Your Password</h2>
-              <p className="text-[#161616] mt-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque leo felis, volutpat in imperdiet id, vulputate ac odio.</p>
+              <p className="text-[#161616] mt-3">Enter your registered email address and we'll send you a link to reset your password.</p>
             </div> 
             <form onSubmit={handleSubmit} className="mt-6">
               <div>

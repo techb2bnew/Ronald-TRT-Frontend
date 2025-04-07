@@ -332,7 +332,7 @@ export default function ProfileCard() {
 
           </button>
         </div>
-        <div className="mt-4 grid grid-cols-6 gap-4">
+        <div className="mt-4 grid grid-cols-3 gap-4">
           <div>
             <label className="text-gray-600">First Name</label>
             <input
@@ -374,7 +374,7 @@ export default function ProfileCard() {
       </div>
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <h3 className="font-semibold text-lg">Address</h3>
-        <div className="mt-4 grid grid-cols-6 gap-4">
+        <div className="mt-4 grid grid-cols-3 gap-4">
 
           <div>
             <label className="text-gray-600">City</label>

@@ -14,6 +14,7 @@ import Loader from '@/app/component/loader';
 import Eye from '../../../../public/eye.svg'
 import Image from 'next/image';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -38,7 +39,7 @@ const TechnicianTable: React.FC = () => {
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
-  
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: `Do you want to change the account status to ${newStatus}?`,
@@ -48,7 +49,7 @@ const TechnicianTable: React.FC = () => {
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
-  
+
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
@@ -58,7 +59,7 @@ const TechnicianTable: React.FC = () => {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         };
-  
+
         const response = await axios.post(
           `${apiUrl}/updateTechnicianAccountStatus`, // Correct API
           {
@@ -67,7 +68,7 @@ const TechnicianTable: React.FC = () => {
           },
           config
         );
-  
+
         if (response.data.status) {
           Swal.fire({
             title: 'Success!',
@@ -94,7 +95,7 @@ const TechnicianTable: React.FC = () => {
 
   const handleApprovalChange = async (techId: number, isApproved: boolean) => {
     const newStatus = isApproved ? 'Approved' : 'Accept';
-  
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: `Do you want to change the status to ${newStatus}?`,
@@ -104,7 +105,7 @@ const TechnicianTable: React.FC = () => {
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
-  
+
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
@@ -114,7 +115,7 @@ const TechnicianTable: React.FC = () => {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         };
-  
+
         const response = await axios.post(
           `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
           {
@@ -123,7 +124,7 @@ const TechnicianTable: React.FC = () => {
           },
           config
         );
-  
+
         if (response.data.status) {
           Swal.fire({
             title: 'Success!',
@@ -147,7 +148,7 @@ const TechnicianTable: React.FC = () => {
       }
     }
   };
-  
+
 
 
 
@@ -314,34 +315,32 @@ const TechnicianTable: React.FC = () => {
         <td>{tech.phoneNumber}</td>
         {/* <td>{tech.payRate}</td> */}
         <td
-  onClick={() => handleAccountStatusChange(tech.id, !tech.accountStatus)} // Corrected here
-  style={{ cursor: 'pointer' }}
->
-  <span
-    className={`badge ${
-      tech.accountStatus
-        ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-        : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
-    }`}
-  >
-    {tech.accountStatus ? 'Active' : 'Inactive'}
-  </span>
-</td>
+          onClick={() => handleAccountStatusChange(tech.id, !tech.accountStatus)} // Corrected here
+          style={{ cursor: 'pointer' }}
+        >
+          <span
+            className={`badge ${tech.accountStatus
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+              }`}
+          >
+            {tech.accountStatus ? 'Active' : 'Inactive'}
+          </span>
+        </td>
 
-<td
-  onClick={() => handleApprovalChange(tech.id, !tech.isApproved)} // Corrected here
-  style={{ cursor: 'pointer' }}
->
-  <span
-    className={`badge ${
-      tech.isApproved
-        ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-        : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
-    }`}
-  >
-    {tech.isApproved ? 'Approved' : 'Accept'}
-  </span>
-</td>
+        <td
+          onClick={() => handleApprovalChange(tech.id, !tech.isApproved)} // Corrected here
+          style={{ cursor: 'pointer' }}
+        >
+          <span
+            className={`badge ${tech.isApproved
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+              }`}
+          >
+            {tech.isApproved ? 'Approved' : 'Accept'}
+          </span>
+        </td>
 
         <td>
           <TableActions
@@ -366,6 +365,11 @@ const TechnicianTable: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4">
+      <Breadcrumb
+        items={[
+          { label: 'Single Technicians', href: '/single-technicians/listing' }
+        ]}
+      />
       <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
 
 

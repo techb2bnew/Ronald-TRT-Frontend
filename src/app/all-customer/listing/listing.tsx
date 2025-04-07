@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -203,7 +204,7 @@ const handleDeleteSuccess = (deletedId: string) => {
           itemId={cust.id}   
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} /> */}
 
-<Link className="p-1" href={`/client/view?customerId=${cust.id}`}>
+<Link className="p-1" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>
          <Image alt='eye' src={Eye} className='w-[16px]' /> 
          </Link>
       </td>
@@ -212,6 +213,11 @@ const handleDeleteSuccess = (deletedId: string) => {
 
   return (
     <div className="container mx-auto mt-4">
+       <Breadcrumb
+                    items={[
+                      { label: 'All Customer', href: '/all-customer/listing' }
+                    ]}
+                  />
       <CommonHeader heading='All Customer' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">

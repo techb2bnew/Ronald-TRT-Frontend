@@ -9,6 +9,7 @@ import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Customer {
@@ -177,6 +178,12 @@ const handleDeleteSuccess = (deletedId: string) => {
 
   return (
     <div className="container mx-auto mt-4">
+      <Breadcrumb
+              items={[
+                { label: 'Customers', href: '/client/listing' }
+              ]}
+            />
+
       <CommonHeader heading='Customers' onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/client/create" />
 
       <div className="overflow-x-auto rounded-md">

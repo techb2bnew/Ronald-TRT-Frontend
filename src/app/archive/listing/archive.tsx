@@ -13,6 +13,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import Breadcrumb from '@/app/component/breadcrumb';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -310,6 +311,11 @@ const ArchivePage = () => {
 
   return (
     <div className="container mx-auto mt-4">
+      <Breadcrumb
+                    items={[
+                      { label: 'Archive', href: '/archive/listing' }
+                    ]}
+                  />
       <CommonHeader
         heading="Archive"
         onSearch={(term) => setSearchTerm(term)}

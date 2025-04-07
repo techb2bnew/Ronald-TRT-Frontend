@@ -436,7 +436,10 @@ export default function Role() {
                     </FormControl>
                   </div>
                   <div className='mb-4'>
-                    <FormControl fullWidth size="small">
+                  <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="Select role type *" variant="outlined"  value={formData.types}   disabled />
+
+
+                    {/* <FormControl fullWidth size="small">
                       <InputLabel id="types" color="warning">Select role type *</InputLabel>
                       <Select
                         labelId="types"
@@ -454,7 +457,7 @@ export default function Role() {
                           <MenuItem value="">Select a role first</MenuItem>
                         )}
                       </Select>
-                    </FormControl>
+                    </FormControl> */}
                   </div>
                 </div>
 
