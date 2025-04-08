@@ -71,7 +71,7 @@ table.table.w-full.table-fixed tbody tr {
   /* background: #fff; */
   border-bottom: 1px solid #ccc;
 }
-tr:nth-child(even) {background: #383d7121;}
+tr:nth-child(even) {background: #383d7114;}
  
 /* Add this in your pagination styles.css */
 
