@@ -41,7 +41,7 @@ const TechnicianTable: React.FC = () => {
       text: `Do you want to change the account status to ${newStatus}?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
@@ -70,7 +70,7 @@ const TechnicianTable: React.FC = () => {
             title: 'Success!',
             text: `Account status changed to ${newStatus}.`,
             icon: 'success',
-            confirmButtonColor: '#EF502E',
+            confirmButtonColor: '#383d71',
             confirmButtonText: 'OK',
           });
           fetchTechnicians();
@@ -97,7 +97,7 @@ const TechnicianTable: React.FC = () => {
       text: `Do you want to change the status to ${newStatus}?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
@@ -126,7 +126,7 @@ const TechnicianTable: React.FC = () => {
             title: 'Success!',
             text: `Technician status changed to ${newStatus}.`,
             icon: 'success',
-            confirmButtonColor: '#EF502E',
+            confirmButtonColor: '#383d71',
             confirmButtonText: 'OK',
           });
           fetchTechnicians();
@@ -308,7 +308,7 @@ const TechnicianTable: React.FC = () => {
         <td className='font-sm'>
           <Link
             href={tech.accountStatus === true && tech.isApproved === true ? '/jobs/create-job/create' : '#'}
-            className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-2 pr-2 text-[#383d71] w-[140px] justify-center ${tech.accountStatus === true && tech.isApproved === true
+            className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === true
               ? 'cursor-pointer bg-white hover:bg-[#383d71] hover:text-[#fff] '  // Active styles
               : 'cursor-not-allowed bg-gray-200' // Disabled styles
               }`}
@@ -320,8 +320,8 @@ const TechnicianTable: React.FC = () => {
           >
             Create Order
             <svg
-              width="20"
-              height="20"
+              width="14"
+              height="14"
               viewBox="0 0 24 25"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -414,15 +414,13 @@ const TechnicianTable: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto mt-4">
+    <div className="container mx-auto mt-4"> 
        <Breadcrumb
         items={[
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
-      />
+      /> 
       <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
-
-
       <SortableTable
         headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
         data={technicians}

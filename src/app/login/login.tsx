@@ -141,7 +141,7 @@ export default function Login() {
                 <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
               </div>
 
-              <button type="submit" className="w-[40%] m-auto block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
+              <button type="submit" className="w-[40%] m-auto block    focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Log In</button>
             </form>
             <div className="text-sm text-center mt-5">

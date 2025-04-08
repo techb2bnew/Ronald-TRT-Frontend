@@ -42,7 +42,7 @@ const TechnicianTable: React.FC = () => {
       text: 'Do you want to change the status of this account?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
@@ -86,7 +86,7 @@ const TechnicianTable: React.FC = () => {
             title: 'Success!',
             text: 'Technician status updated successfully.',
             icon: 'success',
-            confirmButtonColor: '#EF502E',
+            confirmButtonColor: '#383d71',
             confirmButtonText: 'OK'
           });
         } else {

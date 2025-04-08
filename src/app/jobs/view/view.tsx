@@ -12,7 +12,7 @@ export default function ViewDetails() {
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
-   
+
   const isSingleTechnician = searchParams.has('ActiveWorkOrder');
 
   const fetchCustomerData = async (jobId: string) => {
@@ -74,15 +74,15 @@ export default function ViewDetails() {
     const isCompletedJob = searchParams.has('completedJob');
     const isActiveJob = searchParams.has('activeJob');
     const isJobStatus = searchParams.has('jobStatus');
-  
+
     if (isCompletedJob) {
       return { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' };
     }
-  
+
     if (isActiveJob) {
       return { label: 'Active Work Orders', href: '/jobs/active-job' };
     }
-  
+
     if (isJobStatus) {
       const jobStatus = searchParams.get('jobStatus');
       return {
@@ -90,11 +90,11 @@ export default function ViewDetails() {
         href: `/reporting/job-status`,
       };
     }
-  
+
     if (pathname.includes('/reporting/job-status')) {
       return { label: 'All IFS Work Orders', href: '/reporting/job-status' };
     }
-  
+
     return {
       label: isSingleTechnician ? 'Active Work Order' : 'Single Technician Work Order',
       href: isSingleTechnician
@@ -102,22 +102,22 @@ export default function ViewDetails() {
         : '/single-technicians/jobs',
     };
   };
-  
+
 
   return (
     <div>
-   <Breadcrumb
-  items={[
-    getBaseBreadcrumb(),
-    isEdit
-      ? { label: 'View Details' }
-      : { label: 'Create Technician', href: '/technicians/create-technician' },
-  ]}
-/>
+      <Breadcrumb
+        items={[
+          getBaseBreadcrumb(),
+          isEdit
+            ? { label: 'View Details' }
+            : { label: 'Create Technician', href: '/technicians/create-technician' },
+        ]}
+      />
 
       <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
 
-        <div className="bg-[#F6F6F6] rounded-lg shadow-md">
+        <div className="bg-blue rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Work Order Detail</h2>
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
@@ -143,9 +143,21 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong> {jobData.technicians[0]?.email}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong> {jobData.technicians[0]?.phoneNumber} </div>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+                <strong className="w-[200px] min-w-[200px] inline-block">Technician Name:</strong>
+                {jobData.technicians?.map((t: any) => `${t.firstName} ${t.lastName}`).join(', ')}
+              </div>
+
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+                <strong className="w-[200px] min-w-[200px] inline-block">Technician Email:</strong>
+                {jobData.technicians?.map((t: any) => t.email).join(', ')}
+              </div>
+
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+                <strong className="w-[200px] min-w-[200px] inline-block">Technician Ph. Number:</strong>
+                {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
+              </div>
+
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[200px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (

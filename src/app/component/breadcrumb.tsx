@@ -15,7 +15,7 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <AuthCheck>
-    <nav className="flex mb-3 text-gray-700" aria-label="Breadcrumb">
+    <nav className="flex shadow p-3 bg-white text-gray-700 mb-4" aria-label="Breadcrumb">
       <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
         <li className="inline-flex items-center">
           <Link href="" className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-[#383d71]">

@@ -107,7 +107,7 @@ const TableActions: React.FC<TableActionsProps> = ({
   };
 
   return (
-    <div className="flex items-center space-x-1">
+    <div className="flex items-center space-x-1 laptop__icon">
       
         <Link className="p-1" href={viewRoute} data-tooltip-id="view"
         data-tooltip-content="View">

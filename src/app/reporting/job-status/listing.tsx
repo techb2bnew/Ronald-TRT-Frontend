@@ -137,7 +137,7 @@ const JobTable: React.FC = () => {
       text: 'Do you want to change the status of this job?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
@@ -170,7 +170,7 @@ const JobTable: React.FC = () => {
           Swal.fire({
             title: 'Success!',
             text: 'Job status updated successfully.',
-            confirmButtonColor:'#EF502E',
+            confirmButtonColor:'#383d71',
             icon: 'success',
             confirmButtonText: 'OK'
           });
@@ -286,8 +286,8 @@ const JobTable: React.FC = () => {
       </td> 
       <td className='text-left'>
 
-            <Link className="p-1" href={`/jobs/view?jobId=${job.id}&jobStatus`} >
-                 <Image alt='eye' src={Eye} className='w-[16px]'data-tooltip-id="view"
+            <Link   href={`/jobs/view?jobId=${job.id}&jobStatus`} >
+                 <Image alt='eye' src={Eye} className='w-[16px] 'data-tooltip-id="view"
                       data-tooltip-content="View" /> 
                  </Link>
                  <Tooltip id="view" place="top" />

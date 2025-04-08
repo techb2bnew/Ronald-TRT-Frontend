@@ -51,7 +51,12 @@ body {
 .primary-bg:hover::after {
   width: 100%; 
 }
-
+.bg-blue {
+  background:var(--foreground);
+}
+.bg-blue h2 {
+  color: #fff;
+}
 table.table.w-full.table-fixed thead {
   background: var(--foreground);
   color: #fff;
@@ -63,9 +68,10 @@ table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody
   font-size: 14px;
 }
 table.table.w-full.table-fixed tbody tr {
-  background: #fff;
+  /* background: #fff; */
   border-bottom: 1px solid #ccc;
 }
+tr:nth-child(even) {background: #383d7121;}
  
 /* Add this in your pagination styles.css */
 
@@ -92,7 +98,8 @@ table.table.w-full.table-fixed tbody tr {
 }
 
 .pagination > li a:hover {
-  background-color: #ddd;
+  background-color: #383d71;
+  color: #fff;
 }
 
 
@@ -227,12 +234,50 @@ table.table.w-full.table-fixed tbody tr td {
   color: #000;
 }
 
+ul.ml-4 li a:before {
+  position: absolute;
+  border: 1px solid #ffffff;
+  content: "";
+  inset-inline-start: 1.1rem;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  border-radius: 50%;
+  block-size: 0.55rem;
+  font-size: 0.55rem;
+  inline-size: 0.55rem;
+  left: 14px;
+}
+ul.ml-4 li a.active:before {
+  content: '';
+  background: #dbc600;
+}
+.laptop_size li a, .laptop_size li span {
+  font-size: 14px;
+}
+.laptop_size li span { 
+  padding-left: 4px;
+}
+.profile__bg{
+  background-image: url(https://demo.nextadmin.co/_next/image?url=%2Fimages%2Fcover%2Fcover-01.png&w=1080&q=75);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 @media screen and (max-width: 1420px) {
 .laptop_size li a , .laptop_size li span{
-  font-size: 12px;
+  font-size: 10px;
 }
 table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody tr td {
   padding: 10px;
-  font-size: 12px;
+  font-size: 10px;
+}
+.laptop__icon img {
+  width: 10px;
+}
+.laptop__icon button img {
+  width: 8px;
+}
+span.badge.badge-success, span.badge.badge-error  {
+  padding: 5px;
+  width: 80px;
 }
 }

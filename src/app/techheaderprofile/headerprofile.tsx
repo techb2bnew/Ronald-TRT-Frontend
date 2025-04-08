@@ -13,7 +13,10 @@ interface TechnicianContextType {
   setTechnician: (tech: Technician | null) => void;
   isLoading: boolean;
   updateProfileImage: (image: string) => void;
+  updateTechnicianProfile: (updatedData: Partial<Technician>) => void;
 }
+ 
+
 
 const TechnicianContext = createContext<TechnicianContextType | undefined>(undefined);
 
@@ -93,6 +96,15 @@ export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("technicianData", JSON.stringify(updatedTechnician));
     }
   };
+  // ✅ Update the full technician profile and sync with localStorage
+const updateTechnicianProfile = (updatedData: Partial<Technician>) => {
+  if (technician) {
+    const updatedTechnician = { ...technician, ...updatedData };
+    setTechnician(updatedTechnician);
+    localStorage.setItem("technicianData", JSON.stringify(updatedTechnician));
+  }
+};
+
 
   return (
     <TechnicianContext.Provider
@@ -101,6 +113,7 @@ export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
         setTechnician,
         isLoading,
         updateProfileImage,
+        updateTechnicianProfile,
       }}
     >
       {children}

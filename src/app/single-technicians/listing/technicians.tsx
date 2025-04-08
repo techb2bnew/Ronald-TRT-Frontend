@@ -45,7 +45,7 @@ const TechnicianTable: React.FC = () => {
       text: `Do you want to change the account status to ${newStatus}?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
@@ -74,7 +74,7 @@ const TechnicianTable: React.FC = () => {
             title: 'Success!',
             text: `Account status changed to ${newStatus}.`,
             icon: 'success',
-            confirmButtonColor: '#EF502E',
+            confirmButtonColor: '#383d71',
             confirmButtonText: 'OK',
           });
           fetchTechnicians();
@@ -101,7 +101,7 @@ const TechnicianTable: React.FC = () => {
       text: `Do you want to change the status to ${newStatus}?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
@@ -130,7 +130,7 @@ const TechnicianTable: React.FC = () => {
             title: 'Success!',
             text: `Technician status changed to ${newStatus}.`,
             icon: 'success',
-            confirmButtonColor: '#EF502E',
+            confirmButtonColor: '#383d71',
             confirmButtonText: 'OK',
           });
           fetchTechnicians();
@@ -315,13 +315,19 @@ const TechnicianTable: React.FC = () => {
         <td>{tech.phoneNumber}</td>
         {/* <td>{tech.payRate}</td> */}
         <td
-          onClick={() => handleAccountStatusChange(tech.id, !tech.accountStatus)} // Corrected here
-          style={{ cursor: 'pointer' }}
+           onClick={() => {
+            if (tech.accountStatus || tech.isApproved) {
+              handleAccountStatusChange(tech.id, !tech.accountStatus);
+            }
+          }} // Corrected here
+          style={{ cursor: tech.isApproved || tech.accountStatus  ? 'pointer' : 'not-allowed' }}
         >
+
+        
           <span
             className={`badge ${tech.accountStatus
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.accountStatus ? 'Active' : 'Inactive'}
@@ -334,8 +340,8 @@ const TechnicianTable: React.FC = () => {
         >
           <span
             className={`badge ${tech.isApproved
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.isApproved ? 'Approved' : 'Accept'}

@@ -44,6 +44,8 @@ const handleDeleteSuccess = (deletedId: string) => {
     const fetchCustomer = async (page = 1, query = '') => {
       setLoading(true);
       try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const techId = searchParams.get('technicianId') || '';
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userID');
         const headers: Record<string, string> = {
@@ -53,11 +55,11 @@ const handleDeleteSuccess = (deletedId: string) => {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-  
+        const finalUserId = techId || userId;
         // Determine correct endpoint
         const endpoint = query.trim()
           ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-          : `${apiUrl}/fetchAllCustomer?page=${page}`;
+          : `${apiUrl}/fetchAllCustomer?page=${page}&userId=${finalUserId}`;
   
         const response = await fetch(endpoint, { method: 'GET', headers });
         if (response.status == 400) {
@@ -204,7 +206,7 @@ const handleDeleteSuccess = (deletedId: string) => {
           itemId={cust.id}   
           onDeleteSuccess={() => handleDeleteSuccess(cust.id)} /> */}
 
-<Link className="p-1" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>
+<Link   href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>
          <Image alt='eye' src={Eye} className='w-[16px]' /> 
          </Link>
       </td>

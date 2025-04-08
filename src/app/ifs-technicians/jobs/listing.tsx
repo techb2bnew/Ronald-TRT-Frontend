@@ -125,7 +125,7 @@ const JobTable: React.FC = () => {
       text: 'Do you want to change the status of this job?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
@@ -158,7 +158,7 @@ const JobTable: React.FC = () => {
           Swal.fire({
             title: 'Success!',
             text: 'Job status updated successfully.',
-            confirmButtonColor:'#EF502E',
+            confirmButtonColor:'#383d71',
             icon: 'success',
             confirmButtonText: 'OK'
           });

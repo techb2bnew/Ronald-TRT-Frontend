@@ -200,10 +200,7 @@ const CompletedJobs: React.FC = () => {
           <td>{completejob.make}</td>
           <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>
           <td>{new Date(completejob.updatedAt).toLocaleDateString('en-GB')}</td>
-          <td
-            // Corrected here
-            style={{ cursor: 'pointer' }}
-          >
+          <td>
             <span
               className={`badge ${completejob.jobStatus
                   ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'

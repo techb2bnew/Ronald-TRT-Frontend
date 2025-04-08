@@ -38,12 +38,14 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+    <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center border-[#383d71] border-b-[2px]">
+      <h1 className="pl-[17%] text-xl font-bold">Hii, {technician?.firstName} {technician?.lastName}
+                   </h1>
       <div className="w-100 ml-auto flex items-center">
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={toggleDropdown}
-            className="flex gap-2 items-center bg-[#F7F7FD] hover:bg-gray-200 focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 text-sm pl-2 pr-2 pt-1 pb-1"
+            className="flex gap-2 items-center bg-[#fff] shadow-lg hover:bg-[#f2f2f2] focus:outline-none focus:bg-gray-200 rounded-md border border-gray-300 text-sm pl-2 pr-2 pt-1 pb-1"
           >
             <Image
               width="30"

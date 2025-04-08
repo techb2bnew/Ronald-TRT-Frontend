@@ -35,7 +35,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
                 <th
                   key={index}
                   onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
-                  className="cursor-pointer first:w-[50px] [&:nth-child(3)]:w-[170px] [&:nth-child(6)]:w-[180px]"
+                  className="cursor-pointer first:w-[50px]  "
                 >
                   {header}
                   {sortableColumns.includes(columnKey) && sortBy === columnKey && (

@@ -52,7 +52,7 @@ const Sidebar = () => {
     setIsUser1Open((prevState) => {
       const newState = !prevState;
       if (newState) {
-        // setIsUser3Open(false);
+        setIsUser3Open(false);
       }
       localStorage.setItem('isUser1Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -62,8 +62,10 @@ const Sidebar = () => {
     setIsUser3Open((prevState) => {
       const newState = !prevState;
       if (newState) {
-        // setIsUsersOpen(false);
-        // setIsUser1Open(false);
+        setIsUsersOpen(false);
+        setIsUser1Open(false);
+        setIsUser5Open(false);
+
       }
       localStorage.setItem('isUser3Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -74,8 +76,9 @@ const Sidebar = () => {
     setIsUser5Open((prevState) => {
       const newState = !prevState;
       if (newState) {
-        // setIsUsersOpen(false);
-        // setIsUser1Open(false);
+        setIsUsersOpen(false);
+        setIsUser1Open(false);
+        setIsUser3Open(false);
       }
       localStorage.setItem('isUser5Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -85,8 +88,10 @@ const Sidebar = () => {
     setIsUser6Open((prevState) => {
       const newState = !prevState;
       if (newState) {
-        // setIsUsersOpen(false);
-        // setIsUser1Open(false);
+        setIsUsersOpen(false);
+        setIsUser1Open(false);
+        setIsUser3Open(false);
+        setIsUser5Open(false);
       }
       localStorage.setItem('isUser6Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -128,8 +133,8 @@ const Sidebar = () => {
 
   return (
     <div className="w-[15%] bg-color text-white fixed top-[0] overflowslidebar" style={{ height: '100vh', overflow: 'auto' }}>
-      <div className="flex items-center justify-center h-16 border-b border-gray-700 mt-5">
-        <Image src={logo} alt="logo" className='w-[90px] object-cover mt-3 mb-3' />
+      <div className="flex items-center justify-center h-16 mb-3 pt-3  mt-5">
+        <Image src={logo} alt="logo" className='w-[80px] object-cover mt-3 mb-3 border-[2px] border-white rounded-full shadow-xl' />
       </div>
 
       <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
@@ -157,7 +162,12 @@ const Sidebar = () => {
                 <path fillRule="evenodd" clipRule="evenodd" d="M21.2849 9.67893C21.5082 9.98601 21.4403 10.416 21.1332 10.6393C18.9184 12.2501 16.388 13.2081 13.8023 13.5337C13.4256 13.5812 13.0817 13.3143 13.0343 12.9375C12.9868 12.5608 13.2538 12.217 13.6305 12.1695C15.9947 11.8718 18.3043 10.9965 20.3245 9.52729C20.6316 9.30397 21.0616 9.37186 21.2849 9.67893Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M2.7174 9.9425C2.93185 9.62917 3.35971 9.54902 3.67304 9.76348C5.64286 11.1117 7.86417 11.9243 10.1262 12.1776C10.5036 12.2198 10.7752 12.56 10.733 12.9373C10.6907 13.3147 10.3506 13.5863 9.97323 13.544C7.48697 13.2657 5.0516 12.3733 2.89642 10.8982C2.58309 10.6837 2.50294 10.2558 2.7174 9.9425Z" fill="currentColor" />
               </svg>
-              <span>Users</span>
+              {userType == 'single-technician' && (
+                <span>Users</span>
+              )}
+              {userType == 'ifs' || userType == 'superadmin' && (
+                <span>IFS Users</span>
+              )}
             </div>
             <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -184,14 +194,9 @@ const Sidebar = () => {
               )}
               {userType !== 'single-technician' && userType !== 'ifs' && (
                 <li className='p-1'>
-                  <button onClick={handleDropdownToggles} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser1Open ? 'active text-[#fff900]' : ''}`}>
-                    <span>IFS</span>
-                    <svg className={`transform transition-transform ${isUser1Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {isUser1Open && (
-                    <ul className="ml-4">
+
+                  {isUsersOpen && (
+                    <ul className="">
                       <li >
                         <Link
                           href="/technicians/listing"
@@ -394,7 +399,7 @@ const Sidebar = () => {
                   <span>Vehicles List</span>
                 </Link>
               </li>
-              {userType !== 'single-technician' && userType !== 'ifs' &&(
+              {userType !== 'single-technician' && userType !== 'ifs' && (
                 <li>
                   <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900]  rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#fff900]' : ''}`} >
                     <span>All TRT Customers</span>
@@ -409,14 +414,13 @@ const Sidebar = () => {
           <li className='p-1'>
             <button onClick={handleDropdownTogglesSingleTechnician} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser6Open ? 'active bg-white text-[#000]' : ''}`}>
               <div className='flex items-center gap-2'>
-                <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7.61623 7.10532H15.429C15.6986 7.10532 15.9173 6.88671 15.9173 6.61702C15.9173 6.34733 15.6986 6.12872 15.429 6.12872H7.61623C7.34654 6.12872 7.12793 6.34733 7.12793 6.61702C7.12793 6.88671 7.34654 7.10532 7.61623 7.10532Z" fill="currentColor" />
-                  <path d="M17.8705 9.05849C17.8705 8.7888 17.6518 8.57019 17.3822 8.57019H7.61623C7.34654 8.57019 7.12793 8.7888 7.12793 9.05849C7.12793 9.32818 7.34654 9.54679 7.61623 9.54679H17.3822C17.6518 9.54679 17.8705 9.32818 17.8705 9.05849Z" fill="currentColor" />
-                  <path d="M17.8704 11.5C17.8704 11.2303 17.6517 11.0117 17.3821 11.0117H10.0576C9.78795 11.0117 9.56934 11.2303 9.56934 11.5C9.56934 11.7696 9.78795 11.9883 10.0576 11.9883H17.3821C17.6517 11.9883 17.8704 11.7696 17.8704 11.5Z" fill="currentColor" />
-                  <path d="M20.3124 12.0316V5.0683C20.3124 4.67707 20.16 4.30924 19.8834 4.03247L16.5491 0.698221C16.2724 0.421502 15.9046 0.269104 15.5132 0.269104H6.15172C5.34398 0.269104 4.68683 0.926256 4.68683 1.734V8.17256L3.19044 6.67617C2.46156 5.94728 1.27558 5.94733 0.546644 6.67617C-0.182239 7.40505 -0.18219 8.59103 0.546644 9.31991L4.68678 13.46V19.3126C4.68678 20.1204 5.34393 20.7775 6.15168 20.7775H15.4884C16.4744 21.9698 17.9643 22.7307 19.6287 22.7307C22.5904 22.7307 25 20.3212 25 17.3595C25 14.6293 22.9525 12.3684 20.3124 12.0316ZM2.64296 10.0351L3.90555 8.77248L8.85006 13.7169L9.48138 15.6109L7.58742 14.9796L2.64296 10.0351ZM1.23724 7.36677C1.5854 7.01866 2.15178 7.01861 2.49989 7.36677L3.215 8.08188L1.95241 9.34447L1.23729 8.62936C0.889185 8.2813 0.889185 7.71487 1.23724 7.36677ZM6.15172 19.801C5.88248 19.801 5.66343 19.582 5.66343 19.3127V14.4367L6.97836 15.7517C7.03198 15.8053 7.09731 15.8457 7.16924 15.8697L10.099 16.8463C10.1496 16.8631 10.2017 16.8713 10.2534 16.8713C10.3809 16.8713 10.5057 16.8214 10.5988 16.7283C10.7295 16.5975 10.7752 16.4041 10.7167 16.2286L9.74013 13.2989C9.71616 13.2269 9.67577 13.1616 9.62216 13.108L5.66348 9.1493V1.734C5.66348 1.46475 5.88253 1.2457 6.15177 1.2457H15.4294V4.17549C15.4294 4.71487 15.8667 5.15209 16.406 5.15209H19.3358V11.9964C18.0267 12.0671 16.8408 12.6088 15.9448 13.4545C15.9358 13.454 15.9269 13.4532 15.9177 13.4532H11.5231C11.2534 13.4532 11.0348 13.6718 11.0348 13.9415C11.0348 14.2111 11.2534 14.4298 11.5231 14.4298H15.1291C14.8372 14.8766 14.6097 15.3693 14.4606 15.8947H12.0114C11.7417 15.8947 11.5231 16.1133 11.5231 16.383C11.5231 16.6526 11.7417 16.8713 12.0114 16.8713H14.2799C14.2654 17.0321 14.2575 17.1949 14.2575 17.3595C14.2575 18.2381 14.4696 19.0681 14.8452 19.801H6.15172ZM19.6288 21.7542C17.2055 21.7542 15.2341 19.7828 15.2341 17.3595C15.2341 14.9363 17.2055 12.9649 19.6288 12.9649C22.052 12.9649 24.0234 14.9363 24.0234 17.3595C24.0234 19.7828 22.052 21.7542 19.6288 21.7542Z" fill="currentColor" />
-                  <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
-                  <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
+
+
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" height="24">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
                 </svg>
+
                 <span>Single Technician</span>
               </div>
               <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -554,12 +558,12 @@ const Sidebar = () => {
         )} */}
         <li className='p-1'>
           <Link href="/archive/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/archive/listing' ? 'active text-[#fff900]' : ''}`}>
-            <svg width="18" height="18" viewBox="0 0 20 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 5.58337H3H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M17 5.58337V19.5834C17 20.1138 16.7893 20.6225 16.4142 20.9976C16.0391 21.3727 15.5304 21.5834 15 21.5834H5C4.46957 21.5834 3.96086 21.3727 3.58579 20.9976C3.21071 20.6225 3 20.1138 3 19.5834V5.58337M6 5.58337V3.58337C6 3.05294 6.21071 2.54423 6.58579 2.16916C6.96086 1.79409 7.46957 1.58337 8 1.58337H12C12.5304 1.58337 13.0391 1.79409 13.4142 2.16916C13.7893 2.54423 14 3.05294 14 3.58337V5.58337" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" />
-              <path d="M8 10.5834V16.5834" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 10.5834V16.5834" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18" height="18">
+              <rect x="3" y="4" width="18" height="4" rx="1" />
+              <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" />
+              <path d="M9 12h6" />
             </svg>
+
 
             <span>Archives</span>
           </Link>

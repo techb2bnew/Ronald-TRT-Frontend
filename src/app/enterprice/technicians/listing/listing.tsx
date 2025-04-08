@@ -31,7 +31,7 @@ const TechnicianTable: React.FC = () => {
       text: 'Do you want to change the approval status of this account?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
@@ -64,7 +64,7 @@ const TechnicianTable: React.FC = () => {
           Swal.fire({
             title: 'Success!',
             text: 'Technician status updated successfully.',
-            confirmButtonColor:'#EF502E',
+            confirmButtonColor:'#383d71',
             icon: 'success',
             confirmButtonText: 'OK'
           });
@@ -104,7 +104,7 @@ const TechnicianTable: React.FC = () => {
       text: 'Do you want to change the status of this account?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#EF502E',
+      confirmButtonColor: '#383d71',
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
@@ -137,7 +137,7 @@ const TechnicianTable: React.FC = () => {
           Swal.fire({
             title: 'Success!',
             text: 'Technician status updated successfully.',
-            confirmButtonColor:'#EF502E',
+            confirmButtonColor:'#383d71',
             icon: 'success',
             confirmButtonText: 'OK'
           });

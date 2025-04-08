@@ -55,6 +55,16 @@ export default function ViewDetails() {
     }
   }, []);
 
+  const calculateTotalCost = (job: any) => {
+    if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+      return job.jobDescription.reduce((total: number, item: string) => {
+        const parsedItem = JSON.parse(item);
+        return total + parseFloat(parsedItem.cost || '0');
+      }, 0);
+    }
+    return 0;
+  };
+
   if (!jobData || jobData.length === 0) {
     return (
       <div>
@@ -73,13 +83,13 @@ export default function ViewDetails() {
           />
     <div className="max-w-7xl mx-auto p-4 rounded-lg shadow bg-white">
       {jobData.map((job, index) => (
-        <div key={index} className="bg-[#F6F6F6] rounded-lg shadow-md mb-6">
+        <div key={index} className="bg-blue rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">
           Work Order Id - {job?.id}
           </h2>
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
-            <div className="  p-5   rounded">
+            <div className="  p-5 bg-white  rounded">
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className="w-[200px] inline-block">
@@ -114,43 +124,30 @@ export default function ViewDetails() {
                 {job?.manufacturerName}
               </div>
              
-              <div className="text-sm"> 
-                {job?.jobDescription && Array.isArray(job.jobDescription) ? (
-                  <div className="list-none">
-                    {job.jobDescription.map((item: any, index: any) => {
-                      try {
-                        const parsedItem = JSON.parse(item); // ✅ Parse the JSON string
-                        return (
-                          <>
-                          <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                        <strong className="w-[200px] inline-block">Job Description:</strong>{" "}
-                        {parsedItem.jobDescription}
-                      </div>
-                      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                      <strong className="w-[200px] inline-block">Job Cost:</strong>{" "}
-                      ${parsedItem.cost}
-                    </div>
-                    </>
-                          // <li key={index}>
-                          //   <span className="font-semibold block">
-                          //     {parsedItem.jobDescription}
-                          //   </span>
-                          //   <span className="block">${parsedItem.cost}</span>
-                          // </li>
-                        );
-                      } catch (error) {
-                        return (
-                          <li key={index} className="text-red-500">
-                            Invalid job description format
-                          </li>
-                        );
-                      }
-                    })}
-                  </div>
-                ) : (
-                  "No job descriptions available"
-                )}
-              </div>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+          <strong className="w-[200px] inline-block">Job Description:</strong>
+          {job?.jobDescription && Array.isArray(job.jobDescription) ? (
+            <ul className="list-none">
+              {job.jobDescription.map((item: string, index: number) => {
+                const parsed = JSON.parse(item);
+                return (
+                  <li key={index}>
+                    <span className="block">
+                      {parsed.jobDescription}  
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            'No job descriptions available'
+          )}
+        </div>
+
+        <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+          <strong className="w-[200px] inline-block">Total Cost: </strong> ${calculateTotalCost(job).toFixed(2)}
+        </div>
+
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className="w-[200px] inline-block">Images:</strong>
                 {job?.images && Array.isArray(job.images) && job.images.length > 0 ? (
@@ -173,14 +170,29 @@ export default function ViewDetails() {
             </div>
 
             {/* Right Section */}
-            <div className="  p-5   rounded">
+            <div className="  p-5 bg-white  rounded">
               {/* Technicians Section */}
-              {job.technicians?.length > 0 && (
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+        <strong className="w-[200px] min-w-[200px] inline-block">Technician Name:</strong>
+        {job.technicians?.map((t:any) => `${t.firstName} ${t.lastName}`).join(', ')}
+      </div>
+
+      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+        <strong className="w-[200px] min-w-[200px] inline-block">Technician Email:</strong>
+        {job.technicians?.map((t:any) => t.email).join(', ')}
+      </div>
+
+      <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+        <strong className="w-[200px] min-w-[200px] inline-block">Technician Ph. Number:</strong>
+        {job.technicians?.map((t:any) => t.phoneNumber || 'N/A').join(', ')}
+      </div>
+      
+              {/* {job.technicians?.length > 0 && (
                 <div className=""> 
                   {job.technicians.map((tech: any, techIndex: any) => (
                     <div
                       key={techIndex}
-                      className="  mb-3 bg-gray-100 rounded"
+                      className="  mb-3   rounded"
                     >
                        <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                         <strong className="w-[200px] inline-block">Technician Name:</strong>{" "}
@@ -198,7 +210,7 @@ export default function ViewDetails() {
                     </div>
                   ))}
                 </div>
-              )}
+              )} */}
 
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">

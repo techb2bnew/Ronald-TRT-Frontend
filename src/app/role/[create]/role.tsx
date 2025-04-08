@@ -320,7 +320,7 @@ const fetchRoleData = async (roleId: string) => {
                       checked={permissions[role][action]}
                       onChange={() => handlePermissionChange(role, action)}
                       type="checkbox"
-                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#EF502E] checked:border-[#EF502E]"
+                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
                       id={`check-${role}-${action}`}
                     />
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">

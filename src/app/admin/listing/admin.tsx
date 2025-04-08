@@ -146,7 +146,7 @@ const toggleTechnicianStatus = async (adminId: number, currentApprovalStatus: bo
     text: 'Do you want to change the status of this account?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#EF502E',
+    confirmButtonColor: '#383d71',
     cancelButtonColor: 'black',
     confirmButtonText: 'Yes, change it!'
   });
@@ -190,7 +190,7 @@ const toggleTechnicianStatus = async (adminId: number, currentApprovalStatus: bo
           title: 'Success!',
           text: 'Technician status updated successfully.',
           icon: 'success',
-          confirmButtonColor: '#EF502E',
+          confirmButtonColor: '#383d71',
           confirmButtonText: 'OK'
         });
       } else {

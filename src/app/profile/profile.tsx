@@ -25,6 +25,7 @@ export default function ProfileCard() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
   const { updateProfileImage } = useTechnician();
+  const { updateTechnicianProfile } = useTechnician();
 
   // ✅ Fetch Technician Data
   const fetchTechnicianData = async (technicianId: string) => {
@@ -79,7 +80,7 @@ export default function ProfileCard() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
+  
   // ✅ Handle Profile Update
   const handleProfileUpdate = async () => {
     const token = localStorage.getItem("token");
@@ -119,6 +120,11 @@ export default function ProfileCard() {
       });
 
       const result = await response.json();
+      updateTechnicianProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+      });
+      
       if (!response.ok) throw new Error(result.error || "Failed to update profile");
 
       toast.success("Profile updated successfully!");
@@ -266,13 +272,13 @@ export default function ProfileCard() {
   return (
     <div className="rounded-lg p-6 mx-auto">
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} />
-      <div className="flex items-center space-x-4 bg-white shadow-lg p-6">
+      <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
         <div className="relative h-[80px] w-[80px]">
           {technician && technician.image ? (
             <img
               src={technician.image}
               alt="Profile image"
-              className="rounded-full object-cover h-[80px] w-[80px]"
+              className="rounded-full object-cover h-[80px] w-[80px] border-[2px] border-white"
             />
           ) : (
             <Image
@@ -298,11 +304,11 @@ export default function ProfileCard() {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-white">
             {technician ? `${technician.firstName} ${technician.lastName}` : "User"}
           </h2>
-          <p className="text-gray-700">{technician?.types}</p>
-          <p className="text-gray-700">{technician?.address}</p>
+          <p className="text-gray-700 text-white">{technician?.types}</p>
+          <p className="text-gray-700 text-white">{technician?.address}</p>
         </div>
       </div>
 
