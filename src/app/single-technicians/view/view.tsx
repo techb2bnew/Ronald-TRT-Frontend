@@ -71,17 +71,26 @@ export default function ViewDetails() {
         <div className="grid grid-cols-2 gap-6 p-6">
           {/* Left Section */}
           <div className='shadow-lg p-5 bg-white rounded'>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> {technician?.email}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
-            <p><strong className='w-[200px] inline-block'>Status:</strong><span
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> {technician?.email}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Status:</strong><span
           className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
           {technician.isApproved ? 'Active' : 'Inactive'}
         </span></p>
+        <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
+              <strong className='w-[200px] inline-block'>Profile Image:</strong>  
+            <img
+                          onClick={() => window.open(technician?.image, '_blank')}
+                          src={technician?.image}
+                          alt='Technician Tax Form'
+                          className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer"
+                        />
+            </div>
           </div>
 
           {/* Right Section */}
@@ -102,6 +111,7 @@ export default function ViewDetails() {
 
       return (
         <div key={index} className="relative flex items-center gap-2">
+          <strong className='w-[200px] inline-block'>Tax Form:</strong>
           {isPDF ? (
             // PDF Button
             <button 

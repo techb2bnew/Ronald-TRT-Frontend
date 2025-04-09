@@ -3,14 +3,16 @@ import Clientisting from './client'
 import React, { useState } from 'react';
 import Sidebar from '../../component/sidebar/page';
 import AuthCheck from '@/app/component/AuthCheck'; 
-
+import { useSidebar } from "@/app/component/SidebarContext";
 export default function Technicians() { 
-  
+    const { isCollapsed } = useSidebar();
   return (
     <AuthCheck>
     <div className='main-container'>
         {/* <Sidebar /> */}
-        <div className="right_section w-[85%] pl-6 pr-8 ml-auto mt-[7rem]">
+        <div  className={`right_section ${
+          isCollapsed ? "w-full" : "w-[85%]"
+        } pl-6 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
             <Clientisting />
         </div>
     </div>

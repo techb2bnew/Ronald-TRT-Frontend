@@ -310,7 +310,20 @@ const TechnicianTable: React.FC = () => {
     return (
       <tr key={tech.id}>
         <td>{tech.id}</td>
-        <td>{tech.firstName} {tech.lastName}</td>
+        <td>
+  <div className="flex items-center gap-2">
+    {tech?.image ? (
+      <img src={tech.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    )}
+    <span>{tech?.firstName} {tech?.lastName}</span>
+  </div>
+</td> 
         <td>{tech.email}</td>
         <td>{tech.phoneNumber}</td>
         {/* <td>{tech.payRate}</td> */}

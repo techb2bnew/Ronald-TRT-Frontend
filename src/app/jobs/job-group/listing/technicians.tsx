@@ -24,7 +24,7 @@ interface Jobs {
   email: string;
   deletedStatus?: boolean;
 }
-const JobTable: React.FC = () => {
+const JobTGroup: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
@@ -340,4 +340,4 @@ const JobTable: React.FC = () => {
   );
 };
 
-export default JobTable;
+export default JobTGroup;

@@ -1,18 +1,15 @@
 "use client";
 import CompleteJob from './listing'
-import React, { useState } from 'react';
-// import Pagination from '../../../component/pagination';
-import Sidebar from '../../../component/sidebar/page';
-export default function Technicians() {
-    // const [currentPage, setCurrentPage] = useState(1);
-    // const totalPages = 3; // Sample total pages
-  
+import React, { useState } from 'react'; 
+import { useSidebar } from "@/app/component/SidebarContext"; 
+export default function Technicians() { 
+  const { isCollapsed } = useSidebar();
   return (
-    <div className='main-container'>
-        {/* <Sidebar /> */}
-        <div className="right_section w-[85%] pl-6 pr-8 ml-auto mt-[7rem]">
-            <CompleteJob />
-            {/* <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} /> */}
+    <div className='main-container'> 
+        <div  className={`right_section ${
+          isCollapsed ? "w-full" : "w-[85%]"
+        } pl-6 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
+            <CompleteJob /> 
         </div>
     </div>
   );

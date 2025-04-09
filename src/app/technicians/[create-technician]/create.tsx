@@ -483,7 +483,7 @@ export default function Technicians() {
   }, []);
 
   return (
-    <div className='main-container mb-5'>
+    <div className='container mb-5 m-auto'>
       <Breadcrumb
         items={[
           {

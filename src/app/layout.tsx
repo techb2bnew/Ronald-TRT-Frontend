@@ -6,6 +6,7 @@ import "./globals.css";
 import Sidebar from "@/app/component/sidebar/page";
 import Loading from "@/app/component/loader";
 import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; 
+import { SidebarProvider } from "@/app/component/SidebarContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,10 +54,12 @@ export default function RootLayout({
           <main className="flex-1">
             {shouldShowSidebar ? (
               <TechnicianProvider>
+                <SidebarProvider>
                 <div className="flex">
                   <Sidebar /> {/* ✅ Sidebar bhi TechnicianProvider ke andar hai */}
                   <div className="flex-1">{children}</div>
                 </div>
+                </SidebarProvider>
               </TechnicianProvider>
             ) : (
               children

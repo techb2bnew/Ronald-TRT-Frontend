@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import logo from '../../../../public/trt-logo.png'
 import Image from 'next/image';
+import { useSidebar } from "@/app/component/SidebarContext";
+
+
 const Sidebar = () => {
   const [userType, setUserType] = useState<string | null>(null);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
@@ -35,13 +38,22 @@ const Sidebar = () => {
 
   }, []);
 
+  const { isCollapsed, setIsCollapsed } = useSidebar();
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   // Save the state to localStorage whenever it changes
   const handleDropdownToggle = () => {
     setIsUsersOpen((prevState) => {
       const newState = !prevState;
       if (newState) {
-        // setIsUser1Open(false);
-        // setIsUser3Open(false);
+        setIsUser1Open(false);
+        setIsUser3Open(false);
+        setIsUser6Open(false);
+        setIsUser5Open(false);
+
       }
       localStorage.setItem('isUsersOpen', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -65,6 +77,8 @@ const Sidebar = () => {
         setIsUsersOpen(false);
         setIsUser1Open(false);
         setIsUser5Open(false);
+        setIsUser6Open(false);
+
 
       }
       localStorage.setItem('isUser3Open', JSON.stringify(newState)); // Store in localStorage
@@ -79,6 +93,8 @@ const Sidebar = () => {
         setIsUsersOpen(false);
         setIsUser1Open(false);
         setIsUser3Open(false);
+        setIsUser6Open(false);
+
       }
       localStorage.setItem('isUser5Open', JSON.stringify(newState)); // Store in localStorage
       return newState;
@@ -129,12 +145,25 @@ const Sidebar = () => {
     setUserType(type);
   }, [pathname]);
 
+  const ChevronLeftIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--ri fs-20" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M18 18v2H6v-2zm3-7v2H3v-2zm-3-7v2H6V4z"></path></svg>
+
+  );
+
+  const ChevronRightIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--ri fs-20" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M18 18v2H6v-2zm3-7v2H3v-2zm-3-7v2H6V4z"></path></svg>
+  );
 
 
   return (
-    <div className="w-[15%] bg-color text-white fixed top-[0] overflowslidebar" style={{ height: '100vh', overflow: 'auto' }}>
+    <div className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ${isCollapsed ? 'w-[70px]' : 'w-[14%]'}`}>
+      <div className={`flex justify-end p-2 toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
+        <button onClick={toggleSidebar}>
+          {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </button>
+      </div>
       <div className="flex items-center justify-center h-16 mb-3 pt-3  mt-5">
-        <Image src={logo} alt="logo" className='w-[80px] object-cover mt-3 mb-3 border-[2px] border-white rounded-full shadow-xl' />
+        <Image src={logo} alt="logo" className={` w-[80px] object-cover mt-3 mb-3 border-[2px] border-white rounded-full shadow-xl ${isCollapsed ? 'w-[40]' : ''}`} />
       </div>
 
       <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
@@ -152,9 +181,9 @@ const Sidebar = () => {
 
 
 
-        <li className='p-1'>
+        <li className='p-1 relative group'>
           <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUsersOpen ? 'active bg-white text-[#000]' : ''}`}>
-            <div className='flex items-center gap-2'>
+          <div className={`flex items-center gap-2  ${isCollapsed ? 'm-auto' : 'flex'}`}>
               <svg width="18" height="18" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fillRule="evenodd" clipRule="evenodd" d="M3.05877 6.24913C3.8704 5.28419 5.26191 4.8125 7.29969 4.8125H16.4664C18.5041 4.8125 19.8957 5.28419 20.7073 6.24913C21.511 7.20469 21.5875 8.46006 21.4587 9.63061L20.7708 16.9674C20.6699 17.9098 20.4333 18.943 19.5918 19.7117C18.7566 20.4748 17.4626 20.8542 15.5497 20.8542H8.21636C6.30341 20.8542 5.00943 20.4748 4.17421 19.7117C3.33277 18.943 3.09624 17.9098 2.99527 16.9674L2.9943 16.9583L2.30739 9.63063C2.17857 8.46008 2.25502 7.2047 3.05877 6.24913ZM4.11103 7.13421C3.67861 7.6483 3.5569 8.42076 3.67469 9.48522L3.67595 9.49665L4.36292 16.8254C4.45463 17.6773 4.64449 18.279 5.10163 18.6966C5.56579 19.1206 6.4443 19.4792 8.21636 19.4792H15.5497C17.3217 19.4792 18.2003 19.1206 18.6644 18.6966C19.1216 18.279 19.3114 17.6773 19.4031 16.8254L20.0913 9.48521C20.2091 8.42075 20.0874 7.6483 19.655 7.13421C19.2291 6.62789 18.3427 6.1875 16.4664 6.1875H7.29969C5.42331 6.1875 4.5369 6.62789 4.11103 7.13421Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M8.94386 3.71282C8.90492 4.0111 8.90381 4.35006 8.90381 4.76665V5.49998C8.90381 5.87968 8.59601 6.18748 8.21631 6.18748C7.83661 6.18748 7.52881 5.87968 7.52881 5.49998L7.52881 4.74282C7.52879 4.35459 7.52876 3.93054 7.58043 3.53482C7.63396 3.12479 7.74867 2.68949 8.01741 2.30065C8.58275 1.48268 9.61836 1.14581 11.1496 1.14581H12.6163C14.1476 1.14581 15.1832 1.48268 15.7485 2.30065C16.0173 2.68949 16.132 3.12479 16.1855 3.53482C16.2372 3.93054 16.2372 4.35459 16.2371 4.74283L16.2371 5.49998C16.2371 5.87968 15.9293 6.18748 15.5496 6.18748C15.1699 6.18748 14.8621 5.87968 14.8621 5.49998V4.76665C14.8621 4.35006 14.861 4.0111 14.8221 3.71282C14.784 3.42074 14.7153 3.22412 14.6174 3.08243C14.4494 2.83936 14.0184 2.52081 12.6163 2.52081H11.1496C9.74759 2.52081 9.31654 2.83936 9.14854 3.08243C9.05061 3.22412 8.98199 3.42074 8.94386 3.71282Z" fill="currentColor" />
@@ -162,19 +191,44 @@ const Sidebar = () => {
                 <path fillRule="evenodd" clipRule="evenodd" d="M21.2849 9.67893C21.5082 9.98601 21.4403 10.416 21.1332 10.6393C18.9184 12.2501 16.388 13.2081 13.8023 13.5337C13.4256 13.5812 13.0817 13.3143 13.0343 12.9375C12.9868 12.5608 13.2538 12.217 13.6305 12.1695C15.9947 11.8718 18.3043 10.9965 20.3245 9.52729C20.6316 9.30397 21.0616 9.37186 21.2849 9.67893Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M2.7174 9.9425C2.93185 9.62917 3.35971 9.54902 3.67304 9.76348C5.64286 11.1117 7.86417 11.9243 10.1262 12.1776C10.5036 12.2198 10.7752 12.56 10.733 12.9373C10.6907 13.3147 10.3506 13.5863 9.97323 13.544C7.48697 13.2657 5.0516 12.3733 2.89642 10.8982C2.58309 10.6837 2.50294 10.2558 2.7174 9.9425Z" fill="currentColor" />
               </svg>
-              {userType == 'single-technician' && (
-                <span>Users</span>
-              )}
-              {userType == 'ifs' || userType == 'superadmin' && (
-                <span>IFS Users</span>
+              {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin') && (
+                <span className={`transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>
+                  {userType === 'single-technician' ? 'Users' : 'IFS Users'}
+                </span>
               )}
             </div>
-            <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
           </button>
-          {isUsersOpen && (
+          {isCollapsed && (
+            <ul className="absolute left-full top-0 bg-[#383d71] text-white p-2 rounded shadow-lg hidden group-hover:block min-w-[180px] z-50">
+              {(userType == 'single-technician' || userType == 'ifs') && (
+                <li className='mt-1'>
+                  <Link href="/client/listing" className={`block px-3 py-2 hover:text-[#fff900] ${activeLink === '/client/listing' ? 'text-[#fff900]' : ''}`}>
+                    Customers
+                  </Link>
+                </li>
+              )}
+
+              {userType !== 'single-technician' && userType !== 'ifs' && (
+                <>
+                  <li className='mt-1'>
+                    <Link href="/technicians/listing" className={`block px-3 py-2 hover:text-[#fff900] ${activeLink === '/technicians/listing' ? 'text-[#fff900]' : ''}`}>
+                      Technicians
+                    </Link>
+                  </li>
+                  <li className='mt-1'>
+                    <Link href="/client/listing" className={`block px-3 py-2 hover:text-[#fff900] ${activeLink === '/client/listing' ? 'text-[#fff900]' : ''}`}>
+                      Customers
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          )}
+          {!isCollapsed && isUsersOpen && (
             <ul className="ml-4">
               {userType == 'single-technician' && (
                 <li className='mt-3'>
@@ -308,9 +362,9 @@ const Sidebar = () => {
           )}
         </li>
         )} */}
-        <li className='p-1'>
+        <li className='p-1 relative group'>
           <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser3Open ? 'active bg-white text-[#000]' : ''}`}>
-            <div className='flex items-center gap-2'>
+          <div className={`flex items-center gap-2  ${isCollapsed ? 'm-auto' : 'flex'}`}>
               <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_690_1656)">
                   <path d="M5.84375 22H18.7344C19.0903 22 19.3789 21.7114 19.3789 21.3555V3.26562C19.3789 2.90967 19.0903 2.62109 18.7344 2.62109H16.8008V0.644531C16.8008 0.288578 16.5122 0 16.1562 0H3.26562C2.90967 0 2.62109 0.288578 2.62109 0.644531V18.7773C2.62109 19.1333 2.90967 19.4219 3.26562 19.4219H5.19922V21.3555C5.19922 21.7114 5.4878 22 5.84375 22ZM16.8008 18.7773V3.91016H18.0898V20.7109H6.48828V19.4219H16.1562C16.5122 19.4219 16.8008 19.1333 16.8008 18.7773ZM3.91016 18.1328V1.28906H15.5117V18.1328H3.91016Z" fill="currentColor" />
@@ -326,16 +380,40 @@ const Sidebar = () => {
                   </clipPath>
                 </defs>
               </svg>
-              <span>All  {userType !== 'single-technician' && ('IFS')} Jobs</span>
+              <span className={`  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>All  {userType !== 'single-technician' && ('IFS')} Jobs</span>
             </div>
-            <svg className={`transform transition-transform ${isUser3Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className={`transform transition-transform ${isUser3Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
 
 
           </button>
-          {isUser3Open && (
+          {isCollapsed && (
+            <ul className="absolute left-full top-0 bg-[#383d71] text-white p-2 rounded shadow-lg hidden group-hover:block min-w-[180px] z-50">
+              <li  >
+                <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
+                  <span>Create Work Order</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#fff900]' : ''}`} >
+                  <span>Active Work Order</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#fff900]' : ''}`}>
+                  <span>Completed Work Order</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
+                  <span>Group Work Orders</span>
+                </Link>
+              </li>
+            </ul>
+          )}
+          {!isCollapsed && isUser3Open && (
             <ul className="ml-4">
               <li  >
                 <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
@@ -362,9 +440,9 @@ const Sidebar = () => {
         </li>
 
 
-        <li className='p-1'>
+        <li className='p-1 relative group'>
           <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser5Open ? 'active bg-white text-[#000]' : ''}`}>
-            <div className='flex items-center gap-2'>
+          <div className={`flex items-center gap-2  ${isCollapsed ? 'm-auto' : 'flex'}`}>
               <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.61623 7.10532H15.429C15.6986 7.10532 15.9173 6.88671 15.9173 6.61702C15.9173 6.34733 15.6986 6.12872 15.429 6.12872H7.61623C7.34654 6.12872 7.12793 6.34733 7.12793 6.61702C7.12793 6.88671 7.34654 7.10532 7.61623 7.10532Z" fill="currentColor" />
                 <path d="M17.8705 9.05849C17.8705 8.7888 17.6518 8.57019 17.3822 8.57019H7.61623C7.34654 8.57019 7.12793 8.7888 7.12793 9.05849C7.12793 9.32818 7.34654 9.54679 7.61623 9.54679H17.3822C17.6518 9.54679 17.8705 9.32818 17.8705 9.05849Z" fill="currentColor" />
@@ -373,16 +451,42 @@ const Sidebar = () => {
                 <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                 <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
               </svg>
-              <span>All Reports</span>
+              <span className={`  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>All Reports</span>
             </div>
-            <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
 
 
           </button>
-          {isUser5Open && (
+          {isCollapsed && (
+            <ul className="absolute left-full top-0 bg-[#383d71] text-white p-2 rounded shadow-lg hidden group-hover:block min-w-[180px] z-50">
+              <li  >
+                <Link href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#fff900]' : ''}`} >
+                  <span>Vehicles Info</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff900]' : ''}`} >
+                  <span>All IFS Work Orders</span>
+                </Link>
+              </li>
+              <li >
+                <Link href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff900]' : ''}`} >
+                  <span>Vehicles List</span>
+                </Link>
+              </li>
+              {userType !== 'single-technician' && userType !== 'ifs' && (
+                <li>
+                  <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900]  rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#fff900]' : ''}`} >
+                    <span>All TRT Customers</span>
+                  </Link>
+                </li>
+              )}
+            </ul>
+          )}
+          {!isCollapsed && isUser5Open && (
             <ul className="ml-4">
               <li  >
                 <Link href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#fff900]' : ''}`} >
@@ -411,26 +515,37 @@ const Sidebar = () => {
         </li>
 
         {userType !== 'single-technician' && userType !== 'ifs' && (
-          <li className='p-1'>
+          <li className='p-1 relative group'>
             <button onClick={handleDropdownTogglesSingleTechnician} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser6Open ? 'active bg-white text-[#000]' : ''}`}>
-              <div className='flex items-center gap-2'>
+              <div className={`flex items-center gap-2  ${isCollapsed ? 'm-auto' : 'flex'}`}>
 
 
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" height="24">
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
 
-                <span>Single Technician</span>
+                <span className={`  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>Single Technician</span>
               </div>
-              <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
 
 
             </button>
-            {isUser6Open && (
+            {isCollapsed && (
+              <ul className="absolute left-full top-0 bg-[#383d71] text-white p-2 rounded shadow-lg hidden group-hover:block min-w-[180px] z-50">
+                <li  >
+                  <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
+                    <span>Single Technicians</span>
+                  </Link>
+                </li>
+                <li >
+                  <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
+                    <span>All Work Orders</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
+            {!isCollapsed && isUser6Open && (
               <ul className="ml-4">
                 <li  >
                   <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
@@ -558,14 +673,18 @@ const Sidebar = () => {
         )} */}
         <li className='p-1'>
           <Link href="/archive/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/archive/listing' ? 'active text-[#fff900]' : ''}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18" height="18">
-              <rect x="3" y="4" width="18" height="4" rx="1" />
-              <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" />
-              <path d="M9 12h6" />
+          <div className={`flex items-center gap-2  ${isCollapsed ? 'm-auto' : 'flex'}`}> 
+            <svg width="16" height="18" viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.80469 5.08289H3.79427H19.7109" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17.724 5.08289V19.0829C17.724 19.6133 17.5143 20.122 17.1412 20.4971C16.7681 20.8722 16.262 21.0829 15.7344 21.0829H5.78646C5.25879 21.0829 4.75273 20.8722 4.37961 20.4971C4.00649 20.122 3.79688 19.6133 3.79688 19.0829V5.08289M6.78125 5.08289V3.08289C6.78125 2.55245 6.99087 2.04374 7.36399 1.66867C7.7371 1.2936 8.24316 1.08289 8.77083 1.08289H12.75C13.2777 1.08289 13.7837 1.2936 14.1568 1.66867C14.53 2.04374 14.7396 2.55245 14.7396 3.08289V5.08289" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8.77344 10.0829V16.0829" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12.75 10.0829V16.0829" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
 
 
-            <span>Archives</span>
+
+            <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>Archives</span>
+            </div>
           </Link>
         </li>
       </ul>
