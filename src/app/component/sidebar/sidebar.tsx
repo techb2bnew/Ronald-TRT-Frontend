@@ -163,7 +163,7 @@ const Sidebar = () => {
         </button>
       </div>
       <div className="flex items-center justify-center h-16 mb-3 pt-3  mt-5">
-        <Image src={logo} alt="logo" className={` w-[80px] object-cover mt-3 mb-3 border-[2px] border-white rounded-full shadow-xl ${isCollapsed ? 'w-[40]' : ''}`} />
+        <Image src={logo} alt="logo" className={`  object-cover mt-3 mb-3 border-[2px] border-white rounded-full shadow-xl ${isCollapsed ? 'w-[40]' : 'w-[80px]'}`} />
       </div>
 
       <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
