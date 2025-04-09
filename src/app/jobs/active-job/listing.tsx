@@ -12,6 +12,7 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useSidebar } from "@/app/component/SidebarContext";
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -30,6 +31,7 @@ const JobTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
   const [searchTerm, setSearchTerm] = useState('');
+    const { isCollapsed } = useSidebar();
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -323,7 +325,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
   };
 
   return (
-    <div className="container mx-auto mt-4">
+    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
        <Breadcrumb
                     items={[
                       { label: 'Active Work Orders', href: '/jobs/active-job' }

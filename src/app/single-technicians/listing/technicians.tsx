@@ -15,6 +15,7 @@ import Eye from '../../../../public/eye.svg'
 import Image from 'next/image';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useSidebar } from "@/app/component/SidebarContext"; 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -35,6 +36,7 @@ const TechnicianTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { isCollapsed } = useSidebar(); 
 
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
@@ -383,7 +385,8 @@ const TechnicianTable: React.FC = () => {
 
 
   return (
-    <div className="container mx-auto mt-4">
+    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+
       <Breadcrumb
         items={[
           { label: 'Single Technicians', href: '/single-technicians/listing' }

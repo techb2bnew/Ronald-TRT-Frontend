@@ -12,6 +12,8 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useSidebar } from "@/app/component/SidebarContext";
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -29,7 +31,7 @@ const CompletedJobs: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
-
+    const { isCollapsed } = useSidebar();
 
   const handleDeleteSuccess = (deletedId: string) => {
     toast.success('Technician deleted successfully');
@@ -227,7 +229,7 @@ const CompletedJobs: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto mt-4 mb-5">
+    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' }

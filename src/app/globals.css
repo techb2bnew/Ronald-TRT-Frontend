@@ -242,7 +242,7 @@ table.table.w-full.table-fixed tbody tr td {
   color: #000;
 }
 
-ul.ml-4 li a:before {
+ul.ml-6 li a:before {
   position: absolute;
   border: 1px solid #ffffff;
   content: "";
@@ -253,9 +253,9 @@ ul.ml-4 li a:before {
   block-size: 0.55rem;
   font-size: 0.55rem;
   inline-size: 0.55rem;
-  left: 14px;
+  left: 30px;
 }
-ul.ml-4 li a.active:before {
+ul li a.active:before {
   content: '';
   background: #dbc600;
 }

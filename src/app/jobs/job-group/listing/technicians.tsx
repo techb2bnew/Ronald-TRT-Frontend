@@ -16,6 +16,8 @@ import 'react-tooltip/dist/react-tooltip.css';
 import { ExportToCsv } from 'export-to-csv-file';
 import TableActions from '@/app/component/action';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useSidebar } from "@/app/component/SidebarContext";
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -33,6 +35,7 @@ const JobTGroup: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
   const [searchTerm, setSearchTerm] = useState('');
+    const { isCollapsed } = useSidebar();
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -271,7 +274,7 @@ const JobTGroup: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto mt-4">
+    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
               items={[
                 { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
