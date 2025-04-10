@@ -277,10 +277,10 @@ svg.icon__tech {
   left: 5px;
   z-index: 1;
 }
-  .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root{
+  .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root, label#outlined-basic-label{
   left: 22px !important;
 }
-.css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input{
+.css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input, input#outlined-basic{
   padding-left: 35px !important;
 }
 .MuiSelect-select {
