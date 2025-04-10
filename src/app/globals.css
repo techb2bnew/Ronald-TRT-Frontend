@@ -270,6 +270,36 @@ ul li a.active:before {
   background-repeat: no-repeat;
   background-size: cover;
 }
+svg.icon__tech {
+  position: absolute;
+  width: 24px;
+  top: 12px;
+  left: 5px;
+  z-index: 1;
+}
+  .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root{
+  left: 22px !important;
+}
+.css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input{
+  padding-left: 35px !important;
+}
+.MuiSelect-select {
+  padding: 9.5px 35px !important;
+}
+.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root, .MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorWarning.MuiInputBase-formControl.MuiInputBase-sizeSmall.MuiInputBase-adornedStart.css-1kn6kge-MuiInputBase-root-MuiOutlinedInput-root, textarea, .form-control.w-full.p-3.mt-1.rounded.relative{
+  background-color: #f5f7fa !important;
+}
+.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root::before, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root::before{
+  border-bottom: none !important;
+}
+.input.text-xs.input-bordered.w-full.p-2.rounded.PhoneInput {
+  line-height: 1.6rem;
+  background-color: #f5f7fa !important;
+
+}
+.css-1q55ijt-MuiInputBase-input-MuiOutlinedInput-input{
+  height: 22px !important;
+}
 @media screen and (max-width: 1420px) {
 .laptop_size li a , .laptop_size li span{
   font-size: 10px;

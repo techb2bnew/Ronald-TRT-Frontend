@@ -62,7 +62,7 @@ export default function Forgot() {
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <section className="min-h-screen w-full">
-        <div className="bg-[#F7F7FD] flex items-center gap-8 w-full "> 
+        <div className="bg-white flex items-center gap-8 w-full "> 
           <div className="w-1/2 md:block hidden  ">
             <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
           </div>
@@ -73,9 +73,12 @@ export default function Forgot() {
               <p className="text-[#161616] mt-3">Enter your registered email address and we'll send you a link to reset your password.</p>
             </div> 
             <form onSubmit={handleSubmit} className="mt-6">
-              <div>
-                {/* <label className="block text-[#161616]">E-mail / Phone Number</label> */}
-              <TextField fullWidth size="medium" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"   onChange={handleChange} />
+              <div className="relative"> 
+                    <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
+                      <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+              <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="filled"   onChange={handleChange} />
                 {/* <input type="email" name="" onChange={handleChange} id="" placeholder="Enter your email" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required /> */}
               </div>  
               <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg

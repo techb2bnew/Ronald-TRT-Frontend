@@ -93,7 +93,7 @@ export default function Login() {
     <div className="items-center justify-items-center">
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <section className="min-h-screen w-full">
-        <div className="bg-[#F7F7FD] flex items-center gap-8 w-full ">
+        <div className="bg-white flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">
             <img src='https://ronaldo-trt.s3.ap-south-1.amazonaws.com/login.png' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
@@ -104,16 +104,23 @@ export default function Login() {
               <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Tech Repair Tracker</h2>
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
-            <form className="mt-6" onSubmit={handleSubmit}>
-              <div className="mb-4">
-                {/* <label className="block text-[#161616] mb-2">E-mail / Phone Number</label> */}
-                <TextField fullWidth className="text-xs"  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined"  onChange={(e) => setemailAddress(e.target.value)}  />
+            <form className="mt-6" onSubmit={handleSubmit}> 
+              <div className='mb-4 relative'>
+                    <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
+                      <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                <TextField fullWidth className="text-xs" size="small" id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="filled"  onChange={(e) => setemailAddress(e.target.value)}  />
                
               </div>
 
-              <div className="mt-5 relative">
-                {/* <label className="block text-[#161616] mb-2">Password</label> */}
-                <TextField fullWidth  type={showPassword ? "text" : "password"} id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined"   onChange={(e) => setPassword(e.target.value)} />
+              <div className="mt-5 relative"> 
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
+                <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
+                <circle cx="10" cy="12" r="1" fill="#5B5B99" />
+              </svg>
+                <TextField fullWidth  type={showPassword ? "text" : "password"}  size="small" id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="filled"   onChange={(e) => setPassword(e.target.value)} />
                   <button 
                     type="button" 
                     style={{ position: 'absolute', right: '10px', top: '18px' }}

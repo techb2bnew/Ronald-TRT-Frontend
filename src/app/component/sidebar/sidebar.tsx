@@ -156,7 +156,7 @@ const Sidebar = () => {
   }, [pathname]);
 
   const CloseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none">
       <path
         d="M6 6L18 18M6 18L18 6"
         stroke="currentColor"

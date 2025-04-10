@@ -69,7 +69,7 @@ export default function Reset() {
         <div className="items-center justify-items-center">
             <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
             <section className="min-h-screen w-full">
-                <div className="bg-[#F7F7FD] flex items-center gap-8 w-full">
+                <div className="bg-white flex items-center gap-8 w-full">
                     <div className="w-1/2 md:block hidden">
                         <Image src={Banner} width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="reset password page image" />
                     </div>
@@ -80,14 +80,24 @@ export default function Reset() {
                             <p className="text-[#161616] mt-3">Please enter your new password below.</p>
                         </div>
                         <form onSubmit={handleSubmit} className="mt-6">
-                            <div> 
-                                <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter new password *"  variant="outlined"  onChange={handleChange} />
-                                
-                            </div>
-                            <div className="mt-4"> 
-                               <TextField fullWidth size="small" name="confirmPassword" id="outlined-basic" color="warning" label="Confirm new password *"  variant="outlined" value={input.confirmPassword} onChange={handleChange} />
+                            <div className="relative">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                                    <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
+                                    <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
+                                    <circle cx="10" cy="12" r="1" fill="#5B5B99" />
+                                </svg>
+                                <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter new password *" variant="filled" onChange={handleChange} />
 
-                                
+                            </div>
+                            <div className="mt-4 relative">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                                    <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
+                                    <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
+                                    <circle cx="10" cy="12" r="1" fill="#5B5B99" />
+                                </svg>
+                                <TextField fullWidth size="small" name="confirmPassword" id="outlined-basic" color="warning" label="Confirm new password *" variant="filled" value={input.confirmPassword} onChange={handleChange} />
+
+
                             </div>
                             <button type="submit" className="w-full block hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg px-4 py-3 mt-6">
                                 Reset Password

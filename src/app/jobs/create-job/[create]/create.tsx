@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useRouter, usePathname, useSearchParams  } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 // import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
 // import FormControl from '@mui/material/FormControl';
@@ -103,7 +103,7 @@ export default function Technicians() {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
-    const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
   ]);
@@ -436,9 +436,9 @@ export default function Technicians() {
         toast.success('Job created successfully.');
         if (searchParams.has('completeOrder')) {
           router.push('/jobs/complete-job/listing');
-        } else if(searchParams.has('vehicleInfo')) {
+        } else if (searchParams.has('vehicleInfo')) {
           router.push('/reporting/vehicle-info')
-        } else{  
+        } else {
           router.push('/jobs/active-job');
         }
       } else {
@@ -580,23 +580,23 @@ export default function Technicians() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const files = e.target.files ? Array.from(e.target.files) : [];
-  
+
     // Filter out unwanted file types
     const validImageFiles = files.filter(file => acceptedTypes.includes(file.type));
-  
+
     if (validImageFiles.length === 0) {
       toast.error("Please upload only JPEG, PNG, or WEBP images.");
       return;
     }
-  
+
     const maxWidth = 800;
     const maxHeight = 600;
     const quality = 0.7;
-  
+
     const compressions = validImageFiles.map(file =>
       compressImage(file, maxWidth, maxHeight, quality)
     );
-  
+
     Promise.all(compressions)
       .then(compressedFiles => {
         setFormData((prev: any) => ({
@@ -609,7 +609,7 @@ export default function Technicians() {
         toast.error('Failed to compress images.');
       });
   };
-  
+
 
 
   // Remove a specific image
@@ -671,7 +671,7 @@ export default function Technicians() {
                   ...prev,
                   vin: detectedVin, // ✅ Corrected
                 }));
-                console.log(detectedVin,'formData.vinformData.vin')
+                console.log(detectedVin, 'formData.vinformData.vin')
                 setTimeout(() => {
                   fetchVehicleDetails(detectedVin);
                 }, 100);
@@ -691,435 +691,509 @@ export default function Technicians() {
     }
   };
 
-  console.log(formData.vin,'formData.vin')
+  console.log(formData.vin, 'formData.vin')
 
 
   return (
     <div className='main-container mb-5'>
       <Breadcrumb
-              items={[ 
-                isEdit
-                ? { label: 'Edit Work Order' }
-                :{ label: 'Create New Work Order', href: '/jobs/create-job/create' },
-              ]}
-            />
+        items={[
+          isEdit
+            ? { label: 'Edit Work Order' }
+            : { label: 'Create New Work Order', href: '/jobs/create-job/create' },
+        ]}
+      />
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
-        
-          <form className="" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
+
+        <form className="" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="role-label" color="warning">Select role*</InputLabel>
+              <Select
+                labelId="role-label"
+                id="select-role"
+                value={formData.role}
+                label="Select role"
+                name="role"
+                color="warning"
+                onChange={handleSelectRole}
+              >
+                <MenuItem value="IFS">IFS</MenuItem>
+                <MenuItem value="Enterpriceses">Enterpriceses</MenuItem>
+                <MenuItem value="Workshop">Workshop</MenuItem>
+              </Select>
+            </FormControl>
+
+            {formData.role === 'Enterpriceses' && (
               <FormControl fullWidth size="small">
-                <InputLabel id="role-label" color="warning">Select role*</InputLabel>
+                <InputLabel id="enterprise-label" color="warning">Select Enterprise*</InputLabel>
                 <Select
-                  labelId="role-label"
-                  id="select-role"
-                  value={formData.role}
-                  label="Select role"
-                  name="role"
+                  labelId="enterprise-label"
+                  id="select-enterprise"
+                  value={formData.enterprise}
+                  label="Select Enterprise"
+                  name="enterprise"
                   color="warning"
-                  onChange={handleSelectRole}
+                  onChange={handleSelectEnterprise}
                 >
-                  <MenuItem value="IFS">IFS</MenuItem>
-                  <MenuItem value="Enterpriceses">Enterpriceses</MenuItem>
-                  <MenuItem value="Workshop">Workshop</MenuItem>
+                  <MenuItem value="Enterprise1">Enterprise 1</MenuItem>
+                  <MenuItem value="Enterprise2">Enterprise 2</MenuItem>
+                  <MenuItem value="Enterprise3">Enterprise 3</MenuItem>
                 </Select>
               </FormControl>
+            )}
 
-              {formData.role === 'Enterpriceses' && (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="enterprise-label" color="warning">Select Enterprise*</InputLabel>
-                  <Select
-                    labelId="enterprise-label"
-                    id="select-enterprise"
-                    value={formData.enterprise}
-                    label="Select Enterprise"
-                    name="enterprise"
-                    color="warning"
-                    onChange={handleSelectEnterprise}
+            {(formData.role === 'Workshop' || formData.enterprise) && (
+              <FormControl fullWidth size="small">
+                <InputLabel id="workshop-label" color="warning">Select Workshop*</InputLabel>
+                <Select
+                  labelId="workshop-label"
+                  id="select-workshop"
+                  value={formData.workshop}
+                  label="Select Workshop"
+                  name="workshop"
+                  color="warning"
+                  onChange={handleSelectWorkshop}
+                >
+                  <MenuItem value="Workshop1">Workshop 1</MenuItem>
+                  <MenuItem value="Workshop2">Workshop 2</MenuItem>
+                  <MenuItem value="Workshop3">Workshop 3</MenuItem>
+                </Select>
+              </FormControl>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Client Name and Business Name */}
+            <div className='mb-2'>
+              {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
+              <div className='flex gap-3 items-center'>
+                <div className="flex gap-3 items-center w-[70%]">
+                  <div className='relative w-[100%]'>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <path d="M4 12V10L6 6H14L16 10V12" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="6" cy="14" r="1" fill="#5B5B99" />
+                      <circle cx="14" cy="14" r="1" fill="#5B5B99" />
+                      <rect x="3" y="16" width="1" height="3" fill="#5B5B99" />
+                      <rect x="5" y="16" width="0.5" height="3" fill="#5B5B99" />
+                      <rect x="6.5" y="16" width="1" height="3" fill="#5B5B99" />
+                      <rect x="8.5" y="16" width="0.5" height="3" fill="#5B5B99" />
+                      <rect x="10" y="16" width="1" height="3" fill="#5B5B99" />
+                      <rect x="12" y="16" width="0.5" height="3" fill="#5B5B99" />
+                      <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="filled" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
+                  </div>
+                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
+                </div>
+
+                <div className="relative">
+                  <label data-tooltip-id="VIN"
+                    data-tooltip-content="Upload VIN Image"
+                    htmlFor="fileInput"
+                    className="cursor-pointer flex  gap-2 p-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
                   >
-                    <MenuItem value="Enterprise1">Enterprise 1</MenuItem>
-                    <MenuItem value="Enterprise2">Enterprise 2</MenuItem>
-                    <MenuItem value="Enterprise3">Enterprise 3</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-
-              {(formData.role === 'Workshop' || formData.enterprise) && (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="workshop-label" color="warning">Select Workshop*</InputLabel>
-                  <Select
-                    labelId="workshop-label"
-                    id="select-workshop"
-                    value={formData.workshop}
-                    label="Select Workshop"
-                    name="workshop"
-                    color="warning"
-                    onChange={handleSelectWorkshop}
-                  >
-                    <MenuItem value="Workshop1">Workshop 1</MenuItem>
-                    <MenuItem value="Workshop2">Workshop 2</MenuItem>
-                    <MenuItem value="Workshop3">Workshop 3</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              {/* Client Name and Business Name */}
-              <div className='mb-2'>
-                {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
-                <div className='flex gap-3 items-center'>
-                 <div className="flex gap-3 items-center w-[70%]">
-                  <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="outlined" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
-                  <button type="button"   onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
-                 </div>
-
-                  <div className="relative">
-                    <label data-tooltip-id="VIN"
-                  data-tooltip-content="Upload VIN Image"
-                      htmlFor="fileInput"
-                      className="cursor-pointer flex  gap-2 p-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
-                    >
-                      <div className='text-center'>
-                       <svg className='m-auto' width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <div className='text-center'>
+                      <svg className='m-auto' width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
-                      </svg> 
-                      </div>
-                    </label>
-                    <input
-                      id="fileInput"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
+                      </svg>
+                    </div>
+                  </label>
+                  <input
+                    id="fileInput"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Tooltip id="VIN" place="top" />
+                </div>
+
+                {/* Image Preview with Remove Button */}
+                {image && (
+                  <div className="relative">
+                    <img src={image} alt="VIN" width="200" className="border rounded-lg shadow" />
+                    <button
+                      type="button"
+                      onClick={() => setImage(null)} // ✅ Remove Image
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div>
+            {formData && (
+              <div className="overflow-x-auto rounded-md pt-4 mb-5">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-xs mb-2 relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <path d="M4 11V9L6 5H14L16 9V11" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="6" cy="14" r="1" fill="#5B5B99" />
+                      <circle cx="14" cy="14" r="1" fill="#5B5B99" />
+                      <rect x="3" y="15.5" width="2.5" height="0.8" rx="0.4" fill="#5B5B99" />
+                      <rect x="6" y="15.5" width="3" height="0.8" rx="0.4" fill="#5B5B99" />
+                      <rect x="10" y="15.5" width="2" height="0.8" rx="0.4" fill="#5B5B99" />
+                      <rect x="13" y="15.5" width="3.5" height="0.8" rx="0.4" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField
+                      fullWidth
+                      label="Vehicle Descriptor"
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.vehicleDescriptor || ''}
+                      onChange={(e) => handleChange(e, 'vehicleDescriptor')}
                     />
-                    <Tooltip id="VIN" place="top" />
                   </div>
+                  <div className="text-xs mb-2 relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <path d="M4 11V9L6 5H14L16 9V11" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="6" cy="14" r="1" fill="#5B5B99" />
+                      <circle cx="14" cy="14" r="1" fill="#5B5B99" />
+                      <rect x="9" y="6" width="2" height="2" rx="0.3" fill="#5B5B99" />
+                    </svg>
 
-                  {/* Image Preview with Remove Button */}
-                  {image && (
-                    <div className="relative">
-                      <img src={image} alt="VIN" width="200" className="border rounded-lg shadow" />
-                      <button
-                        type="button"
-                        onClick={() => setImage(null)} // ✅ Remove Image
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
+                    <TextField
+                      fullWidth
+                      label="Make"
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.make || ''}
+                      onChange={(e) => handleChange(e, 'make')}
+                    />
+                  </div>
+                  <div className="text-xs  mb-2 relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <rect x="3" y="8" width="14" height="9" rx="1" stroke="#5B5B99" strokeWidth="1.2" />
+                      <rect x="5" y="4" width="2" height="4" fill="#5B5B99" />
+                      <rect x="9" y="10.5" width="6" height="2" rx="0.5" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField
+                      fullWidth
+                      label="Manufacturer Name"
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.manufacturerName || ''}
+                      onChange={(e) => handleChange(e, 'manufacturerName')}
+                    />
+                  </div>
+                  <div className="text-xs relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <path d="M4 11V9L6 5H14L16 9V11" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="6" cy="14" r="1" fill="#5B5B99" />
+                      <circle cx="14" cy="14" r="1" fill="#5B5B99" />
+                      <rect x="7" y="2.5" width="6" height="2" rx="0.5" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField
+                      fullWidth
+                      label="Model"
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.model || ''}
+                      onChange={(e) => handleChange(e, 'model')}
+                    />
+                  </div>
+                  <div className="text-xs relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <rect x="3" y="3" width="14" height="14" rx="2" stroke="#5B5B99" strokeWidth="1.2" />
+                      <path d="M3 6.5H17" stroke="#5B5B99" strokeWidth="1.2" />
+                      <rect x="6" y="9" width="2.5" height="1" rx="0.5" fill="#5B5B99" />
+                      <rect x="9.5" y="9" width="4" height="1" rx="0.5" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField
+                      fullWidth
+                      label="Model Year"
+                      type='number'
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.modelYear || ''}
+                      onChange={(e) => handleChange(e, 'modelYear')}
+                    />
+                  </div>
+                  <div className="text-xs relative">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                      <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
+                      <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
+                    </svg>
+
+                    <TextField
+                      fullWidth
+                      label="Vehicle Type"
+                      variant="filled"
+                      color="warning"
+                      size="small"
+                      value={formData.vehicleType || ''}
+                      onChange={(e) => handleChange(e, 'vehicleType')}
+                    />
+                  </div>
                 </div>
               </div>
+
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className='mb-4 relative'>
+              {/* <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p> */}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <path d="M10 2C5.6 2 2 5.1 2 9C2 12.9 5.4 14 7 14C8.3 14 8.5 15.5 9 16.3C9.6 17.2 10.5 18 12 18C14.8 18 18 15.1 18 10.5C18 5.9 14.4 2 10 2Z" stroke="#5B5B99" strokeWidth="1.2" fill="none" />
+
+                <circle cx="7" cy="7" r="0.8" fill="#5B5B99" />
+                <circle cx="10" cy="5.5" r="0.8" fill="#5B5B99" />
+                <circle cx="13" cy="7" r="0.8" fill="#5B5B99" />
+                <circle cx="13.5" cy="10" r="0.8" fill="#5B5B99" />
+              </svg>
+
+              <FormControl fullWidth size="small" variant="filled">
+                <InputLabel id="color" color="warning">Select color *</InputLabel>
+                <Select
+                  labelId="color"
+                  id="select-color"
+                  value={formData.color}
+                  label="Select color"
+                  name="color"
+                  color="warning"
+                  required
+                  onChange={(event) => handleSelectColor(event, 'color')}
+                >
+                  <MenuItem value='black'>Black</MenuItem>
+                  <MenuItem value='gray'>Gray</MenuItem>
+                  <MenuItem value='blue'>Blue</MenuItem>
+                  <MenuItem value='silver'>Silver</MenuItem>
+                  <MenuItem value='red'>Red</MenuItem>
+                  <MenuItem value='maroon'>Maroon</MenuItem>
+                  <MenuItem value='yellow'>Yellow</MenuItem>
+                  <MenuItem value='white'>White</MenuItem>
+                  <MenuItem value='brown'>Brown</MenuItem>
+                  <MenuItem value='tan'>Tan</MenuItem>
+                  <MenuItem value='gold'>Gold</MenuItem>
+                  <MenuItem value='green'>Green</MenuItem>
+                  <MenuItem value='orange'>Orange</MenuItem>
+
+                </Select>
+              </FormControl>
             </div>
-            <div>
-              {formData && (
-                <div className="overflow-x-auto rounded-md pt-4 mb-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-xs mb-2">
-                      <TextField
-                        fullWidth
-                        label="Vehicle Descriptor"
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.vehicleDescriptor || ''}
-                        onChange={(e) => handleChange(e, 'vehicleDescriptor')}
-                      />
-                    </div>
-                    <div className="text-xs mb-2">
-                      <TextField
-                        fullWidth
-                        label="Make"
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.make || ''}
-                        onChange={(e) => handleChange(e, 'make')}
-                      />
-                    </div>
-                    <div className="text-xs  mb-2">
-                      <TextField
-                        fullWidth
-                        label="Manufacturer Name"
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.manufacturerName || ''}
-                        onChange={(e) => handleChange(e, 'manufacturerName')}
-                      />
-                    </div>
-                    <div className="text-xs">
-                      <TextField
-                        fullWidth
-                        label="Model"
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.model || ''}
-                        onChange={(e) => handleChange(e, 'model')}
-                      />
-                    </div>
-                    <div className="text-xs">
-                      <TextField
-                        fullWidth
-                        label="Model Year"
-                        type='number'
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.modelYear || ''}
-                        onChange={(e) => handleChange(e, 'modelYear')}
-                      />
-                    </div>
-                    <div className="text-xs">
-                      <TextField
-                        fullWidth
-                        label="Vehicle Type"
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        value={formData.vehicleType || ''}
-                        onChange={(e) => handleChange(e, 'vehicleType')}
-                      />
-                    </div>
-                  </div>
-                </div>
+            {/* Client Name and Business Name */}
+            <div className='mb-4 flex gap-3 relative' >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
+              <FormControl fullWidth size="small" variant="filled">
+                <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
+                <Select
+                  labelId="assignCustomer"
+                  id="select-assignCustomer"
+                  color="warning"
+                  value={formData.assignCustomer}
+                  label="Select customer"
+                  name="assignCustomer"
+                  required
+                  onChange={(event) => handleSelectChange(event, 'assignCustomer')}
+                >
+                  {customer.map((customer: any) => (
+                    <MenuItem key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Link href='/client/create' data-tooltip-id="create-customer"
+                data-tooltip-content="Create Customer" className='primary-bg text-sm p-1 rounded mb-4'>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
+                  <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
+                </svg>
 
-              )}
+              </Link>
+              <Tooltip id="create-customer" place="top" />
+
             </div>
+            {userType !== 'single-technician' && userType !== 'ifs' && (
+              <div className='mb-4 flex gap-3 relative'>
+                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+                {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
+                <FormControl fullWidth size="small" variant="filled">
+                  <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className='mb-4'>
-                {/* <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p> */}
-
-                <FormControl fullWidth size="small">
-                  <InputLabel id="color" color="warning">Select color *</InputLabel>
                   <Select
-                    labelId="color"
-                    id="select-color"
-                    value={formData.color}
-                    label="Select color"
-                    name="color"
+                    labelId="assignTechnicians"
+                    id="select-assignTechnicians"
                     color="warning"
+                    label="Select technicians"
+                    multiple
                     required
-                    onChange={(event) => handleSelectColor(event, 'color')}
+                    value={formData.assignTechnicians}
+                    onChange={handleTechnicianChange}
+                    renderValue={(selected) => selected.map(id => {
+                      const tech = technicians.find(tech => String(tech.id) === id);
+                      return tech ? `${tech.firstName} ${tech.lastName}` : undefined;
+                    }).filter(Boolean).join(', ')}
                   >
-                    <MenuItem value='black'>Black</MenuItem>
-                    <MenuItem value='gray'>Gray</MenuItem>
-                    <MenuItem value='blue'>Blue</MenuItem>
-                    <MenuItem value='silver'>Silver</MenuItem>
-                    <MenuItem value='red'>Red</MenuItem>
-                    <MenuItem value='maroon'>Maroon</MenuItem>
-                    <MenuItem value='yellow'>Yellow</MenuItem>
-                    <MenuItem value='white'>White</MenuItem>
-                    <MenuItem value='brown'>Brown</MenuItem>
-                    <MenuItem value='tan'>Tan</MenuItem>
-                    <MenuItem value='gold'>Gold</MenuItem>
-                    <MenuItem value='green'>Green</MenuItem>
-                    <MenuItem value='orange'>Orange</MenuItem>
-
-                  </Select>
-                </FormControl>
-              </div>
-              {/* Client Name and Business Name */}
-              <div className='mb-4 flex gap-3'>
-                {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
-                <FormControl fullWidth size="small">
-                  <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
-                  <Select
-                    labelId="assignCustomer"
-                    id="select-assignCustomer"
-                    color="warning"
-                    value={formData.assignCustomer}
-                    label="Select customer"
-                    name="assignCustomer"
-                    required
-                    onChange={(event) => handleSelectChange(event, 'assignCustomer')}
-                  >
-                    {customer.map((customer: any) => (
-                      <MenuItem key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
+                    {technicians.map((tech) => (
+                      <MenuItem key={tech.id} value={String(tech.id)}>
+                        <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
+                        <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                      </MenuItem>
                     ))}
                   </Select>
+
                 </FormControl>
-                <Link href='/client/create' data-tooltip-id="create-customer"
-                  data-tooltip-content="Create Customer" className='primary-bg text-sm p-1 rounded mb-4'>
+                <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
+                  data-tooltip-content="Create Technician" className='primary-bg text-sm p-1 rounded mb-4'>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
                     <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
                   </svg>
 
                 </Link>
-                <Tooltip id="create-customer" place="top" />
-
+                <Tooltip id="create-technician" place="top" />
               </div>
-              {userType !== 'single-technician' && userType !== 'ifs' && (
-                <div className='mb-4 flex gap-3'>
-                  {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
-
-                    <Select
-                      labelId="assignTechnicians"
-                      id="select-assignTechnicians"
-                      color="warning"
-                      label="Select technicians"
-                      multiple
-                      required
-                      value={formData.assignTechnicians}
-                      onChange={handleTechnicianChange}
-                      renderValue={(selected) => selected.map(id => {
-                        const tech = technicians.find(tech => String(tech.id) === id);
-                        return tech ? `${tech.firstName} ${tech.lastName}` : undefined;
-                      }).filter(Boolean).join(', ')}
-                    >
-                      {technicians.map((tech) => (
-                        <MenuItem key={tech.id} value={String(tech.id)}>
-                          <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
-                          <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-
-                  </FormControl>
-                  <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
-                    data-tooltip-content="Create Technician" className='primary-bg text-sm p-1 rounded mb-4'>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
-                      <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
-                    </svg>
-
-                  </Link>
-                  <Tooltip id="create-technician" place="top" />
-                </div>
-              )}
-            </div>
-            {descriptionCostFields.map((field, index) => (
-              <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
-                <div className='mb-2'>
-                  <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
+            )}
+          </div>
+          {descriptionCostFields.map((field, index) => (
+            <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
+              <div className='mb-2'>
+                <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
+                  onChange={(e) =>
+                    handleDescriptionCostChange(index, "jobDescription", e.target.value)
+                  }
+                  placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
+              </div>
+              <div className="mb-2 flex items-center gap-3">
+                <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
+                  <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
+                  <OutlinedInput
+                    id={`cost-${index}`}
+                    value={field.cost}
                     onChange={(e) =>
-                      handleDescriptionCostChange(index, "jobDescription", e.target.value)
+                      handleDescriptionCostChange(index, "cost", e.target.value)
                     }
-                    placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
-                </div>
-                <div className="mb-2 flex items-center gap-3">
-                  <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
-                    <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
-                    <OutlinedInput
-                      id={`cost-${index}`}
-                      value={field.cost}
-                      onChange={(e) =>
-                        handleDescriptionCostChange(index, "cost", e.target.value)
-                      }
-                      startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                      label="Amount"
-                      required
-                    />
-                  </FormControl>
-                  {descriptionCostFields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteField(field.id)}
-                      className="border border-red-500 text-sm p-2 rounded"
-                    >
-                      <Image alt='delete' src={Delete} className='w-[14px]' />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={handleAddMore}
-              className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
-
-
-            <div className='mb-4'>
-              {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
-
-              <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
-                <label className="label text-center">
-                  <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
-                  </svg>
-                  <p className='text-sm mb-1 mt-1'>Upload File</p>
-                  <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
-                </label>
-                <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
-                {/* onChange={handleFileChange} */}
-              </div>
-              {/* Thumbnails of selected images */}
-              <div className='flex flex-wrap gap-4 items-center mt-5'>
-                {formData.images.map((file, index) => (
-                  <div key={index} className='shadow rounded p-2 relative'>
-                    {/* Check if the file is an instance of File to create a URL */}
-                    {file instanceof File ? (
-                      <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                    ) : (
-                      <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                    )}
-                    <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-
-
-            </div>
-            <div className="grid grid-cols-1 gap-4">
-              {/* Client Name and Business Name */}
-              <div className='mb-4'>
-                {/* <p className='text-sm mb-2'>Note</p> */}
-                <textarea name="notes" id="" value={formData.notes}
-                  onChange={(e) => handleChange(e, 'notes')}
-                  placeholder='Enter Note *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
-              </div>
-            </div>
-
-            <div className="text-right mt-4 mb-4">
-              
-              <button
-                type="submit"
-                className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  'Submit'
+                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                    label="Amount"
+                    required
+                  />
+                </FormControl>
+                {descriptionCostFields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteField(field.id)}
+                    className="border border-red-500 text-sm p-2 rounded"
+                  >
+                    <Image alt='delete' src={Delete} className='w-[14px]' />
+                  </button>
                 )}
-              </button>
-            </div> 
-          </form>
-       
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={handleAddMore}
+            className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
+
+
+          <div className='mb-4'>
+            {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
+
+            <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
+              <label className="label text-center">
+                <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
+                </svg>
+                <p className='text-sm mb-1 mt-1'>Upload File</p>
+                <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+              </label>
+              <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
+              {/* onChange={handleFileChange} */}
+            </div>
+            {/* Thumbnails of selected images */}
+            <div className='flex flex-wrap gap-4 items-center mt-5'>
+              {formData.images.map((file, index) => (
+                <div key={index} className='shadow rounded p-2 relative'>
+                  {/* Check if the file is an instance of File to create a URL */}
+                  {file instanceof File ? (
+                    <img src={URL.createObjectURL(file)} alt={`Uploaded file ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                  ) : (
+                    <img src={file} alt={`Uploaded image ${index}`} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                  )}
+                  <button onClick={() => handleRemoveFile(index)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+
+
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Client Name and Business Name */}
+            <div className='mb-4'>
+              {/* <p className='text-sm mb-2'>Note</p> */}
+              <textarea name="notes" id="" value={formData.notes}
+                onChange={(e) => handleChange(e, 'notes')}
+                placeholder='Enter Note *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+            </div>
+          </div>
+
+          <div className="text-right mt-4 mb-4">
+
+            <button
+              type="submit"
+              className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                'Submit'
+              )}
+            </button>
+          </div>
+        </form>
+
 
       </div>
     </div>
