@@ -288,10 +288,10 @@ svg.icon__tech {
 .MuiSelect-select {
   padding: 9.5px 35px !important;
 }
-.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root, .MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorWarning.MuiInputBase-formControl.MuiInputBase-sizeSmall.MuiInputBase-adornedStart.css-1kn6kge-MuiInputBase-root-MuiOutlinedInput-root, textarea, .form-control.w-full.p-3.mt-1.rounded.relative{
+.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root, .MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorWarning.MuiInputBase-formControl.MuiInputBase-sizeSmall.MuiInputBase-adornedStart.css-1kn6kge-MuiInputBase-root-MuiOutlinedInput-root, textarea, .form-control.w-full.p-3.mt-1.rounded.relative, .MuiInputBase-root.MuiFilledInput-root{
   background-color: #f5f7fa !important;
 }
-.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root::before, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root::before{
+.css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root::before, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root::before, .MuiInputBase-root.MuiFilledInput-root:before{
   border-bottom: none !important;
 }
 .input.text-xs.input-bordered.w-full.p-2.rounded.PhoneInput {
