@@ -2,7 +2,7 @@
 import View from '../view/view'
 import React, { useState } from 'react'; 
 import AuthCheck from '@/app/component/AuthCheck';
-import Customer from '../../../app/all-customer/listing/listing';
+import Customer from '../customer/listing';
 import { useSidebar } from "@/app/component/SidebarContext";
 export default function ViewTechnicians() { 
    const { isCollapsed } = useSidebar();

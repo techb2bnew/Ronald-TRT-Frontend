@@ -53,12 +53,16 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           {/* <p className='text-sm'>{title}</p> */}
         </div>
         <div className='flex items-center gap-4'>
-          <div className="flex w-[250]">
+          <div className="flex w-[250] relative search__input">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position:'absolute', left:'10px', top:'12px', zIndex:'1'}} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <circle cx="11" cy="11" r="8"></circle>
+  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+</svg> 
 
-            <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="outlined" onChange={(e) => onSearch(e.target.value)} />
+            <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
 
           </div>
-          <button className="text-xs border border-gray-300 p-2 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
+          <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
               <polyline points="3 4 5 6 7 4" />
@@ -68,7 +72,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             Export
           </button>
           {buttonLink && buttonLabel && canCreate && (
-            <Link href={buttonLink} className="primary-bg text-xs border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
+            <Link href={buttonLink} className="primary-bg text-xs border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
               {buttonLabel}
               <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
