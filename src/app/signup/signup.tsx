@@ -411,7 +411,7 @@ export default function Role() {
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
 
                   <div className='mb-4 relative'>
                     <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -440,35 +440,15 @@ export default function Role() {
                       </Select>
                     </FormControl>
                   </div>
-                  <div className='mb-4 relative'>
+                  {/* <div className='mb-4 relative'>
                     <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" stroke-linecap="round" />
                       <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                     </svg>
                     <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="Select role type *" variant="filled" value={formData.types} disabled />
-
-
-                    {/* <FormControl fullWidth size="small">
-                      <InputLabel id="types" color="warning">Select role type *</InputLabel>
-                      <Select
-                        labelId="types"
-                        id="select-role-type"
-                        color="warning"
-                        value={formData.types}
-                        label="State role type"
-                        name="types"
-                        disabled
-                        onChange={handleSelectChange}
-                      >
-                        {formData.types ? (
-                          <MenuItem value={formData.types}>{formData.types}</MenuItem>
-                        ) : (
-                          <MenuItem value="">Select a role first</MenuItem>
-                        )}
-                      </Select>
-                    </FormControl> */}
-                  </div>
+ 
+                  </div> */}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

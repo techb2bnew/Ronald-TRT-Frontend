@@ -89,7 +89,11 @@ export default function ProfileCard() {
       toast.error("Technician ID not found!");
       return;
     }
-
+    const { firstName, lastName, phoneNumber, address, city, country, zipCode } = formData;
+    if (!firstName || !lastName || !phoneNumber || !address || !city || !country || !zipCode) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
     // ✅ Create FormData
     const formDataPayload = new FormData();
     formDataPayload.append("technicianId", technicianId);
@@ -340,7 +344,7 @@ export default function ProfileCard() {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-4">
           <div>
-            <label className="text-gray-600">First Name</label>
+            <label className="text-gray-600">First Name *</label>
             <input
               type="text"
               name="firstName"
@@ -349,10 +353,11 @@ export default function ProfileCard() {
               disabled={!isEditing}
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
+                required
             />
           </div>
           <div>
-            <label className="text-gray-600">Last Name</label>
+            <label className="text-gray-600">Last Name *</label>
             <input
               type="text"
               name="lastName"
@@ -361,10 +366,11 @@ export default function ProfileCard() {
               disabled={!isEditing}
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
+                required
             />
           </div>
           <div>
-            <label className="text-gray-600">Phone Number</label>
+            <label className="text-gray-600">Phone Number *</label>
             <input
               type="text"
               name="phoneNumber"
@@ -373,6 +379,7 @@ export default function ProfileCard() {
               disabled={!isEditing}
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
+                required
             />
           </div>
 
@@ -381,21 +388,8 @@ export default function ProfileCard() {
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <h3 className="font-semibold text-lg">Address</h3>
         <div className="mt-4 grid grid-cols-3 gap-4">
-
-          <div>
-            <label className="text-gray-600">City</label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-            />
-          </div>
-          <div>
-            <label className="text-gray-600">Country</label>
+        <div>
+            <label className="text-gray-600">Country *</label>
             <input
               type="text"
               name="country"
@@ -404,10 +398,25 @@ export default function ProfileCard() {
               disabled={!isEditing}
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
+                required
             />
           </div>
           <div>
-            <label className="text-gray-600">Zip Code</label>
+            <label className="text-gray-600">City *</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
+                }`}
+                required
+            />
+          </div>
+         
+          <div>
+            <label className="text-gray-600">Zip Code *</label>
             <input
               type="text"
               name="zipCode"
@@ -416,6 +425,7 @@ export default function ProfileCard() {
               disabled={!isEditing}
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
+                required
             />
           </div>
         </div>
