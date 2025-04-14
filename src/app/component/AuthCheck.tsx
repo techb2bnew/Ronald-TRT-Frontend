@@ -24,7 +24,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     // Show a full-page loader
     return (
-      <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-[#ccc] bg-opacity-50 z-50"> 
+      <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-[#fff] z-50"> 
       <Loading />
       </div>
     );

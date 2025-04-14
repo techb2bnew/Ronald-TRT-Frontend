@@ -851,6 +851,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.vehicleDescriptor || ''}
                       onChange={(e) => handleChange(e, 'vehicleDescriptor')}
+                      required
                     />
                   </div>
                   <div className="text-xs mb-2 relative">
@@ -869,6 +870,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.make || ''}
                       onChange={(e) => handleChange(e, 'make')}
+                      required
                     />
                   </div>
                   <div className="text-xs  mb-2 relative">
@@ -886,6 +888,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.manufacturerName || ''}
                       onChange={(e) => handleChange(e, 'manufacturerName')}
+                      required
                     />
                   </div>
                   <div className="text-xs relative">
@@ -904,6 +907,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.model || ''}
                       onChange={(e) => handleChange(e, 'model')}
+                      required
                     />
                   </div>
                   <div className="text-xs relative">
@@ -923,6 +927,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.modelYear || ''}
                       onChange={(e) => handleChange(e, 'modelYear')}
+                      required
                     />
                   </div>
                   <div className="text-xs relative">
@@ -940,6 +945,7 @@ export default function Technicians() {
                       size="small"
                       value={formData.vehicleType || ''}
                       onChange={(e) => handleChange(e, 'vehicleType')}
+                      required
                     />
                   </div>
                 </div>
@@ -971,6 +977,7 @@ export default function Technicians() {
                   color="warning"
                   required
                   onChange={(event) => handleSelectColor(event, 'color')}
+                  
                 >
                   <MenuItem value='black'>Black</MenuItem>
                   <MenuItem value='gray'>Gray</MenuItem>
@@ -1080,7 +1087,7 @@ export default function Technicians() {
               </div>
               <div className="mb-2 flex items-center gap-3">
                 <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
-                  <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
+                  <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
                   <OutlinedInput
                     id={`cost-${index}`}
                     value={field.cost}

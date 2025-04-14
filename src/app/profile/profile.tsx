@@ -273,6 +273,8 @@ export default function ProfileCard() {
     }
   };
 
+  
+
   return (
     <div className="rounded-lg p-6 mx-auto">
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} />
@@ -308,10 +310,17 @@ export default function ProfileCard() {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-white first-letter:uppercase">
             {technician ? `${technician.firstName} ${technician.lastName}` : "User"}
           </h2>
-          <p className="text-gray-700 text-white">{technician?.types}</p>
+          <p className="text-gray-700 text-white first-letter:uppercase">
+          {
+    technician?.types === "superadmin" ? "Super Admin" :
+    technician?.types === "single-technician" ? "Single Technician" :
+    technician?.types === "ifs" ? "IFS" :
+    technician?.types
+  }
+          </p>
           <p className="text-gray-700 text-white">{technician?.address}</p>
         </div>
       </div>

@@ -7,6 +7,7 @@ import Sidebar from "@/app/component/sidebar/page";
 import Loading from "@/app/component/loader";
 import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; 
 import { SidebarProvider } from "@/app/component/SidebarContext";
+import ColorSettings from "@/app/component/colorsetting"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,6 +65,7 @@ export default function RootLayout({
             ) : (
               children
             )}
+             <ColorSettings />
           </main> 
         </div>
       </body>
