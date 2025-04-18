@@ -10,7 +10,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 
 const Sidebar = () => {
   const [userType, setUserType] = useState<string | null>(null);
-  const [isUsersOpen, setIsUsersOpen] = useState(false);
+  const [isUsersOpen, setIsUsersOpen] = useState(true);
   const [isUser1Open, setIsUser1Open] = useState(false);
   const [isUser2Open, setIsUser2Open] = useState(false);
   const [isUser3Open, setIsUser3Open] = useState(false);
