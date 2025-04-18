@@ -109,7 +109,9 @@ tr:nth-child(even) {background: #383d7114;}
   background-color: #383d71;
   color: #fff;
 }
-
+.margin_remove .MuiFormControl-root {
+  margin: 0 !important;
+}
 
 /* Loader css */
 /* Preloader Styling */

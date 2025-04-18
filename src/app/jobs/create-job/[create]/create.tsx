@@ -33,6 +33,7 @@ interface JobPayload {
   vehicleDescriptor: string;
   vehicleType: string;
   jobDescription: JobDescriptionItem[];
+  labourCost:string;
   color: string;
   assignTechnicians: string[];
   notes: string;
@@ -116,6 +117,7 @@ export default function Technicians() {
     vehicleDescriptor: '',
     vehicleType: '',
     jobDescription: [],
+    labourCost:'',
     notes: '',
     color: '',
     assignTechnicians: [],
@@ -183,6 +185,7 @@ export default function Technicians() {
           jobDescription: jobDescriptionsArray,
           notes: jobData.notes || '',
           color: jobData.color || '',
+          labourCost: jobData.labourCost,
           // Assuming 'jobData.technicians' is an array of 'Technicians'
           assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
           // Using Technician interface
@@ -379,6 +382,7 @@ export default function Technicians() {
     formDataObj.append('bodyClass', formData.bodyClass);
     formDataObj.append('schedule', formData.schedule);
     formDataObj.append('ip', formData.ip);
+    formDataObj.append('labourCost', formData.labourCost);
 
     // Append all formData fields to formDataObj
     // Flatten the formData object and append each item
@@ -1076,6 +1080,8 @@ export default function Technicians() {
               </div>
             )}
           </div>
+        
+
           {descriptionCostFields.map((field, index) => (
             <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
               <div className='mb-2'>
@@ -1085,7 +1091,7 @@ export default function Technicians() {
                   }
                   placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
               </div>
-              <div className="mb-2 flex items-center gap-3">
+              <div className="mb-2 flex items-center gap-3 margin_remove">
                 <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
                   <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
                   <OutlinedInput
@@ -1115,8 +1121,22 @@ export default function Technicians() {
             type="button"
             onClick={handleAddMore}
             className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
+    { userType !== 'ifs' && (
+<div className="grid grid-cols-1 gap-4 mb-4 margin_remove">
 
-
+<FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
+        <InputLabel htmlFor='labourCost'>R/I R/R (Labour/Service Cost) *</InputLabel>
+        <OutlinedInput
+          id='R/I R/R (Labour/Service Cost)'
+          value={formData.labourCost}
+          onChange={(e) => handleChange(e, 'labourCost')}
+          startAdornment={<InputAdornment position="start">$</InputAdornment>}
+          label="R/I R/R (Labour/Service Cost)"
+          required
+        />
+      </FormControl>
+      </div>
+    )}
           <div className='mb-4'>
             {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
 

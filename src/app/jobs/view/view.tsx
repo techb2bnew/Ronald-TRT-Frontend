@@ -9,6 +9,7 @@ import { useSearchParams, usePathname } from 'next/navigation';
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,6 +45,11 @@ export default function ViewDetails() {
       toast.error('An error occurred while fetching technician data');
     }
   };
+
+  React.useEffect(() => {
+    const type = localStorage.getItem('types');
+    setUserType(type);
+  });
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -122,16 +128,16 @@ export default function ViewDetails() {
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Id:</strong> {jobData?.id}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>VIN:</strong> {jobData?.vin}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>VIN:</strong> {jobData?.vin}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model:</strong> {jobData?.model}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
                 >
@@ -144,22 +150,22 @@ export default function ViewDetails() {
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] min-w-[200px] inline-block">Technician Name:</strong>
+                <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
                 {jobData.technicians?.map((t: any) => `${t.firstName} ${t.lastName}`).join(', ')}
               </div>
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] min-w-[200px] inline-block">Technician Email:</strong>
+                <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
                 {jobData.technicians?.map((t: any) => t.email).join(', ')}
               </div>
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] min-w-[200px] inline-block">Technician Ph. Number:</strong>
+                <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
                 {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
               </div>
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] inline-block">Job Description:</strong>
+                <strong className="w-[210px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
                   <ul className="list-none">
                     {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
@@ -175,13 +181,16 @@ export default function ViewDetails() {
 
               </div>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[200px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
+                <strong className='w-[210px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
               </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Notes:</strong> {jobData?.notes}</div>
+              { userType !== 'ifs' && (
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
+              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Color:</strong> {jobData?.color}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
                 {jobData.images.map((form: any, index: any) => (
                   <img
