@@ -298,7 +298,7 @@ export default function Role() {
       } else {
         Swal.fire({
           title: "Registration Successful!",
-          text: "You have successfully registered. Your account will be approved soon. You will be notified via email when you can log in.",
+          text: "Thank you for signing up! Your account request has been submitted successfully and is currently under review by our team. You will receive an email notification once your account is approved.",
           icon: "success",
           confirmButtonText: "OK",
         }).then((result) => {
@@ -373,9 +373,8 @@ export default function Role() {
     // Extracting country code and formatting phone number
     const parsedNumber = parsePhoneNumberFromString(value);
     if (parsedNumber) {
-      const countryCode = parsedNumber.countryCallingCode; // Example: "91" for India
-      const nationalNumber = parsedNumber.nationalNumber; // Example: "983274663"
-
+      const countryCode = parsedNumber.countryCallingCode;  
+      const nationalNumber = parsedNumber.nationalNumber;  
       // Formatting as "+91-983274663"
       const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
 
@@ -391,14 +390,14 @@ export default function Role() {
 
 
   return (
-    <div className='main-container mb-5'>
+    <div className='main-container mb-5 bg-white'>
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <div className="flex">
         <div className="w-1/2 md:block fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
         </div>
-        <div className="md:w-1/2 absolute right-[0] top-[3rem] bg-white" style={{ padding: '0px 5rem' }}>
+        <div className="md:w-1/2 absolute right-[0] top-[0rem] bg-white" style={{ padding: '2rem 5rem' }}>
           <div className="text-center mb-5 w-full">
             <Image src={Logo} className="m-auto" width='100' height='50' alt="page img" />
             <h2 className="text-2xl font-bold text-[#161616] mt-5">Create Account</h2>
@@ -482,7 +481,7 @@ export default function Role() {
                     {/* <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="outlined" value={formData.phoneNumber} onChange={handleChange} /> */}
                     <PhoneInput
                       international
-                      defaultCountry="IN"
+                      defaultCountry="US" 
                       value={formData.phoneNumber}
                       onChange={handlePhoneChange}
                       className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
@@ -499,16 +498,7 @@ export default function Role() {
                   </div>
                 </div>
                 {/* Address and Email */}
-                <div className='mb-4 relative'>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <TextField fullWidth size="small" name="address" id="outlined-basic" color="warning" label="Enter your address *" variant="filled" value={formData.address} onChange={handleChange} />
-
-
-                </div>
+              
                 <div className="grid grid-cols-4 gap-4">
                   {/* Client Name and Business Name */}
                   <div className='mb-4 relative'>
@@ -582,6 +572,16 @@ export default function Role() {
                     <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *" variant="filled" value={formData.zipCode} onChange={handleChange} />
 
                   </div>
+                </div>
+                <div className='mb-4 relative'>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <TextField fullWidth size="small" name="address" id="outlined-basic" color="warning" label="Enter your address *" variant="filled" value={formData.address} onChange={handleChange} />
+
+
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className='mb-4 relative'>
@@ -752,7 +752,7 @@ export default function Role() {
                 </div>
                 <div className="text-sm text-center mt-5">
                   <p>Already have an account?
-                    <Link href='/' className="primary-text"> Login</Link> </p>
+                    <Link href='/' className="primary-text font-bold"> Login</Link> </p>
                 </div>
               </form>
             )}

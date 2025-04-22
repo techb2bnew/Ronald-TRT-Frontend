@@ -32,8 +32,9 @@ interface JobPayload {
   manufacturerName: string;
   vehicleDescriptor: string;
   vehicleType: string;
+  payVehicleType:string;
   jobDescription: JobDescriptionItem[];
-  labourCost:string;
+  labourCost: string;
   color: string;
   assignTechnicians: string[];
   notes: string;
@@ -44,6 +45,9 @@ interface JobPayload {
   plantState: string;
   bodyClass: string;
   schedule: string;
+  payRate: string;
+  amountPercentage: string;
+  simpleFlatRate: string;
   ip: string;
   jobId?: string;
   images: File[];
@@ -105,9 +109,11 @@ export default function Technicians() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const hasVehicleInfo = searchParams.has('vehicleInfo');
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
   ]);
+  const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [formData, setFormData] = useState<JobPayload>({
     vin: '',
     make: '',
@@ -116,8 +122,9 @@ export default function Technicians() {
     manufacturerName: '',
     vehicleDescriptor: '',
     vehicleType: '',
+    payVehicleType:'',
     jobDescription: [],
-    labourCost:'',
+    labourCost: '',
     notes: '',
     color: '',
     assignTechnicians: [],
@@ -128,6 +135,9 @@ export default function Technicians() {
     plantState: '',
     bodyClass: '',
     schedule: '',
+    payRate: '',
+    simpleFlatRate: '',
+    amountPercentage: '',
     ip: '',
     jobId: '',
     images: [],
@@ -371,7 +381,7 @@ export default function Technicians() {
     formDataObj.append('modelYear', formData.modelYear);
     formDataObj.append('manufacturerName', formData.manufacturerName);
     formDataObj.append('vehicleDescriptor', formData.vehicleDescriptor);
-    formDataObj.append('vehicleType', formData.vehicleType);
+    formDataObj.append('vehicleType', formData.vehicleType); 
     formDataObj.append('notes', formData.notes);
     formDataObj.append('color', formData.color);
     formDataObj.append('assignCustomer', formData.assignCustomer);
@@ -383,7 +393,13 @@ export default function Technicians() {
     formDataObj.append('schedule', formData.schedule);
     formDataObj.append('ip', formData.ip);
     formDataObj.append('labourCost', formData.labourCost);
-
+    if (isEdit && jobId) {
+    formDataObj.append('payVehicleType', formData.payVehicleType); 
+    formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
+    formDataObj.append('amountPercentage', formData.amountPercentage);
+    formDataObj.append('payRate', formData.payRate);
+    
+    }
     // Append all formData fields to formDataObj
     // Flatten the formData object and append each item
 
@@ -410,6 +426,16 @@ export default function Technicians() {
     if (roleType === "single-technician" && userId || roleType === "ifs" && userId) {
       if (!assignTechnicians.includes(userId)) {
         assignTechnicians.push(userId); // Add the logged-in technician's ID
+      }
+    }
+    if (isEdit && jobId) {
+      const isMultipleTechnicians = assignTechnicians.length > 1;
+      const hasFlatRate = !!formData.simpleFlatRate;
+      const hasPercentage = !!formData.amountPercentage;
+    
+      if (isMultipleTechnicians && (hasFlatRate || hasPercentage)) {
+        toast.error('Multiple technicians cannot be assigned a flat rate or percentage-based rate.');
+        return;
       }
     }
     assignTechnicians.forEach((techId) => {
@@ -981,7 +1007,7 @@ export default function Technicians() {
                   color="warning"
                   required
                   onChange={(event) => handleSelectColor(event, 'color')}
-                  
+
                 >
                   <MenuItem value='black'>Black</MenuItem>
                   <MenuItem value='gray'>Gray</MenuItem>
@@ -1002,7 +1028,7 @@ export default function Technicians() {
             </div>
             {/* Client Name and Business Name */}
             <div className='mb-4 flex gap-3 relative' >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
@@ -1037,10 +1063,10 @@ export default function Technicians() {
             </div>
             {userType !== 'single-technician' && userType !== 'ifs' && (
               <div className='mb-4 flex gap-3 relative'>
-                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                  <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
                 {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
                 <FormControl fullWidth size="small" variant="filled">
                   <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
@@ -1080,7 +1106,7 @@ export default function Technicians() {
               </div>
             )}
           </div>
-        
+
 
           {descriptionCostFields.map((field, index) => (
             <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
@@ -1102,6 +1128,7 @@ export default function Technicians() {
                     }
                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
                     label="Amount"
+                    type='number'
                     required
                   />
                 </FormControl>
@@ -1121,23 +1148,100 @@ export default function Technicians() {
             type="button"
             onClick={handleAddMore}
             className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
-    { userType !== 'ifs' && (
-<div className="grid grid-cols-1 gap-4 mb-4 margin_remove">
+          {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType !== 'single-technician' && (
+            <div className="grid grid-cols-2 gap-4">
 
-<FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
-        <InputLabel htmlFor='labourCost'>R/I R/R (Labour/Service Cost) *</InputLabel>
-        <OutlinedInput
-          id='R/I R/R (Labour/Service Cost)'
-          value={formData.labourCost}
-          onChange={(e) => handleChange(e, 'labourCost')}
-          startAdornment={<InputAdornment position="start">$</InputAdornment>}
-          label="R/I R/R (Labour/Service Cost)"
-          required
-        />
-      </FormControl>
-      </div>
-    )}
-          <div className='mb-4'>
+              <div className=' relative'>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                  <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+
+                {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
+                <FormControl fullWidth size="small" variant="filled">
+                  <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
+                  <Select
+                    labelId="payRate"
+                    color="warning"
+                    id="select-payRate"
+                    value={formData.payRate}
+                    label="payRate"
+                    name="payRate"
+                    required
+                    onChange={(event) => handleSelectChange(event, 'payRate')}
+                  >
+                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
+                    <MenuItem value='per job'>Pay Per Job</MenuItem>
+                    <MenuItem value='Flat Rate'>Flat Rate</MenuItem>
+                    <MenuItem value='Percentage Flat Rate'>Percentage Flat Rate</MenuItem>
+
+                  </Select>
+                </FormControl>
+              </div>
+              {formData.payRate === 'Pay Per Vehicles' && (
+                <div className='mb relative'>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                    <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
+                    <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
+                  </svg>
+                  <FormControl fullWidth size="small" variant="filled" className="mt-4">
+                    <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
+                    <Select
+                      labelId="payVehicleType"
+                      color="warning"
+                      id="select-payVehicleType"
+                      value={formData.payVehicleType}
+                      label="payVehicleType"
+                      name="payVehicleType"
+                      onChange={(event) => handleSelectChange(event, 'payVehicleType')}
+                    >
+                      {vehicleTypes.map((type) => (
+                        <MenuItem key={type} value={type}>{type}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              )}
+
+              {(formData.payRate === 'Percentage Flat Rate' || formData.payRate === 'per job') && (
+                <div className=' relative'>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                    <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                    <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage Rate" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} required />
+                </div>
+              )}
+              {formData.payRate !== 'Percentage Flat Rate' && (
+                <div className=' relative'>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                    <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                    <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                  <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')} required />
+                </div>
+              )}
+            </div>
+          )}
+          {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType === 'single-technician' && (
+            <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')} required />
+            </div>
+          )}
+          <div className='mb-4 mt-4'>
             {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
 
             <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>

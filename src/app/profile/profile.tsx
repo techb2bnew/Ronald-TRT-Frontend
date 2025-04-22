@@ -94,6 +94,10 @@ export default function ProfileCard() {
       toast.error("Please fill in all required fields.");
       return;
     }
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      toast.error("Phone number must be 10 digits.");
+      return;
+    }
     // ✅ Create FormData
     const formDataPayload = new FormData();
     formDataPayload.append("technicianId", technicianId);
@@ -329,8 +333,8 @@ export default function ProfileCard() {
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <div className="flex justify-between">
           <h3 className="font-semibold text-lg">Personal Information</h3>
-
-          <button
+  {!isEditing &&(
+    <button
             onClick={() => setIsEditing(true)}
             className=" primary-bg px-4 py-2 rounded-lg"
           >
@@ -350,6 +354,8 @@ export default function ProfileCard() {
             </svg>
 
           </button>
+  )}
+          
         </div>
         <div className="mt-4 grid grid-cols-3 gap-4">
           <div>
@@ -381,15 +387,34 @@ export default function ProfileCard() {
           <div>
             <label className="text-gray-600">Phone Number *</label>
             <input
-              type="text"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            />
+  type="tel"
+  name="phoneNumber"
+  value={formData.phoneNumber}
+  onChange={(e) => {
+    const onlyDigits = e.target.value.replace(/\D/g, "");
+
+    handleInputChange({
+      ...e,
+      target: {
+        ...e.target,
+        value: onlyDigits,
+        name: "phoneNumber",
+      },
+    } as React.ChangeEvent<HTMLInputElement>);
+  }}
+  pattern="\d{10,}" // At least 10 digits
+  inputMode="numeric"
+  minLength={10}
+  required
+  disabled={!isEditing}
+  className={`text-sm border rounded p-2 w-full ${
+    !isEditing ? "bg-gray-200 cursor-not-allowed" : ""
+  }`}
+/>
+
+
+
+
           </div>
 
         </div>

@@ -15,6 +15,8 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { ExportToCsv } from 'export-to-csv-file';
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -28,6 +30,8 @@ const ArchivePage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
+  const [type, setType] = useState("Archive");
+
 
   const groupedRecords: Record<string, any[]> = archive.reduce((acc, item) => {
     if (!acc[item.type]) {
@@ -193,32 +197,47 @@ const ArchivePage = () => {
   }, [currentPage, searchTerm]);
 
   // CSV Export Functions
-  const convertToCSV = (data: any[]) => {
-    if (!data.length) return ''; // Handle empty data case
-
-    const headers = Object.keys(data[0] || {}); // Extract headers from the first item
-    const csvRows = [headers.join(',')];
-
-    data.forEach((row) => {
-      const values = headers.map(header => row[header] || ''); // Ensure values are extracted
-      csvRows.push(values.join(','));
-    });
-
-    return csvRows.join('\n');
-  };
-
   const downloadCSV = () => {
-    const csvData = convertToCSV(archive);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'archive.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const csvOptions = {
+      fieldSeparator: ",",
+      quoteStrings: '"',
+      decimalSeparator: ".",
+      showLabels: true,
+      showTitle: true,
+      title: "Archived Data",
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true,
+    };
+  
+    const csvExporter = new ExportToCsv(csvOptions);
+  
+    const archiveRecords = archive ?? [];
+  
+    if (!Array.isArray(archiveRecords) || archiveRecords.length === 0) {
+      alert("No archive data found to export.");
+      return;
+    }
+  
+    const formattedData = archiveRecords.map((item) => ({
+      ID: item.id,
+      Name: `${item.firstName || ""} ${item.lastName || ""}`,
+      Email: item.email || item.vin || "",
+      Phone: item.phoneNumber || item.make || "",
+      Address: item.address || "",
+      Country: item.country || "",
+      City: item.city || "",
+      State: item.state || "",
+      Type: item.type,
+      Status: item.accountStatus || item.isApproved ? "Approved" : "Pending",
+    }));
+  
+    csvExporter.generateCsv(formattedData);
   };
+  
+  
+  
+  
  
   const renderAllTables = () => {
     const recordKeys = Object.keys(groupedRecords);

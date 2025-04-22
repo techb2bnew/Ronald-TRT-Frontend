@@ -15,83 +15,82 @@ import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
 
 export default function Login() {
-    const router = useRouter();
-    const [email, setemailAddress] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [errors, setErrors] = useState({ email: '', password: '' });
-    const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
+  const [email, setemailAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [rememberMe, setRememberMe] = useState(false);
 
-  
-  
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
- 
 
-        try {
-            const response = await fetch(`${apiUrl}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password}),
-            });
-            const data = await response.json();
 
-            if (!response.ok) {
-                if (data.errors) {
-                    setErrors(prev => ({ ...prev, ...data.errors }));
-                    Object.values(data.errors).forEach(error => {
-                        toast.error(data.error);
-                    });
-                } else if (data.error) {
-                    setErrors(prev => ({ ...prev, general: data.error }));
-                    toast.error(data.error);
-                }
-            } else {
-                console.log('Login successful:', data);
-                toast.success("Login successful!");
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('userID', data.user.id);
-                localStorage.setItem('types', data.user.types);
-                localStorage.setItem('roleId',data?.user?.roleId)
-                if (data.user.permissions) {
-                  localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
-              }
-                if (rememberMe) {
-                  localStorage.setItem('rememberedEmail', email);
-                  localStorage.setItem('rememberedPassword', password);
-              } else {
-                  localStorage.removeItem('rememberedEmail');
-                  localStorage.removeItem('rememberedPassword');
-              }
-                if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
-                  router.push('/client/listing');
-              } else {
-                  router.push('/technicians/listing');
-              }
-                // Handle success (e.g., clearing form, redirecting)
-            }
-        } catch (error) {
-            console.error('Login failed:', error);
-            toast.error('Login failed. Please try again.');
+    try {
+      const response = await fetch(`${apiUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(prev => ({ ...prev, ...data.errors }));
+          Object.values(data.errors).forEach(error => {
+            toast.error(data.error);
+          });
+        } else if (data.error) {
+          setErrors(prev => ({ ...prev, general: data.error }));
+          toast.error(data.error);
         }
-    }
-
-    useEffect(() => {
-      const rememberedEmail = localStorage.getItem('rememberedEmail');
-      const rememberedPassword = localStorage.getItem('rememberedPassword');
-  
-      if (rememberedEmail && rememberedPassword) {
-          setemailAddress(rememberedEmail);
-          setPassword(rememberedPassword);
-          setRememberMe(true); // ✅ Auto-check "Remember Me"
+      } else { 
+        toast.success("Login successful!");
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userID', data.user.id);
+        localStorage.setItem('types', data.user.types);
+        localStorage.setItem('roleId', data?.user?.roleId)
+        if (data.user.permissions) {
+          localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
+        }
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+          localStorage.setItem('rememberedPassword', password);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+          localStorage.removeItem('rememberedPassword');
+        }
+        if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
+          router.push('/client/listing');
+        } else {
+          router.push('/technicians/listing');
+        }
+        // Handle success (e.g., clearing form, redirecting)
       }
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error('Login failed. Please try again.');
+    }
+  }
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    const rememberedPassword = localStorage.getItem('rememberedPassword');
+
+    if (rememberedEmail && rememberedPassword) {
+      setemailAddress(rememberedEmail);
+      setPassword(rememberedPassword);
+      setRememberMe(true); // ✅ Auto-check "Remember Me"
+    }
   }, []);
 
-  
+
   return (
     <div className="items-center justify-items-center">
-            <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full ">
 
@@ -104,37 +103,47 @@ export default function Login() {
               <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Tech Repair Tracker</h2>
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
-            <form className="mt-6" onSubmit={handleSubmit}> 
+            <form className="mt-6" onSubmit={handleSubmit}>
               <div className='mb-4 relative'>
-                    <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                      <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
-                      <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                <TextField fullWidth className="text-xs" size="small" id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="filled"  onChange={(e) => setemailAddress(e.target.value)}  />
-               
+                <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
+                  <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <TextField fullWidth className="text-xs" size="small" id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="filled" onChange={(e) => setemailAddress(e.target.value.toLowerCase().replace(/\s/g, ""))} />
+
               </div>
 
-              <div className="mt-5 relative"> 
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
-                <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
-                <circle cx="10" cy="12" r="1" fill="#5B5B99" />
-              </svg>
-                <TextField fullWidth  type={showPassword ? "text" : "password"}  size="small" id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="filled"   onChange={(e) => setPassword(e.target.value)} />
-                  <button 
-                    type="button" 
-                    style={{ position: 'absolute', right: '10px', top: '18px' }}
-                    onClick={() => setShowPassword(!showPassword)}
+              <div className="mt-5 relative">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
+                  <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
+                  <circle cx="10" cy="12" r="1" fill="#5B5B99" />
+                </svg>
+                <TextField fullWidth type={showPassword ? "text" : "password"} size="small" id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="filled" inputProps={{
+                  maxLength: 8,
+                  minLength: 8,
+                  pattern: ".{8,8}" // exactly 8 characters
+                }}
+                  error={password.length > 0 && password.length !== 8}
+                  helperText={
+                    password.length > 0 && password.length !== 8
+                      ? "The password you entered is incorrect. Please check and try again."
+                      : ""
+                  } onChange={(e) => setPassword(e.target.value)} />
+                <button
+                  type="button"
+                  style={{ position: 'absolute', right: '10px', top: '18px' }}
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                    {showPassword ? <Image src={Eye} width='18' height='18'   alt="eye"/>  : <Image src={ EyeOff} width='18' height='18'   alt="eye"/>
-                }
-                 </button> 
+                  {showPassword ? <Image src={Eye} width='18' height='18' alt="eye" /> : <Image src={EyeOff} width='18' height='18' alt="eye" />
+                  }
+                </button>
               </div>
 
               <div className="flex justify-between items-center mt-4">
                 <div className="inline-flex items-center">
                   <label className="flex items-center cursor-pointer relative">
-                    <input type="checkbox" checked  onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]" id="check" />
+                    <input type="checkbox" checked onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]" id="check" />
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
@@ -153,7 +162,7 @@ export default function Login() {
             </form>
             <div className="text-sm text-center mt-5">
               <p>Don&apos;t have an account?
-                <Link href='/signup' className="primary-text"> Sign Up</Link> </p>
+                <Link href='/signup' className="primary-text font-bold"> Sign Up</Link> </p>
             </div>
             {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />

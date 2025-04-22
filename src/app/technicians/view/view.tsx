@@ -142,7 +142,10 @@ export default function ViewDetails() {
                 <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Pay Rate:</strong> {technician?.payRate}</p>
               )}
               {technician.amountPercentage && (
-                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> {technician?.amountPercentage}</p>
+                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Amount Percentage:</strong> ${technician?.amountPercentage}</p>
+              )}
+              {technician.simpleFlatRate && (
+                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Flat Rate:</strong> ${technician?.simpleFlatRate}</p>
               )}
 
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>

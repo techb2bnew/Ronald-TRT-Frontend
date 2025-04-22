@@ -164,25 +164,7 @@ export default function ViewDetails() {
                 {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
               </div>
 
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] inline-block">Job Description:</strong>
-                {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-                  <ul className="list-none">
-                    {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
-                      <li key={index}>
-                        <span className=" block">{item.jobDescription}</span>
-                        {/* <span className='block'>${item.cost}</span>  */}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  "No job descriptions available"
-                )}
-
-              </div>
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[210px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
-              </div>
+              
               { userType !== 'ifs' && (
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
               )}
@@ -203,7 +185,32 @@ export default function ViewDetails() {
                 ))}
               </div>
             </div>
+            
           </div>
+          <div className="grid grid-cols-1 gap-3 p-6 pt-0 mb-4">
+
+          <div className='shadow-lg p-5 bg-white rounded'>
+          <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+                <strong className="w-[210px] inline-block">Job Description:</strong>
+                {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
+                  <ul className="list-block">
+                    {jobData.jobDescription.map((item: { jobDescription: string; cost: string }, index: number) => (
+                      <li key={index} className='mb-2'>
+                        <span className=" block">{item.jobDescription}</span>
+                        {/* <span className='block'>${item.cost}</span>  */}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  "No job descriptions available"
+                )}
+
+              </div>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                <strong className='w-[210px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
+              </div>
+              </div>
+              </div>
         </div>
         <ToastContainer />
       </div>
