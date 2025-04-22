@@ -934,8 +934,8 @@ export default function Technicians() {
                 >
                   <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
                   <MenuItem value='per job'>Pay Per Job</MenuItem>
-                  <MenuItem value='Flat Rate'>Flat Rate</MenuItem>
-                  <MenuItem value='Percentage Flat Rate'>Percentage Flat Rate</MenuItem>
+                  <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
+                  <MenuItem value='Percentage Flat Rate'>Simple Percentage</MenuItem>
 
                 </Select>
               </FormControl>
@@ -977,7 +977,7 @@ export default function Technicians() {
                 <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage Rate" variant="filled" value={formData.amountPercentage} onChange={handleChange} required />
               </div>
             )}
-            {formData.payRate !== 'Percentage Flat Rate' && (
+            {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate ==='per job') && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -985,7 +985,7 @@ export default function Technicians() {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={handleChange} required />
+                <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={handleChange} required />
               </div>
             )}
           </div>
