@@ -11,6 +11,7 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import Link from 'next/link';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Customer {
@@ -160,9 +161,21 @@ const handleDeleteSuccess = (deletedId: string) => {
   const renderRow = (cust: any) => (
     <tr key={cust.id}>
       <td>{cust.id}</td>
-      <td>{cust.firstName} {cust.lastName}</td>
-      <td>{cust.email}</td>
-      <td>{cust.phoneNumber}</td>
+      <td>
+      <Link href={`/client/view?customerId=${cust.id}`}>
+  {cust?.firstName} {cust?.lastName}
+</Link>
+    </td> 
+      <td>
+  <a href={`mailto:${cust.email}`} style={{ color: '#383d71'  }}>
+    {cust.email}
+  </a>
+</td>
+<td>
+  <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71'  }}>
+    {cust.phoneNumber}
+  </a>
+</td> 
       <td>{cust.address}</td>
       <td>{cust.country}</td>
       <td>

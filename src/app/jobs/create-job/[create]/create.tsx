@@ -32,11 +32,12 @@ interface JobPayload {
   manufacturerName: string;
   vehicleDescriptor: string;
   vehicleType: string;
-  payVehicleType:string;
+  payVehicleType: string;
   jobDescription: JobDescriptionItem[];
   labourCost: string;
   color: string;
   assignTechnicians: string[];
+  technicianId: string[];
   notes: string;
   assignCustomer: string;
   createdBy: string;
@@ -86,6 +87,11 @@ interface Technicians {
   firstName: string;
   lastName: string;
   email: string;
+  simpleFlatRate: string;
+  payRate: string;
+  amountPercentage: string;
+  payVehicleType: string;
+
 }
 
 export default function Technicians() {
@@ -122,12 +128,13 @@ export default function Technicians() {
     manufacturerName: '',
     vehicleDescriptor: '',
     vehicleType: '',
-    payVehicleType:'',
+    payVehicleType: '',
     jobDescription: [],
     labourCost: '',
     notes: '',
     color: '',
     assignTechnicians: [],
+    technicianId: [],
     assignCustomer: '',
     createdBy: 'admin',
     plantCountry: '',
@@ -198,6 +205,10 @@ export default function Technicians() {
           labourCost: jobData.labourCost,
           // Assuming 'jobData.technicians' is an array of 'Technicians'
           assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
+          payRate: jobData.technicians?.[0]?.payRate || '',
+          simpleFlatRate: jobData.technicians?.[0]?.simpleFlatRate || '',
+          amountPercentage: jobData.technicians?.[0]?.amountPercentage || '',
+          payVehicleType: jobData.technicians?.[0]?.payVehicleType || '',
           // Using Technician interface
           assignCustomer: jobData.assignCustomer || '',
           createdBy: jobData.createdBy || '',
@@ -346,10 +357,15 @@ export default function Technicians() {
 
 
   const handleDescriptionCostChange = (index: number, field: keyof JobDescriptionItem, value: string) => {
+    if (field === 'cost') {
+      // Regex to allow up to 2 decimal places
+      const regex = /^\d+(\.\d{0,2})?$/;
+      if (!regex.test(value)) return; // Reject invalid input
+    }
     setDescriptionCostFields((prevFields) =>
       prevFields.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
-
+   
     // ✅ Sync changes with formData
     setFormData((prev) => ({
       ...prev,
@@ -381,7 +397,7 @@ export default function Technicians() {
     formDataObj.append('modelYear', formData.modelYear);
     formDataObj.append('manufacturerName', formData.manufacturerName);
     formDataObj.append('vehicleDescriptor', formData.vehicleDescriptor);
-    formDataObj.append('vehicleType', formData.vehicleType); 
+    formDataObj.append('vehicleType', formData.vehicleType);
     formDataObj.append('notes', formData.notes);
     formDataObj.append('color', formData.color);
     formDataObj.append('assignCustomer', formData.assignCustomer);
@@ -393,13 +409,7 @@ export default function Technicians() {
     formDataObj.append('schedule', formData.schedule);
     formDataObj.append('ip', formData.ip);
     formDataObj.append('labourCost', formData.labourCost);
-    if (isEdit && jobId) {
-    formDataObj.append('payVehicleType', formData.payVehicleType); 
-    formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
-    formDataObj.append('amountPercentage', formData.amountPercentage);
-    formDataObj.append('payRate', formData.payRate);
-    
-    }
+
     // Append all formData fields to formDataObj
     // Flatten the formData object and append each item
 
@@ -429,15 +439,17 @@ export default function Technicians() {
       }
     }
     if (isEdit && jobId) {
-      const isMultipleTechnicians = assignTechnicians.length > 1;
-      const hasFlatRate = !!formData.simpleFlatRate;
-      const hasPercentage = !!formData.amountPercentage;
-    
-      if (isMultipleTechnicians && (hasFlatRate || hasPercentage)) {
-        toast.error('Multiple technicians cannot be assigned a flat rate or percentage-based rate.');
-        return;
-      }
+      assignTechnicians.forEach((id) => {
+        formDataObj.append('technicianId[]', id); // send technicianId as an array
+      }); 
+      formDataObj.append('payVehicleType', formData.payVehicleType);
+      formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
+      formDataObj.append('amountPercentage', formData.amountPercentage);
+      formDataObj.append('payRate', formData.payRate);
+
     }
+
+     
     assignTechnicians.forEach((techId) => {
       formDataObj.append('assignTechnicians[]', techId);
     });
@@ -519,11 +531,17 @@ export default function Technicians() {
 
   const handleChange = (event: any, key: any, target = 'formData') => {
     const value = event.target.value;
+    if (key === 'simpleFlatRate') {
+      // Regex to allow up to 2 decimal places
+      const regex = /^\d+(\.\d{0,2})?$/;
+      if (!regex.test(value)) return; // Reject invalid input
+    }
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
     } else {
       setFormData((prev) => ({ ...prev, [key]: value }));
     }
+    
   };
 
 
@@ -736,7 +754,7 @@ export default function Technicians() {
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
 
         <form className="" onSubmit={handleSubmit}>
           <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
@@ -1129,6 +1147,10 @@ export default function Technicians() {
                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
                     label="Amount"
                     type='number'
+                    inputProps={{
+                      step: "0.01",
+                      min: 0
+                    }}
                     required
                   />
                 </FormControl>
@@ -1149,7 +1171,7 @@ export default function Technicians() {
             onClick={handleAddMore}
             className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
           {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType !== 'single-technician' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
 
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -1174,8 +1196,8 @@ export default function Technicians() {
                   >
                     <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
                     <MenuItem value='per job'>Pay Per Job</MenuItem>
-                    <MenuItem value='Flat Rate'>Flat Rate</MenuItem>
-                    <MenuItem value='Percentage Flat Rate'>Percentage Flat Rate</MenuItem>
+                    <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
+                    <MenuItem value='Percentage Flat Rate'>Simple Percentage Flat</MenuItem>
 
                   </Select>
                 </FormControl>
@@ -1214,10 +1236,10 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage Rate" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} required />
+                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} required />
                 </div>
               )}
-              {formData.payRate !== 'Percentage Flat Rate' && (
+              {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
                 <div className=' relative'>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                     <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -1225,7 +1247,11 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')} required />
+                  <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
+                   inputProps={{
+                    step: "0.01",
+                    min: 0
+                  }} required />
                 </div>
               )}
             </div>
@@ -1283,7 +1309,7 @@ export default function Technicians() {
               {/* <p className='text-sm mb-2'>Note</p> */}
               <textarea name="notes" id="" value={formData.notes}
                 onChange={(e) => handleChange(e, 'notes')}
-                placeholder='Enter Note *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+                placeholder='Enter Note' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
             </div>
           </div>
 

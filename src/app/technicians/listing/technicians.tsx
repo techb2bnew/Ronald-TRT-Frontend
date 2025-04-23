@@ -293,12 +293,24 @@ const TechnicianTable: React.FC = () => {
         <circle cx="12" cy="7" r="4" />
       </svg>
     )}
-    <span>{tech?.firstName} {tech?.lastName}</span>
+   <Link href={`/technicians/view?technicianId=${tech.id}`}>
+  {tech?.firstName} {tech?.lastName}
+</Link>
+
   </div>
 </td>
 
-        <td>{tech.email}</td>
-        <td>{tech.phoneNumber}</td>
+<td>
+  <a href={`mailto:${tech.email}`} style={{ color: '#383d71'  }}>
+    {tech.email}
+  </a>
+</td>
+<td>
+  <a href={`tel:${tech.phoneNumber}`} style={{ color: '#383d71'  }}>
+    {tech.phoneNumber}
+  </a>
+</td>
+
         {/* <td>{tech.payRate}</td> */}
 
         <td

@@ -534,7 +534,7 @@ svg.icon__tech {
 }
 @media screen and (max-width: 1420px) {
 .laptop_size li a , .laptop_size li span{
-  font-size: 10px;
+  font-size: 11px;
 }
 table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody tr td {
   padding: 10px;

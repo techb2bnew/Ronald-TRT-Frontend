@@ -201,7 +201,7 @@ export default function Technicians() {
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">

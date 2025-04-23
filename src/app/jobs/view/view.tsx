@@ -166,7 +166,43 @@ export default function ViewDetails() {
 
               
               { userType !== 'ifs' && (
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
+                  <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
+                  <strong className="w-[200px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
+                
+                  {(() => {
+                    const validTechs = jobData?.technicians || []; // Get all technicians from job context
+                    const flatRate = Number(jobData?.technicians?.[0]?.simpleFlatRate || 0); // Get the flat rate from the job context, if available
+                
+                    // If no technicians are available, return a message
+                    if (validTechs.length === 0) {
+                      return <div>No technicians available.</div>;
+                    }
+                
+                    // Calculate the amount to distribute per technician without percentage
+                    const amountPerTech = flatRate / validTechs.length;
+                    let calculatedPay = 0;
+                    // Iterate over all technicians and calculate the total amount
+                    validTechs.forEach((tech: any) => {
+                      const amountPercentage = Number(tech.amountPercentage); // Get the technician's percentage
+                
+                      if (!isNaN(amountPercentage)) {
+                        // If technician has an amountPercentage, calculate pay based on percentage
+                        calculatedPay = (amountPercentage / 100) * amountPerTech;
+                      } else {
+                        // Otherwise, distribute flatRate equally among all technicians
+                        calculatedPay = amountPerTech;
+                      }
+                    });
+                
+                    return (
+                      <div className="">
+                        ${calculatedPay.toFixed(2)} {/* Display the total calculated pay once */}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+              // <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>

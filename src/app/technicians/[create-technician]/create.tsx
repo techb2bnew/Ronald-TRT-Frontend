@@ -42,7 +42,7 @@ interface TechnicianForm {
   role: string;
   types: string;
   agreeTerms: string;
-  vehicleType: string;
+  payVehicleType: string;
 
 }
 export default function Technicians() {
@@ -61,6 +61,7 @@ export default function Technicians() {
   const [roles, setRoles] = useState<any[]>([]);
   const isSingleTechnician = searchParams.has('singletechnician');
   const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];  
+  const [userType, setUserType] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
@@ -80,7 +81,7 @@ export default function Technicians() {
     simpleFlatRate: '',
     taxForms: [],
     image: null,
-    vehicleType: '',
+    payVehicleType: '',
     amountPercentage: '',
     role: 'technician',
     types: 'superadmin',
@@ -165,6 +166,11 @@ export default function Technicians() {
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
+    if (name === 'simpleFlatRate') {
+      // Regex to allow up to 2 decimal places
+      const regex = /^\d+(\.\d{0,2})?$/;
+      if (!regex.test(value)) return; // Reject invalid input
+    }
     setFormData({ ...formData, [name]: value });
     if (name === 'confirmPassword') {
       validateConfirmPassword(value);
@@ -273,7 +279,10 @@ export default function Technicians() {
     }
   };
 
-
+React.useEffect(() => {
+    const type = localStorage.getItem('types');
+    setUserType(type);
+  });
   // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const files = e.target.files ? Array.from(e.target.files) : []; // Convert FileList to array
   //   setFormData(prev => ({ ...prev, taxForms: files }));
@@ -507,7 +516,7 @@ export default function Technicians() {
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
         <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Share Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
 
         <form onSubmit={handleSubmit}>
@@ -909,8 +918,8 @@ export default function Technicians() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-
+          <div className="grid grid-cols-3 gap-4">
+                  {!isSingleTechnician && (
             <div className=' relative'>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -940,6 +949,7 @@ export default function Technicians() {
                 </Select>
               </FormControl>
             </div>
+            )}
             {formData.payRate === 'Pay Per Vehicles' && (
               <div className='mb relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -948,14 +958,14 @@ export default function Technicians() {
                   <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
                 </svg>
                 <FormControl fullWidth size="small" variant="filled" className="mt-4">
-                  <InputLabel id="vehicleType" color="warning">Select Vehicle Type</InputLabel>
+                  <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
                   <Select
-                    labelId="vehicleType"
+                    labelId="payVehicleType"
                     color="warning"
                     id="select-vehicleType"
-                    value={formData.vehicleType}
-                    label="vehicleType"
-                    name="vehicleType"
+                    value={formData.payVehicleType}
+                    label="payVehicleType"
+                    name="payVehicleType"
                     onChange={handleSelectChange}
                   >
                     {vehicleTypes.map((type) => (
@@ -966,7 +976,7 @@ export default function Technicians() {
               </div>
             )}
 
-            {(formData.payRate === 'Percentage Flat Rate' || formData.payRate === 'per job') && (
+            {(formData.payRate === 'Percentage Flat Rate') && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -974,10 +984,10 @@ export default function Technicians() {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage Rate" variant="filled" value={formData.amountPercentage} onChange={handleChange} required />
+                <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={handleChange} required />
               </div>
             )}
-            {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate ==='per job') && (
+            {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate') && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -985,10 +995,27 @@ export default function Technicians() {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={handleChange} required />
+                <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={handleChange} inputProps={{
+                    step: "0.01",
+                    min: 0
+                  }} required />
               </div>
             )}
           </div>
+          {!isSingleTechnician || userType !== 'ifs' && (
+                      <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                          <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                          <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                          <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                        </svg>
+                        <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={handleChange} inputProps={{
+                    step: "0.01",
+                    min: 0
+                  }} required />
+                      </div>
+                    )}
           <div className="grid grid-cols-2 gap-4 mt-4">
 
             <div className='mb-2'>
