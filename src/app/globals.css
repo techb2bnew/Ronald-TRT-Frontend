@@ -505,7 +505,7 @@ svg.icon__tech {
   .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root, label#outlined-basic-label, label.MuiFormLabel-root.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled.MuiFormLabel-colorWarning.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled{
   left: 22px !important;
 }
-.css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input, input#outlined-basic, input#confirmPassword{
+.css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input, input#outlined-basic, input#confirmPassword, .MuiInputBase-input.MuiFilledInput-input{
   padding-left: 35px !important;
   background-color: #f5f7fa !important;
 
