@@ -12,13 +12,15 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import PhoneInput from 'react-phone-number-input'
-import 'react-phone-number-input/style.css' // For basic styling
+import 'react-phone-number-input/style.css' 
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import Share from '../../../../public/share.png';
 import Image from 'next/image';
 import Eye from "../../../../public/eye.svg";
 import EyeOff from '../../../../public/eye-off.svg';
 import Breadcrumb from '@/app/component/breadcrumb';
+import Swal from "sweetalert2";
+
 interface TechnicianForm {
   id?: string;
   firstName: string;
@@ -425,13 +427,42 @@ React.useEffect(() => {
   }, []);
 
   const handleCopy = () => {
-    const link = `${domain}/signup`;  // Apna actual link dalen
-    navigator.clipboard.writeText(link).then(() => {
-      setCopied(true);
-      toast.success('Link Copied!');
-      setTimeout(() => setCopied(false), 2000); // 2 sec baad reset
+    const shareUrl = `${domain}/signup`;
+  
+    Swal.fire({
+      title: "Share Link",
+      html: `
+      <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 15px;">
+        <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" style="background: #f7f7f7; padding: 10px; border-radius: 40px; box-shadow: 2px 3px 4px #ebe1e1;">
+          <svg width="24" height="24" fill="#3b5998" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879v-6.987h-2.54v-2.892h2.54V9.797c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.772-1.63 1.562v1.875h2.773l-.443 2.892h-2.33V21.88C18.343 21.128 22 16.991 22 12z"/></svg>
+        </a>
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" style="background: #f7f7f7; padding: 10px; border-radius: 40px; box-shadow: 2px 3px 4px #ebe1e1;">
+          <svg width="24" height="24" fill="#1da1f2" viewBox="0 0 24 24"><path d="M23 2.999a9.001 9.001 0 01-2.608.716A4.522 4.522 0 0022.395.362a9.039 9.039 0 01-2.867 1.097 4.513 4.513 0 00-7.683 4.113 12.798 12.798 0 01-9.293-4.71 4.513 4.513 0 001.397 6.027A4.486 4.486 0 01.893 6.44v.057a4.513 4.513 0 003.622 4.422 4.518 4.518 0 01-2.038.078 4.514 4.514 0 004.213 3.128A9.055 9.055 0 010 19.54 12.781 12.781 0 006.918 21c8.303 0 12.844-6.877 12.844-12.84 0-.196-.004-.392-.013-.586A9.19 9.19 0 0023 2.999z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" style="background: #f7f7f7; padding: 10px; border-radius: 40px; box-shadow: 2px 3px 4px #ebe1e1;">
+          <svg width="24" height="24" fill="#0077b5" viewBox="0 0 24 24"><path d="M4.98 3.5C3.33 3.5 2 4.82 2 6.48s1.33 2.98 2.98 2.98a2.983 2.983 0 002.98-2.98A2.982 2.982 0 004.98 3.5zM2.4 21.5h5.16v-11H2.4v11zM9.34 10.5h4.93v1.6h.07c.68-1.28 2.35-2.63 4.83-2.63 5.16 0 6.11 3.4 6.11 7.81v4.22h-5.16v-3.74c0-.89-.03-2.04-.77-2.83-.73-.78-1.76-.84-2.49-.84-1.77 0-2.59 1.27-2.59 3.14v4.27h-5.17v-11z"/></svg>
+        </a>
+        <a href="https://api.whatsapp.com" target="_blank" rel="noopener noreferrer" style="background: #f7f7f7; padding: 10px; border-radius: 40px; box-shadow: 2px 3px 4px #ebe1e1;">
+          <svg width="24" height="24" fill="#25d366" viewBox="0 0 24 24"><path d="M20.52 3.48A11.9 11.9 0 0012.01 0C5.37 0 .01 5.36.01 12c0 2.11.55 4.17 1.59 5.97L0 24l6.24-1.63a11.91 11.91 0 005.77 1.47H12c6.63 0 12-5.37 12-12a11.9 11.9 0 00-3.48-8.52zM12 21.75c-1.75 0-3.47-.46-4.97-1.34l-.36-.21-3.69.96.99-3.6-.23-.37A9.72 9.72 0 012.26 12c0-5.37 4.37-9.74 9.75-9.74S21.76 6.63 21.76 12 17.38 21.75 12 21.75zm5.2-7.04c-.28-.14-1.65-.81-1.91-.9-.26-.1-.44-.14-.62.14s-.72.9-.89 1.08-.33.2-.6.07a8.34 8.34 0 01-2.45-1.51 9.24 9.24 0 01-1.71-2.13c-.18-.3 0-.46.13-.6.13-.13.29-.33.44-.49.15-.17.2-.29.3-.48.1-.2.05-.37-.02-.51-.07-.13-.62-1.5-.86-2.06-.23-.56-.46-.48-.62-.49l-.53-.01c-.17 0-.45.06-.69.29a2.86 2.86 0 00-.9 2.12c0 1.24.9 2.44 1.02 2.6.12.17 1.77 2.7 4.3 3.78.6.26 1.06.42 1.42.54.6.19 1.15.16 1.58.1.48-.07 1.65-.68 1.89-1.33.23-.64.23-1.19.16-1.33-.07-.13-.24-.2-.51-.34z"/></svg>
+        </a>
+        <a href="mailto:?subject=Check this out" style="background: #f7f7f7; padding: 10px; border-radius: 40px; box-shadow: 2px 3px 4px #ebe1e1;">
+          <svg width="24" height="24" fill="#555" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 00-2 2v1.2l10 6.25L22 7.2V6a2 2 0 00-2-2zM2 8.92V18a2 2 0 002 2h16a2 2 0 002-2V8.92l-9.28 5.79a1.2 1.2 0 01-1.44 0L2 8.92z"/></svg>
+        </a>
+      </div>
+      <input type="text" class="p-3 rounded" value="${shareUrl}" id="copyInput" readonly style="margin-top:1rem; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+    `,
+      showCancelButton: true,
+      confirmButtonColor: "#383d71",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Copy Link",
+      preConfirm: () => {
+        const input = document.getElementById("copyInput") as HTMLInputElement;
+        navigator.clipboard.writeText(input.value);
+        return false;
+      },
     });
   };
+  
 
 
   const countries = Country.getAllCountries();
@@ -676,9 +707,7 @@ React.useEffect(() => {
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4'>
-              {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
-              {/* <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="filled" value={formData.phoneNumber} onChange={handleChange} /> */}
-              <PhoneInput
+               <PhoneInput
                 international
                 defaultCountry="IN"
                 value={formData.phoneNumber}

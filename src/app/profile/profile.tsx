@@ -6,6 +6,14 @@ import "react-toastify/dist/ReactToastify.css";
 import user from "../../../public/user.png";
 import Edit from "../../../public/upload.png";
 import { useTechnician } from "@/app/techheaderprofile/headerprofile";
+import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { Country, State } from 'country-state-city';
+import { ICountry, IState } from 'country-state-city';
+import { SelectChangeEvent } from '@mui/material/Select';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css' ;
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+
 
 export default function ProfileCard() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -19,6 +27,7 @@ export default function ProfileCard() {
     phoneNumber: "",
     address: "",
     city: "",
+    state:'',
     country: "",
     zipCode: "",
   });
@@ -56,6 +65,7 @@ export default function ProfileCard() {
           phoneNumber: data.technician.phoneNumber,
           address: data.technician.address || "",
           city: data.technician.city || "",
+          state: data.technician.state || "",
           country: data.technician.country || "",
           zipCode: data.technician.zipCode || "",
         });
@@ -76,11 +86,20 @@ export default function ProfileCard() {
   }, []);
 
   // ✅ Handle Form Change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { name, value } = e.target;
+  //   setFormData({ ...formData, [name]: value });
+  // };
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
   
+
+const handleSelectChange = (event: SelectChangeEvent) => {
+  const { name, value } = event.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+};
   // ✅ Handle Profile Update
   const handleProfileUpdate = async () => {
     const token = localStorage.getItem("token");
@@ -94,8 +113,9 @@ export default function ProfileCard() {
       toast.error("Please fill in all required fields.");
       return;
     }
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      toast.error("Phone number must be 10 digits.");
+
+    if (!parsePhoneNumberFromString(phoneNumber)) {
+      toast.error("Please enter a valid phone number.");
       return;
     }
     // ✅ Create FormData
@@ -106,6 +126,7 @@ export default function ProfileCard() {
     formDataPayload.append("phoneNumber", formData.phoneNumber);
     formDataPayload.append("address", formData.address);
     formDataPayload.append("city", formData.city);
+    formDataPayload.append("state", formData.state);
     formDataPayload.append("country", formData.country);
     formDataPayload.append("zipCode", formData.zipCode);
 
@@ -277,7 +298,19 @@ export default function ProfileCard() {
     }
   };
 
+
+  const handlePhoneChange = (value: string | undefined) => {
+    if (!value) return;
   
+    setFormData((prev) => ({
+      ...prev,
+      phoneNumber: value, // <-- Keep this E.164 formatted string
+    }));
+  };
+  
+
+  const countries = Country.getAllCountries();
+  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   return (
     <div className="rounded-lg p-6 mx-auto">
@@ -357,63 +390,39 @@ export default function ProfileCard() {
   )}
           
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4">
-          <div>
-            <label className="text-gray-600">First Name *</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            />
+        <div className="mt-4 grid grid-cols-3 gap-4"> 
+            <div className='mb-4 relative'>
+            
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                            <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                            <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+            
+                          <TextField fullWidth size="small" className='form__input' name="firstName" id="outlined-basic" color="warning" label="First Name" variant="filled" value={formData.firstName} onChange={handleInputChange}   disabled={!isEditing} required />
+             
+             
           </div>
-          <div>
-            <label className="text-gray-600">Last Name *</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            />
+           <div className='mb-4 relative'>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                          <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                          <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Last Name" variant="filled" value={formData.lastName} onChange={handleInputChange} disabled={!isEditing} required />
+           
+             
           </div>
-          <div>
-            <label className="text-gray-600">Phone Number *</label>
-            <input
-  type="tel"
-  name="phoneNumber"
-  value={formData.phoneNumber}
-  onChange={(e) => {
-    const onlyDigits = e.target.value.replace(/\D/g, "");
+          <div className='mb-4'>
+                         <PhoneInput
+                          international
+                          defaultCountry="US"
+                          value={formData.phoneNumber}
+                          onChange={handlePhoneChange}
+                          disabled={!isEditing}
+                          required
+                          className="input text-xs input-bordered w-full p-2 rounded"
+                        />
 
-    handleInputChange({
-      ...e,
-      target: {
-        ...e.target,
-        value: onlyDigits,
-        name: "phoneNumber",
-      },
-    } as React.ChangeEvent<HTMLInputElement>);
-  }}
-  pattern="\d{10,}" // At least 10 digits
-  inputMode="numeric"
-  minLength={10}
-  required
-  disabled={!isEditing}
-  className={`text-sm border rounded p-2 w-full ${
-    !isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-  }`}
-/>
-
-
-
+             
 
           </div>
 
@@ -421,9 +430,33 @@ export default function ProfileCard() {
       </div>
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <h3 className="font-semibold text-lg">Address</h3>
-        <div className="mt-4 grid grid-cols-3 gap-4">
-        <div>
-            <label className="text-gray-600">Country *</label>
+        <div className="mt-4 grid grid-cols-4 gap-4">
+        <div className=' relative'>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+           <FormControl fullWidth size="small" variant="filled">
+                          <InputLabel id="country" color="warning">Select country *</InputLabel>
+                          <Select
+                            labelId="country"
+                            color="warning"
+                            id="country"
+                            value={formData.country}
+                            label="country"
+                            name="country"
+                            required
+                            disabled={!isEditing}
+                            onChange={handleSelectChange}
+                          >
+                            {countries.map((country: ICountry) => (
+                              <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+
+            {/* <label className="text-gray-600">Country *</label>
             <input
               type="text"
               name="country"
@@ -433,10 +466,55 @@ export default function ProfileCard() {
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
                 required
-            />
+            /> */}
           </div>
-          <div>
-            <label className="text-gray-600">City *</label>
+          <div className=' relative'>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+            <FormControl fullWidth size="small" variant="filled">
+                            <InputLabel id="state" color="warning"> Select state *</InputLabel>
+                            <Select
+                              labelId="state"
+                              color="warning"
+                              id="select-state"
+                              value={formData.state}
+                              label="State"
+                              name="state"
+                              required
+                              disabled={!isEditing}
+                              onChange={handleSelectChange}
+                            >
+                              {states.map((state: IState) => (
+                                <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+            {/* <label className="text-gray-600">State *</label>
+            <input
+              type="text"
+              name="state"
+              value={formData.state}
+              onChange={handleInputChange}
+              disabled={!isEditing}
+              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
+                }`}
+                required
+            /> */}
+          </div> 
+            <div className='mb-4 relative'>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                          <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city" variant="filled" value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
+            
+                         
+            {/* <label className="text-gray-600">City *</label>
             <input
               type="text"
               name="city"
@@ -446,11 +524,18 @@ export default function ProfileCard() {
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
                 required
-            />
+            /> */}
           </div>
          
-          <div>
-            <label className="text-gray-600">Zip Code *</label>
+          <div className='mb-4 relative'>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                          <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+          
+                        <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="filled" value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
+           
+            {/* <label className="text-gray-600">Zip Code *</label>
             <input
               type="text"
               name="zipCode"
@@ -460,7 +545,7 @@ export default function ProfileCard() {
               className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
                 }`}
                 required
-            />
+            /> */}
           </div>
         </div>
       </div>

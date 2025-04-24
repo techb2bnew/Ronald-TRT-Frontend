@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import plusIcon from '../../../public/plus-circle.png'
 import Image from 'next/image';
 import TextField from '@mui/material/TextField';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 
 interface CommonHeaderProps {
   heading: string;
@@ -13,10 +14,11 @@ interface CommonHeaderProps {
   buttonLink: string;
   userRole: string;
   onExport?: () => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport, onPageSizeChange }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
 
@@ -62,6 +64,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
 
           </div>
+          <select name="" id="" className='w-[180px] p-3'  onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+            <option value="">Select option</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="40">40</option>
+            <option value="50">50</option> 
+          </select> 
+
           <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />

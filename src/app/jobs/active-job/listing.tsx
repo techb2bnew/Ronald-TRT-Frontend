@@ -33,6 +33,8 @@ const JobTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -44,7 +46,24 @@ const JobTable: React.FC = () => {
     // ✅ Remove the deleted technician from the table
     setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
   };
-  const fetchJobs = async (page = 1, query = '') => {
+
+
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
+  
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+  
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
+
+  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -52,27 +71,29 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
+      // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchTechnicianActiveJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+          : `${apiUrl}/searchTechnicianActiveJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchAllJobs?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
-
+          ? `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchAllJobs?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+  
+      console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
+  
       const response = await fetch(endpoint, { method: 'GET', headers });
-
       const data = await response.json();
+  
+      console.log('API response data:', data);  // Debugging API response
+  
       if (response.ok) {
-        const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.ActiveJob || []
-          : data.jobs?.jobs || [];
-        //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
-
-        setActiveJob(fetchedTechnicians);
+        const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
+        setActiveJob(fetchedJobs);
         setTotalPages(data.jobs?.totalPages || 1);
-
+        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+  
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -86,17 +107,18 @@ const JobTable: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+useEffect(() => {
+  const timeoutId = setTimeout(() => {
+    fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
+  }, 500);
+  return () => clearTimeout(timeoutId);
+}, [currentPage, searchTerm, pageSize]);
 
 
-
+ 
 
 
 
@@ -371,7 +393,7 @@ const JobTable: React.FC = () => {
         ]}
       />
 
-      <CommonHeader heading="Active Work Orders" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Active Work Orders"  onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

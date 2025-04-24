@@ -45,7 +45,7 @@ export default function Forgot() {
                 } else { 
                   await Swal.fire({
                     title: 'Success',
-                    text: 'Password reset email sent successfully',
+                    text: 'Password reset link has been sent to your email.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                   }).then(() => {

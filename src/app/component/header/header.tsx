@@ -6,6 +6,7 @@ import user from "../../../../public/user.png";
 import { useState, useRef, useEffect } from "react";
 import { useSidebar } from "@/app/component/SidebarContext";
 import Image from "next/image";
+import Swal from "sweetalert2";
 
 export default function Header() {
   const router = useRouter();
@@ -17,9 +18,21 @@ export default function Header() {
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
   const logOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("technicianData");
-    router.push("/");
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#383d71",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("technicianData");
+        router.push("/");
+      }
+    });
   };
 
   // 🟡 Detect outside click

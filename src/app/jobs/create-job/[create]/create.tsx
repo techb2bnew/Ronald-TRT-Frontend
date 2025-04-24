@@ -1093,8 +1093,7 @@ export default function Technicians() {
                     labelId="assignTechnicians"
                     id="select-assignTechnicians"
                     color="warning"
-                    label="Select technicians"
-                    multiple
+                    label="Select technicians" 
                     required
                     value={formData.assignTechnicians}
                     onChange={handleTechnicianChange}
@@ -1104,8 +1103,7 @@ export default function Technicians() {
                     }).filter(Boolean).join(', ')}
                   >
                     {technicians.map((tech) => (
-                      <MenuItem key={tech.id} value={String(tech.id)}>
-                        <Checkbox checked={formData.assignTechnicians.includes(String(tech.id))} />
+                      <MenuItem key={tech.id} value={String(tech.id)}> 
                         <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
                       </MenuItem>
                     ))}
