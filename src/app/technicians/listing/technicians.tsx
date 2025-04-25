@@ -34,6 +34,9 @@ const TechnicianTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
+
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
@@ -146,7 +149,7 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
-  const fetchTechnicians = async (page = 1, query = '') => {
+  const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -167,7 +170,7 @@ const TechnicianTable: React.FC = () => {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchTechnician?page=${page}`;
+        : `${apiUrl}/fetchTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -200,10 +203,10 @@ const TechnicianTable: React.FC = () => {
   // Unified useEffect to handle both search and pagination
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchTechnicians(currentPage, searchTerm);
+      fetchTechnicians(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
 
 
   const handleDeleteSuccess = (deletedId: string) => {
@@ -273,7 +276,20 @@ const TechnicianTable: React.FC = () => {
     setStatuses(loadedStatuses);
   }, [technicians]);
 
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
 
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
 
   const renderRow = (tech: any) => {
@@ -283,48 +299,48 @@ const TechnicianTable: React.FC = () => {
       <tr key={tech.id}>
         <td>{tech.id}</td>
         <td>
-  <div className="flex items-center gap-2">
-    {tech?.image ? (
-      <img src={tech.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-    ) : (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    )}
-   <Link href={`/technicians/view?technicianId=${tech.id}`}>
-  {tech?.firstName} {tech?.lastName}
-</Link>
+          <div className="flex items-center gap-2">
+            {tech?.image ? (
+              <img src={tech.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
+            <Link href={`/technicians/view?technicianId=${tech.id}`}>
+              {tech?.firstName} {tech?.lastName}
+            </Link>
 
-  </div>
-</td>
+          </div>
+        </td>
 
-<td>
-  <a href={`mailto:${tech.email}`} style={{ color: '#383d71'  }}>
-    {tech.email}
-  </a>
-</td>
-<td>
-  <a href={`tel:${tech.phoneNumber}`} style={{ color: '#383d71'  }}>
-    {tech.phoneNumber}
-  </a>
-</td>
+        <td>
+          <a href={`mailto:${tech.email}`} style={{ color: '#383d71' }}>
+            {tech.email}
+          </a>
+        </td>
+        <td>
+          <a href={`tel:${tech.phoneNumber}`} style={{ color: '#383d71' }}>
+            {tech.phoneNumber}
+          </a>
+        </td>
 
         {/* <td>{tech.payRate}</td> */}
 
         <td
-           onClick={() => {
+          onClick={() => {
             if (tech.accountStatus || tech.isApproved) {
               handleAccountStatusChange(tech.id, !tech.accountStatus);
             }
           }} // Corrected here
-          style={{ cursor: tech.isApproved || tech.accountStatus  ? 'pointer' : 'not-allowed' }}
+          style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
         >
           <span
             className={`badge ${tech.accountStatus
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]' 
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.accountStatus ? 'Active' : 'Inactive'}
@@ -384,8 +400,8 @@ const TechnicianTable: React.FC = () => {
         >
           <span
             className={`badge ${tech.isApproved
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.isApproved ? 'Approved' : 'Accept'}
@@ -441,13 +457,13 @@ const TechnicianTable: React.FC = () => {
   };
 
   return (
-    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}> 
-       <Breadcrumb
+    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+      <Breadcrumb
         items={[
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
-      /> 
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      />
+      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
       <SortableTable
         headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
         data={technicians}

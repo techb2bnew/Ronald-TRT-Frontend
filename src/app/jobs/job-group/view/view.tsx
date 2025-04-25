@@ -5,6 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/app/component/loader";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { capitalize } from "@mui/material";
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
@@ -151,36 +153,38 @@ export default function ViewDetails() {
   <strong className="w-[200px] min-w-[200px] inline-block capitalize">R/I/R/R</strong>
 
   {(() => {
-    const validTechs = job?.technicians || []; // Get all technicians from job context
-    const flatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0); // Get the flat rate from the job context, if available
+                    if (!job) return null;
 
-    // If no technicians are available, return a message
-    if (validTechs.length === 0) {
-      return <div>No technicians available.</div>;
-    }
+                    const percentage = Number(job.amountPercentage);
+                    const flatRate = Number(job.simpleFlatRate);
+                    const calculatedPay = (flatRate * percentage) / 100;
 
-    // Calculate the amount to distribute per technician without percentage
-    const amountPerTech = flatRate / validTechs.length;
-    let calculatedPay = 0;
-    // Iterate over all technicians and calculate the total amount
-    validTechs.forEach((tech: any) => {
-      const amountPercentage = Number(tech.amountPercentage); // Get the technician's percentage
+                    const tooltipId = `tooltip-${job.id}`;
 
-      if (!isNaN(amountPercentage)) {
-        // If technician has an amountPercentage, calculate pay based on percentage
-        calculatedPay = (amountPercentage / 100) * amountPerTech;
-      } else {
-        // Otherwise, distribute flatRate equally among all technicians
-        calculatedPay = amountPerTech;
-      }
-    });
-
-    return (
-      <div className="">
-        ${calculatedPay.toFixed(2)} {/* Display the total calculated pay once */}
-      </div>
-    );
-  })()}
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {calculatedPay === 0 ? (
+                          <>
+                            <span
+                              data-tooltip-id={tooltipId}
+                              data-tooltip-content="R/I/R/R price is not added for this job."
+                              style={{
+                                height: '12px',
+                                width: '12px',
+                                backgroundColor: 'red',
+                                borderRadius: '50%',
+                                display: 'inline-block',
+                                cursor: 'pointer',
+                              }}
+                            ></span>
+                            <Tooltip id={tooltipId} place="top" />
+                          </>
+                        ) : (
+                          <>${calculatedPay.toFixed(2)}</>
+                        )}
+                      </div>
+                    );
+                  })()}
 </div>
 
 

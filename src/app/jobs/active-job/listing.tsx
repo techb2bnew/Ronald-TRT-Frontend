@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -15,6 +15,7 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import Papa from 'papaparse';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -51,13 +52,13 @@ const JobTable: React.FC = () => {
   const handlePageSizeChange = (size: number) => {
     // Calculate the total number of pages based on the current totalJobs and the new pageSize
     const newTotalPages = Math.ceil(totalJobs / size);
-  
+
     // If the current page is greater than the new total pages, reset it to the last page
     let newPage = currentPage;
     if (newPage > newTotalPages) {
       newPage = newTotalPages;
     }
-  
+
     // Update the state with the new page size and set the current page accordingly
     setPageSize(size);
     setCurrentPage(newPage); // Set the current page to the last valid page
@@ -71,7 +72,7 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin'
@@ -80,20 +81,20 @@ const JobTable: React.FC = () => {
         : roleType === 'superadmin'
           ? `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchAllJobs?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-  
+
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
-  
+
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-  
+
       console.log('API response data:', data);  // Debugging API response
-  
+
       if (response.ok) {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
         setActiveJob(fetchedJobs);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
-  
+
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -107,18 +108,18 @@ const JobTable: React.FC = () => {
       setLoading(false);
     }
   };
-  
 
 
-useEffect(() => {
-  const timeoutId = setTimeout(() => {
-    fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
-  }, 500);
-  return () => clearTimeout(timeoutId);
-}, [currentPage, searchTerm, pageSize]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm, pageSize]);
 
 
- 
+
 
 
 
@@ -243,29 +244,40 @@ useEffect(() => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = activeJob.map((jobData) => ({
-      ID: jobData.id,
-      Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-      BodyClass: jobData.bodyClass,
-      Color: jobData.color,
-      Make: jobData.make,
-      Model: jobData.model,
-      'Model Year': jobData.modelYear,
-      'Manufacturer Name': jobData.manufacturerName,
-      'Plant Company Name': jobData.plantCompanyName,
-      'Plant Country': jobData.plantCountry,
-      'Plant State': jobData.plantState,
-      'Account Status': jobData.accountStatus ? 'Approved' : 'Accept',
-      Notes: jobData.notes,
-      CreatedAt: new Date(jobData.createdAt).toLocaleDateString(),
-      JobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
-      Technicians: jobData.technicians
-        .map((tech: any) => `${tech.firstName} ${tech.lastName}`)
-        .join(', '), // Multiple technicians in one column
-    }));
+    const formattedData = activeJob.map((jobData) => {
+      return {
+        id: jobData.id,
+        vin: jobData.vin,
+        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        assignCustomer: jobData.assignCustomer,
+        bodyClass: jobData.bodyClass,
+        color: jobData.color,
+        make: jobData.make,
+        model: jobData.model,
+        amountPercentage: jobData.amountPercentage,
+        payRate: jobData.payRate,
+        vehicleType: jobData.vehicleType,
+        simpleFlatRate: jobData.simpleFlatRate,
+        'modelYear': jobData.modelYear,
+        'vehicleDescriptor': jobData.vehicleDescriptor,
+        'manufacturerName': jobData.manufacturerName,
+        'plantCompanyName': jobData.plantCompanyName,
+        'plantCountry': jobData.plantCountry,
+        'plantState': jobData.plantState,
+        'accountStatus': jobData.accountStatus ? 'Approved' : 'Accept',
+        notes: jobData.notes,
+        createdAt: new Date(jobData.createdAt).toLocaleDateString(),
+        jobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
+        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
+        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
 
+      };
+    });
     csvExporter.generateCsv(formattedData);
-  };
+  }
+
 
 
 
@@ -299,6 +311,69 @@ useEffect(() => {
   const canCreate = hasPermission("approve");
 
 
+  const handleImportCSV = (file: File) => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // remove BOM
+        .trimStart(); // remove leading whitespace/newlines
+  
+      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
+      if (text.startsWith('Work Order Data')) {
+        const lines = text.split(/\r?\n/);
+        if (lines.length > 1) {
+          // drop the first "Work Order Data" line if it doesn't contain valid headers
+          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
+            lines.shift(); // remove first line
+          }
+        }
+        text = lines.join('\n');
+      }
+  
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        complete: async (result) => { 
+  
+          const cleanedData = (result.data as any[]).filter(
+            (row) => Object.values(row).some((val) => val !== '')
+          );
+  
+          const finalData = cleanedData.map((row) => ({
+            ...row, 
+          }));
+  
+          try {
+            const response = await axios.post(
+              `${apiUrl}/importActiveJob`,
+              { data: finalData },
+              { headers }
+            );
+            toast.success('CSV Import Successful!.');
+            fetchJobs(currentPage, searchTerm, pageSize); 
+          } catch (error) {
+            console.error('❌ Import failed:', error);
+            toast.error('Import failed. Check console for details.'); 
+          }
+        },
+        error: (err:any) => {
+          console.error('❌ CSV Parse error:', err);
+          alert('❌ Error parsing CSV file.');
+        },
+      });
+    };
+  
+    reader.readAsText(file);
+  };
+  
+  
+
+
   const renderRow = (job: any) => {
 
     const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
@@ -323,39 +398,45 @@ useEffect(() => {
         <td>${totalCost}</td>
         <td>
   {(() => {
-    if (!job?.technicians?.length) return null;
+    if (!job) return null;
 
-    const tech = job.technicians[0]; // Only use the first technician
-    const percentage = Number(tech.amountPercentage);
-    const flatRate = Number(tech.simpleFlatRate);
+    const percentage = job.amountPercentage ? Number(job.amountPercentage) : null;
+    const flatRate = job.simpleFlatRate ? Number(job.simpleFlatRate) : null;
+
+    // Check if either amountPercentage or simpleFlatRate is null
+    if (percentage === null || flatRate === null || isNaN(percentage) || isNaN(flatRate)) {
+      const tooltipId = `tooltip-${job.id}`;
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span
+            data-tooltip-id={tooltipId}
+            data-tooltip-content="R/I/R/R price is not added for this job."
+            style={{
+              height: '12px',
+              width: '12px',
+              backgroundColor: 'red',
+              borderRadius: '50%',
+              display: 'inline-block',
+              cursor: 'pointer',
+            }}
+          ></span>
+          <Tooltip id={tooltipId} place="top" />
+        </div>
+      );
+    }
+
+    // Calculate the pay if both values are present
     const calculatedPay = (flatRate * percentage) / 100;
-    const tooltipId = `tooltip-${tech.id}`;
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-        {calculatedPay === 0 ? (
-          <>
-            <span
-              data-tooltip-id={tooltipId}
-              data-tooltip-content="R/I/R/R price is not added for this job."
-              style={{
-                height: '12px',
-                width: '12px',
-                backgroundColor: 'red',
-                borderRadius: '50%',
-                display: 'inline-block',
-                cursor: 'pointer',
-              }}
-            ></span>
-            <Tooltip id={tooltipId} place="top" />
-          </>
-        ) : (
-          <>${calculatedPay.toFixed(2)}</>
-        )}
+        ${calculatedPay.toFixed(2)}
       </div>
     );
   })()}
 </td>
+
+
 
 
 
@@ -393,7 +474,8 @@ useEffect(() => {
         ]}
       />
 
-      <CommonHeader heading="Active Work Orders"  onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Active Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -5,6 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
@@ -164,45 +166,47 @@ export default function ViewDetails() {
                 {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
               </div>
 
-              
-              { userType !== 'ifs' && (
-                  <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
+
+              {userType !== 'ifs' && (
+                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
                   <strong className="w-[200px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
-                
+
                   {(() => {
-                    const validTechs = jobData?.technicians || []; // Get all technicians from job context
-                    const flatRate = Number(jobData?.technicians?.[0]?.simpleFlatRate || 0); // Get the flat rate from the job context, if available
-                
-                    // If no technicians are available, return a message
-                    if (validTechs.length === 0) {
-                      return <div>No technicians available.</div>;
-                    }
-                
-                    // Calculate the amount to distribute per technician without percentage
-                    const amountPerTech = flatRate / validTechs.length;
-                    let calculatedPay = 0;
-                    // Iterate over all technicians and calculate the total amount
-                    validTechs.forEach((tech: any) => {
-                      const amountPercentage = Number(tech.amountPercentage); // Get the technician's percentage
-                
-                      if (!isNaN(amountPercentage)) {
-                        // If technician has an amountPercentage, calculate pay based on percentage
-                        calculatedPay = (amountPercentage / 100) * amountPerTech;
-                      } else {
-                        // Otherwise, distribute flatRate equally among all technicians
-                        calculatedPay = amountPerTech;
-                      }
-                    });
-                
+                    if (!jobData) return null;
+
+                    const percentage = Number(jobData.amountPercentage);
+                    const flatRate = Number(jobData.simpleFlatRate);
+                    const calculatedPay = (flatRate * percentage) / 100;
+
+                    const tooltipId = `tooltip-${jobData.id}`;
+
                     return (
-                      <div className="">
-                        ${calculatedPay.toFixed(2)} {/* Display the total calculated pay once */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {calculatedPay === 0 ? (
+                          <>
+                            <span
+                              data-tooltip-id={tooltipId}
+                              data-tooltip-content="R/I/R/R price is not added for this job."
+                              style={{
+                                height: '12px',
+                                width: '12px',
+                                backgroundColor: 'red',
+                                borderRadius: '50%',
+                                display: 'inline-block',
+                                cursor: 'pointer',
+                              }}
+                            ></span>
+                            <Tooltip id={tooltipId} place="top" />
+                          </>
+                        ) : (
+                          <>${calculatedPay.toFixed(2)}</>
+                        )}
                       </div>
                     );
                   })()}
                 </div>
 
-              // <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
+                // <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
@@ -221,12 +225,12 @@ export default function ViewDetails() {
                 ))}
               </div>
             </div>
-            
+
           </div>
           <div className="grid grid-cols-1 gap-3 p-6 pt-0 mb-4">
 
-          <div className='shadow-lg p-5 bg-white rounded'>
-          <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+            <div className='shadow-lg p-5 bg-white rounded'>
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
                   <ul className="list-block">
@@ -245,8 +249,8 @@ export default function ViewDetails() {
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className='w-[210px] inline-block'>Total Cost: </strong> ${calculateTotalCost().toFixed(2)}
               </div>
-              </div>
-              </div>
+            </div>
+          </div>
         </div>
         <ToastContainer />
       </div>

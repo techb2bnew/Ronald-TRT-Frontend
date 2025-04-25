@@ -31,7 +31,9 @@ const CompletedJobs: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
-    const { isCollapsed } = useSidebar();
+  const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
 
   const handleDeleteSuccess = (deletedId: string) => {
     toast.success('Technician deleted successfully');
@@ -42,7 +44,7 @@ const CompletedJobs: React.FC = () => {
 
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-  const fetchCompleteJobs = async (page = 1, query = '') => {
+  const fetchCompleteJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -57,8 +59,8 @@ const CompletedJobs: React.FC = () => {
           ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/searchTechnicianCompleteJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchCompleteJobStatus?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+          ? `${apiUrl}/fetchCompleteJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchCompleteJobStatus?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -92,10 +94,10 @@ const CompletedJobs: React.FC = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchCompleteJobs(currentPage, searchTerm);
+      fetchCompleteJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -175,6 +177,21 @@ const CompletedJobs: React.FC = () => {
     csvExporter.generateCsv(formattedData);
   };
 
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
+
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
+
   const renderRow = (completejob: any) => {
 
     const totalCost = completejob.jobDescription.reduce((sum: number, job: any) => {
@@ -205,8 +222,8 @@ const CompletedJobs: React.FC = () => {
           <td>
             <span
               className={`badge ${completejob.jobStatus
-                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                  : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
                 }`}
             >
               {completejob.jobStatus ? 'Approved' : 'Inprogress'}
@@ -229,13 +246,13 @@ const CompletedJobs: React.FC = () => {
   };
 
   return (
-    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' }
         ]}
       />
-      <CommonHeader heading="Completed Work Orders" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel=" " buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

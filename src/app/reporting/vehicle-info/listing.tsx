@@ -34,8 +34,9 @@ const VehicleTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
-    const { isCollapsed } = useSidebar();
-
+  const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
@@ -43,7 +44,7 @@ const VehicleTable: React.FC = () => {
     // ✅ Remove the deleted technician from the table
     setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
   };
-  const fetchJobs = async (page = 1, query = '') => {
+  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -58,8 +59,8 @@ const VehicleTable: React.FC = () => {
           ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 
@@ -90,10 +91,25 @@ const VehicleTable: React.FC = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm);
+      fetchJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
+
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
+
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -197,13 +213,13 @@ const VehicleTable: React.FC = () => {
   );
 
   return (
-    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Vehicles Info" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -31,7 +31,8 @@ const ArchivePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
   const [type, setType] = useState("Archive");
-
+const [pageSize, setPageSize] = useState(10);
+    const [totalJobs, setTotalJobs] = useState(10);
 
   const groupedRecords: Record<string, any[]> = archive.reduce((acc, item) => {
     if (!acc[item.type]) {
@@ -41,7 +42,7 @@ const ArchivePage = () => {
     return acc;
   }, {});
 
-  const fetchArchive = async (page = 1, query = '') => {
+  const fetchArchive = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -58,7 +59,7 @@ const ArchivePage = () => {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchRecoverRecord?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/recoverRecordsList?page=${page}`;
+        : `${apiUrl}/recoverRecordsList?page=${page}&limit=${limit}`;
   
       const response = await fetch(endpoint, { method: 'GET', headers });
   
@@ -191,10 +192,25 @@ const ArchivePage = () => {
   // Unified useEffect to handle both search and pagination
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchArchive(currentPage, searchTerm);
+      fetchArchive(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
+
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
+
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
   // CSV Export Functions
   const downloadCSV = () => {
@@ -344,6 +360,7 @@ const ArchivePage = () => {
         buttonLabel=""
         buttonLink=""
         onExport={downloadCSV}
+        onPageSizeChange={handlePageSizeChange}
       />
       {loading ? (
         <Loader />

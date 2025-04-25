@@ -205,10 +205,10 @@ export default function Technicians() {
           labourCost: jobData.labourCost,
           // Assuming 'jobData.technicians' is an array of 'Technicians'
           assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
-          payRate: jobData.technicians?.[0]?.payRate || '',
-          simpleFlatRate: jobData.technicians?.[0]?.simpleFlatRate || '',
-          amountPercentage: jobData.technicians?.[0]?.amountPercentage || '',
-          payVehicleType: jobData.technicians?.[0]?.payVehicleType || '',
+          payRate: jobData.payRate || '',
+          simpleFlatRate: jobData.simpleFlatRate || '',
+          amountPercentage: jobData.amountPercentage || '',
+          payVehicleType: jobData.payVehicleType || '',
           // Using Technician interface
           assignCustomer: jobData.assignCustomer || '',
           createdBy: jobData.createdBy || '',
@@ -263,7 +263,7 @@ export default function Technicians() {
       }
 
       const data = await response.json();
-      setState(endpoint === 'fetchTechnician' ? data.technician.technicians : data.customers.customers);
+      setState(endpoint === 'fetchTechnicianJob' ? data.technician.technicians : data.customers.customers);
     } catch (error) {
       console.error(`Error fetching ${endpoint}:`, error);
     }
@@ -274,7 +274,7 @@ export default function Technicians() {
     const types = localStorage.getItem('types');
 
     if (types) {
-      fetchData('fetchTechnician', setTechnicians, { types }); // Pass roleType to fetchTechnician
+      fetchData('fetchTechnicianJob', setTechnicians, { types }); // Pass roleType to fetchTechnician
     } else {
       console.error("Role type is missing for fetching technicians!");
     }

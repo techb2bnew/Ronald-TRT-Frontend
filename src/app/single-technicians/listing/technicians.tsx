@@ -15,7 +15,7 @@ import Eye from '../../../../public/eye.svg'
 import Image from 'next/image';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSidebar } from "@/app/component/SidebarContext"; 
+import { useSidebar } from "@/app/component/SidebarContext";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -36,8 +36,9 @@ const TechnicianTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
-  const { isCollapsed } = useSidebar(); 
-
+  const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
@@ -158,7 +159,7 @@ const TechnicianTable: React.FC = () => {
 
 
 
-  const fetchTechnicians = async (page = 1, query = '') => {
+  const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -179,7 +180,7 @@ const TechnicianTable: React.FC = () => {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=single-technician`
-        : `${apiUrl}/fetchIndividualTechnician?page=${page}`;
+        : `${apiUrl}/fetchIndividualTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -212,12 +213,25 @@ const TechnicianTable: React.FC = () => {
   // Unified useEffect to handle both search and pagination
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchTechnicians(currentPage, searchTerm);
+      fetchTechnicians(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
 
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
 
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully'); 
     // ✅ Remove the deleted technician from the table
@@ -313,36 +327,36 @@ const TechnicianTable: React.FC = () => {
       <tr key={tech.id}>
         <td>{tech.id}</td>
         <td>
-  <div className="flex items-center gap-2">
-    {tech?.image ? (
-      <img src={tech.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-    ) : (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    )}
-    <span>{tech?.firstName} {tech?.lastName}</span>
-  </div>
-</td> 
+          <div className="flex items-center gap-2">
+            {tech?.image ? (
+              <img src={tech.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
+            <span>{tech?.firstName} {tech?.lastName}</span>
+          </div>
+        </td>
         <td>{tech.email}</td>
         <td>{tech.phoneNumber}</td>
         {/* <td>{tech.payRate}</td> */}
         <td
-           onClick={() => {
+          onClick={() => {
             if (tech.accountStatus || tech.isApproved) {
               handleAccountStatusChange(tech.id, !tech.accountStatus);
             }
           }} // Corrected here
-          style={{ cursor: tech.isApproved || tech.accountStatus  ? 'pointer' : 'not-allowed' }}
+          style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
         >
 
-        
+
           <span
             className={`badge ${tech.accountStatus
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.accountStatus ? 'Active' : 'Inactive'}
@@ -355,8 +369,8 @@ const TechnicianTable: React.FC = () => {
         >
           <span
             className={`badge ${tech.isApproved
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
             {tech.isApproved ? 'Approved' : 'Accept'}
@@ -385,14 +399,14 @@ const TechnicianTable: React.FC = () => {
 
 
   return (
-    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
 
       <Breadcrumb
         items={[
           { label: 'Single Technicians', href: '/single-technicians/listing' }
         ]}
       />
-      <CommonHeader heading="Single Technicians" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
+      <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
 
 
       <SortableTable

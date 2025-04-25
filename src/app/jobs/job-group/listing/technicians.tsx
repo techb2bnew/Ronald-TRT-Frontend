@@ -36,6 +36,8 @@ const JobTGroup: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true); 
   const [searchTerm, setSearchTerm] = useState('');
     const { isCollapsed } = useSidebar();
+  const [pageSize, setPageSize] = useState(10);
+  const [totalJobs, setTotalJobs] = useState(10);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -47,7 +49,7 @@ const JobTGroup: React.FC = () => {
       // ✅ Remove the deleted technician from the table
       setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
     };
-    const fetchJobs = async (page = 1, query = '') => {
+    const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
@@ -62,8 +64,8 @@ const JobTGroup: React.FC = () => {
         ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         :`${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+          ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
         const response = await fetch(endpoint, { method: 'GET', headers });
@@ -95,13 +97,26 @@ const JobTGroup: React.FC = () => {
   
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm);
+      fetchJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, pageSize]);
 
 
-  
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
+
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
+
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
 
 
@@ -280,7 +295,7 @@ const JobTGroup: React.FC = () => {
                 { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
               ]}
             />
-      <CommonHeader heading="Group Work Orders" onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
