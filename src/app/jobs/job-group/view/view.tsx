@@ -7,6 +7,9 @@ import Breadcrumb from "@/app/component/breadcrumb";
 import { capitalize } from "@mui/material";
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import Link from "next/link";
+import Image from "next/image";
+import Edit from "../../../../../public/edit.svg";
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
@@ -58,14 +61,38 @@ export default function ViewDetails() {
     }
   }, []);
 
-  const calculateTotalCost = (job: any) => {
-    if (job?.jobDescription && Array.isArray(job.jobDescription)) {
-      return job.jobDescription.reduce((total: number, item: string) => {
+  // const calculateTotalCost = (job: any) => {
+  //   if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+  //     return job.jobDescription.reduce((total: number, item: string) => {
+  //       const parsedItem = JSON.parse(item);
+  //       return total + parseFloat(parsedItem.cost || '0');
+  //     }, 0);
+  //   }
+  //   return 0;
+  // };
+  const calculateTotalCost = (jobData: any) => {
+    // Calculate subtotalcost from jobDescription
+    let subtotalcost = 0;
+    if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
+      subtotalcost = jobData.jobDescription.reduce((total: number, item: string) => {
+        // Parse the stringified JSON to access the cost value
         const parsedItem = JSON.parse(item);
         return total + parseFloat(parsedItem.cost || '0');
       }, 0);
     }
-    return 0;
+  
+    const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
+    const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
+  
+    // Calculate the percentage amount
+    const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
+      ? (subtotalcost * amountPercentage) / 100
+      : 0;
+  
+    // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
+    const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+  
+    return totalCost;
   };
 
   if (!jobData || jobData.length === 0) {
@@ -87,9 +114,15 @@ export default function ViewDetails() {
       <div className="max-w-7xl mx-auto p-4 rounded-lg shadow bg-white">
         {jobData.map((job, index) => (
           <div key={index} className="bg-blue rounded-lg shadow-md mb-6">
-            <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">
+            <div className="flex justify-between items-center border-b border-[#ccc] pb-3 mb-2 pl-6 pr-6 pt-4">
+            <h2 className="text-xl font-bold ">
               Work Order Id - {job?.id}
             </h2>
+            <Link className="p-2 bg-white rounded" href={`/jobs/create-job/create?jobId=${job.id}&groupjob`} data-tooltip-id="edit"
+        data-tooltip-content="Edit">
+          <Image alt="edit" src={Edit} className="w-[14px]" />
+        </Link>
+        </div>
             <div className="grid grid-cols-2 gap-3 p-6">
               {/* Left Section */}
               <div className="  p-5 bg-white  rounded">
@@ -153,39 +186,65 @@ export default function ViewDetails() {
   <strong className="w-[200px] min-w-[200px] inline-block capitalize">R/I/R/R</strong>
 
   {(() => {
-                    if (!job) return null;
+    if (!job) return null;
 
-                    const percentage = Number(job.amountPercentage);
-                    const flatRate = Number(job.simpleFlatRate);
-                    const calculatedPay = (flatRate * percentage) / 100;
+    // Parse jobDescription items and calculate total cost
+    const totalCost = job.jobDescription.reduce((sum: number, item: string) => {
+      const parsedItem = JSON.parse(item); // Parse the stringified JSON
+      return sum + Number(parsedItem.cost || 0); // Accumulate the cost
+    }, 0);
 
-                    const tooltipId = `tooltip-${job.id}`;
+    const simpleFlatRate = Number(job.simpleFlatRate);
+    const amountPercentage = Number(job.amountPercentage);
 
-                    return (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        {calculatedPay === 0 ? (
-                          <>
-                            <span
-                              data-tooltip-id={tooltipId}
-                              data-tooltip-content="R/I/R/R price is not added for this job."
-                              style={{
-                                height: '12px',
-                                width: '12px',
-                                backgroundColor: 'red',
-                                borderRadius: '50%',
-                                display: 'inline-block',
-                                cursor: 'pointer',
-                              }}
-                            ></span>
-                            <Tooltip id={tooltipId} place="top" />
-                          </>
-                        ) : (
-                          <>${calculatedPay.toFixed(2)}</>
-                        )}
-                      </div>
-                    );
-                  })()}
+    // Neither is valid — show red dot with tooltip
+    if (
+      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+      (isNaN(amountPercentage) || amountPercentage === 0)
+    ) {
+      const tooltipId = `tooltip-${job.id}`;
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span
+            data-tooltip-id={tooltipId}
+            data-tooltip-content="R/I/R/R price is not added for this job."
+            style={{
+              height: '12px',
+              width: '12px',
+              backgroundColor: 'red',
+              borderRadius: '50%',
+              display: 'inline-block',
+              cursor: 'pointer',
+            }}
+          ></span>
+          <Tooltip id={tooltipId} place="top" />
+        </div>
+      );
+    }
+
+    // Show simpleFlatRate if valid
+    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          ${simpleFlatRate.toFixed(2)}
+        </div>
+      );
+    }
+
+    // Show percentage-based calculation
+    if (!isNaN(amountPercentage) && amountPercentage > 0) {
+      const percentageAmount = (totalCost * amountPercentage) / 100;
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+        </div>
+      );
+    }
+
+    return null;
+  })()}
 </div>
+
 
 
 

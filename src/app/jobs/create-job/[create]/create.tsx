@@ -480,6 +480,8 @@ export default function Technicians() {
           router.push('/jobs/complete-job/listing');
         } else if (searchParams.has('vehicleInfo')) {
           router.push('/reporting/vehicle-info')
+        } else if(searchParams.has('groupjob')){
+          router.push('/jobs/job-group/listing')
         } else {
           router.push('/jobs/active-job');
         }
@@ -1234,7 +1236,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} required />
+                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')}  disabled={!!formData.simpleFlatRate} />
                 </div>
               )}
               {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
@@ -1249,7 +1251,7 @@ export default function Technicians() {
                    inputProps={{
                     step: "0.01",
                     min: 0
-                  }} required />
+                  }} disabled={!!formData.amountPercentage} />
                 </div>
               )}
             </div>

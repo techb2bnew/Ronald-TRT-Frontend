@@ -15,6 +15,8 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import Papa from 'papaparse';
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Technicians {
@@ -441,7 +443,7 @@ const TechnicianTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = technicians.map((tech) => ({
-      ID: tech.id,
+      Id: tech.id,
       Name: `${tech.firstName} ${tech.lastName}`,
       Email: tech.email,
       Phone: tech.phoneNumber,
@@ -449,12 +451,94 @@ const TechnicianTable: React.FC = () => {
       Country: tech.country,
       City: tech.city,
       State: tech.state,
-      Status: tech.isApproved ? 'Active' : 'Inactive',
-      'Account Status': tech.accountStatus ? 'Approved' : 'Accept',
+      SimpleFlatRate: tech.simpleFlatRate,
+      PayRate: tech.payRate,
+      Status: tech.isApproved ? 'true' : 'false',
+      'account status': tech.accountStatus ? 'true' : 'false',
     }));
 
     csvExporter.generateCsv(formattedData);
   };
+
+ 
+
+const handleImportCSV = (file: File) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    let text = (e.target?.result as string)
+      .replace(/^\uFEFF/, '') // remove BOM
+      .trimStart();
+
+    let lines = text.split(/\r?\n/);
+
+    // ✅ Safe filter: remove blank or garbage lines
+    lines = lines.filter((line) => line.trim() !== '');
+
+    // ✅ Detect if first line is garbage (e.g., "Technicians Data")
+    if (lines[0].toLowerCase().includes('technician')) {
+      lines.shift(); // remove garbage line
+    }
+
+    text = lines.join('\n'); // rebuild cleaned CSV text
+
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim(),
+      complete: async (result) => {
+        const parsedData = (result.data as any[]);
+
+        // ✅ Very Important: If still only "Technicians Data" field, fix manually
+        const correctedData = parsedData.map((row) => {
+          if (row['Technicians Data']) {
+            // Manual split fix
+            const values = (row['Technicians Data'] as string).split(',');
+            return {
+              id: values[0]?.trim() || '',
+              name: values[1]?.trim() || '',
+              email: values[2]?.trim() || '',
+              phone: values[3]?.trim() || '',
+              address: values[4]?.trim() || '',
+              country: values[5]?.trim() || '',
+              city: values[6]?.trim() || '',
+              state: values[7]?.trim() || '',
+              simpleFlatRate: values[8]?.trim() || '',
+              payRate: values[9]?.trim() || '',
+              // 👆 jitne fields hain utne daal lena
+            };
+          }
+          return row; // otherwise normal row
+        });
+
+        try {
+          const response = await axios.post(
+            `${apiUrl}/importTechnician`,
+            { data: correctedData },
+            { headers }
+          );
+          toast.success('CSV Import Successful!');
+          fetchTechnicians(currentPage, searchTerm, pageSize);
+        } catch (error) {
+          console.error('❌ Import failed:', error);
+          toast.error('Import failed. Check console for details.');
+        }
+      },
+      error: (err: any) => {
+        console.error('❌ CSV Parse error:', err);
+        alert('❌ Error parsing CSV file.');
+      },
+    });
+  };
+
+  reader.readAsText(file);
+};
+
+  
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -463,7 +547,7 @@ const TechnicianTable: React.FC = () => {
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
       />
-      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
       <SortableTable
         headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
         data={technicians}

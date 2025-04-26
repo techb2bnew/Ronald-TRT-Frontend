@@ -264,10 +264,10 @@ const JobTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        'accountStatus': jobData.accountStatus ? 'Approved' : 'Accept',
+        'accountStatus': jobData.accountStatus ? 'true' : 'false',
         notes: jobData.notes,
         createdAt: new Date(jobData.createdAt).toLocaleDateString(),
-        jobStatus: jobData.jobStatus ? 'Completed' : 'Pending',
+        jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
@@ -376,10 +376,14 @@ const JobTable: React.FC = () => {
 
   const renderRow = (job: any) => {
 
-    const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
+    const subtotalcost = job.jobDescription.reduce((sum: number, job: any) => {
       const parsedJob = (job);
       return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
     }, 0);
+    const simpleFlatRate = Number(job.simpleFlatRate);
+    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
+      ? subtotalcost + simpleFlatRate
+      : subtotalcost;
     return (
       <tr key={job.id}>
         <td>{job.id}</td>
@@ -395,16 +399,24 @@ const JobTable: React.FC = () => {
             {tech.phoneNumber}
           </div>
         ))}</td>
-        <td>${totalCost}</td>
+        <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
+
         <td>
   {(() => {
     if (!job) return null;
 
-    const percentage = job.amountPercentage ? Number(job.amountPercentage) : null;
-    const flatRate = job.simpleFlatRate ? Number(job.simpleFlatRate) : null;
+    const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+      return sum + Number(item.cost || 0);
+    }, 0);
 
-    // Check if either amountPercentage or simpleFlatRate is null
-    if (percentage === null || flatRate === null || isNaN(percentage) || isNaN(flatRate)) {
+    const simpleFlatRate = Number(job.simpleFlatRate);
+    const amountPercentage = Number(job.amountPercentage);
+
+    // Neither is valid — show red dot with tooltip
+    if (
+      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+      (isNaN(amountPercentage) || amountPercentage === 0)
+    ) {
       const tooltipId = `tooltip-${job.id}`;
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -425,18 +437,96 @@ const JobTable: React.FC = () => {
       );
     }
 
-    // Calculate the pay if both values are present
-    const calculatedPay = (flatRate * percentage) / 100;
+    // Show simpleFlatRate if valid
+    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          ${simpleFlatRate.toFixed(2)}
+        </div>
+      );
+    }
 
+    // Show percentage-based calculation
+    if (!isNaN(amountPercentage) && amountPercentage > 0) {
+      const percentageAmount = (totalCost * amountPercentage) / 100;
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+        </div>
+      );
+    }
+
+    return null;
+  })()}
+</td>
+ 
+<td>
+  {(() => {
+    if (!job) return null;
+
+    // Calculate subtotal cost from jobDescription
+    const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
+      return sum + Number(item.cost || 0);
+    }, 0);
+
+    const simpleFlatRate = Number(job.simpleFlatRate);
+    const amountPercentage = Number(job.amountPercentage);
+
+    // Calculate the percentage amount
+    const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
+      ? (subtotalcost * amountPercentage) / 100
+      : 0;
+
+    // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
+    const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+
+    // If amountPercentage is not available, show subtotal only
+    if (isNaN(amountPercentage) || amountPercentage === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          ${subtotalcost.toFixed(2)}
+        </div>
+      );
+    }
+
+    // Show tooltip if neither simpleFlatRate nor amountPercentage are provided
+    if (
+      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+      (isNaN(amountPercentage) || amountPercentage === 0)
+    ) {
+      const tooltipId = `tooltip-${job.id}`;
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span
+            data-tooltip-id={tooltipId}
+            data-tooltip-content="R/I/R/R price is not added for this job."
+            style={{
+              height: '12px',
+              width: '12px',
+              backgroundColor: 'red',
+              borderRadius: '50%',
+              display: 'inline-block',
+              cursor: 'pointer',
+            }}
+          ></span>
+          <Tooltip id={tooltipId} place="top" />
+        </div>
+      );
+    }
+
+    // Show the total cost when both flat rate and percentage are available
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-        ${calculatedPay.toFixed(2)}
+        ${totalCost.toFixed(2)}
       </div>
     );
   })()}
 </td>
 
+ 
 
+
+ 
 
 
 
@@ -504,8 +594,9 @@ const JobTable: React.FC = () => {
                 Technician Name
               </th>
               <th className="w-[100px]">Tech. Number</th>
-              <th className="w-[120px]">Total Cost</th>
+              <th className="w-[100px]">Sub Total Cost</th>
               <th className="w-[120px]">R/I R/R </th>
+              <th className="w-[120px]">Total Cost</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>

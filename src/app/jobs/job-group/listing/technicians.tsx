@@ -17,6 +17,8 @@ import { ExportToCsv } from 'export-to-csv-file';
 import TableActions from '@/app/component/action';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import Papa from 'papaparse';
+import { toast } from 'react-toastify';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -26,7 +28,7 @@ interface Jobs {
   email: string;
   deletedStatus?: boolean;
 }
-const JobTGroup: React.FC = () => {
+const JobTGroups: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
@@ -127,13 +129,22 @@ const JobTGroup: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
+      if (column === 'id') {
+        const idA = Number(a.customer.id);  // Directly access a.id
+        const idB = Number(b.customer.id);
+        return direction === 'asc' ? idA - idB : idB - idA;
+      }
       if (column === 'customerName') {
-        const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
-        const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
+        const nameA = `${a?.customer?.customer?.firstName} ${a?.customer?.customer?.lastName}`;
+        const nameB = `${b?.customer?.customer?.firstName} ${b?.customer?.customer?.lastName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
+      if (column === 'technicianName') {
+        const nameF = `${a?.customer?.technician?.firstName} ${a?.customer?.technician?.lastName}`;
+        const nameL = `${b?.customer?.technician?.firstName} ${b?.customer?.technician?.lastName}`;
+        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
+      }
      
-
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -222,71 +233,271 @@ const JobTGroup: React.FC = () => {
   };
 
   // CSV Export Functions
- const downloadCSV = () => {
-      const csvOptions = {
-        fieldSeparator: ',',
-        quoteStrings: '"',
-        decimalSeparator: '.',
-        showLabels: true,
-        showTitle: true,
-        title: 'Work Group Data',
-        useTextFile: false,
-        useBom: true,
-        useKeysAsHeaders: true, // Use object keys as headers
-      };
-    
-      const csvExporter = new ExportToCsv(csvOptions);
-    
-      const formattedData = activeJob.map((jobData) => ({
-        VIN: jobData.vin,  
-        Customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        Email: jobData?.customer?.email,
-        Number: jobData?.customer?.phoneNumber,
-      }));
-    
-      csvExporter.generateCsv(formattedData);
+const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Work Order Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
     };
 
+    const csvExporter = new ExportToCsv(csvOptions);
 
-  const renderRow = (job: any) => {
+    const formattedData = activeJob.map((jobData) => {
+      return {
+        id: jobData?.customer?.id,
+        vin: jobData.customer?.vin,
+        customer: `${jobData?.customer?.customer?.firstName} ${jobData?.customer?.customer?.lastName}`,
+        assignCustomer: jobData.customer?.assignCustomer,
+        bodyClass: jobData.customer?.bodyClass,
+        color: jobData.customer?.color,
+        make: jobData.customer?.make,
+        model: jobData.customer?.model,
+        amountPercentage: jobData.customer?.amountPercentage,
+        payRate: jobData.customer?.payRate,
+        vehicleType: jobData.customer?.vehicleType,
+        simpleFlatRate: jobData.customer?.simpleFlatRate,
+        'modelYear': jobData.customer?.modelYear,
+        'vehicleDescriptor': jobData.customer?.vehicleDescriptor,
+        'manufacturerName': jobData.customer?.manufacturerName,
+        'plantCompanyName': jobData.customer?.plantCompanyName,
+        'plantCountry': jobData.customer?.plantCountry,
+        'plantState': jobData.customer?.plantState,
+        'accountStatus': jobData.customer?.accountStatus ? 'true' : 'false',
+        notes: jobData.customer?.notes, 
+        jobStatus: jobData.customer?.jobStatus ? 'true' : 'false',
+        technicians: jobData.customer?.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.customer?.technicians.map((techId: any) => `${techId.id}`).join(', '),
+        jobDescription: jobData.customer.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        cost: jobData.customer.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
 
-    
-    
-    return (
-    <tr key={job.vin}>
-      {/* <td>{job.vinCount}</td>  */}
-      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>  
-      <td>{job?.customer?.email}</td>  
-      <td>{job?.customer?.phoneNumber}</td>  
-      <td>{job?.vin}</td> 
-       
-      {/* <td>
-        <span
-          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-        >
-          {job.jobStatus ? 'Completed' : 'In Progress'}
-        </span>
-      </td>  */}
-      <td> 
-      {/* <TableActions 
-          editRoute={`/jobs/create-job/create?jobId=${job.id}&vehicleInfo`}   
-         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
-           idKey="jobid"
-           userRole='Vehicleinfo'
-          itemId={job.id}  // Pass the technician ID
-          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
-           /> */}
+      };
+    });
+    csvExporter.generateCsv(formattedData);
+  }
 
-            <Link   href={`/jobs/job-group/view?vin=${job?.vin}`}>
-                 <Image alt='eye' src={Eye} className='w-[16px]' data-tooltip-id="view"
-                      data-tooltip-content="View"/> 
-                 </Link>
-                 <Tooltip id="view" place="top" />
-      </td>
-    </tr>
-    )
+  const handleImportCSV = (file: File) => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // remove BOM
+        .trimStart(); // remove leading whitespace/newlines
+  
+      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
+      if (text.startsWith('Work Order Data')) {
+        const lines = text.split(/\r?\n/);
+        if (lines.length > 1) {
+          // drop the first "Work Order Data" line if it doesn't contain valid headers
+          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
+            lines.shift(); // remove first line
+          }
+        }
+        text = lines.join('\n');
+      }
+  
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        complete: async (result) => { 
+  
+          const cleanedData = (result.data as any[]).filter(
+            (row) => Object.values(row).some((val) => val !== '')
+          );
+  
+          const finalData = cleanedData.map((row) => ({
+            ...row, 
+          }));
+  
+          try {
+            const response = await axios.post(
+              `${apiUrl}/importActiveJob`,
+              { data: finalData },
+              { headers }
+            );
+            toast.success('CSV Import Successful!.');
+            fetchJobs(currentPage, searchTerm, pageSize); 
+          } catch (error) {
+            console.error('❌ Import failed:', error);
+            toast.error('Import failed. Check console for details.'); 
+          }
+        },
+        error: (err:any) => {
+          console.error('❌ CSV Parse error:', err);
+          alert('❌ Error parsing CSV file.');
+        },
+      });
+    };
+  
+    reader.readAsText(file);
   };
+    const renderRow = (job: any) => {
+
+      const subtotalcost = job.customer.jobDescription.reduce((sum: number, job: any) => {
+        // Directly access the cost property since job is already an object
+        return sum + Number(job.cost || 0); // Ensure cost is treated as a number
+      }, 0);
+      
+    
+      const simpleFlatRate = Number(job.customer.simpleFlatRate);
+      const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
+        ? subtotalcost + simpleFlatRate
+        : subtotalcost;
+    
+      return (
+        <tr key={job.id}>
+          <td>{job.customer.id}</td>
+          <td>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</td>
+          <td>{job?.customer?.customer?.phoneNumber}</td>
+          <td>
+            {job?.customer?.technicians?.map((tech: any) => (
+              <div key={tech.id}>
+                {tech.firstName} {tech.lastName}
+              </div>
+            ))}
+          </td>
+          <td>
+            {job?.customer?.technicians?.map((tech: any) => (
+              <div key={tech.id}>
+                {tech.phoneNumber}
+              </div>
+            ))}
+          </td>
+          <td>${(job?.customer?.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
+    
+          <td>
+            {(() => {
+              if (!job) return null;
+    
+              const totalCost = job.customer.jobDescription.reduce((sum: number, item: any) => {
+                // Directly access the cost property from the object
+                return sum + Number(item.cost || 0);  // Ensure cost is treated as a number
+              }, 0);
+              
+    
+              const simpleFlatRate = Number(job.customer.simpleFlatRate);
+              const amountPercentage = Number(job.customer.amountPercentage);
+    
+              if ((isNaN(simpleFlatRate) || simpleFlatRate === 0) && (isNaN(amountPercentage) || amountPercentage === 0)) {
+                const tooltipId = `tooltip-${job.id}`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span
+                      data-tooltip-id={tooltipId}
+                      data-tooltip-content="R/I/R/R price is not added for this job."
+                      style={{
+                        height: '12px',
+                        width: '12px',
+                        backgroundColor: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        cursor: 'pointer',
+                      }}
+                    ></span>
+                    <Tooltip id={tooltipId} place="top" />
+                  </div>
+                );
+              }
+    
+              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${simpleFlatRate.toFixed(2)}
+                  </div>
+                );
+              }
+    
+              if (!isNaN(amountPercentage) && amountPercentage > 0) {
+                const percentageAmount = (totalCost * amountPercentage) / 100;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${percentageAmount.toFixed(2)}  
+                  </div>
+                );
+              }
+    
+              return null;
+            })()}
+          </td>
+    
+          <td>
+            {(() => {
+              if (!job) return null;
+    
+              const subtotalcost = job.customer.jobDescription.reduce((sum: number, item: any) => {
+                try {   // Safely parse each stringified item
+                  return sum + Number(item.cost || 0);  // Access cost from parsed object
+                } catch (error) {
+                  console.error("Error parsing jobDescription item:", error);
+                  return sum;  // Return sum so far in case of error
+                }
+              }, 0);
+    
+              const simpleFlatRate = Number(job.customer.simpleFlatRate);
+              const amountPercentage = Number(job.customer.amountPercentage);
+    
+              const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
+                ? (subtotalcost * amountPercentage) / 100
+                : 0;
+    
+              const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+    
+              if (isNaN(amountPercentage) || amountPercentage === 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${subtotalcost.toFixed(2)}
+                  </div>
+                );
+              }
+    
+              if ((isNaN(simpleFlatRate) || simpleFlatRate === 0) && (isNaN(amountPercentage) || amountPercentage === 0)) {
+                const tooltipId = `tooltip-${job.id}`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span
+                      data-tooltip-id={tooltipId}
+                      data-tooltip-content="R/I/R/R price is not added for this job."
+                      style={{
+                        height: '12px',
+                        width: '12px',
+                        backgroundColor: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        cursor: 'pointer',
+                      }}
+                    ></span>
+                    <Tooltip id={tooltipId} place="top" />
+                  </div>
+                );
+              }
+    
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${totalCost.toFixed(2)}
+                </div>
+              );
+            })()}
+          </td>
+    
+          <td>
+            <Link href={`/jobs/job-group/view?vin=${job?.vin}`}>
+              <Image alt="eye" src={Eye} className="w-[16px]" data-tooltip-id="view" data-tooltip-content="View" />
+            </Link>
+            <Tooltip id="view" place="top" />
+          </td>
+        </tr>
+      );
+    };
+    
 
   return (
     <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -295,67 +506,63 @@ const JobTGroup: React.FC = () => {
                 { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
               ]}
             />
-      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
-          <thead>
-            <tr>
-              {/* <th   onClick={() => handleSort('id')}>
-                Count
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </th>  */}
-             <th
-  onClick={() => handleSort('customerName')}
-  className="cursor-pointer flex items-center gap-2"
->
-  Customer Name
-  <span>
-    {sortBy === 'customerName' ? (
-      sortDirection === 'asc' ? (
-        <span className="text-white-500">▲</span> // Ascending
-      ) : (
-        <span className="text-white-500">▼</span> // Descending
-      )
-    ) : (
-      <span className="text-white-400">▼</span> // Neutral state
-    )}
-  </span>
-</th>
- 
-              <th  >Email</th>  
-              <th  >Phone Number</th>  
-              <th  >VIN</th>  
-              {/* <th>Status</th> */}
-              <th  >Action</th>
-            </tr>
-          </thead>
-          <tbody>
-              {loading ? (
-                          <tr>
-                            <td colSpan={5} className="text-center py-10">
-                              <Loader />
-                            </td>
-                          </tr>
-                        ) : activeJob.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="text-center py-10">
-                              <Empty />
-                            </td>
-                          </tr>
-                        ) : (
-                          activeJob.map((job) => renderRow(job))
+         <table className="table w-full table-fixed">
+                  <thead>
+                    <tr>
+                      <th className="w-[50px]" onClick={() => handleSort('id')}>
+                        ID
+                        {sortBy === 'id' && (
+                          <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                            {sortDirection === 'asc' ? '▲' : '▼'}
+                          </span>
                         )}
-          </tbody>
-        </table>
+                      </th>
+                      <th className="w-[150px]" onClick={() => handleSort('customerName')}>
+                        Customer Name
+                        {sortBy === 'customerName' && (
+                          <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                            {sortDirection === 'asc' ? '▲' : '▼'}
+                          </span>
+                        )}
+                      </th>
+                      <th className="w-[120px]">
+                        Customer Number
+                      </th>
+                      <th className="w-[150px]" >
+                        Technician Name
+                      </th>
+                      <th className="w-[100px]">Tech. Number</th>
+                      <th className="w-[100px]">Sub Total Cost</th>
+                      <th className="w-[120px]">R/I R/R</th>
+                      <th className="w-[120px]">Total Cost</th> 
+                      <th className="w-[100px]">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={8} className="text-center py-10">
+                          <Loader />
+                        </td>
+                      </tr>
+                    ) : activeJob.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center py-10">
+                          <Empty />
+                        </td>
+                      </tr>
+                    ) : (
+                      activeJob.map((job) => renderRow(job))
+                    )}
+                  </tbody>
+                </table>
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 };
 
-export default JobTGroup;
+export default JobTGroups;

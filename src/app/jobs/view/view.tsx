@@ -66,12 +66,26 @@ export default function ViewDetails() {
   }, []);
 
   const calculateTotalCost = () => {
+    // Calculate subtotalcost from jobDescription
+    let subtotalcost = 0;
     if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-      return jobData.jobDescription.reduce((total: number, item: { cost: string }) => {
+      subtotalcost = jobData.jobDescription.reduce((total: number, item: { cost: string }) => {
         return total + parseFloat(item.cost || '0');
       }, 0);
     }
-    return 0;
+  
+    const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
+    const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
+  
+    // Calculate the percentage amount
+    const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
+      ? (subtotalcost * amountPercentage) / 100
+      : 0;
+  
+    // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
+    const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+  
+    return totalCost;
   };
 
 
@@ -168,46 +182,70 @@ export default function ViewDetails() {
 
 
               {userType !== 'ifs' && (
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
-                  <strong className="w-[200px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
+  <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
+    <strong className="w-[200px] min-w-[200px] inline-block capitalize">R/I/R/R</strong>
 
-                  {(() => {
-                    if (!jobData) return null;
+    {(() => {
+      if (!jobData) return null;
 
-                    const percentage = Number(jobData.amountPercentage);
-                    const flatRate = Number(jobData.simpleFlatRate);
-                    const calculatedPay = (flatRate * percentage) / 100;
+      // Check if jobDescription is already an array of objects
+      const totalCost = jobData.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0); // Directly access cost if jobDescription is an array of objects
+      }, 0);
 
-                    const tooltipId = `tooltip-${jobData.id}`;
+      const simpleFlatRate = Number(jobData.simpleFlatRate);
+      const amountPercentage = Number(jobData.amountPercentage);
 
-                    return (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        {calculatedPay === 0 ? (
-                          <>
-                            <span
-                              data-tooltip-id={tooltipId}
-                              data-tooltip-content="R/I/R/R price is not added for this job."
-                              style={{
-                                height: '12px',
-                                width: '12px',
-                                backgroundColor: 'red',
-                                borderRadius: '50%',
-                                display: 'inline-block',
-                                cursor: 'pointer',
-                              }}
-                            ></span>
-                            <Tooltip id={tooltipId} place="top" />
-                          </>
-                        ) : (
-                          <>${calculatedPay.toFixed(2)}</>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+      // Neither is valid — show red dot with tooltip
+      if (
+        (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+        (isNaN(amountPercentage) || amountPercentage === 0)
+      ) {
+        const tooltipId = `tooltip-${jobData.id}`;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span
+              data-tooltip-id={tooltipId}
+              data-tooltip-content="R/I/R/R price is not added for this job."
+              style={{
+                height: '12px',
+                width: '12px',
+                backgroundColor: 'red',
+                borderRadius: '50%',
+                display: 'inline-block',
+                cursor: 'pointer',
+              }}
+            ></span>
+            <Tooltip id={tooltipId} place="top" />
+          </div>
+        );
+      }
 
-                // <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>R/I R/R (Labour/Service Cost):</strong>${jobData?.labourCost}</div>
-              )}
+      // Show simpleFlatRate if valid
+      if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            ${simpleFlatRate.toFixed(2)}
+          </div>
+        );
+      }
+
+      // Show percentage-based calculation
+      if (!isNaN(amountPercentage) && amountPercentage > 0) {
+        const percentageAmount = (totalCost * amountPercentage) / 100;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+          </div>
+        );
+      }
+
+      return null;
+    })()}
+  </div>
+)}
+
+
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
