@@ -3,11 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { ChromePicker, ColorResult } from "react-color";
 
-type ColorKeys =  "foreground" | "primaryBg";
+type ColorKeys =  "foreground";
 
 const defaultColors: Record<ColorKeys, string> = { 
   foreground: "#383D71",
-  primaryBg: "#383D71"
 };
 
 export default function ColorSettings() {
@@ -66,7 +65,7 @@ export default function ColorSettings() {
       <button
        ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="fixed bottom-4 right-4 bg-[var(--primaryColor)] text-white px-2 py-2 rounded-full shadow-lg z-50"
+        className="fixed bottom-4 right-4 bg-[var(--foreground)] text-white px-2 py-2 rounded-full shadow-lg z-50"
       >
       <svg
   xmlns="http://www.w3.org/2000/svg"

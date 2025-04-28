@@ -1,11 +1,11 @@
 // components/JobTable.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';  
+import React, { useState, useEffect, useCallback } from 'react';
 import CommonHeader from '../../../component/commonHeader';
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import Pagination from '../../../component/pagination';
 import axios from 'axios';
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import Eye from '../../../../../public/eye.svg'
@@ -13,8 +13,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
-import { ExportToCsv } from 'export-to-csv-file';
-import TableActions from '@/app/component/action';
+import { ExportToCsv } from 'export-to-csv-file'; 
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
@@ -28,16 +27,16 @@ interface Jobs {
   email: string;
   deletedStatus?: boolean;
 }
-const JobTGroups: React.FC = () => {
+const JobTListing: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);  
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
-    const { isCollapsed } = useSidebar();
+  const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
 
@@ -46,57 +45,57 @@ const JobTGroups: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-      // toast.success('Technician deleted successfully');
-  
-      // ✅ Remove the deleted technician from the table
-      setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
-    };
-    const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const roleType = localStorage.getItem('types') || "";
-        const userId = localStorage.getItem('userID');
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
+    // toast.success('Technician deleted successfully');
 
-     
-        const endpoint = query.trim()
+    // ✅ Remove the deleted technician from the table
+    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+  };
+  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || "";
+      const userId = localStorage.getItem('userID');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+
+      const endpoint = query.trim()
         ? roleType === 'superadmin'
-        ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        :`${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
           ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
-        const response = await fetch(endpoint, { method: 'GET', headers });
-  
-        const data = await response.json();
-        if (response.ok) {
-          const fetchedTechnicians: Jobs[] = query.trim()
+      const response = await fetch(endpoint, { method: 'GET', headers });
+
+      const data = await response.json();
+      if (response.ok) {
+        const fetchedTechnicians: Jobs[] = query.trim()
           ? data.searchGroup || []
           : data.GroupJob || [];
         //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
 
-         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.jobs?.totalPages || 1); 
- 
+        setActiveJob(fetchedTechnicians);
+        setTotalPages(data.jobs?.totalPages || 1);
+
+      } else {
+        if (data.error === 'Invalid Token') {
+          router.push('/');
         } else {
-          if (data.error === 'Invalid Token') {
-            router.push('/');
-          } else {
-            console.error('Error fetching job data:', data.error);
-          }
+          console.error('Error fetching job data:', data.error);
         }
-      } catch (error) {
-        console.error('Error fetching job data:', error);
-      } finally {
-        setLoading(false);
       }
-    };
- 
-  
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchJobs(currentPage, searchTerm, pageSize);
@@ -144,7 +143,7 @@ const JobTGroups: React.FC = () => {
         const nameL = `${b?.customer?.technician?.firstName} ${b?.customer?.technician?.lastName}`;
         return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
       }
-     
+
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -165,25 +164,25 @@ const JobTGroups: React.FC = () => {
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!'
     });
-  
+
     // Check if the user confirmed the action
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-  
+
         const config = {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` })
           }
         };
-  
+
         const response = await axios.post(`${apiUrl}/updateJobStatus`, {
           jobId,
           jobStatus: !currentApprovalStatus
         }, config);
-  
-        if (response.data.status ) {
+
+        if (response.data.status) {
           // Optimistically update the local state
           setActiveJob(prev => prev.map(job => {
             if (job.id === jobId) {
@@ -194,7 +193,7 @@ const JobTGroups: React.FC = () => {
           Swal.fire({
             title: 'Success!',
             text: 'Job status updated successfully.',
-            confirmButtonColor:'#383d71',
+            confirmButtonColor: '#383d71',
             icon: 'success',
             confirmButtonText: 'OK'
           });
@@ -233,7 +232,7 @@ const JobTGroups: React.FC = () => {
   };
 
   // CSV Export Functions
-const downloadCSV = () => {
+  const downloadCSV = () => {
     const csvOptions = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -268,8 +267,9 @@ const downloadCSV = () => {
         'plantCompanyName': jobData.customer?.plantCompanyName,
         'plantCountry': jobData.customer?.plantCountry,
         'plantState': jobData.customer?.plantState,
-        'accountStatus': jobData.customer?.accountStatus ? 'true' : 'false',
-        notes: jobData.customer?.notes, 
+        AccountStatus: jobData.accountStatus,
+        DeletedStatus: jobData.deletedStatus,
+        notes: jobData.customer?.notes,
         jobStatus: jobData.customer?.jobStatus ? 'true' : 'false',
         technicians: jobData.customer?.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.customer?.technicians.map((techId: any) => `${techId.id}`).join(', '),
@@ -285,13 +285,13 @@ const downloadCSV = () => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // remove BOM
         .trimStart(); // remove leading whitespace/newlines
-  
+
       // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
       if (text.startsWith('Work Order Data')) {
         const lines = text.split(/\r?\n/);
@@ -303,21 +303,21 @@ const downloadCSV = () => {
         }
         text = lines.join('\n');
       }
-  
+
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
-        complete: async (result) => { 
-  
+        complete: async (result) => {
+
           const cleanedData = (result.data as any[]).filter(
             (row) => Object.values(row).some((val) => val !== '')
           );
-  
+
           const finalData = cleanedData.map((row) => ({
-            ...row, 
+            ...row,
           }));
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
@@ -325,68 +325,69 @@ const downloadCSV = () => {
               { headers }
             );
             toast.success('CSV Import Successful!.');
-            fetchJobs(currentPage, searchTerm, pageSize); 
+            fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.'); 
+            toast.error('Import failed. Check console for details.');
           }
         },
-        error: (err:any) => {
+        error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
           alert('❌ Error parsing CSV file.');
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
-    const renderRow = (job: any) => {
+  const renderRow = (job: any) => {
 
-      const subtotalcost = job.customer.jobDescription.reduce((sum: number, job: any) => {
-        // Directly access the cost property since job is already an object
-        return sum + Number(job.cost || 0); // Ensure cost is treated as a number
-      }, 0);
-      
-    
-      const simpleFlatRate = Number(job.customer.simpleFlatRate);
-      const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-        ? subtotalcost + simpleFlatRate
-        : subtotalcost;
-    
-      return (
-        <tr key={job.id}>
+    const subtotalcost = job.customer.jobDescription.reduce((sum: number, job: any) => {
+      // Directly access the cost property since job is already an object
+      return sum + Number(job.cost || 0); // Ensure cost is treated as a number
+    }, 0);
+
+
+    const simpleFlatRate = Number(job.customer.simpleFlatRate);
+    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
+      ? subtotalcost + simpleFlatRate
+      : subtotalcost;
+
+    return ( 
+        <tr key={job?.customer?.id}>
           <td>{job.customer.id}</td>
           <td>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</td>
           <td>{job?.customer?.customer?.phoneNumber}</td>
           <td>
-            {job?.customer?.technicians?.map((tech: any) => (
-              <div key={tech.id}>
-                {tech.firstName} {tech.lastName}
+            {job?.customer?.technicians?.map((technicianData: any, index: number) => (
+              <div key={`${technicianData.id}-${index}`}>
+                {technicianData.firstName} {technicianData.lastName}
               </div>
             ))}
           </td>
           <td>
-            {job?.customer?.technicians?.map((tech: any) => (
-              <div key={tech.id}>
+            {job?.customer?.technicians?.map((tech: any, index: number) => (
+              <div key={`${tech.id}-${index}`}>
+
                 {tech.phoneNumber}
               </div>
             ))}
           </td>
           <td>${(job?.customer?.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-    
+
           <td>
             {(() => {
               if (!job) return null;
-    
+
               const totalCost = job.customer.jobDescription.reduce((sum: number, item: any) => {
                 // Directly access the cost property from the object
                 return sum + Number(item.cost || 0);  // Ensure cost is treated as a number
               }, 0);
-              
-    
+
+
               const simpleFlatRate = Number(job.customer.simpleFlatRate);
               const amountPercentage = Number(job.customer.amountPercentage);
-    
+
               if ((isNaN(simpleFlatRate) || simpleFlatRate === 0) && (isNaN(amountPercentage) || amountPercentage === 0)) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
@@ -407,7 +408,7 @@ const downloadCSV = () => {
                   </div>
                 );
               }
-    
+
               if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -415,24 +416,24 @@ const downloadCSV = () => {
                   </div>
                 );
               }
-    
+
               if (!isNaN(amountPercentage) && amountPercentage > 0) {
                 const percentageAmount = (totalCost * amountPercentage) / 100;
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${percentageAmount.toFixed(2)}  
+                    ${percentageAmount.toFixed(2)}
                   </div>
                 );
               }
-    
+
               return null;
             })()}
           </td>
-    
+
           <td>
             {(() => {
               if (!job) return null;
-    
+
               const subtotalcost = job.customer.jobDescription.reduce((sum: number, item: any) => {
                 try {   // Safely parse each stringified item
                   return sum + Number(item.cost || 0);  // Access cost from parsed object
@@ -441,16 +442,16 @@ const downloadCSV = () => {
                   return sum;  // Return sum so far in case of error
                 }
               }, 0);
-    
+
               const simpleFlatRate = Number(job.customer.simpleFlatRate);
               const amountPercentage = Number(job.customer.amountPercentage);
-    
+
               const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
                 ? (subtotalcost * amountPercentage) / 100
                 : 0;
-    
+
               const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
-    
+
               if (isNaN(amountPercentage) || amountPercentage === 0) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -458,13 +459,13 @@ const downloadCSV = () => {
                   </div>
                 );
               }
-    
+
               if ((isNaN(simpleFlatRate) || simpleFlatRate === 0) && (isNaN(amountPercentage) || amountPercentage === 0)) {
-                const tooltipId = `tooltip-${job.id}`;
+                const tooltipID = `tooltip-${job.customer.id}`;
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span
-                      data-tooltip-id={tooltipId}
+                      data-tooltip-id={tooltipID}
                       data-tooltip-content="R/I/R/R price is not added for this job."
                       style={{
                         height: '12px',
@@ -475,94 +476,95 @@ const downloadCSV = () => {
                         cursor: 'pointer',
                       }}
                     ></span>
-                    <Tooltip id={tooltipId} place="top" />
+                    <Tooltip id={tooltipID} place="top" />
                   </div>
                 );
               }
-    
+
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   ${totalCost.toFixed(2)}
                 </div>
               );
-            })()}
+            })
+            ()}
           </td>
-    
+
           <td>
             <Link href={`/jobs/job-group/view?vin=${job?.vin}`}>
               <Image alt="eye" src={Eye} className="w-[16px]" data-tooltip-id="view" data-tooltip-content="View" />
             </Link>
             <Tooltip id="view" place="top" />
           </td>
-        </tr>
-      );
-    };
-    
+        </tr> 
+    );
+  };
+
 
   return (
-    <div  className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
-              items={[
-                { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
-              ]}
-            />
-      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange}  onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
+        items={[
+          { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
+        ]}
+      />
+      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
-         <table className="table w-full table-fixed">
-                  <thead>
-                    <tr>
-                      <th className="w-[50px]" onClick={() => handleSort('id')}>
-                        ID
-                        {sortBy === 'id' && (
-                          <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                            {sortDirection === 'asc' ? '▲' : '▼'}
-                          </span>
-                        )}
-                      </th>
-                      <th className="w-[150px]" onClick={() => handleSort('customerName')}>
-                        Customer Name
-                        {sortBy === 'customerName' && (
-                          <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                            {sortDirection === 'asc' ? '▲' : '▼'}
-                          </span>
-                        )}
-                      </th>
-                      <th className="w-[120px]">
-                        Customer Number
-                      </th>
-                      <th className="w-[150px]" >
-                        Technician Name
-                      </th>
-                      <th className="w-[100px]">Tech. Number</th>
-                      <th className="w-[100px]">Sub Total Cost</th>
-                      <th className="w-[120px]">R/I R/R</th>
-                      <th className="w-[120px]">Total Cost</th> 
-                      <th className="w-[100px]">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr>
-                        <td colSpan={8} className="text-center py-10">
-                          <Loader />
-                        </td>
-                      </tr>
-                    ) : activeJob.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="text-center py-10">
-                          <Empty />
-                        </td>
-                      </tr>
-                    ) : (
-                      activeJob.map((job) => renderRow(job))
-                    )}
-                  </tbody>
-                </table>
+        <table className="table w-full table-fixed">
+          <thead>
+            <tr>
+              <th className="w-[50px]" onClick={() => handleSort('id')}>
+                ID
+                {sortBy === 'id' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[150px]" onClick={() => handleSort('customerName')}>
+                Customer Name
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[120px]">
+                Customer Number
+              </th>
+              <th className="w-[150px]" >
+                Technician Name
+              </th>
+              <th className="w-[100px]">Tech. Number</th>
+              <th className="w-[100px]">Sub Total Cost</th>
+              <th className="w-[120px]">R/I R/R</th>
+              <th className="w-[120px]">Total Cost</th>
+              <th className="w-[100px]">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={9} className="text-center py-10">
+                  <Loader />
+                </td>
+              </tr>
+            ) : activeJob?.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="text-center py-10">
+                  <Empty />
+                </td>
+              </tr>
+            ) : (
+              activeJob.map((job) => renderRow(job))
+            )}
+          </tbody>
+        </table>
       </div>
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
     </div>
   );
 };
 
-export default JobTGroups;
+export default JobTListing;

@@ -264,10 +264,11 @@ const JobTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        'accountStatus': jobData.accountStatus ? 'true' : 'false',
+        AccountStatus: jobData.accountStatus,
+        DeletedStatus: jobData.deletedStatus,
         notes: jobData.notes,
         createdAt: new Date(jobData.createdAt).toLocaleDateString(),
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
+        jobStatus: jobData.jobStatus,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
@@ -315,13 +316,13 @@ const JobTable: React.FC = () => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // remove BOM
         .trimStart(); // remove leading whitespace/newlines
-  
+
       // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
       if (text.startsWith('Work Order Data')) {
         const lines = text.split(/\r?\n/);
@@ -333,21 +334,21 @@ const JobTable: React.FC = () => {
         }
         text = lines.join('\n');
       }
-  
+
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
-        complete: async (result) => { 
-  
+        complete: async (result) => {
+
           const cleanedData = (result.data as any[]).filter(
             (row) => Object.values(row).some((val) => val !== '')
           );
-  
+
           const finalData = cleanedData.map((row) => ({
-            ...row, 
+            ...row,
           }));
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
@@ -355,23 +356,23 @@ const JobTable: React.FC = () => {
               { headers }
             );
             toast.success('CSV Import Successful!.');
-            fetchJobs(currentPage, searchTerm, pageSize); 
+            fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.'); 
+            toast.error('Import failed. Check console for details.');
           }
         },
-        error: (err:any) => {
+        error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
           alert('❌ Error parsing CSV file.');
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
-  
-  
+
+
 
 
   const renderRow = (job: any) => {
@@ -402,131 +403,131 @@ const JobTable: React.FC = () => {
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
 
         <td>
-  {(() => {
-    if (!job) return null;
+          {(() => {
+            if (!job) return null;
 
-    const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-      return sum + Number(item.cost || 0);
-    }, 0);
+            const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+              return sum + Number(item.cost || 0);
+            }, 0);
 
-    const simpleFlatRate = Number(job.simpleFlatRate);
-    const amountPercentage = Number(job.amountPercentage);
+            const simpleFlatRate = Number(job.simpleFlatRate);
+            const amountPercentage = Number(job.amountPercentage);
 
-    // Neither is valid — show red dot with tooltip
-    if (
-      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-      (isNaN(amountPercentage) || amountPercentage === 0)
-    ) {
-      const tooltipId = `tooltip-${job.id}`;
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span
-            data-tooltip-id={tooltipId}
-            data-tooltip-content="R/I/R/R price is not added for this job."
-            style={{
-              height: '12px',
-              width: '12px',
-              backgroundColor: 'red',
-              borderRadius: '50%',
-              display: 'inline-block',
-              cursor: 'pointer',
-            }}
-          ></span>
-          <Tooltip id={tooltipId} place="top" />
-        </div>
-      );
-    }
+            // Neither is valid — show red dot with tooltip
+            if (
+              (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+              (isNaN(amountPercentage) || amountPercentage === 0)
+            ) {
+              const tooltipId = `tooltip-${job.id}`;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span
+                    data-tooltip-id={tooltipId}
+                    data-tooltip-content="R/I/R/R price is not added for this job."
+                    style={{
+                      height: '12px',
+                      width: '12px',
+                      backgroundColor: 'red',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      cursor: 'pointer',
+                    }}
+                  ></span>
+                  <Tooltip id={tooltipId} place="top" />
+                </div>
+              );
+            }
 
-    // Show simpleFlatRate if valid
-    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          ${simpleFlatRate.toFixed(2)}
-        </div>
-      );
-    }
+            // Show simpleFlatRate if valid
+            if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${simpleFlatRate.toFixed(2)}
+                </div>
+              );
+            }
 
-    // Show percentage-based calculation
-    if (!isNaN(amountPercentage) && amountPercentage > 0) {
-      const percentageAmount = (totalCost * amountPercentage) / 100;
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-        </div>
-      );
-    }
+            // Show percentage-based calculation
+            if (!isNaN(amountPercentage) && amountPercentage > 0) {
+              const percentageAmount = (totalCost * amountPercentage) / 100;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+                </div>
+              );
+            }
 
-    return null;
-  })()}
-</td>
- 
-<td>
-  {(() => {
-    if (!job) return null;
+            return null;
+          })()}
+        </td>
 
-    // Calculate subtotal cost from jobDescription
-    const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-      return sum + Number(item.cost || 0);
-    }, 0);
+        <td>
+          {(() => {
+            if (!job) return null;
 
-    const simpleFlatRate = Number(job.simpleFlatRate);
-    const amountPercentage = Number(job.amountPercentage);
+            // Calculate subtotal cost from jobDescription
+            const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
+              return sum + Number(item.cost || 0);
+            }, 0);
 
-    // Calculate the percentage amount
-    const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
-      ? (subtotalcost * amountPercentage) / 100
-      : 0;
+            const simpleFlatRate = Number(job.simpleFlatRate);
+            const amountPercentage = Number(job.amountPercentage);
 
-    // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
-    const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+            // Calculate the percentage amount
+            const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
+              ? (subtotalcost * amountPercentage) / 100
+              : 0;
 
-    // If amountPercentage is not available, show subtotal only
-    if (isNaN(amountPercentage) || amountPercentage === 0) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          ${subtotalcost.toFixed(2)}
-        </div>
-      );
-    }
+            // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
+            const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
 
-    // Show tooltip if neither simpleFlatRate nor amountPercentage are provided
-    if (
-      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-      (isNaN(amountPercentage) || amountPercentage === 0)
-    ) {
-      const tooltipId = `tooltip-${job.id}`;
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span
-            data-tooltip-id={tooltipId}
-            data-tooltip-content="R/I/R/R price is not added for this job."
-            style={{
-              height: '12px',
-              width: '12px',
-              backgroundColor: 'red',
-              borderRadius: '50%',
-              display: 'inline-block',
-              cursor: 'pointer',
-            }}
-          ></span>
-          <Tooltip id={tooltipId} place="top" />
-        </div>
-      );
-    }
+            // If amountPercentage is not available, show subtotal only
+            if (isNaN(amountPercentage) || amountPercentage === 0) {
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${subtotalcost.toFixed(2)}
+                </div>
+              );
+            }
 
-    // Show the total cost when both flat rate and percentage are available
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-        ${totalCost.toFixed(2)}
-      </div>
-    );
-  })()}
-</td>
+            // Show tooltip if neither simpleFlatRate nor amountPercentage are provided
+            if (
+              (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+              (isNaN(amountPercentage) || amountPercentage === 0)
+            ) {
+              const tooltipId = `tooltip-${job.id}`;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span
+                    data-tooltip-id={tooltipId}
+                    data-tooltip-content="R/I/R/R price is not added for this job."
+                    style={{
+                      height: '12px',
+                      width: '12px',
+                      backgroundColor: 'red',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                      cursor: 'pointer',
+                    }}
+                  ></span>
+                  <Tooltip id={tooltipId} place="top" />
+                </div>
+              );
+            }
 
- 
+            // Show the total cost when both flat rate and percentage are available
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                ${totalCost.toFixed(2)}
+              </div>
+            );
+          })()}
+        </td>
 
 
- 
+
+
+
 
 
 

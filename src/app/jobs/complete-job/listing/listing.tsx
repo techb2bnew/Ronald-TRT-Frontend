@@ -138,115 +138,116 @@ const CompletedJobs: React.FC = () => {
   };
 
 
-   const downloadCSV = () => {
-      const csvOptions = {
-        fieldSeparator: ',',
-        quoteStrings: '"',
-        decimalSeparator: '.',
-        showLabels: true,
-        showTitle: true,
-        title: 'Work Order Data',
-        useTextFile: false,
-        useBom: true,
-        useKeysAsHeaders: true, // Use object keys as headers
-      };
-  
-      const csvExporter = new ExportToCsv(csvOptions);
-  
-      const formattedData = activeJob.map((jobData) => {
-        return {
-          id: jobData.id,
-          vin: jobData.vin,
-          customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-          assignCustomer: jobData.assignCustomer,
-          bodyClass: jobData.bodyClass,
-          color: jobData.color,
-          make: jobData.make,
-          model: jobData.model,
-          amountPercentage: jobData.amountPercentage,
-          payRate: jobData.payRate,
-          vehicleType: jobData.vehicleType,
-          simpleFlatRate: jobData.simpleFlatRate,
-          'modelYear': jobData.modelYear,
-          'vehicleDescriptor': jobData.vehicleDescriptor,
-          'manufacturerName': jobData.manufacturerName,
-          'plantCompanyName': jobData.plantCompanyName,
-          'plantCountry': jobData.plantCountry,
-          'plantState': jobData.plantState,
-          'accountStatus': jobData.accountStatus ? 'true' : 'false',
-          notes: jobData.notes,
-          createdAt: new Date(jobData.createdAt).toLocaleDateString(),
-          jobStatus: jobData.jobStatus ? 'true' : 'false',
-          technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-          assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-          jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-          cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        }
-      });
-      csvExporter.generateCsv(formattedData);
-    }
-
-
-    const handleImportCSV = (file: File) => {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-    
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        let text = (e.target?.result as string)
-          .replace(/^\uFEFF/, '') // remove BOM
-          .trimStart(); // remove leading whitespace/newlines
-    
-        // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
-        if (text.startsWith('Work Order Data')) {
-          const lines = text.split(/\r?\n/);
-          if (lines.length > 1) {
-            // drop the first "Work Order Data" line if it doesn't contain valid headers
-            if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
-              lines.shift(); // remove first line
-            }
-          }
-          text = lines.join('\n');
-        }
-    
-        Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (header) => header.trim(),
-          complete: async (result) => { 
-    
-            const cleanedData = (result.data as any[]).filter(
-              (row) => Object.values(row).some((val) => val !== '')
-            );
-    
-            const finalData = cleanedData.map((row) => ({
-              ...row, 
-            }));
-    
-            try {
-              const response = await axios.post(
-                `${apiUrl}/importActiveJob`,
-                { data: finalData },
-                { headers }
-              );
-              toast.success('CSV Import Successful!.');
-              fetchCompleteJobs(currentPage, searchTerm, pageSize);
-
-            } catch (error) {
-              console.error('❌ Import failed:', error);
-              toast.error('Import failed. Check console for details.'); 
-            }
-          },
-          error: (err:any) => {
-            console.error('❌ CSV Parse error:', err);
-            alert('❌ Error parsing CSV file.');
-          },
-        });
-      };
-    
-      reader.readAsText(file);
+  const downloadCSV = () => {
+    const csvOptions = {
+      fieldSeparator: ',',
+      quoteStrings: '"',
+      decimalSeparator: '.',
+      showLabels: true,
+      showTitle: true,
+      title: 'Work Order Data',
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true, // Use object keys as headers
     };
+
+    const csvExporter = new ExportToCsv(csvOptions);
+
+    const formattedData = activeJob.map((jobData) => {
+      return {
+        id: jobData.id,
+        vin: jobData.vin,
+        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        assignCustomer: jobData.assignCustomer,
+        bodyClass: jobData.bodyClass,
+        color: jobData.color,
+        make: jobData.make,
+        model: jobData.model,
+        amountPercentage: jobData.amountPercentage,
+        payRate: jobData.payRate,
+        vehicleType: jobData.vehicleType,
+        simpleFlatRate: jobData.simpleFlatRate,
+        'modelYear': jobData.modelYear,
+        'vehicleDescriptor': jobData.vehicleDescriptor,
+        'manufacturerName': jobData.manufacturerName,
+        'plantCompanyName': jobData.plantCompanyName,
+        'plantCountry': jobData.plantCountry,
+        'plantState': jobData.plantState,
+        AccountStatus: jobData.accountStatus,
+        DeletedStatus: jobData.deletedStatus,
+        notes: jobData.notes,
+        createdAt: new Date(jobData.createdAt).toLocaleDateString(),
+        jobStatus: jobData.jobStatus ? 'true' : 'false',
+        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
+        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+      }
+    });
+    csvExporter.generateCsv(formattedData);
+  }
+
+
+  const handleImportCSV = (file: File) => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // remove BOM
+        .trimStart(); // remove leading whitespace/newlines
+
+      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
+      if (text.startsWith('Work Order Data')) {
+        const lines = text.split(/\r?\n/);
+        if (lines.length > 1) {
+          // drop the first "Work Order Data" line if it doesn't contain valid headers
+          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
+            lines.shift(); // remove first line
+          }
+        }
+        text = lines.join('\n');
+      }
+
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        complete: async (result) => {
+
+          const cleanedData = (result.data as any[]).filter(
+            (row) => Object.values(row).some((val) => val !== '')
+          );
+
+          const finalData = cleanedData.map((row) => ({
+            ...row,
+          }));
+
+          try {
+            const response = await axios.post(
+              `${apiUrl}/importActiveJob`,
+              { data: finalData },
+              { headers }
+            );
+            toast.success('CSV Import Successful!.');
+            fetchCompleteJobs(currentPage, searchTerm, pageSize);
+
+          } catch (error) {
+            console.error('❌ Import failed:', error);
+            toast.error('Import failed. Check console for details.');
+          }
+        },
+        error: (err: any) => {
+          console.error('❌ CSV Parse error:', err);
+          alert('❌ Error parsing CSV file.');
+        },
+      });
+    };
+
+    reader.readAsText(file);
+  };
 
   const handlePageSizeChange = (size: number) => {
     // Calculate the total number of pages based on the current totalJobs and the new pageSize
@@ -268,7 +269,7 @@ const CompletedJobs: React.FC = () => {
     const totalCost = completejob.jobDescription.reduce((sum: number, job: any) => {
       return sum + Number(job.cost); // Directly use job.cost as it's already an object
     }, 0);
-    
+
 
 
 

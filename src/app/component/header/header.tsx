@@ -93,7 +93,7 @@ export default function Header() {
             <div className="absolute right-0 mt-2 py-2 w-40 bg-white rounded-md shadow-xl border border-[#383d71] z-20">
               <Link
                 href="/profile"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#383d71] hover:text-white flex items-center gap-1"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-[var(--foreground)] hover:text-white flex items-center gap-1"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" height="24">
                   <circle cx="12" cy="8" r="4" />
@@ -103,7 +103,7 @@ export default function Header() {
               </Link>
               <p
                 onClick={logOut}
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#383d71] hover:text-white flex gap-2 cursor-pointer"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-[var(--foreground)] hover:text-white flex gap-2 cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                   strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

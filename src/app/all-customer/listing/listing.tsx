@@ -14,6 +14,8 @@ import Eye from '../../../../public/eye.svg';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import axios from 'axios';
+import Papa from 'papaparse';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -183,7 +185,7 @@ export default function ClientListing() {
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'All TRT Customers Data',
+      title: 'Customer Data',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -192,7 +194,7 @@ export default function ClientListing() {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = customer.map((customerData) => ({
-      ID: customerData.id,
+      Id: customerData.id,
       Name: `${customerData.firstName} ${customerData.lastName}`,
       Email: customerData.email,
       Phone: customerData.phoneNumber,
@@ -201,9 +203,86 @@ export default function ClientListing() {
       City: customerData.city,
       State: customerData.state,
       ZipCode: customerData.zipCode,
+      DeletedStatus: customerData.deletedStatus,
     }));
 
     csvExporter.generateCsv(formattedData);
+  };
+
+  const handleImportCSV = (file: File) => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // remove BOM
+        .trimStart();
+
+      let lines = text.split(/\r?\n/);
+
+      // ✅ Safe filter: remove blank or garbage lines
+      lines = lines.filter((line) => line.trim() !== '');
+
+      // ✅ Detect if first line is garbage (e.g., "Technicians Data")
+      if (lines[0].toLowerCase().includes('customer')) {
+        lines.shift(); // remove garbage line
+      }
+
+      text = lines.join('\n'); // rebuild cleaned CSV text
+
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim(),
+        complete: async (result) => {
+          const parsedData = (result.data as any[]);
+
+          // ✅ Very Important: If still only "Customer Data" field, fix manually
+          const correctedData = parsedData.map((row) => {
+            if (row['Customer Data']) {
+              // Manual split fix
+              const values = (row['Customer Data'] as string).split(',');
+              return {
+                id: values[0]?.trim() || '',
+                name: values[1]?.trim() || '',
+                email: values[2]?.trim() || '',
+                phone: values[3]?.trim() || '',
+                address: values[4]?.trim() || '',
+                country: values[5]?.trim() || '',
+                city: values[6]?.trim() || '',
+                state: values[7]?.trim() || '',
+                zipCode: values[7]?.trim() || '',
+                deletedStatus: values[7]?.trim() || '',
+              };
+            }
+            return row;
+          });
+
+          try {
+            const response = await axios.post(
+              `${apiUrl}/importCustomer`,
+              { data: correctedData },
+              { headers }
+            );
+            toast.success('CSV Import Successful!');
+            fetchCustomer(currentPage, searchTerm, pageSize);
+
+          } catch (error) {
+            console.error('❌ Import failed:', error);
+            toast.error('Import failed. Check console for details.');
+          }
+        },
+        error: (err: any) => {
+          console.error('❌ CSV Parse error:', err);
+          alert('❌ Error parsing CSV file.');
+        },
+      });
+    };
+
+    reader.readAsText(file);
   };
 
   const renderRow = (cust: any) => (
@@ -237,7 +316,7 @@ export default function ClientListing() {
           { label: 'All Customer', href: '/all-customer/listing' }
         ]}
       />
-      <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='' buttonLabel="" buttonLink="" />
+      <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">

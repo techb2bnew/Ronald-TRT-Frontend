@@ -172,6 +172,7 @@ export default function ClientListing() {
       City: customerData.city,
       State: customerData.state,
       ZipCode: customerData.zipCode,
+      DeletedStatus: customerData.deletedStatus,
     }));
 
     csvExporter.generateCsv(formattedData);
@@ -181,33 +182,33 @@ export default function ClientListing() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // remove BOM
         .trimStart();
-  
+
       let lines = text.split(/\r?\n/);
-  
+
       // ✅ Safe filter: remove blank or garbage lines
       lines = lines.filter((line) => line.trim() !== '');
-  
+
       // ✅ Detect if first line is garbage (e.g., "Technicians Data")
       if (lines[0].toLowerCase().includes('customer')) {
         lines.shift(); // remove garbage line
       }
-  
+
       text = lines.join('\n'); // rebuild cleaned CSV text
-  
+
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         transformHeader: (header) => header.trim(),
         complete: async (result) => {
           const parsedData = (result.data as any[]);
-  
+
           // ✅ Very Important: If still only "Customer Data" field, fix manually
           const correctedData = parsedData.map((row) => {
             if (row['Customer Data']) {
@@ -222,12 +223,13 @@ export default function ClientListing() {
                 country: values[5]?.trim() || '',
                 city: values[6]?.trim() || '',
                 state: values[7]?.trim() || '',
-                zipCode: values[7]?.trim() || '',
+                zipCode: values[8]?.trim() || '',
+                deletedStatus: values[9]?.trim() || '',
               };
             }
-            return row; 
+            return row;
           });
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importCustomer`,
@@ -248,7 +250,7 @@ export default function ClientListing() {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
   const renderRow = (cust: any) => (
