@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
@@ -36,6 +36,7 @@ export default function ClientListing() {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
@@ -148,6 +149,13 @@ export default function ClientListing() {
 
 
   const downloadCSV = () => {
+
+    const selectedCustomers = customer.filter(c => selectedIds.includes(c.id));
+
+    if (selectedCustomers.length === 0) {
+      toast.warning("Please select at least one customer to export.");
+      return;
+    }
     const csvOptions = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -162,7 +170,12 @@ export default function ClientListing() {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = customer.map((customerData) => ({
+
+    if (!selectedCustomers || selectedCustomers.length === 0) {
+      alert("Please select at least one customer to export.");
+      return;
+    }
+    const formattedData = selectedCustomers.map((customerData) => ({
       Id: customerData.id,
       Name: `${customerData.firstName} ${customerData.lastName}`,
       Email: customerData.email,
@@ -253,38 +266,67 @@ export default function ClientListing() {
 
     reader.readAsText(file);
   };
-  const renderRow = (cust: any) => (
-    <tr key={cust.id}>
-      <td>{cust.id}</td>
-      <td>
-        <Link href={`/client/view?customerId=${cust.id}`}>
-          {cust?.firstName} {cust?.lastName}
-        </Link>
-      </td>
-      <td>
-        <a href={`mailto:${cust.email}`} style={{ color: '#383d71' }}>
-          {cust.email}
-        </a>
-      </td>
-      <td>
-        <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71' }}>
-          {cust.phoneNumber}
-        </a>
-      </td>
-      <td>{cust.address}</td>
-      <td>{cust.country}</td>
-      <td>
-        <TableActions
-          editRoute={`/client/create?customerId=${cust.id}`}
-          deleteRoute={`${apiUrl}/deleteCustomer`}
-          viewRoute={`/client/view?customerId=${cust.id}`}
-          idKey="customerId"
-          userRole="Customer"
-          itemId={cust.id}  // Pass the technician ID
-          onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
-      </td>
-    </tr>
-  );
+
+
+
+  // Individual Row Checkbox
+  const handleCheckboxChange = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+
+  const renderRow = (cust: any) => {
+    const isChecked = selectedIds.includes(cust.id);
+    return (
+      <tr key={cust.id}>
+        <td key="checkbox">
+          <label className="flex items-center cursor-pointer relative">
+            <input
+              type="checkbox"
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+              checked={isChecked}
+              onChange={() => handleCheckboxChange(cust.id)}
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+              </svg>
+            </span>
+          </label>
+        </td>
+        <td>{cust.id}</td>
+        <td>
+          <Link href={`/client/view?customerId=${cust.id}`}>
+            {cust?.firstName} {cust?.lastName}
+          </Link>
+        </td>
+        <td>
+          <a href={`mailto:${cust.email}`} style={{ color: '#383d71' }}>
+            {cust.email}
+          </a>
+        </td>
+        <td>
+          <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71' }}>
+            {cust.phoneNumber}
+          </a>
+        </td>
+        <td>{cust.address}</td>
+        <td>{cust.country}</td>
+        <td>
+          <TableActions
+            editRoute={`/client/create?customerId=${cust.id}`}
+            deleteRoute={`${apiUrl}/deleteCustomer`}
+            viewRoute={`/client/view?customerId=${cust.id}`}
+            idKey="customerId"
+            userRole="Customer"
+            itemId={cust.id}  // Pass the technician ID
+            onDeleteSuccess={() => handleDeleteSuccess(cust.id)} />
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -293,6 +335,7 @@ export default function ClientListing() {
           { label: 'Customers', href: '/client/listing' }
         ]}
       />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/client/create" />
 
@@ -300,6 +343,25 @@ export default function ClientListing() {
         <table className="table w-full table-fixed">
           <thead>
             <tr>
+              <th className="w-[35px]">
+                <label className="flex items-center cursor-pointer relative">
+                  <input
+                    type="checkbox"
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                    checked={selectedIds.length === customer.length}
+                    onChange={() =>
+                      setSelectedIds(
+                        selectedIds.length === customer.length ? [] : customer.map((cust) => cust.id)
+                      )
+                    }
+                  />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+              </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (

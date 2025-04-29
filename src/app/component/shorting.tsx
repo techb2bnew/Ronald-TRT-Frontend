@@ -10,6 +10,7 @@ interface SortableTableProps {
   sortDirection: 'asc' | 'desc';
   handleSort: (column: string) => void;
   loading: boolean;  // New prop to track loading state
+  renderHeaderCell?: (header: string, index: number) => React.ReactNode;
 }
 
 const SortableTable: React.FC<SortableTableProps> = ({
@@ -19,7 +20,8 @@ const SortableTable: React.FC<SortableTableProps> = ({
   sortBy,
   sortDirection,
   handleSort,
-  loading,
+  loading, 
+  renderHeaderCell,
 }) => {
   // Define sortable columns
   const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status', 'action'];
@@ -27,28 +29,32 @@ const SortableTable: React.FC<SortableTableProps> = ({
   return (
     <div className="overflow-x-auto rounded-md">
       <table className="table w-full table-fixed">
-        <thead>
-          <tr>
-            {headers.map((header, index) => {
-              const columnKey = header.toLowerCase().replace(' ', '');
-              return (
-                <th
-                  key={index}
-                  onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
-                  className="cursor-pointer first:w-[50px]  "
-                >
-                  {header}
-                  {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                     {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
-                </th>
+      <thead>
+  <tr>
+    {headers.map((header, index) => {
+      if (typeof renderHeaderCell === 'function') {
+        return renderHeaderCell(header, index);
+      }
 
-              );
-            })}
-          </tr>
-        </thead>
+      const columnKey = header.toLowerCase().replace(' ', '');
+      return (
+        <th
+          key={index}
+          className= 'cursor-pointer [&:nth-child(2n)]:w-[50px]'
+          onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+        >
+          {header}
+          {sortableColumns.includes(columnKey) && sortBy === columnKey && (
+            <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
+              {sortDirection === 'asc' ? '▲' : '▼'}
+            </span>
+          )}
+        </th>
+      );
+    })}
+  </tr>
+</thead>
+
         <tbody>
           {loading ? (
             <tr>

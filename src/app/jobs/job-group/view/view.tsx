@@ -71,30 +71,54 @@ export default function ViewDetails() {
   //   return 0;
   // };
   const calculateTotalCost = (jobData: any) => {
-    // Calculate subtotalcost from jobDescription
     let subtotalcost = 0;
+  
+    // Check if jobDescription exists and is an array
     if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: string) => {
-        // Parse the stringified JSON to access the cost value
-        const parsedItem = JSON.parse(item);
-        return total + parseFloat(parsedItem.cost || '0');
+      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+        let parsedItem = item;
+  
+        // Only parse if item is a string
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item); // Parse the stringified JSON
+          } catch (error) {
+            console.error("Error parsing job description:", error);
+            return total; // Skip this item if parsing fails
+          }
+        }
+  
+        // Check if parsedItem has a cost property and is a number
+        const cost = parseFloat(parsedItem?.cost || '0');
+        return total + (isNaN(cost) ? 0 : cost);
       }, 0);
     }
   
+    // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
     const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
     const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
   
+    // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
+    const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
+      ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
+      : simpleFlatRate;
+      
+    const finalAmountPercentage = isNaN(amountPercentage) || amountPercentage <= 0
+      ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
+      : amountPercentage;
+  
     // Calculate the percentage amount
-    const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
-      ? (subtotalcost * amountPercentage) / 100
+    const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
+      ? (subtotalcost * finalAmountPercentage) / 100
       : 0;
   
-    // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
-    const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
+    // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
+    const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
   
     return totalCost;
   };
-
+  
+  
   if (!jobData || jobData.length === 0) {
     return (
       <div>
@@ -161,47 +185,83 @@ export default function ViewDetails() {
                 </div>
 
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                  <strong className="w-[200px] inline-block">Job Description:</strong>
-                  {job?.jobDescription && Array.isArray(job.jobDescription) ? (
-                    <ul className="list-none">
-                      {job.jobDescription.map((item: string, index: number) => {
-                        const parsed = JSON.parse(item);
-                        return (
-                          <li key={index}>
-                            <span className="block">
-                              {parsed.jobDescription}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    'No job descriptions available'
-                  )}
-                </div>
+  <strong className="w-[200px] inline-block">Job Description:</strong>
+  {job?.jobDescription && Array.isArray(job.jobDescription) ? (
+    <ul className="list-none">
+      {job.jobDescription.map((item: string | object, index: number) => {
+        let parsedItem;
+
+        // Check if the item is a stringified JSON and try to parse it
+        try {
+          parsedItem = typeof item === 'string' ? JSON.parse(item) : item;
+        } catch (error) {
+          console.error("Error parsing job description:", error);
+          parsedItem = {}; // Fallback in case of an error
+        }
+
+        return (
+          <li key={index}>
+            <span className="block">
+              {parsedItem?.jobDescription || "No description available"}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    'No job descriptions available'
+  )}
+</div>
 
 
 
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
+<div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
   <strong className="w-[200px] min-w-[200px] inline-block capitalize">R/I/R/R</strong>
 
   {(() => {
     if (!job) return null;
 
     // Parse jobDescription items and calculate total cost
-    const totalCost = job.jobDescription.reduce((sum: number, item: string) => {
-      const parsedItem = JSON.parse(item); // Parse the stringified JSON
-      return sum + Number(parsedItem.cost || 0); // Accumulate the cost
-    }, 0);
+    let totalCost = 0;
+
+    if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+      totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item?.cost || 0); // Accumulate the cost
+      }, 0);
+    }
 
     const simpleFlatRate = Number(job.simpleFlatRate);
     const amountPercentage = Number(job.amountPercentage);
 
-    // Neither is valid — show red dot with tooltip
+    // If both are invalid in the first job data, fallback to technician data
+    const fallbackSimpleFlatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0);
+    const fallbackAmountPercentage = Number(job?.technicians?.[0]?.amountPercentage || 0);
+
+    // Check if both simpleFlatRate and amountPercentage are invalid
     if (
       (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
       (isNaN(amountPercentage) || amountPercentage === 0)
     ) {
+      // Fallback to technician data if primary values are invalid
+      if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            ${fallbackSimpleFlatRate.toFixed(2)}
+          </div>
+        );
+      }
+
+      // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
+      if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
+        const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
+          </div>
+        );
+      }
+
+      // Show red dot with tooltip if both fallback values are invalid
       const tooltipId = `tooltip-${job.id}`;
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -222,7 +282,7 @@ export default function ViewDetails() {
       );
     }
 
-    // Show simpleFlatRate if valid
+    // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
     if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -244,6 +304,7 @@ export default function ViewDetails() {
     return null;
   })()}
 </div>
+
 
 
 

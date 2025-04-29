@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -40,6 +40,8 @@ const JobTable: React.FC = () => {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -228,6 +230,12 @@ const JobTable: React.FC = () => {
 
   // CSV Export Functions
   const downloadCSV = () => {
+    const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
+    if (selectedJobs.length === 0) {
+          toast.warning("Please select at least job group to export.");
+          return;
+        }
+
     const csvOptions = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -242,7 +250,7 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = activeJob.map((jobData) => {
+    const formattedData = selectedJobs.map((jobData) => {
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -337,7 +345,14 @@ const JobTable: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const handleCheckboxChange = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
   const renderRow = (job: any) => {
+    const isChecked = selectedIds.includes(job.id);
 
     const subtotalcost = job.jobDescription.reduce((sum: number, job: any) => {
       const parsedJob = (job);
@@ -350,6 +365,22 @@ const JobTable: React.FC = () => {
 
     return (
       <tr key={job.id}>
+        <td key="checkbox">
+        <label className="flex items-center cursor-pointer relative">
+
+          <input
+            type="checkbox"
+            className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+            checked={isChecked}
+            onChange={() => handleCheckboxChange(job.id)}
+          />
+               <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+        </td>
         <td>{job.id}</td>
         <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
         <td>{job?.customer?.phoneNumber}</td>
@@ -365,17 +396,20 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
 
-        <td>
+            <td>
           {(() => {
             if (!job) return null;
-
+        
             const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
               return sum + Number(item.cost || 0);
             }, 0);
-
-            const simpleFlatRate = Number(job.simpleFlatRate);
-            const amountPercentage = Number(job.amountPercentage);
-
+        
+            // Use job's simpleFlatRate or fallback to technician's simpleFlatRate
+            const simpleFlatRate = job.simpleFlatRate ? Number(job.simpleFlatRate) : (job.technicians[0]?.simpleFlatRate ? Number(job.technicians[0].simpleFlatRate) : 0);
+        
+            // Use job's amountPercentage or fallback to technician's amountPercentage
+            const amountPercentage = job.amountPercentage ? Number(job.amountPercentage) : (job.technicians[0]?.amountPercentage ? Number(job.technicians[0].amountPercentage) : 0);
+        
             // Neither is valid — show red dot with tooltip
             if (
               (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
@@ -400,7 +434,7 @@ const JobTable: React.FC = () => {
                 </div>
               );
             }
-
+        
             // Show simpleFlatRate if valid
             if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
               return (
@@ -409,7 +443,7 @@ const JobTable: React.FC = () => {
                 </div>
               );
             }
-
+        
             // Show percentage-based calculation
             if (!isNaN(amountPercentage) && amountPercentage > 0) {
               const percentageAmount = (totalCost * amountPercentage) / 100;
@@ -419,7 +453,7 @@ const JobTable: React.FC = () => {
                 </div>
               );
             }
-
+        
             return null;
           })()}
         </td>
@@ -427,37 +461,30 @@ const JobTable: React.FC = () => {
         <td>
           {(() => {
             if (!job) return null;
-
-            // Calculate subtotal cost from jobDescription
+        
+            // Step 1: Calculate subtotal from jobDescription
             const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
               return sum + Number(item.cost || 0);
             }, 0);
-
-            const simpleFlatRate = Number(job.simpleFlatRate);
-            const amountPercentage = Number(job.amountPercentage);
-
-            // Calculate the percentage amount
-            const percentageAmount = !isNaN(amountPercentage) && amountPercentage > 0
-              ? (subtotalcost * amountPercentage) / 100
-              : 0;
-
-            // Calculate the totalCost by adding simpleFlatRate and percentageAmount if available
-            const totalCost = (isNaN(simpleFlatRate) || simpleFlatRate <= 0 ? 0 : simpleFlatRate) + subtotalcost + percentageAmount;
-
-            // If amountPercentage is not available, show subtotal only
-            if (isNaN(amountPercentage) || amountPercentage === 0) {
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${subtotalcost.toFixed(2)}
-                </div>
-              );
-            }
-
-            // Show tooltip if neither simpleFlatRate nor amountPercentage are provided
-            if (
-              (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-              (isNaN(amountPercentage) || amountPercentage === 0)
-            ) {
+        
+            // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
+            const technician = job.technicians?.[0] || {};
+            const simpleFlatRate = !isNaN(Number(job.simpleFlatRate)) && Number(job.simpleFlatRate) > 0
+              ? Number(job.simpleFlatRate)
+              : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+        
+            const amountPercentage = !isNaN(Number(job.amountPercentage)) && Number(job.amountPercentage) > 0
+              ? Number(job.amountPercentage)
+              : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+        
+            // Step 3: Calculate percentage amount
+            const percentageAmount = (amountPercentage * subtotalcost) / 100;
+        
+            // Step 4: Total = subtotal + flat rate + percentage amount
+            const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
+        
+            // Step 5: Show red dot tooltip if neither flat rate nor percentage are valid
+            if (simpleFlatRate === 0 && amountPercentage === 0) {
               const tooltipId = `tooltip-${job.id}`;
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -477,8 +504,8 @@ const JobTable: React.FC = () => {
                 </div>
               );
             }
-
-            // Show the total cost when both flat rate and percentage are available
+        
+            // Step 6: Return total cost
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 ${totalCost.toFixed(2)}
@@ -513,11 +540,32 @@ const JobTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="All IFS Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
+            <th className="w-[35px]">
+        <label className="flex items-center cursor-pointer relative">
+
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length === activeJob.length}
+                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                  onChange={() =>
+                    setSelectedIds(
+                      selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                    )
+                  }
+                />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label> 
+              </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (

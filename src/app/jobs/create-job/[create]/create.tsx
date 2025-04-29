@@ -187,7 +187,18 @@ export default function Technicians() {
             cost: item.cost || '',
           }))
           : [{ id: crypto.randomUUID(), jobDescription: '', cost: '' }];
+        const technician = jobData.technicians?.[0] || {};
+        const fallbackSimpleFlatRate = jobData.simpleFlatRate !== null && jobData.simpleFlatRate !== ''
+          ? jobData.simpleFlatRate
+          : technician.simpleFlatRate || '';
 
+        const fallbackAmountPercentage = jobData.amountPercentage !== null && jobData.amountPercentage !== ''
+          ? jobData.amountPercentage
+          : technician.amountPercentage || '';
+
+        const fallbackPayRate = jobData.payRate !== null && jobData.payRate !== ''
+          ? jobData.payRate
+          : technician.payRate || '';
         // ✅ Update `descriptionCostFields` for UI display
         setDescriptionCostFields(jobDescriptionsArray);
         setFormData((prev) => ({
@@ -205,9 +216,9 @@ export default function Technicians() {
           labourCost: jobData.labourCost,
           // Assuming 'jobData.technicians' is an array of 'Technicians'
           assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
-          payRate: jobData.payRate || '',
-          simpleFlatRate: jobData.simpleFlatRate || '',
-          amountPercentage: jobData.amountPercentage || '',
+          payRate: fallbackPayRate,
+          simpleFlatRate: fallbackSimpleFlatRate,
+          amountPercentage: fallbackAmountPercentage,
           payVehicleType: jobData.payVehicleType || '',
           // Using Technician interface
           assignCustomer: jobData.assignCustomer || '',
@@ -365,7 +376,7 @@ export default function Technicians() {
     setDescriptionCostFields((prevFields) =>
       prevFields.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
-   
+
     // ✅ Sync changes with formData
     setFormData((prev) => ({
       ...prev,
@@ -441,7 +452,7 @@ export default function Technicians() {
     if (isEdit && jobId) {
       assignTechnicians.forEach((id) => {
         formDataObj.append('technicianId[]', id); // send technicianId as an array
-      }); 
+      });
       formDataObj.append('payVehicleType', formData.payVehicleType);
       formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
       formDataObj.append('amountPercentage', formData.amountPercentage);
@@ -449,7 +460,7 @@ export default function Technicians() {
 
     }
 
-     
+
     assignTechnicians.forEach((techId) => {
       formDataObj.append('assignTechnicians[]', techId);
     });
@@ -480,7 +491,7 @@ export default function Technicians() {
           router.push('/jobs/complete-job/listing');
         } else if (searchParams.has('vehicleInfo')) {
           router.push('/reporting/vehicle-info')
-        } else if(searchParams.has('groupjob')){
+        } else if (searchParams.has('groupjob')) {
           router.push('/jobs/job-group/listing')
         } else {
           router.push('/jobs/active-job');
@@ -543,7 +554,7 @@ export default function Technicians() {
     } else {
       setFormData((prev) => ({ ...prev, [key]: value }));
     }
-    
+
   };
 
 
@@ -1095,7 +1106,7 @@ export default function Technicians() {
                     labelId="assignTechnicians"
                     id="select-assignTechnicians"
                     color="warning"
-                    label="Select technicians" 
+                    label="Select technicians"
                     required
                     value={formData.assignTechnicians}
                     onChange={handleTechnicianChange}
@@ -1105,7 +1116,7 @@ export default function Technicians() {
                     }).filter(Boolean).join(', ')}
                   >
                     {technicians.map((tech) => (
-                      <MenuItem key={tech.id} value={String(tech.id)}> 
+                      <MenuItem key={tech.id} value={String(tech.id)}>
                         <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
                       </MenuItem>
                     ))}
@@ -1236,7 +1247,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')}  disabled={!!formData.simpleFlatRate} />
+                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
                 </div>
               )}
               {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
@@ -1248,10 +1259,10 @@ export default function Technicians() {
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
                   <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
-                   inputProps={{
-                    step: "0.01",
-                    min: 0
-                  }} disabled={!!formData.amountPercentage} />
+                    inputProps={{
+                      step: "0.01",
+                      min: 0
+                    }} disabled={!!formData.amountPercentage} />
                 </div>
               )}
             </div>
@@ -1264,7 +1275,7 @@ export default function Technicians() {
                 <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')} required />
+              <TextField fullWidth type='number' size="small" name="labourCost" id="outlined-basic" color="warning" label="Labour Cost" variant="filled" value={formData.labourCost} onChange={(e) => handleChange(e, 'labourCost')} required />
             </div>
           )}
           <div className='mb-4 mt-4'>

@@ -83,7 +83,9 @@ tr:nth-child(even) {background: #383d7114;}
   border: 4px solid #f7f7fd;
 }
 /* Add this in your pagination styles.css */
-
+.form-control.w-full.p-8.mt-1.rounded.relative.disabled {
+  background: #0000001f;
+}
 .pagination {
   display: flex;
   list-style: none;

@@ -5,7 +5,7 @@ import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
 import SortableTable from '../../component/shorting'; // Import SortableTable
 import Link from 'next/link';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Pagination from '../../component/pagination';
@@ -40,6 +40,7 @@ const TechnicianTable: React.FC = () => {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
@@ -292,6 +293,12 @@ const TechnicianTable: React.FC = () => {
 
   // CSV Export Functions
   const downloadCSV = () => {
+    const selectedTechnicians = technicians.filter(tech => selectedIds.includes(tech.id));
+
+    if (selectedTechnicians.length === 0) {
+      toast.warning("Please select at least job group to export.");
+      return;
+    }
     const csvOptions = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -306,7 +313,7 @@ const TechnicianTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = technicians.map((tech) => ({
+    const formattedData = selectedTechnicians.map((tech) => ({
       Id: tech.id,
       Name: `${tech.firstName} ${tech.lastName}`,
       Email: tech.email,
@@ -405,12 +412,47 @@ const TechnicianTable: React.FC = () => {
 
     reader.readAsText(file);
   };
+
+  // Select All
+  const isAllSelected = technicians.length > 0 && selectedIds.length === technicians.length;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      const allIds = technicians.map(t => t.id); // Assuming each technician has an `id` field
+      setSelectedIds(allIds);
+    }
+  };
+
+  // Individual Row Checkbox
+  const handleCheckboxChange = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
   // Render row function for SortableTable
   const renderRow = (tech: any) => {
     const status = statuses[tech.id] || "Accept";
+    const isChecked = selectedIds.includes(tech.id);
 
     return (
       <tr key={tech.id}>
+        <td key="checkbox">
+          <label className="flex items-center cursor-pointer relative">
+            <input
+              type="checkbox"
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+              checked={isChecked}
+              onChange={() => handleCheckboxChange(tech.id)}
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+              </svg>
+            </span>
+          </label>
+        </td>
         <td>{tech.id}</td>
         <td>
           <div className="flex items-center gap-2">
@@ -493,16 +535,53 @@ const TechnicianTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
-
-
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <SortableTable
-        headers={['ID', 'Name', 'Email', 'Phone Number', 'Status', 'Account Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Status', 'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
         sortDirection={sortDirection}
         handleSort={handleSort}
         loading={loading}
+        renderHeaderCell={(header, index) => {
+          if (index === 0) {
+            return (
+              <th key={index} className='w-[40px]'>
+                <label className="flex items-center cursor-pointer relative">
+                  <input
+                    type="checkbox"
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                    checked={isAllSelected}
+                    onChange={handleSelectAll}
+                  />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+              </th>
+            );
+          }
+          const columnKey = header.toLowerCase().replace(' ', '');
+          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'account status', 'action'];
+
+          return (
+            <th
+              key={index}
+              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''}`}
+              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+            >
+              {header}
+              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
+                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
+                  {sortDirection === 'asc' ? '▲' : '▼'}
+                </span>
+              )}
+            </th>
+          );
+        }}
       />
 
 

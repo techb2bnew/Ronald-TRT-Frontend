@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -38,6 +38,7 @@ const VehicleTable: React.FC = () => {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
@@ -145,6 +146,12 @@ const VehicleTable: React.FC = () => {
 
   // CSV Export Functions
   const downloadCSV = () => {
+    const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
+
+    if (selectedJobs.length === 0) {
+      toast.warning("Please select at least job group to export.");
+      return;
+    }
     const csvOptions = {
       fieldSeparator: ',',
       quoteStrings: '"',
@@ -159,7 +166,7 @@ const VehicleTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = activeJob.map((jobData) => {
+    const formattedData = selectedJobs.map((jobData) => {
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -254,29 +261,55 @@ const VehicleTable: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const renderRow = (job: any) => (
-    <tr key={job.id}>
-      <td>{job?.id}</td>
-      <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
-      <td>  {job?.technicians?.map((tech: any) => (
-        <div key={tech.id}>
-          {tech.firstName} {tech.lastName}
-        </div>
-      ))}</td>
-      <td>{job.make} </td>
-      <td>{job.model}</td>
-      <td>{job.modelYear}</td>
-      <td>{job.color}</td>
-      <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
-      <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td>
-      <td> <span
-        className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-      >
-        {job.jobStatus ? 'Completed' : 'In Progress'}
-      </span></td>
+  const handleCheckboxChange = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
-    </tr>
-  );
+  const renderRow = (job: any) => {
+    const isChecked = selectedIds.includes(job.id);
+
+    return (
+      <tr key={job.id}>
+        <td key="checkbox">
+          <label className="flex items-center cursor-pointer relative">
+
+            <input
+              type="checkbox"
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+              checked={isChecked}
+              onChange={() => handleCheckboxChange(job.id)}
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+              </svg>
+            </span>
+          </label>
+        </td>
+        <td>{job?.id}</td>
+        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+        <td>  {job?.technicians?.map((tech: any) => (
+          <div key={tech.id}>
+            {tech.firstName} {tech.lastName}
+          </div>
+        ))}</td>
+        <td>{job.make} </td>
+        <td>{job.model}</td>
+        <td>{job.modelYear}</td>
+        <td>{job.color}</td>
+        <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
+        <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td>
+        <td> <span
+          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+        >
+          {job.jobStatus ? 'Completed' : 'In Progress'}
+        </span></td>
+
+      </tr>
+    );
+  };
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -286,11 +319,32 @@ const VehicleTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Vehicles List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
+              <th className="w-[35px]">
+                <label className="flex items-center cursor-pointer relative">
+
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === activeJob.length}
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                    onChange={() =>
+                      setSelectedIds(
+                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                      )
+                    }
+                  />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+              </th>
               <th className="w-[100px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
