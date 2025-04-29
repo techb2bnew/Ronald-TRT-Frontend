@@ -14,6 +14,7 @@ import Edit from "../../../../../public/edit.svg";
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
 
   const fetchCustomerData = async (vin: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -117,7 +118,10 @@ export default function ViewDetails() {
   
     return totalCost;
   };
-  
+    React.useEffect(() => {
+      const type = localStorage.getItem('types');
+      setUserType(type);
+    });
   
   if (!jobData || jobData.length === 0) {
     return (
@@ -214,6 +218,7 @@ export default function ViewDetails() {
 </div>
 
 
+{userType !== 'single-technician' && (
 
 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
   <strong className="w-[200px] min-w-[200px] inline-block capitalize">R/I/R/R</strong>
@@ -304,7 +309,11 @@ export default function ViewDetails() {
     return null;
   })()}
 </div>
+)}
+{userType === 'single-technician' && (
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${job?.labourCost}</div>
 
+                )}
 
 
 

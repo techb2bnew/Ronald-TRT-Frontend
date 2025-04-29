@@ -408,7 +408,7 @@ const JobTListing: React.FC = () => {
           ))}
         </td>
         <td>${(job?.customer?.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-        {roleType != 'single-technician' && (
+        {roleType !== 'single-technician' && (
           <td>
             {(() => {
               if (!job) return null;
@@ -502,7 +502,7 @@ const JobTListing: React.FC = () => {
           </td>
         )}
 
-        {roleType != 'single-technician' && (
+        {roleType !== 'single-technician' && (
 
           <td>
             {(() => {

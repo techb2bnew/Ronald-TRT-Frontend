@@ -428,11 +428,13 @@ const Sidebar = () => {
                     <span>Completed Work Order</span>
                   </Link>
                 </li>
+                 {userType !== 'single-technician' &&(
                 <li >
                   <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
                     <span>Group Work Orders</span>
                   </Link>
                 </li>
+            )}
               </ul>
             )}
           </li>
@@ -468,11 +470,14 @@ const Sidebar = () => {
                     <span>Vehicles Info</span>
                   </Link>
                 </li>
+                {userType !== 'single-technician' &&(
+
                 <li >
                   <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff900]' : ''}`} >
                     <span>All IFS Work Orders</span>
                   </Link>
                 </li>
+                )}
                 <li >
                   <Link href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff900]' : ''}`} >
                     <span>Vehicles List</span>

@@ -431,7 +431,7 @@ const JobTable: React.FC = () => {
           </div>
         ))}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-        {roleType != 'single-technician' && (
+        {roleType !== 'single-technician' && (
           <td>
             {(() => {
               if (!job) return null;
@@ -525,7 +525,7 @@ const JobTable: React.FC = () => {
   </td>
 )}
 
-        {roleType != 'single-technician' && (
+        {roleType !== 'single-technician' && (
 
           <td>
             {(() => {

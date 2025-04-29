@@ -206,7 +206,7 @@ export default function ViewDetails() {
               </div>
 
 
-              {userType !== 'ifs' && (
+              {userType !== 'ifs' && userType !== 'single-technician' && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
                   <strong className="w-[210px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
 
@@ -298,7 +298,10 @@ export default function ViewDetails() {
                 </div>
               )}
 
+                {userType === 'single-technician' && (
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData?.labourCost}</div>
 
+                )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>

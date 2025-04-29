@@ -331,7 +331,7 @@ const CompletedJobs: React.FC = () => {
             </div>
           ))}</td>
           {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
-          {roleType != 'single-technician' && (
+          {roleType !== 'single-technician' && (
             <td> ${totalCost}</td>
           )}
 
