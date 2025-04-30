@@ -448,7 +448,7 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
 
 }
 .MuiSelect-select{
-      padding: 5.5px 14px !important;
+      padding: 14px 14px !important;
 }
 .edit_img {
   position: absolute;
@@ -500,23 +500,23 @@ ul li a.active:before {
 svg.icon__tech {
   position: absolute;
   width: 24px;
-  top: 12px;
-  left: 5px;
+  top: 15px;
+  right: 5px;
   z-index: 1;
 }
-  .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root, label#outlined-basic-label, label.MuiFormLabel-root.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled.MuiFormLabel-colorWarning.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled{
+  /* .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root, label#outlined-basic-label, label.MuiFormLabel-root.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled.MuiFormLabel-colorWarning.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled{
   left: 22px !important;
-}
+} */
 .css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input, input#outlined-basic, input#confirmPassword, .MuiInputBase-input.MuiFilledInput-input{
-  padding-left: 35px !important;
+  /* padding-left: 35px !important; */
   background-color: #f5f7fa !important;
 
 }
-.MuiSelect-select {
+/* .MuiSelect-select {
   padding: 9.5px 35px !important;
   top: 8px;
     position: relative;
-}
+} */
 .css-x1lh3w-MuiInputBase-root-MuiFilledInput-root-MuiSelect-root, .css-1hwf8la-MuiInputBase-root-MuiFilledInput-root, .MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorWarning.MuiInputBase-formControl.MuiInputBase-sizeSmall.MuiInputBase-adornedStart.css-1kn6kge-MuiInputBase-root-MuiOutlinedInput-root, textarea, .form-control.w-full.p-3.mt-1.rounded.relative, .MuiInputBase-root.MuiFilledInput-root{
   background-color: #f5f7fa !important;
 }
@@ -524,7 +524,7 @@ svg.icon__tech {
   border-bottom: none !important;
 }
 .input.text-xs.input-bordered.w-full.p-2.rounded.PhoneInput {
-  line-height: 1.6rem;
+  line-height: 2.2rem;
   background-color: #f5f7fa !important;
 
 }

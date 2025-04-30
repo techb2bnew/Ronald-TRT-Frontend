@@ -8,6 +8,7 @@ import Breadcrumb from '@/app/component/breadcrumb';
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
 
   const fetchCustomerData = async (vehicalId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -61,7 +62,10 @@ export default function ViewDetails() {
     return 0;
   };
 
-
+React.useEffect(() => {
+    const type = localStorage.getItem('types');
+    setUserType(type);
+  });
 
   if (!jobData) {
     return <div><Loading /></div>;
@@ -126,6 +130,11 @@ export default function ViewDetails() {
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className='w-[200px] inline-block'>Total Cost:</strong> ${calculateTotalCost().toFixed(2)}
               </div>
+              {userType === 'single-technician' && (
+              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                <strong className='w-[200px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
+              </div>
+              )}
 
 
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</p>

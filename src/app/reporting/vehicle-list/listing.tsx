@@ -153,12 +153,13 @@ const VehicleTable: React.FC = () => {
       return;
     }
     const csvOptions = {
+      filename: 'Vehicle List',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Work Order Data',
+      title: 'Vehicle List',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -189,7 +190,6 @@ const VehicleTable: React.FC = () => {
         AccountStatus: jobData.accountStatus,
         DeletedStatus: jobData.deletedStatus,
         notes: jobData.notes,
-        createdAt: new Date(jobData.createdAt).toLocaleDateString(),
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),

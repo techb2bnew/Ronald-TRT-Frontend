@@ -86,7 +86,7 @@ export default function Reset() {
                                     <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
                                     <circle cx="10" cy="12" r="1" fill="#5B5B99" />
                                 </svg>
-                                <TextField fullWidth size="small" name="password" id="outlined-basic" color="warning" label="Enter new password *" variant="filled" onChange={handleChange} />
+                                <TextField fullWidth  name="password" id="outlined-basic" color="warning" label="Enter new password *" variant="outlined" onChange={handleChange} />
 
                             </div>
                             <div className="mt-4 relative">
@@ -95,7 +95,7 @@ export default function Reset() {
                                     <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
                                     <circle cx="10" cy="12" r="1" fill="#5B5B99" />
                                 </svg>
-                                <TextField fullWidth size="small" name="confirmPassword" id="outlined-basic" color="warning" label="Confirm new password *" variant="filled" value={input.confirmPassword} onChange={handleChange} />
+                                <TextField fullWidth name="confirmPassword" id="outlined-basic" color="warning" label="Confirm new password *" variant="outlined" value={input.confirmPassword} onChange={handleChange} />
 
 
                             </div>

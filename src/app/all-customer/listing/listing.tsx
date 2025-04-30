@@ -187,12 +187,13 @@ export default function ClientListing() {
       return;
     }
     const csvOptions = {
+      filename: 'All Customer',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Customer Data',
+      title: 'All Customer Data',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers

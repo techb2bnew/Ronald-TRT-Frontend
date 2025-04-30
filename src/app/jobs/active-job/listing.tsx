@@ -239,12 +239,13 @@ const JobTable: React.FC = () => {
       return;
     }
     const csvOptions = {
+      filename: 'Active Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Work Order Data',
+      title: 'Active Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -276,7 +277,6 @@ const JobTable: React.FC = () => {
         AccountStatus: jobData.accountStatus,
         DeletedStatus: jobData.deletedStatus,
         notes: jobData.notes,
-        createdAt: new Date(jobData.createdAt).toLocaleDateString(),
         jobStatus: jobData.jobStatus,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
@@ -474,7 +474,7 @@ const JobTable: React.FC = () => {
               // Show simpleFlatRate if valid
               if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     ${simpleFlatRate.toFixed(2)}
                   </div>
                 );
@@ -495,35 +495,35 @@ const JobTable: React.FC = () => {
           </td>
         )}
 
-{roleType === 'single-technician' && (
-  <td>
-    {(() => {
-      const labourCost = Number(job?.labourCost || 0);
-      if (labourCost === 0) {
-        const tooltipId = `tooltip-${job.id}-labour`;
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span
-              data-tooltip-id={tooltipId}
-              data-tooltip-content="Labour cost is not added for this job."
-              style={{
-                height: '12px',
-                width: '12px',
-                backgroundColor: 'red',
-                borderRadius: '50%',
-                display: 'inline-block',
-                cursor: 'pointer',
-              }}
-            ></span>
-            <Tooltip id={tooltipId} place="top" />
-          </div>
-        );
-      }
+        {roleType === 'single-technician' && (
+          <td>
+            {(() => {
+              const labourCost = Number(job?.labourCost || 0);
+              if (labourCost === 0) {
+                const tooltipId = `tooltip-${job.id}-labour`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span
+                      data-tooltip-id={tooltipId}
+                      data-tooltip-content="Labour cost is not added for this job."
+                      style={{
+                        height: '12px',
+                        width: '12px',
+                        backgroundColor: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        cursor: 'pointer',
+                      }}
+                    ></span>
+                    <Tooltip id={tooltipId} place="top" />
+                  </div>
+                );
+              }
 
-      return `$${labourCost.toFixed(2)}`;
-    })()}
-  </td>
-)}
+              return `$${labourCost.toFixed(2)}`;
+            })()}
+          </td>
+        )}
 
         {roleType !== 'single-technician' && (
 

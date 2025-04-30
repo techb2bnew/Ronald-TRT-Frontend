@@ -242,12 +242,13 @@ const JobTListing: React.FC = () => {
     }
 
     const csvOptions = {
+      filename: 'Group Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Work Order Data',
+      title: 'Group Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers

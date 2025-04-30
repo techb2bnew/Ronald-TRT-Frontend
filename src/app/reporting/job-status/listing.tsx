@@ -237,12 +237,13 @@ const JobTable: React.FC = () => {
         }
 
     const csvOptions = {
+      filename: 'Job Status',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Work Order Data',
+      title: 'Job Status',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -273,7 +274,6 @@ const JobTable: React.FC = () => {
         AccountStatus: jobData.accountStatus,
         DeletedStatus: jobData.deletedStatus,
         notes: jobData.notes,
-        createdAt: new Date(jobData.createdAt).toLocaleDateString(),
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),

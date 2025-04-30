@@ -450,6 +450,7 @@ const TechnicianTable: React.FC = () => {
       return;
     }
     const csvOptions = {
+      filename: 'IFS Technicians',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',

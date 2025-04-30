@@ -664,6 +664,8 @@ const Sidebar = () => {
               </div>
             </Link>
           </li>
+          {userType !== 'ifs' && (
+
           <li className='p-1 pl-4'>
             <Link href="/banner" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/banner' ? 'active text-[#fff900]' : ''}`}>
               <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
@@ -676,6 +678,8 @@ const Sidebar = () => {
               </div>
             </Link>
           </li>
+          )}
+
         </ul>
       </div>
     </div>

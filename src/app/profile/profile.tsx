@@ -398,7 +398,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                             <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
             
-                          <TextField fullWidth size="small" className='form__input' name="firstName" id="outlined-basic" color="warning" label="First Name" variant="filled" value={formData.firstName} onChange={handleInputChange}   disabled={!isEditing} required />
+                          <TextField fullWidth  className='form__input' name="firstName" id="outlined-basic" color="warning" label="First Name" variant="outlined" value={formData.firstName} onChange={handleInputChange}   disabled={!isEditing} required />
              
              
           </div>
@@ -407,7 +407,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                           <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                           <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
-                        <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Last Name" variant="filled" value={formData.lastName} onChange={handleInputChange} disabled={!isEditing} required />
+                        <TextField fullWidth  name="lastName" id="outlined-basic" color="warning" label="Last Name" variant="outlined" value={formData.lastName} onChange={handleInputChange} disabled={!isEditing} required />
            
              
           </div>
@@ -437,7 +437,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-           <FormControl fullWidth size="small" variant="filled">
+           <FormControl fullWidth  variant="outlined">
                           <InputLabel id="country" color="warning">Select country *</InputLabel>
                           <Select
                             labelId="country"
@@ -474,7 +474,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-            <FormControl fullWidth size="small" variant="filled">
+            <FormControl fullWidth  variant="outlined">
                             <InputLabel id="state" color="warning"> Select state *</InputLabel>
                             <Select
                               labelId="state"
@@ -511,7 +511,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                             <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                             <circle cx="12" cy="10" r="3" />
                           </svg>
-                          <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city" variant="filled" value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
+                          <TextField fullWidth  name="city" id="outlined-basic" color="warning" label="Enter your city" variant="outlined" value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
             
                          
             {/* <label className="text-gray-600">City *</label>
@@ -533,7 +533,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                           <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
           
-                        <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="filled" value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
+                        <TextField fullWidth  name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="outlined" value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
            
             {/* <label className="text-gray-600">Zip Code *</label>
             <input

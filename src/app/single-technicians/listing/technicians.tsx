@@ -300,12 +300,13 @@ const TechnicianTable: React.FC = () => {
       return;
     }
     const csvOptions = {
+      filename: 'Single Technicians',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Technicians Data',
+      title: 'Single Technicians Data',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers

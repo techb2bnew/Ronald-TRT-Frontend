@@ -157,12 +157,13 @@ export default function ClientListing() {
       return;
     }
     const csvOptions = {
+      filename: 'IFS Customer',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Customer Data',
+      title: 'IFS Customer Data',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers

@@ -212,7 +212,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="Enter your first name" variant="filled" value={formData.firstName} onChange={handleChange} required/>
+              <TextField fullWidth   name="firstName" id="outlined-basic" color="warning" label="Enter your first name" variant="outlined" value={formData.firstName} onChange={handleChange} required/>
 
             </div>
             <div className='mb-4 relative'>
@@ -221,7 +221,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Enter your last name" variant="filled" value={formData.lastName} onChange={handleChange} required/>
+              <TextField fullWidth  name="lastName" id="outlined-basic" color="warning" label="Enter your last name" variant="outlined" value={formData.lastName} onChange={handleChange} required/>
 
 
             </div>
@@ -244,7 +244,7 @@ export default function Technicians() {
                 <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
-              <TextField fullWidth size="small" name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number" variant="filled" value={formData.phoneNumber} onChange={handleChange} required />
+              <TextField fullWidth  name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number" variant="outlined" value={formData.phoneNumber} onChange={handleChange} required />
 
 
             </div>
@@ -253,7 +253,7 @@ export default function Technicians() {
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth size="small" name="email" id="outlined-basic" color="warning" label="Enter your email" variant="filled" value={formData.email} onChange={handleChange} required/>
+              <TextField fullWidth  name="email" id="outlined-basic" color="warning" label="Enter your email" variant="outlined" value={formData.email} onChange={handleChange} required/>
 
 
             </div>
@@ -266,7 +266,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-            <TextField fullWidth size="small" name="address" id="outlined-basic" color="warning" label="Enter your address" variant="filled" value={formData.address} onChange={handleChange} required/>
+            <TextField fullWidth  name="address" id="outlined-basic" color="warning" label="Enter your address" variant="outlined" value={formData.address} onChange={handleChange} required/>
 
 
           </div>
@@ -280,7 +280,7 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg>
 
-              <FormControl fullWidth size="small" variant="filled">
+              <FormControl fullWidth   variant="outlined">
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
                   labelId="country"
@@ -306,7 +306,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <FormControl fullWidth size="small" variant="filled">
+              <FormControl fullWidth  variant="outlined">
                 <InputLabel id="demo-simple-select-label" color="warning">Select state *</InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
@@ -330,7 +330,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <TextField fullWidth size="small" name="city" id="outlined-basic" color="warning" label="Enter your city" variant="filled" value={formData.city} onChange={handleChange} required/>
+              <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" variant="outlined" value={formData.city} onChange={handleChange} required/>
 
 
             </div>
@@ -339,7 +339,7 @@ export default function Technicians() {
                 <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth size="small" name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="filled" value={formData.zipCode} onChange={handleChange} required/>
+              <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="outlined" value={formData.zipCode} onChange={handleChange} required/>
 
 
             </div>

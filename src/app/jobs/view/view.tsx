@@ -206,7 +206,7 @@ export default function ViewDetails() {
               </div>
 
 
-              {userType !== 'ifs' && userType !== 'single-technician' && (
+              {  userType !== 'single-technician' && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
                   <strong className="w-[210px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
 

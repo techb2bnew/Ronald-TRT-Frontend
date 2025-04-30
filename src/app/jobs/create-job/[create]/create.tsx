@@ -544,18 +544,19 @@ export default function Technicians() {
 
   const handleChange = (event: any, key: any, target = 'formData') => {
     const value = event.target.value;
+  
     if (key === 'simpleFlatRate') {
-      // Regex to allow up to 2 decimal places
       const regex = /^\d+(\.\d{0,2})?$/;
-      if (!regex.test(value)) return; // Reject invalid input
+      if (value !== '' && !regex.test(value)) return; // Allow empty string
     }
+  
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
     } else {
       setFormData((prev) => ({ ...prev, [key]: value }));
     }
-
   };
+  
 
 
 
@@ -771,7 +772,7 @@ export default function Technicians() {
 
         <form className="" onSubmit={handleSubmit}>
           <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth >
               <InputLabel id="role-label" color="warning">Select role*</InputLabel>
               <Select
                 labelId="role-label"
@@ -789,7 +790,7 @@ export default function Technicians() {
             </FormControl>
 
             {formData.role === 'Enterpriceses' && (
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth >
                 <InputLabel id="enterprise-label" color="warning">Select Enterprise*</InputLabel>
                 <Select
                   labelId="enterprise-label"
@@ -808,7 +809,7 @@ export default function Technicians() {
             )}
 
             {(formData.role === 'Workshop' || formData.enterprise) && (
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth >
                 <InputLabel id="workshop-label" color="warning">Select Workshop*</InputLabel>
                 <Select
                   labelId="workshop-label"
@@ -846,16 +847,16 @@ export default function Technicians() {
                       <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
                     </svg>
 
-                    <TextField fullWidth size="small" name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="filled" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
+                    <TextField fullWidth  name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="outlined" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
                   </div>
-                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
+                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-4 text-sm  w-[300px] rounded">Add New Vehicle</button>
                 </div>
 
                 <div className="relative">
                   <label data-tooltip-id="VIN"
                     data-tooltip-content="Upload VIN Image"
                     htmlFor="fileInput"
-                    className="cursor-pointer flex  gap-2 p-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
+                    className="cursor-pointer flex  gap-2 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
                   >
                     <div className='text-center'>
                       <svg className='m-auto' width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -907,9 +908,9 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Vehicle Descriptor"
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.vehicleDescriptor || ''}
                       onChange={(e) => handleChange(e, 'vehicleDescriptor')}
                       required
@@ -926,9 +927,9 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Make"
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.make || ''}
                       onChange={(e) => handleChange(e, 'make')}
                       required
@@ -944,9 +945,9 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Manufacturer Name"
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.manufacturerName || ''}
                       onChange={(e) => handleChange(e, 'manufacturerName')}
                       required
@@ -963,9 +964,9 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Model"
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.model || ''}
                       onChange={(e) => handleChange(e, 'model')}
                       required
@@ -983,9 +984,9 @@ export default function Technicians() {
                       fullWidth
                       label="Model Year"
                       type='number'
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.modelYear || ''}
                       onChange={(e) => handleChange(e, 'modelYear')}
                       required
@@ -1001,9 +1002,9 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Vehicle Type"
-                      variant="filled"
+                      variant="outlined"
                       color="warning"
-                      size="small"
+                      
                       value={formData.vehicleType || ''}
                       onChange={(e) => handleChange(e, 'vehicleType')}
                       required
@@ -1027,7 +1028,7 @@ export default function Technicians() {
                 <circle cx="13.5" cy="10" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <FormControl fullWidth size="small" variant="filled">
+              <FormControl fullWidth  variant="outlined">
                 <InputLabel id="color" color="warning">Select color *</InputLabel>
                 <Select
                   labelId="color"
@@ -1064,7 +1065,7 @@ export default function Technicians() {
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
-              <FormControl fullWidth size="small" variant="filled">
+              <FormControl fullWidth  variant="outlined">
                 <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
                 <Select
                   labelId="assignCustomer"
@@ -1082,7 +1083,7 @@ export default function Technicians() {
                 </Select>
               </FormControl>
               <Link href='/client/create' data-tooltip-id="create-customer"
-                data-tooltip-content="Create Customer" className='primary-bg text-sm p-1 rounded mb-4'>
+                data-tooltip-content="Create Customer" className='primary-bg text-sm p-3 rounded mb-4'>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                   <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
                   <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
@@ -1099,7 +1100,7 @@ export default function Technicians() {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
-                <FormControl fullWidth size="small" variant="filled">
+                <FormControl fullWidth  variant="outlined">
                   <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
 
                   <Select
@@ -1124,7 +1125,7 @@ export default function Technicians() {
 
                 </FormControl>
                 <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
-                  data-tooltip-content="Create Technician" className='primary-bg text-sm p-1 rounded mb-4'>
+                  data-tooltip-content="Create Technician" className='primary-bg text-sm p-3 rounded mb-4'>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
                     <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
@@ -1147,7 +1148,7 @@ export default function Technicians() {
                   placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
               </div>
               <div className="mb-2 flex items-center gap-3 margin_remove">
-                <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning" >
+                <FormControl fullWidth sx={{ m: 1 }}  color="warning" >
                   <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
                   <OutlinedInput
                     id={`cost-${index}`}
@@ -1180,7 +1181,7 @@ export default function Technicians() {
           <button
             type="button"
             onClick={handleAddMore}
-            className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
+            className="primary-bg pl-5 pr-5 text-sm p-3 rounded mb-4">Add More + </button>
           {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType !== 'single-technician' && (
             <div className="grid grid-cols-3 gap-4">
 
@@ -1193,7 +1194,7 @@ export default function Technicians() {
                 </svg>
 
                 {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth size="small" variant="filled">
+                <FormControl fullWidth  variant="outlined">
                   <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
                   <Select
                     labelId="payRate"
@@ -1220,7 +1221,7 @@ export default function Technicians() {
                     <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
                     <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
                   </svg>
-                  <FormControl fullWidth size="small" variant="filled" className="mt-4">
+                  <FormControl fullWidth  variant="outlined" className="mt-4">
                     <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
                     <Select
                       labelId="payVehicleType"
@@ -1247,7 +1248,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="filled" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
+                  <TextField fullWidth type='number'  name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="outlined" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
                 </div>
               )}
               {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
@@ -1258,7 +1259,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number' size="small" name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="filled" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
+                  <TextField fullWidth type='number'  name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="outlined" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
                     inputProps={{
                       step: "0.01",
                       min: 0
@@ -1275,7 +1276,7 @@ export default function Technicians() {
                 <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth type='number' size="small" name="labourCost" id="outlined-basic" color="warning" label="Labour Cost" variant="filled" value={formData.labourCost} onChange={(e) => handleChange(e, 'labourCost')} required />
+              <TextField fullWidth type='number'  name="labourCost" id="outlined-basic" color="warning" label="Labour Cost" variant="outlined" value={formData.labourCost} onChange={(e) => handleChange(e, 'labourCost')} required />
             </div>
           )}
           <div className='mb-4 mt-4'>
@@ -1328,7 +1329,7 @@ export default function Technicians() {
 
             <button
               type="submit"
-              className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
+              className="primary-bg pl-5 pr-5 p-3 rounded flex items-center justify-center gap-2 min-w-[100px]"
               disabled={submitting}
             >
               {submitting ? (

@@ -26,28 +26,45 @@ export default function Technicians() {
 
   const fetchBannerData = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    const userID = localStorage.getItem('userID');
+    const roleType = localStorage.getItem('types');
+  
     try {
-      const token = localStorage.getItem('token');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
+  
       const response = await fetch(`${apiUrl}/bannerImages`, {
         method: 'GET',
         headers,
       });
-
+  
       const data = await response.json();
-
-      if (response.ok && data.banners) {
-        const bannerData = data.banners[0];  // Get first banner data
-        setFormData((prev) => ({
-          ...prev,
-          bannerImages: bannerData.bannerImages || [],
-          bannerId: bannerData.id || '', // Save the banner ID
-        }));
-        setJobId(bannerData.id);  // Set the job ID
+  
+      if (response.ok && Array.isArray(data.banners)) {
+        // Filter all matching banners
+        const matchedBanners = data.banners.filter(
+          (banner: any) =>
+            String(banner.userId) === String(userID) && banner.roleType === roleType
+        );
+  
+        if (matchedBanners.length > 0) {
+          // You can loop or display them as needed
+          console.log('Matched Banners:', matchedBanners);
+  
+          // For example, using the first matched one to update formData
+          const firstMatch = matchedBanners[0];
+          setFormData((prev) => ({
+            ...prev,
+            bannerImages: firstMatch.bannerImages || [],
+            bannerId: firstMatch.id || '',
+          }));
+          setJobId(firstMatch.id);
+        } else {
+          console.log('No matching banners found for this user.');
+        }
       } else {
         toast.error(data.error || 'Error fetching banner data');
       }
@@ -56,6 +73,8 @@ export default function Technicians() {
       toast.error('An error occurred while fetching banner data');
     }
   };
+  
+  
 
 
 
@@ -69,6 +88,8 @@ export default function Technicians() {
     e.preventDefault();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
+    const userID = localStorage.getItem('userID');
+    const roleType = localStorage.getItem('types');
     const formDataObj = new FormData();
     formData.bannerImages.forEach((file) => {
       formDataObj.append('bannerImages', file);
@@ -76,6 +97,9 @@ export default function Technicians() {
     if (isEdit && formData.bannerId) {
       formDataObj.append('id', formData.bannerId); // Pass the bannerId for edit case
     }
+    formDataObj.append('userId', userID || '');
+    formDataObj.append('roleType', roleType || '');
+
     try {
       setSubmitting(true);
       const endpoint = isEdit ? `${apiUrl}/bannerImages` : `${apiUrl}/bannerImages`;
@@ -200,10 +224,10 @@ export default function Technicians() {
       toast.error("Invalid data for removing image.");
       return;
     }
-  
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-  
+
     try {
       // Check if it's a File or URL
       if (imageUrl instanceof File) {
@@ -221,7 +245,7 @@ export default function Technicians() {
             "Authorization": `Bearer ${token}`,
           },
         });
-  
+
         if (response.ok) {
           toast.success('Image deleted successfully');
           fetchBannerData();  // Refresh the banner data
@@ -234,8 +258,8 @@ export default function Technicians() {
       toast.error('An error occurred while deleting the image');
     }
   };
-  
-  
+
+
 
 
 
@@ -283,10 +307,10 @@ export default function Technicians() {
                     )}
                     <button
                       type='button'
-                      onClick={() => { 
-                       
-                          handleRemoveFile(formData.bannerId, file);
-                        
+                      onClick={() => {
+
+                        handleRemoveFile(formData.bannerId, file);
+
                       }}
                       style={{
                         border: 'none',
