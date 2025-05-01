@@ -725,7 +725,7 @@ export default function Technicians() {
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
 
-              <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} className='form__input' name="firstName" id="outlined-basic" color="warning" label="Enter your first name" size="small" value={formData.firstName} onChange={handleChange} />
+              <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} className='form__input' name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
               {/* <input
                 type="text"
                 placeholder="Enter your first name"
@@ -740,7 +740,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Enter your last name" size="small" value={formData.lastName} onChange={handleChange} />
+              <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
 
               {/* <input
                 type="text"
@@ -778,7 +778,7 @@ export default function Technicians() {
 
 
               {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Enter your email" size="small" error={!!errors.email} helperText={errors.email || ''} value={formData.email} onChange={handleChange} />
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" error={!!errors.email} helperText={errors.email || ''} value={formData.email} onChange={handleChange} />
 
 
             </div>

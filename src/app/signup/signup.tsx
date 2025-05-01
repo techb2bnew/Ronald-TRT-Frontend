@@ -533,7 +533,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"   value={formData.firstName} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="First name *"   value={formData.firstName} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -543,7 +543,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"   value={formData.lastName} onChange={handleChange} />
+                    <TextField fullWidth  error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Last name *"   value={formData.lastName} onChange={handleChange} />
 
 
                   </div>
@@ -555,7 +555,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="businessName" id="outlined-basic" color="warning" label="Enter your business name *" size="small" value={formData.businessName} onChange={handleChange} />
+                    <TextField fullWidth  name="businessName" id="outlined-basic" color="warning" label="Business name *" size="small" value={formData.businessName} onChange={handleChange} />
                   </div>
                   )}
                 </div>
@@ -582,7 +582,7 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Enter your email *" size="small" value={formData.email} onChange={handleChange} />
+                    <TextField fullWidth  name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
 
                   </div>
                 </div>

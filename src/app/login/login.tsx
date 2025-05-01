@@ -146,7 +146,7 @@ export default function Login() {
                   className="text-xs"  
                   id="email"
                   color="warning" 
-                  label="Enter Email Address" 
+                  label="Email Address" 
                   value={email} 
                   variant="outlined" 
                   onChange={(e) => {
@@ -168,7 +168,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}  
                   id="password"
                   color="warning" 
-                  label="Enter Password" 
+                  label="Password" 
                   value={password} 
                   variant="outlined" 
                   inputProps={{
