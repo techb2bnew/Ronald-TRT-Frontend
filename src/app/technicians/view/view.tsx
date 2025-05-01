@@ -70,7 +70,7 @@ export default function ViewDetails() {
           <div className='flex gap-4 p-4'>
             {technician?.image ? (
               <img
-              onClick={() => setPreviewImage(technician.image)}
+                onClick={() => setPreviewImage(technician.image)}
                 src={technician?.image}
                 alt='Technician Tax Form'
                 className="w-[100px] h-[100px] rounded shadow-lg cursor-pointer object-cover"
@@ -91,7 +91,9 @@ export default function ViewDetails() {
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                   <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {technician?.email}</p>
+                <a href={`mailto:${technician?.email}`}>
+                  {technician?.email}
+                </a></p>
 
               <p className='flex gap-2 items-center'>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="view__detail"
@@ -116,7 +118,9 @@ export default function ViewDetails() {
                   <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                   <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
                 </svg>
-                {technician?.phoneNumber}</p>
+                <a href={`tel:${technician?.phoneNumber}`}>
+                  {technician?.phoneNumber}
+                </a></p>
             </div>
           </div>
         </div>
@@ -221,7 +225,7 @@ export default function ViewDetails() {
                             </button>
                           ) : (
                             <img
-                              onClick={() => window.open(form, '_blank')}
+                            onClick={() => setPreviewImage(form)}
                               src={form}
                               alt={`Technician Tax Form ${index + 1}`}
                               className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer"

@@ -188,7 +188,7 @@ export default function Login() {
                   style={{ position: 'absolute', right: '10px', top: '10px' }}
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Image src={Eye} width='18' height='18' alt="eye" /> : <Image src={EyeOff} width='18' height='18' alt="eye" />
+                  {showPassword ? <Image src={Eye} width='16' height='16' alt="eye" /> : <Image src={EyeOff} width='16' height='16' alt="eye" />
                   }
                 </button>
               </div>
