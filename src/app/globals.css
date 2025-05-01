@@ -410,7 +410,7 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
 }
 
 :focus-visible {
-  outline: -webkit-focus-ring-color auto 0px !important;
+  outline: none !important;
 }
 
 .overflowslidebar::-webkit-scrollbar-track
@@ -443,13 +443,19 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
 .MuiInputBase-input, .MuiFormLabel-root {
   font-size: 12px !important;
 } 
+.MuiInputBase-root.MuiSelect-root{
+  /* padding: 12px 14px !important; */
+  height: 35px !important;
+
+}
+
 .css-w1u3ce>span{
   font-size: 9px !important;
 
 }
-.MuiSelect-select{
+/* .MuiSelect-select{
       padding: 14px 14px !important;
-}
+} */
 .edit_img {
   position: absolute;
   right: 0;
@@ -500,9 +506,13 @@ ul li a.active:before {
 svg.icon__tech {
   position: absolute;
   width: 24px;
-  top: 15px;
+  top: 9px;
   right: 5px;
   z-index: 1;
+  height: 16px;
+}
+p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText-contained {
+  margin: 0;
 }
   /* .css-huhkee-MuiFormLabel-root-MuiInputLabel-root, .css-14a97vk-MuiFormLabel-root-MuiInputLabel-root, label#outlined-basic-label, label.MuiFormLabel-root.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled.MuiFormLabel-colorWarning.MuiInputLabel-root.MuiInputLabel-formControl.MuiInputLabel-animated.MuiInputLabel-sizeSmall.MuiInputLabel-filled{
   left: 22px !important;
@@ -524,7 +534,6 @@ svg.icon__tech {
   border-bottom: none !important;
 }
 .input.text-xs.input-bordered.w-full.p-2.rounded.PhoneInput {
-  line-height: 2.2rem;
   background-color: #f5f7fa !important;
 
 }

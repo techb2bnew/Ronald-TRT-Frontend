@@ -8,6 +8,7 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+  
   return (
     <ReactPaginate
       previousLabel={'«'}

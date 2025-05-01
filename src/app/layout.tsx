@@ -8,7 +8,7 @@ import Loading from "@/app/component/loader";
 import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; 
 import { SidebarProvider } from "@/app/component/SidebarContext";
 import ColorSettings from "@/app/component/colorsetting"; 
-
+import AuthCheck from "@/app/component/AuthCheck";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -52,7 +52,7 @@ export default function RootLayout({
       >
         <div className="flex">
         
-          <main className="flex-1">
+          <main className="flex-1"> 
             {shouldShowSidebar ? (
               <TechnicianProvider>
                 <SidebarProvider>
@@ -65,7 +65,7 @@ export default function RootLayout({
             ) : (
               children
             )}
-             <ColorSettings />
+             <ColorSettings /> 
           </main> 
         </div>
       </body>

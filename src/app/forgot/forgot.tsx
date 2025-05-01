@@ -15,13 +15,48 @@ export default function Forgot() {
   const router = useRouter()
     const [input, setInput] = useState<ForgotForm>({ emailOrPhone: '' });
     const [loading, setLoading] = useState(false); 
-    const [errors, setErrors] = useState({ emailOrPhone: '', });
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInput({ ...input, emailOrPhone: e.target.value });
-      };
+    const [errors, setErrors] = useState({ emailOrPhone: '', form:''});
+
+    const validateInput = (value: string): boolean => {
+      // Check if it's an email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Check if it's a phone number (simple check for digits)
+      const phoneRegex = /^[\d\s+-]+$/;
+      
+      return emailRegex.test(value) || (phoneRegex.test(value) && value.replace(/\D/g, '').length >= 10);
+    };
+
+      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setInput({ ...input, emailOrPhone: value });
+    
+    // Clear error when user types
+    if (errors.emailOrPhone) {
+      setErrors(prev => ({ ...prev, emailOrPhone: '' }));
+    }
+  };
 
      const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
             event.preventDefault();
+
+            if (!input.emailOrPhone.trim()) {
+              setErrors({ 
+                emailOrPhone: 'Email is required',
+                form: ''
+              });
+              setLoading(false);
+              return;
+            }
+
+            if (!validateInput(input.emailOrPhone)) {
+              setErrors({ 
+                emailOrPhone: 'Please enter a valid email',
+                form: ''
+              });
+              setLoading(false);
+              return;
+            }
+
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     
             try {
@@ -78,7 +113,8 @@ export default function Forgot() {
                       <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-              <TextField fullWidth  name="email" id="outlined-basic" color="warning" label="Enter your email *"  variant="outlined"   onChange={handleChange} />
+              <TextField fullWidth  error={!!errors.emailOrPhone}
+                  helperText={errors.emailOrPhone} name="email" id="outlined-basic" color="warning" label="Enter your email *"  size="small"   onChange={handleChange} />
                 {/* <input type="email" name="" onChange={handleChange} id="" placeholder="Enter your email" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required /> */}
               </div>  
               <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg

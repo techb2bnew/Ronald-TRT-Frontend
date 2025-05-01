@@ -28,8 +28,7 @@ export default function Header() {
       confirmButtonText: "Yes, logout",
     }).then((result) => {
       if (result.isConfirmed) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("technicianData");
+        localStorage.clear();
         router.push("/");
       }
     });

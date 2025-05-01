@@ -5,7 +5,7 @@ import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
 import SortableTable from '../../component/shorting'; // Import SortableTable
-import Link from 'next/link'; 
+import Link from 'next/link';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Pagination from '../../component/pagination';
@@ -95,7 +95,17 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
-  const handleApprovalChange = async (techId: number, isApproved: boolean) => {
+  const handleApprovalChange = async (techId: number, isApproved: boolean,  tech: any) => {
+    if (!tech.amountPercentage && !tech.simpleFlatRate) {
+      Swal.fire({
+        title: 'Missing Payment Info',
+        text: 'Please fill in either the Amount Percentage or Flat Rate before approving.',
+        icon: 'info',
+        confirmButtonColor: '#383d71',
+        confirmButtonText: 'OK',
+      });
+      return;
+    }
     const newStatus = isApproved ? 'Approved' : 'Accept';
 
     const result = await Swal.fire({
@@ -413,7 +423,7 @@ const TechnicianTable: React.FC = () => {
 
         </td>
         <td
-          onClick={() => handleApprovalChange(tech.id, !tech.isApproved)} // Corrected here
+          onClick={() => handleApprovalChange(tech.id, !tech.isApproved, tech)} // Corrected here
           style={{ cursor: 'pointer' }}
         >
           <span
@@ -463,7 +473,7 @@ const TechnicianTable: React.FC = () => {
     };
 
     const csvExporter = new ExportToCsv(csvOptions);
-    
+
     const formattedData = selectedTechnicians.map((tech) => ({
       Id: tech.id,
       Name: `${tech.firstName} ${tech.lastName}`,
@@ -595,7 +605,7 @@ const TechnicianTable: React.FC = () => {
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
       />
-            <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
@@ -647,9 +657,9 @@ const TechnicianTable: React.FC = () => {
       />
 
 
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-
+      {technicians.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      )}
     </div>
   );
 };

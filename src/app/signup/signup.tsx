@@ -21,6 +21,7 @@ import Link from 'next/link';
 import Eye from "../../../public/eye.svg";
 import EyeOff from '../../../public/eye-off.svg'
 import Swal from "sweetalert2";
+import { FormHelperText } from '@mui/material';
 interface registerForm {
   id?: string;
   firstName: string;
@@ -101,6 +102,13 @@ export default function Role() {
         types: selectedRole ? selectedRole.type : "", // Auto-fill role type
       }));
     }
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
 
 
   };
@@ -110,6 +118,13 @@ export default function Role() {
     setFormData({ ...formData, [name]: value });
     if (name === 'confirmPassword') {
       validateConfirmPassword(value);
+    }
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
   const validateConfirmPassword = (confirmPassword: string) => {
@@ -261,12 +276,25 @@ export default function Role() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.confirmPassword !== formData.password) {
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: 'Passwords do not match'
-      }));
-      return; // Stop the function if passwords do not match
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.role.trim()) newErrors.role = 'Role name is required';
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
+    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.country?.trim()) newErrors.country = 'Country is required';
+    if (!formData.state?.trim()) newErrors.state = 'State is required';
+    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required'; 
+    if (!formData.password?.trim()) newErrors.password = 'Password is required';
+
+    if (formData.password && formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Replace all errors with new ones
+      return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -392,23 +420,40 @@ export default function Role() {
   }, []);
 
 
-  const handlePhoneChange = (value: string | undefined) => {
-    if (!value) return;
-
-    // Extracting country code and formatting phone number
-    const parsedNumber = parsePhoneNumberFromString(value);
-    if (parsedNumber) {
-      const countryCode = parsedNumber.countryCallingCode;
-      const nationalNumber = parsedNumber.nationalNumber;
-      // Formatting as "+91-983274663"
-      const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
-
-      setFormData((prev) => ({
-        ...prev,
-        phoneNumber: formattedPhoneNumber,
-      }));
-    }
-  };
+ const handlePhoneChange = (value: string | undefined) => {
+     // Clear phone number error if it exists
+     if (errors.phoneNumber) {
+       setErrors(prev => {
+         const newErrors = { ...prev };
+         delete newErrors.phoneNumber;
+         return newErrors;
+       });
+     }
+   
+     if (!value) {
+       // Handle empty value case
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: ''
+       }));
+       return;
+     }
+   
+     const parsedNumber = parsePhoneNumberFromString(value);
+     if (parsedNumber) {
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: parsedNumber.number // E.164 format
+       }));
+     } else {
+       // Handle invalid phone number case
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: value // Fallback to raw input
+       }));
+     }
+   };
+  
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
@@ -440,10 +485,10 @@ export default function Role() {
                   <div className='mb-4 relative'>
                     <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                      <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" stroke-linecap="round" />
+                      <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                       <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                     </svg>
-                    <FormControl fullWidth  variant='filled'>
+                    <FormControl fullWidth  size="small" error={!!errors.role}>
                       <InputLabel id="role" color="warning">Select role name *</InputLabel>
                       <Select
                         labelId="role"
@@ -462,6 +507,9 @@ export default function Role() {
                             </MenuItem>
                           ))}
                       </Select>
+                      {errors.role && (
+                                        <FormHelperText>{errors.role}</FormHelperText>
+                                      )}
                     </FormControl>
                   </div>
                   {/* <div className='mb-4 relative'>
@@ -470,7 +518,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" stroke-linecap="round" />
                       <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                     </svg>
-                    <TextField fullWidth  name="firstName" id="outlined-basic" color="warning" label="Select role type *" variant="outlined" value={formData.types} disabled />
+                    <TextField fullWidth  name="firstName" id="outlined-basic" color="warning" label="Select role type *" size="small" value={formData.types} disabled />
  
                   </div> */}
                 </div>
@@ -485,7 +533,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="firstName" id="outlined-basic" color="warning" label="Enter your first name *" variant="outlined" value={formData.firstName} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="Enter your first name *"   value={formData.firstName} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -495,7 +543,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="lastName" id="outlined-basic" color="warning" label="Enter your last name *" variant="outlined" value={formData.lastName} onChange={handleChange} />
+                    <TextField fullWidth  error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Enter your last name *"   value={formData.lastName} onChange={handleChange} />
 
 
                   </div>
@@ -507,7 +555,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="businessName" id="outlined-basic" color="warning" label="Enter your business name *" variant="outlined" value={formData.businessName} onChange={handleChange} />
+                    <TextField fullWidth  name="businessName" id="outlined-basic" color="warning" label="Enter your business name *" size="small" value={formData.businessName} onChange={handleChange} />
                   </div>
                   )}
                 </div>
@@ -515,14 +563,18 @@ export default function Role() {
                   {/* Client Name and Business Name */}
                   <div className='mb-4'>
                     {/* <p className='text-sm mb-2'>Phone <span className='text-red-500'>*</span></p> */}
-                    {/* <TextField fullWidth  name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" variant="outlined" value={formData.phoneNumber} onChange={handleChange} /> */}
+                    {/* <TextField fullWidth  name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number *" size="small" value={formData.phoneNumber} onChange={handleChange} /> */}
                     <PhoneInput
                       international
                       defaultCountry="US"
                       value={formData.phoneNumber}
+                      error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''}
                       onChange={handlePhoneChange}
                       className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
                     />
+                     {errors.phoneNumber && (
+                <div className="text-red-500 text-xs mt-1">{errors.phoneNumber}</div>
+              )}
                   </div>
                   <div className='mb-4 relative'>
                     <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -530,7 +582,7 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="email" id="outlined-basic" color="warning" label="Enter your email *" variant="outlined" value={formData.email} onChange={handleChange} />
+                    <TextField fullWidth  name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Enter your email *" size="small" value={formData.email} onChange={handleChange} />
 
                   </div>
                 </div>
@@ -544,7 +596,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    <FormControl fullWidth  variant='filled'>
+                    <FormControl fullWidth  size="small" error={!!errors.country}>
                       <InputLabel id="country" color="warning">Select country *</InputLabel>
                       <Select
                         labelId="country"
@@ -559,6 +611,9 @@ export default function Role() {
                           <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
                         ))}
                       </Select>
+                      {errors.country && (
+                                        <FormHelperText>{errors.country}</FormHelperText>
+                                      )}
                     </FormControl>
 
 
@@ -569,7 +624,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    <FormControl fullWidth  variant='filled'>
+                    <FormControl fullWidth  size="small" error={!!errors.state}>
                       <InputLabel id="state" color="warning">Select state *</InputLabel>
                       <Select
                         labelId="state"
@@ -584,6 +639,9 @@ export default function Role() {
                           <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                         ))}
                       </Select>
+                      {errors.state && (
+                                        <FormHelperText>{errors.state}</FormHelperText>
+                                      )}
                     </FormControl>
 
 
@@ -596,7 +654,7 @@ export default function Role() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                     {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth  name="city" id="outlined-basic" color="warning" label="Enter your city *" variant="outlined" value={formData.city} onChange={handleChange} />
+                    <TextField fullWidth  error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="Enter your city *" size="small" value={formData.city} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -606,7 +664,7 @@ export default function Role() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth  name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *" variant="outlined" value={formData.zipCode} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code *" size="small" value={formData.zipCode} onChange={handleChange} />
 
                   </div>
                 </div>
@@ -616,7 +674,7 @@ export default function Role() {
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  <TextField fullWidth  name="address" id="outlined-basic" color="warning" label="Enter your address *" variant="outlined" value={formData.address} onChange={handleChange} />
+                  <TextField fullWidth  error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Enter your address *" size="small" value={formData.address} onChange={handleChange} />
 
 
                 </div>
@@ -637,7 +695,7 @@ export default function Role() {
                       <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                       <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
                     </svg>
-                    <TextField fullWidth  name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
+                    <TextField fullWidth  name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
 
 
                   </div>
@@ -646,7 +704,7 @@ export default function Role() {
                       <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <TextField fullWidth  name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
+                    <TextField fullWidth  name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
 
 
                   </div>
@@ -655,10 +713,10 @@ export default function Role() {
 
                   <div className='mb-4 relative'>
                      
-                    <TextField fullWidth  type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Enter your password *" variant="outlined" value={formData.password} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.password} helperText={errors.password || ''} type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Enter your password *" size="small" value={formData.password} onChange={handleChange} />
                     <button
                       type="button"
-                      style={{ position: 'absolute', right: '10px', top: '10px' }}
+                      style={{ position: 'absolute', right: '10px', top: '8px' }}
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
@@ -676,7 +734,7 @@ export default function Role() {
                       id="confirmPassword"
                       color="warning"
                       label="Confirm your password *"
-                      variant="outlined"
+                      size="small"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       error={!!errors.confirmPassword}
@@ -684,7 +742,7 @@ export default function Role() {
                     />
                     <button
                       type="button"
-                      style={{ position: 'absolute', right: '10px', top: '10px' }}
+                      style={{ position: 'absolute', right: '10px', top: '8px' }}
                       onClick={() => setShowConformPassword(!showConformPassword)}
                     >
                       {showConformPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
@@ -704,7 +762,7 @@ export default function Role() {
                           <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                         </svg>
                         <p className='text-sm mb-1 mt-1'>Upload File</p>
-                        <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                        <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
                       </label>
                       <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
                       {/* onChange={handleFileChange} */}
@@ -750,7 +808,7 @@ export default function Role() {
                           <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                         </svg>
                         <p className='text-sm mb-1 mt-1'>Upload Profile Image</p>
-                        <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                        <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
                       </label>
                       <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
                     </div>

@@ -389,7 +389,7 @@ const CompletedJobs: React.FC = () => {
                 : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
                 }`}
             >
-              {completejob.jobStatus ? 'Approved' : 'Inprogress'}
+              {completejob.jobStatus ? 'Completed' : 'Inprogress'}
             </span>
           </td>
           <td>
@@ -505,7 +505,9 @@ const CompletedJobs: React.FC = () => {
           </tbody>
         </table>
       </div>
+      {activeJob.length > 0 && (
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      )}
     </div>
   );
 };

@@ -21,23 +21,53 @@ const Sidebar = () => {
   const [activeLink, setActiveLink] = useState('');
   const [isHovered, setIsHovered] = useState(false);
   useEffect(() => {
-    const usersOpenState = localStorage.getItem('isUsersOpen');
-    const user1OpenState = localStorage.getItem('isUser1Open');
-    const user3OpenState = localStorage.getItem('isUser3Open');
-    const user4OpenState = localStorage.getItem('isUser4Open');
-    const user5OpenState = localStorage.getItem('isUser5Open');
-    const user6OpenState = localStorage.getItem('isUser6Open');
-    const user7OpenState = localStorage.getItem('isUser7Open');
+    const isFirstLogin = sessionStorage.getItem('firstLogin');
 
-    if (usersOpenState) setIsUsersOpen(JSON.parse(usersOpenState));
-    if (user1OpenState) setIsUser1Open(JSON.parse(user1OpenState));
-    if (user3OpenState) setIsUser3Open(JSON.parse(user3OpenState));
-    if (user4OpenState) setIsUser4Open(JSON.parse(user4OpenState));
-    if (user5OpenState) setIsUser5Open(JSON.parse(user5OpenState));
-    if (user6OpenState) setIsUser6Open(JSON.parse(user6OpenState));
-    if (user7OpenState) setIsUser7Open(JSON.parse(user7OpenState));
+    if (!isFirstLogin) {
+      // First time login – open only the first dropdown, others stay false
+      setIsUsersOpen(true);
+      setIsUser1Open(false);
+      setIsUser2Open(false);
+      setIsUser3Open(false);
+      setIsUser4Open(false);
+      setIsUser5Open(false);
+      setIsUser6Open(false);
+      setIsUser7Open(false);
 
+      // Save state to localStorage
+      localStorage.setItem('isUsersOpen', JSON.stringify(true));
+      localStorage.setItem('isUser1Open', JSON.stringify(false));
+      localStorage.setItem('isUser2Open', JSON.stringify(false));
+      localStorage.setItem('isUser3Open', JSON.stringify(false));
+      localStorage.setItem('isUser4Open', JSON.stringify(false));
+      localStorage.setItem('isUser5Open', JSON.stringify(false));
+      localStorage.setItem('isUser6Open', JSON.stringify(false));
+      localStorage.setItem('isUser7Open', JSON.stringify(false));
+
+      // Prevent re-initializing on page refresh
+      sessionStorage.setItem('firstLogin', 'true');
+    } else {
+      // Use previously saved states from localStorage
+      const usersOpenState = localStorage.getItem('isUsersOpen');
+      const user1OpenState = localStorage.getItem('isUser1Open');
+      const user2OpenState = localStorage.getItem('isUser2Open');
+      const user3OpenState = localStorage.getItem('isUser3Open');
+      const user4OpenState = localStorage.getItem('isUser4Open');
+      const user5OpenState = localStorage.getItem('isUser5Open');
+      const user6OpenState = localStorage.getItem('isUser6Open');
+      const user7OpenState = localStorage.getItem('isUser7Open');
+
+      if (usersOpenState) setIsUsersOpen(JSON.parse(usersOpenState));
+      if (user1OpenState) setIsUser1Open(JSON.parse(user1OpenState));
+      if (user2OpenState) setIsUser2Open(JSON.parse(user2OpenState));
+      if (user3OpenState) setIsUser3Open(JSON.parse(user3OpenState));
+      if (user4OpenState) setIsUser4Open(JSON.parse(user4OpenState));
+      if (user5OpenState) setIsUser5Open(JSON.parse(user5OpenState));
+      if (user6OpenState) setIsUser6Open(JSON.parse(user6OpenState));
+      if (user7OpenState) setIsUser7Open(JSON.parse(user7OpenState));
+    }
   }, []);
+
 
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const collapseSidebar = () => {
@@ -220,7 +250,15 @@ const Sidebar = () => {
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUsersOpen ? 'text-[#fff900] active' : 'text-[#fff]'}`}>
+            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+    ${isUsersOpen ? 'text-[#fff900]' : ''}
+    ${!isUsersOpen && (
+                activeLink === '/technicians/listing' ||
+                activeLink === '/technicians/create-technician' ||
+                activeLink === '/client/listing' ||
+                activeLink === '/client/create'
+              ) ? 'text-[#fff900]' : 'text-[#fff]'}
+  `}>
               <div className={`flex items-center gap-2 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
                 <div className='m-auto'>
@@ -382,7 +420,15 @@ const Sidebar = () => {
         </li>
         )} */}
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser3Open ? 'text-[#fff900] active' : 'text-[#fff] '}`}>
+            <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+    ${isUser3Open ? 'text-[#fff900]' : ''}
+    ${!isUser3Open && (
+                activeLink === '/jobs/create-job/create' ||
+                activeLink === '/jobs/active-job' ||
+                activeLink === '/jobs/complete-job/listing' ||
+                activeLink === '/jobs/job-group/listing'
+              ) ? 'text-[#fff900]' : 'text-[#fff]'}
+  `}>
               <div className={`flex items-center gap-2 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
                 <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -428,20 +474,28 @@ const Sidebar = () => {
                     <span>Completed Work Order</span>
                   </Link>
                 </li>
-                 {userType !== 'single-technician' &&(
-                <li >
-                  <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
-                    <span>Group Work Orders</span>
-                  </Link>
-                </li>
-            )}
+                {userType !== 'single-technician' && (
+                  <li >
+                    <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
+                      <span>Group Work Orders</span>
+                    </Link>
+                  </li>
+                )}
               </ul>
             )}
           </li>
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser5Open ? 'text-[#fff900] active' : 'text-[#fff] '}`}>
+            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+    ${isUser5Open ? 'text-[#fff900]' : ''}
+    ${!isUser5Open && (
+                activeLink === '/reporting/vehicle-info' ||
+                activeLink === '/reporting/job-status' ||
+                activeLink === '/reporting/vehicle-list' ||
+                activeLink === '/all-customer/listing'
+              ) ? 'text-[#fff900]' : 'text-[#fff]'}
+  `}>
               <div className={`flex items-center gap-2 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
                 <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -470,13 +524,13 @@ const Sidebar = () => {
                     <span>Vehicles Info</span>
                   </Link>
                 </li>
-                {userType !== 'single-technician' &&(
+                {userType !== 'single-technician' && (
 
-                <li >
-                  <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff900]' : ''}`} >
-                    <span>All IFS Work Orders</span>
-                  </Link>
-                </li>
+                  <li >
+                    <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff900]' : ''}`} >
+                      <span>All IFS Work Orders</span>
+                    </Link>
+                  </li>
                 )}
                 <li >
                   <Link href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff900]' : ''}`} >
@@ -496,7 +550,13 @@ const Sidebar = () => {
 
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group'>
-              <button onClick={handleDropdownTogglesSingleTechnician} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser6Open ? 'text-[#fff900] active' : 'text-[#fff] '}`}>
+              <button onClick={handleDropdownTogglesSingleTechnician} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+    ${isUser6Open ? 'text-[#fff900]' : ''}
+    ${!isUser6Open && (
+                  activeLink === '/single-technicians/listing' ||
+                  activeLink === '/single-technicians/jobs'
+                ) ? 'text-[#fff900]' : 'text-[#fff]'}
+  `}>
                 <div className={`flex items-center gap-2 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
 
@@ -517,7 +577,7 @@ const Sidebar = () => {
                 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                   <li  >
                     <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
-                      <span>Single Technicians</span>
+                      <span>Technicians</span>
                     </Link>
                   </li>
                   <li >
@@ -666,18 +726,18 @@ const Sidebar = () => {
           </li>
           {userType !== 'ifs' && (
 
-          <li className='p-1 pl-4'>
-            <Link href="/banner" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/banner' ? 'active text-[#fff900]' : ''}`}>
-              <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none" />
-                  <circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="2" fill="none" />
-                  <path d="M21 18L16 13L10 18" stroke="currentColor" strokeWidth="2" fill="none" />
-                </svg> 
-                <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Mobile Banner</span>
-              </div>
-            </Link>
-          </li>
+            <li className='p-1 pl-4'>
+              <Link href="/banner" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/banner' ? 'active text-[#fff900]' : ''}`}>
+                <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <path d="M21 18L16 13L10 18" stroke="currentColor" strokeWidth="2" fill="none" />
+                  </svg>
+                  <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Mobile Banner</span>
+                </div>
+              </Link>
+            </li>
           )}
 
         </ul>

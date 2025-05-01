@@ -316,20 +316,21 @@ const handleSelectChange = (event: SelectChangeEvent) => {
     <div className="rounded-lg p-6 mx-auto">
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} />
       <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
-        <div className="relative h-[80px] w-[80px]">
+        <div className="relative h-[88px] w-[88px]">
           {technician && technician.image ? (
             <img
               src={technician.image}
               alt="Profile image"
-              className="rounded-full object-cover h-[80px] w-[80px] border-[2px] border-white"
+              className="rounded-full object-cover h-[85px] w-[85px] border-[2px] border-white"
             />
           ) : (
-            <Image
-              src={user}
-              alt="Default profile image"
-              layout="fill"
-              className="rounded-full"
-            />
+            // <Image
+            //   src={user}
+            //   alt="Default profile image"
+            //   layout="fill"
+            //   className="rounded-full"
+            // />
+            <p className="font-[600] text-[12px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center">No image uploaded</p>
           )}
 
           <div

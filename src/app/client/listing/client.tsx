@@ -433,9 +433,9 @@ export default function ClientListing() {
           </tbody>
         </table>
       </div>
-
+      {customer.length > 0 && (
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-
+      )}
     </div>
   );
 }

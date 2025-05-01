@@ -15,6 +15,7 @@ export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchCustomerData = async (vin: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -341,7 +342,7 @@ export default function ViewDetails() {
                           src={image}
                           alt={`Job Image ${index + 1}`}
                           className="w-[70px] h-[70px] rounded-lg shadow cursor-pointer hover:scale-105 transition"
-                          onClick={() => window.open(image, '_blank')} // Opens image in a new tab
+                          onClick={() => setPreviewImage(image)}
                         />
                       ))}
                     </div>
@@ -440,6 +441,15 @@ export default function ViewDetails() {
           </div>
         ))}
         <ToastContainer />
+
+        {previewImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setPreviewImage(null)} // Close on backdrop click
+          >
+            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+          </div>
+        )}
       </div>
     </>
 

@@ -12,7 +12,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import PhoneInput from 'react-phone-number-input'
-import 'react-phone-number-input/style.css' 
+import 'react-phone-number-input/style.css'
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import Share from '../../../../public/share.png';
 import Image from 'next/image';
@@ -20,6 +20,7 @@ import Eye from "../../../../public/eye.svg";
 import EyeOff from '../../../../public/eye-off.svg';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Swal from "sweetalert2";
+import { FormHelperText } from '@mui/material';
 
 interface TechnicianForm {
   id?: string;
@@ -62,7 +63,7 @@ export default function Technicians() {
   const searchParams = useSearchParams();
   const [roles, setRoles] = useState<any[]>([]);
   const isSingleTechnician = searchParams.has('singletechnician');
-  const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];  
+  const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [userType, setUserType] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<TechnicianForm>({
@@ -164,19 +165,34 @@ export default function Technicians() {
         types: selectedRole ? selectedRole.type : "", // Auto-fill role type
       }));
     }
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
     if (name === 'simpleFlatRate') {
       // Regex to allow up to 2 decimal places
-      const regex = /^\d+(\.\d{0,2})?$/;
-      if (!regex.test(value)) return; // Reject invalid input
+      const regex = /^\d*(\.\d{0,2})?$/;
+      if (value !== '' && !regex.test(value)) return; // Reject invalid input
     }
     setFormData({ ...formData, [name]: value });
     if (name === 'confirmPassword') {
       validateConfirmPassword(value);
     }
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
   };
   const validateConfirmPassword = (confirmPassword: string) => {
     if (confirmPassword !== formData.password) {
@@ -281,7 +297,7 @@ export default function Technicians() {
     }
   };
 
-React.useEffect(() => {
+  React.useEffect(() => {
     const type = localStorage.getItem('types');
     setUserType(type);
   });
@@ -297,12 +313,29 @@ React.useEffect(() => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.confirmPassword !== formData.password) {
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: 'Passwords do not match'
-      }));
-      return; // Stop the function if passwords do not match
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
+    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.country?.trim()) newErrors.country = 'Country is required';
+    if (!formData.state?.trim()) newErrors.state = 'State is required';
+    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
+    // if (!formData.simpleFlatRate?.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
+    // if (!formData.payVehicleType?.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
+    // if (!formData.amountPercentage?.trim()) newErrors.amountPercentage = 'Amount Percentage is required';
+ 
+
+    if (formData.password && formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Replace all errors with new ones
+      return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -400,25 +433,41 @@ React.useEffect(() => {
     setFormData((prev: any) => ({ ...prev, image: null }));
   };
 
-
   const handlePhoneChange = (value: string | undefined) => {
-    if (!value) return;
-
-    // Extracting country code and formatting phone number
+    // Clear phone number error if it exists
+    if (errors.phoneNumber) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
+    }
+  
+    if (!value) {
+      // Handle empty value case
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      return;
+    }
+  
     const parsedNumber = parsePhoneNumberFromString(value);
     if (parsedNumber) {
-      const countryCode = parsedNumber.countryCallingCode; // Example: "91" for India
-      const nationalNumber = parsedNumber.nationalNumber; // Example: "983274663"
-
-      // Formatting as "+91-983274663"
-      const formattedPhoneNumber = `+${countryCode}-${nationalNumber}`;
-
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
-        phoneNumber: formattedPhoneNumber,
+        phoneNumber: parsedNumber.number // E.164 format
+      }));
+    } else {
+      // Handle invalid phone number case
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: value // Fallback to raw input
       }));
     }
   };
+
+ 
   useEffect(() => {
     // ✅ Get current domain dynamically
     if (typeof window !== "undefined") {
@@ -428,7 +477,7 @@ React.useEffect(() => {
 
   const handleCopy = () => {
     const shareUrl = `${domain}/signup`;
-  
+
     Swal.fire({
       title: "Share Link",
       html: `
@@ -462,7 +511,7 @@ React.useEffect(() => {
       },
     });
   };
-  
+
 
 
   const countries = Country.getAllCountries();
@@ -547,11 +596,11 @@ React.useEffect(() => {
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
         <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Share Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
 
         <form onSubmit={handleSubmit}>
-          {!searchParams.has('singletechnician') && (
+          {!searchParams.has('singletechnician') && !isEdit && (
             <div className="grid grid-cols-1 gap-4">
 
               <div className='mb-4 relative'>
@@ -560,7 +609,7 @@ React.useEffect(() => {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
-                <FormControl fullWidth  variant="outlined" >
+                <FormControl fullWidth size="small" >
                   <InputLabel id="role" color="warning">Select role name *</InputLabel>
                   <Select
                     labelId="role"
@@ -569,10 +618,10 @@ React.useEffect(() => {
                     value={formData.role}
                     label="State role name"
                     name="role"
-                    required
                     onChange={handleSelectChange}
                   >
                     {roles
+                      .filter((role) => role.name !== "super admin") // Filter out "super admin"
                       .map((role, index) => (
                         <MenuItem key={index} value={role.name}>
                           {role.name}
@@ -587,7 +636,7 @@ React.useEffect(() => {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
-                <FormControl fullWidth  variant="outlined" >
+                <FormControl fullWidth  size="small" >
                   <InputLabel id="types" color="warning">Select role type *</InputLabel>
                   <Select
                     labelId="types"
@@ -607,7 +656,7 @@ React.useEffect(() => {
               </div> */}
             </div>
           )}
-          {searchParams.has('singletechnician') && (
+          {searchParams.has('singletechnician') && !isEdit && (
             <div className="grid grid-cols-1 gap-4">
 
               <div className='mb-4 relative'>
@@ -617,7 +666,7 @@ React.useEffect(() => {
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
 
-                <FormControl fullWidth  variant="outlined" >
+                <FormControl fullWidth size="small" >
                   <InputLabel id="role" color="warning">Select role name *</InputLabel>
                   <Select
                     labelId="role"
@@ -645,7 +694,7 @@ React.useEffect(() => {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
-                <FormControl fullWidth  variant="outlined" >
+                <FormControl fullWidth  size="small" >
                   <InputLabel id="types" color="warning">Select role type *</InputLabel>
                   <Select
                     labelId="types"
@@ -676,8 +725,7 @@ React.useEffect(() => {
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
 
-              <TextField fullWidth  className='form__input' name="firstName" id="outlined-basic" color="warning" label="Enter your first name" variant="outlined" value={formData.firstName} onChange={handleChange} required />
-
+              <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} className='form__input' name="firstName" id="outlined-basic" color="warning" label="Enter your first name" size="small" value={formData.firstName} onChange={handleChange} />
               {/* <input
                 type="text"
                 placeholder="Enter your first name"
@@ -692,7 +740,7 @@ React.useEffect(() => {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth  name="lastName" id="outlined-basic" color="warning" label="Enter your last name" variant="outlined" value={formData.lastName} onChange={handleChange} required />
+              <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Enter your last name" size="small" value={formData.lastName} onChange={handleChange} />
 
               {/* <input
                 type="text"
@@ -707,14 +755,18 @@ React.useEffect(() => {
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4'>
-               <PhoneInput
+              <PhoneInput
                 international
-                defaultCountry="IN"
+                defaultCountry="US"
                 value={formData.phoneNumber}
                 onChange={handlePhoneChange}
-                required
-                className="input text-xs input-bordered w-full p-2 rounded"
+                error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''}
+                className={`input text-xs input-bordered w-full p-2 rounded ${errors.phoneNumber ? 'border border-red-500' : ''
+                  }`}
               />
+              {errors.phoneNumber && (
+                <div className="text-red-500 text-xs mt-1">{errors.phoneNumber}</div>
+              )}
 
 
             </div>
@@ -726,33 +778,12 @@ React.useEffect(() => {
 
 
               {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth  name="email" id="outlined-basic" color="warning" label="Enter your email" variant="outlined" value={formData.email} onChange={handleChange} required />
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Enter your email" size="small" error={!!errors.email} helperText={errors.email || ''} value={formData.email} onChange={handleChange} />
 
 
             </div>
           </div>
-          {/* Address and Email */}
-          <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
 
-
-
-            {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
-            <TextField fullWidth  name="address" id="outlined-basic" color="warning" label="Enter your address" variant="outlined" value={formData.address} onChange={handleChange} required />
-
-            {/* <input
-              type="text"
-               name="address"
-              placeholder="Enter your address"
-              value={formData.address}
-              onChange={handleChange}
-              className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-            /> */}
-          </div>
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4 relative'>
@@ -761,7 +792,7 @@ React.useEffect(() => {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <FormControl fullWidth  variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.country}>
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
                   labelId="country"
@@ -770,13 +801,15 @@ React.useEffect(() => {
                   value={formData.country}
                   label="country"
                   name="country"
-                  required
                   onChange={handleSelectChange}
                 >
                   {countries.map((country: ICountry) => (
                     <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
                   ))}
                 </Select>
+                {errors.country && (
+                  <FormHelperText>{errors.country}</FormHelperText>
+                )}
               </FormControl>
 
               {/* <select
@@ -797,7 +830,7 @@ React.useEffect(() => {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <FormControl fullWidth  variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.state}>
                 <InputLabel id="state" color="warning"> Select state *</InputLabel>
                 <Select
                   labelId="state"
@@ -806,13 +839,15 @@ React.useEffect(() => {
                   value={formData.state}
                   label="State"
                   name="state"
-                  required
                   onChange={handleSelectChange}
                 >
                   {states.map((state: IState) => (
                     <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                   ))}
                 </Select>
+                {errors.state && (
+                  <FormHelperText>{errors.state}</FormHelperText>
+                )}
               </FormControl>
 
 
@@ -836,7 +871,7 @@ React.useEffect(() => {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <TextField fullWidth  name="city" id="outlined-basic" color="warning" label="Enter your city" variant="outlined" value={formData.city} onChange={handleChange} required />
+              <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="Enter your city" size="small" value={formData.city} onChange={handleChange} />
 
             </div>
             <div className='mb-4 relative'>
@@ -845,9 +880,31 @@ React.useEffect(() => {
                 <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
-              <TextField fullWidth  name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="outlined" value={formData.zipCode} onChange={handleChange} required />
+              <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size="small" value={formData.zipCode} onChange={handleChange} />
 
             </div>
+          </div>
+          {/* Address and Email */}
+          <div className='mb-4 relative'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+
+
+
+            {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
+            <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Enter your address" size="small" value={formData.address} onChange={handleChange} />
+
+            {/* <input
+              type="text"
+               name="address"
+              placeholder="Enter your address"
+              value={formData.address}
+              onChange={handleChange}
+              className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
+            /> */}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className='mb-4 relative'>
@@ -867,7 +924,7 @@ React.useEffect(() => {
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <TextField fullWidth  name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" variant="outlined" value={formData.secondaryContactName} onChange={handleChange} />
+              <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
 
               {/* <input
                 type="number"
@@ -883,7 +940,7 @@ React.useEffect(() => {
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth  name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" variant="outlined" value={formData.secondaryEmail} onChange={handleChange} />
+              <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
 
               {/* <input
                 type="email"
@@ -905,7 +962,7 @@ React.useEffect(() => {
               </svg>
 
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth type={showPassword ? "text" : "password"}  name="password" id="outlined-basic" color="warning" label="Enter your password" variant="outlined" value={formData.password} onChange={handleChange} required />
+              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Enter your password" size="small" value={formData.password} onChange={handleChange} />
               <button
                 type="button"
                 style={{ position: 'absolute', right: '10px', top: '10px' }}
@@ -924,18 +981,18 @@ React.useEffect(() => {
               </svg>
               <TextField
                 fullWidth
-                
+
                 type={showConformPassword ? "text" : "password"}
                 name="confirmPassword"
                 id="confirmPassword"
                 color="warning"
                 label="Confirm your password"
-                variant="outlined"
+                size="small"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword}
-                required
+
               />
               <button
                 type="button"
@@ -948,36 +1005,38 @@ React.useEffect(() => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-                  {!isSingleTechnician && (
-            <div className=' relative'>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
+            {!isSingleTechnician && (
+              <div className=' relative'>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                  <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
 
-              {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-              <FormControl fullWidth  variant="outlined">
-                <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
-                <Select
-                  labelId="payRate"
-                  color="warning"
-                  id="select-payRate"
-                  value={formData.payRate}
-                  label="payRate"
-                  name="payRate"
-                  required
-                  onChange={handleSelectChange}
-                >
-                  <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
-                  <MenuItem value='per job'>Pay Per Job</MenuItem>
-                  <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
-                  <MenuItem value='Percentage Flat Rate'>Simple Percentage</MenuItem>
+                {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
+                <FormControl fullWidth size="small" error={!!errors.payRate}>
+                  <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
+                  <Select
+                    labelId="payRate"
+                    color="warning"
+                    id="select-payRate"
+                    value={formData.payRate}
+                    label="Select pay rate(R/1/R/R)"
+                    name="payRate"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
+                    <MenuItem value='per job'>Pay Per Job</MenuItem>
+                    <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
+                    <MenuItem value='Percentage Flat Rate'>Simple Percentage</MenuItem>
 
-                </Select>
-              </FormControl>
-            </div>
+                  </Select>
+                  {errors.payRate && (
+                    <FormHelperText>{errors.payRate}</FormHelperText>
+                  )}
+                </FormControl>
+              </div>
             )}
             {formData.payRate === 'Pay Per Vehicles' && (
               <div className='mb relative'>
@@ -986,14 +1045,14 @@ React.useEffect(() => {
                   <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
                   <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
                 </svg>
-                <FormControl fullWidth  variant="outlined" className="mt-4">
+                <FormControl fullWidth size="small" className="mt-4" error={!!errors.payVehicleType}>
                   <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
                   <Select
                     labelId="payVehicleType"
                     color="warning"
                     id="select-vehicleType"
                     value={formData.payVehicleType}
-                    label="payVehicleType"
+                    label="Select Vehicle Type"
                     name="payVehicleType"
                     onChange={handleSelectChange}
                   >
@@ -1001,6 +1060,9 @@ React.useEffect(() => {
                       <MenuItem key={type} value={type}>{type}</MenuItem>
                     ))}
                   </Select>
+                  {errors.payVehicleType && (
+                    <FormHelperText>{errors.payVehicleType}</FormHelperText>
+                  )}
                 </FormControl>
               </div>
             )}
@@ -1013,7 +1075,7 @@ React.useEffect(() => {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number'  name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="outlined" value={formData.amountPercentage} onChange={handleChange} required />
+                <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} onChange={handleChange} />
               </div>
             )}
             {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate') && (
@@ -1024,27 +1086,29 @@ React.useEffect(() => {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number'  name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="outlined" value={formData.simpleFlatRate} onChange={handleChange} inputProps={{
+                <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" size="small" value={formData.simpleFlatRate} onChange={handleChange}
+                  inputProps={{
                     step: "0.01",
                     min: 0
-                  }} required />
+                  }} />
               </div>
             )}
           </div>
           {!isSingleTechnician || userType !== 'ifs' && (
-                      <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                          <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                          <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                          <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                        </svg>
-                        <TextField fullWidth type='number'  name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" variant="outlined" value={formData.simpleFlatRate} onChange={handleChange} inputProps={{
-                    step: "0.01",
-                    min: 0
-                  }} required />
-                      </div>
-                    )}
+            <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" size="small" value={formData.simpleFlatRate} onChange={handleChange}
+                inputProps={{
+                  step: "0.01",
+                  min: 0
+                }} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4 mt-4">
 
             <div className='mb-2'>
@@ -1056,7 +1120,7 @@ React.useEffect(() => {
                     <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                   </svg>
                   <p className='text-sm mb-1 mt-1'>Upload Tax Form</p>
-                  <span className="text-center m-auto text-xs block"> (Only JPEG, Webp, PNG & PDF files are accepted.)</span>
+                  <span className="text-center m-auto text-xs block"> (Only JPEG, Webp, PNG, GIF & PDF files are accepted.)</span>
                 </label>
                 <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
                 {/* onChange={handleFileChange} */}
@@ -1110,7 +1174,7 @@ React.useEffect(() => {
                     <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                   </svg>
                   <p className='text-sm mb-1 mt-1'>Upload Profile Image</p>
-                  <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                  <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
                 </label>
                 <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
               </div>

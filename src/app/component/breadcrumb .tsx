@@ -9,7 +9,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ links }) => {
   return (
     <Breadcrumbs aria-label="breadcrumb">
       {links.map((link, index) => (
-      <Link key={index} href={link.href} color="inherit">
+      <Link key={index} href={link.href} color="inherit" underline="always"  sx={{ textDecoration: 'underline !important' }}>
              {link.name}
     </Link>
     

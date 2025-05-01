@@ -16,20 +16,49 @@ import TextField from '@mui/material/TextField';
 
 export default function Login() {
   const router = useRouter();
-  const [email, setemailAddress] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({ email: '', password: '' });
-  const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState({ email: '', password: '', form:'' });
+    const [submitting, setSubmitting] = useState<boolean>(false); 
+  // const [rememberMe, setRememberMe] = useState(false);
 
+  const validateForm = () => {
+    const newErrors = { email: '', password: '', form: '' };
+    let isValid = true;
 
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required';
+      isValid = false;
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 
     try {
+      setSubmitting(true); 
       const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,13 +85,13 @@ export default function Login() {
         if (data.user.permissions) {
           localStorage.setItem('permissions', JSON.stringify(data.user.permissions));
         }
-        if (rememberMe) {
-          localStorage.setItem('rememberedEmail', email);
-          localStorage.setItem('rememberedPassword', password);
-        } else {
-          localStorage.removeItem('rememberedEmail');
-          localStorage.removeItem('rememberedPassword');
-        }
+        // if (rememberMe) {
+        //   localStorage.setItem('rememberedEmail', email);
+        //   localStorage.setItem('rememberedPassword', password);
+        // } else {
+        //   localStorage.removeItem('rememberedEmail');
+        //   localStorage.removeItem('rememberedPassword');
+        // }
         if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
           router.push('/client/listing');
         } else {
@@ -74,18 +103,20 @@ export default function Login() {
       console.error('Login failed:', error);
       toast.error('Login failed. Please try again.');
     }
+    setSubmitting(false); 
+
   }
 
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    const rememberedPassword = localStorage.getItem('rememberedPassword');
+  // useEffect(() => {
+  //   const rememberedEmail = localStorage.getItem('rememberedEmail');
+  //   const rememberedPassword = localStorage.getItem('rememberedPassword');
 
-    if (rememberedEmail && rememberedPassword) {
-      setemailAddress(rememberedEmail);
-      setPassword(rememberedPassword);
-      setRememberMe(true); // ✅ Auto-check "Remember Me"
-    }
-  }, []);
+  //   if (rememberedEmail && rememberedPassword) {
+  //     setemailAddress(rememberedEmail);
+  //     setPassword(rememberedPassword);
+  //     setRememberMe(true); // ✅ Auto-check "Remember Me"
+  //   }
+  // }, []);
 
 
   return (
@@ -100,7 +131,7 @@ export default function Login() {
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
               <Image src={Logo} className="m-auto rounded object-cover" width='100' height='50' alt="page img" />
-              <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Tech Repair Tracker</h2>
+              <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Prorevv!</h2>
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
             <form className="mt-6" onSubmit={handleSubmit}>
@@ -109,24 +140,52 @@ export default function Login() {
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                   <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <TextField fullWidth className="text-xs"  id="outlined-basic" color="warning" label="Enter Email Address" value={email} variant="outlined" onChange={(e) => setemailAddress(e.target.value.toLowerCase().replace(/\s/g, ""))} />
-
+                <TextField 
+                  fullWidth 
+                  size="small" 
+                  className="text-xs"  
+                  id="email"
+                  color="warning" 
+                  label="Enter Email Address" 
+                  value={email} 
+                  variant="outlined" 
+                  onChange={(e) => {
+                    setEmail(e.target.value.toLowerCase().replace(/\s/g, ""));
+                    if (errors.email) {
+                      setErrors(prev => ({ ...prev, email: '' }));
+                    }
+                  }}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                />
               </div>
 
               <div className="mt-5 relative">
                  
-                <TextField fullWidth type={showPassword ? "text" : "password"}  id="outlined-basic" color="warning" label="Enter Email Password" value={password} variant="outlined" inputProps={{
-                  minLength: 8,  
-                }}
-                error={password.length > 0 && password.length < 8}
-                helperText={
-                  password.length > 0 && password.length < 8
-                    ? "The password must be at least 8 characters long."
-                    : ""
-                } onChange={(e) => setPassword(e.target.value)} />
+              <TextField 
+                  fullWidth 
+                  size="small" 
+                  type={showPassword ? "text" : "password"}  
+                  id="password"
+                  color="warning" 
+                  label="Enter Password" 
+                  value={password} 
+                  variant="outlined" 
+                  inputProps={{
+                    minLength: 8,  
+                  }}
+                  error={!!errors.password}
+                  helperText={errors.password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) {
+                      setErrors(prev => ({ ...prev, password: '' }));
+                    }
+                  }} 
+                />
                 <button
                   type="button"
-                  style={{ position: 'absolute', right: '10px', top: '18px' }}
+                  style={{ position: 'absolute', right: '10px', top: '10px' }}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <Image src={Eye} width='18' height='18' alt="eye" /> : <Image src={EyeOff} width='18' height='18' alt="eye" />
@@ -134,7 +193,7 @@ export default function Login() {
                 </button>
               </div>
 
-              <div className="flex justify-between items-center mt-4">
+              {/* <div className="flex justify-between items-center mt-4">
                 <div className="inline-flex items-center">
                   <label className="flex items-center cursor-pointer relative">
                     <input type="checkbox"   checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]" id="check" />
@@ -148,11 +207,43 @@ export default function Login() {
                     Remember Me
                   </label>
                 </div>
-                <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
-              </div>
-
-              <button type="submit" className="w-[40%] m-auto block    focus:bg-black text-white font-semibold rounded-lg primary-bg
-                px-4 py-3 mt-6">Log In</button>
+                </div> */}
+                <div className="pt-4">
+                <Link href="/forgot" className="text-sm  primary-text">Forgot Password?</Link>
+                </div> 
+                <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
+                px-4 py-3 mt-6"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                'Log In'
+              )}
+            </button> 
+            
             </form>
             <div className="text-sm text-center mt-5">
               <p>Don&apos;t have an account?

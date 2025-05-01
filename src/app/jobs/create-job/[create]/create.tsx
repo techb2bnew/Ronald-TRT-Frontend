@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import TextField from '@mui/material/TextField';
 // import FormControl from '@mui/material/FormControl';
 // import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText, OutlinedInput, InputAdornment } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText, OutlinedInput, InputAdornment, FormHelperText } from '@mui/material';
 // import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Swal from 'sweetalert2';
@@ -115,6 +115,7 @@ export default function Technicians() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [userType, setUserType] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const hasVehicleInfo = searchParams.has('vehicleInfo');
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
@@ -384,6 +385,21 @@ export default function Technicians() {
         i === index ? { ...item, [field]: value } : item
       ),
     }));
+
+    if (errors.jobDescription) {
+      const allFieldsFilled = descriptionCostFields.every(
+        field => field.jobDescription.trim() && field.cost.trim()
+      );
+
+      if (allFieldsFilled) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.jobDescription;
+          return newErrors;
+        });
+      }
+    }
+
   };
 
 
@@ -393,6 +409,42 @@ export default function Technicians() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.vin.trim()) newErrors.vin = 'VIN is required';
+    if (!formData.vehicleDescriptor.trim()) newErrors.vehicleDescriptor = 'Vehicle Descriptor is required';
+    if (!formData.color.trim()) newErrors.color = 'Color is required';
+    if (!String(formData.assignCustomer).trim()) {
+      newErrors.assignCustomer = 'Customer is required';
+    }
+
+    if (!formData.assignTechnicians || formData.assignTechnicians.length === 0) {
+      newErrors.assignTechnicians = 'Technicians is required';
+    }
+
+    // Validate job descriptions
+    const hasEmptyDescriptions = descriptionCostFields.some(
+      field => !field.jobDescription.trim() || !field.cost.trim()
+    );
+
+    if (hasEmptyDescriptions) {
+      newErrors.jobDescription = 'Please fill all descriptions and costs';
+    }
+
+    // Additional validations for edit mode
+    // if (isEdit) {
+    //   if (!formData.labourCost.trim()) newErrors.labourCost = 'Labour Cost is required';
+    //   if (!formData.payVehicleType.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
+    //   if (!formData.simpleFlatRate.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
+    //   if (!formData.amountPercentage.trim()) newErrors.amountPercentage = 'Amount Percentage is required';
+    //   if (!formData.payRate.trim()) newErrors.payRate = 'Pay Rate is required';
+    // }
+
+    // If any errors, update state and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const formDataObj = new FormData();
@@ -544,19 +596,27 @@ export default function Technicians() {
 
   const handleChange = (event: any, key: any, target = 'formData') => {
     const value = event.target.value;
-  
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    if (errors[key] && String(value).trim()) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[key];
+        return newErrors;
+      });
+    }
     if (key === 'simpleFlatRate') {
       const regex = /^\d+(\.\d{0,2})?$/;
       if (value !== '' && !regex.test(value)) return; // Allow empty string
     }
-  
+
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
     } else {
       setFormData((prev) => ({ ...prev, [key]: value }));
     }
+
   };
-  
+
 
 
 
@@ -568,10 +628,24 @@ export default function Technicians() {
   const handleSelectChange = (event: SelectChangeEvent<string>, field: string) => {
     const value = event.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
   const handleSelectColor = (event: SelectChangeEvent<string>, field: string) => {
     const value = event.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   // Special handler for multiple select (technicians):
@@ -581,10 +655,20 @@ export default function Technicians() {
     } = event;
 
     // Ensure value is always an array of strings
+
+    const newTechnicians = typeof value === 'string' ? value.split(',') : value.map(String);
     setFormData(prev => ({
       ...prev,
-      assignTechnicians: typeof value === 'string' ? value.split(',') : value.map(String)
+      assignTechnicians: newTechnicians
     }));
+
+    if (newTechnicians.length > 0 && errors.assignTechnicians) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.assignTechnicians;
+        return newErrors;
+      });
+    }
   };
   function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
     return new Promise((resolve, reject) => {
@@ -651,6 +735,15 @@ export default function Technicians() {
       return;
     }
 
+    // Check total images won't exceed 5
+    const currentImageCount = formData.images.length;
+    const newImageCount = validImageFiles.length;
+
+    if (currentImageCount + newImageCount > 5) {
+      toast.error(`You can only upload up to 5 images. You already have ${currentImageCount} images.`);
+      return;
+    }
+
     const maxWidth = 800;
     const maxHeight = 600;
     const quality = 0.7;
@@ -663,7 +756,7 @@ export default function Technicians() {
       .then(compressedFiles => {
         setFormData((prev: any) => ({
           ...prev,
-          images: [...prev.images, ...compressedFiles], // Append instead of replace
+          images: [...prev.images, ...compressedFiles].slice(0, 5), // Ensure max 5 images
         }));
       })
       .catch(error => {
@@ -768,7 +861,7 @@ export default function Technicians() {
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
 
         <form className="" onSubmit={handleSubmit}>
           <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
@@ -847,16 +940,16 @@ export default function Technicians() {
                       <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
                     </svg>
 
-                    <TextField fullWidth  name="vin" id="outlined-basic" color="warning" label="Enter vin number *" variant="outlined" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
+                    <TextField fullWidth error={!!errors.vin} helperText={errors.vin || ''} name="vin" id="outlined-basic" color="warning" label="Enter vin number *" size="small" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
                   </div>
-                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-4 text-sm  w-[300px] rounded">Add New Vehicle</button>
+                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
                 </div>
 
                 <div className="relative">
                   <label data-tooltip-id="VIN"
                     data-tooltip-content="Upload VIN Image"
                     htmlFor="fileInput"
-                    className="cursor-pointer flex  gap-2 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
+                    className="cursor-pointer flex  gap-2 p-[7px] bg-gray-100 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200"
                   >
                     <div className='text-center'>
                       <svg className='m-auto' width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -907,13 +1000,13 @@ export default function Technicians() {
 
                     <TextField
                       fullWidth
-                      label="Vehicle Descriptor"
-                      variant="outlined"
+                      label="Vehicle Descriptor *"
+                      size="small"
                       color="warning"
-                      
+                      error={!!errors.vehicleDescriptor} helperText={errors.vehicleDescriptor || ''}
                       value={formData.vehicleDescriptor || ''}
                       onChange={(e) => handleChange(e, 'vehicleDescriptor')}
-                      required
+
                     />
                   </div>
                   <div className="text-xs mb-2 relative">
@@ -927,12 +1020,11 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Make"
-                      variant="outlined"
+                      size="small"
                       color="warning"
-                      
                       value={formData.make || ''}
                       onChange={(e) => handleChange(e, 'make')}
-                      required
+
                     />
                   </div>
                   <div className="text-xs  mb-2 relative">
@@ -945,12 +1037,11 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Manufacturer Name"
-                      variant="outlined"
+                      size="small"
                       color="warning"
-                      
                       value={formData.manufacturerName || ''}
                       onChange={(e) => handleChange(e, 'manufacturerName')}
-                      required
+
                     />
                   </div>
                   <div className="text-xs relative">
@@ -964,12 +1055,11 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Model"
-                      variant="outlined"
+                      size="small"
                       color="warning"
-                      
                       value={formData.model || ''}
                       onChange={(e) => handleChange(e, 'model')}
-                      required
+
                     />
                   </div>
                   <div className="text-xs relative">
@@ -984,12 +1074,11 @@ export default function Technicians() {
                       fullWidth
                       label="Model Year"
                       type='number'
-                      variant="outlined"
+                      size="small"
                       color="warning"
-                      
                       value={formData.modelYear || ''}
                       onChange={(e) => handleChange(e, 'modelYear')}
-                      required
+
                     />
                   </div>
                   <div className="text-xs relative">
@@ -1002,12 +1091,11 @@ export default function Technicians() {
                     <TextField
                       fullWidth
                       label="Vehicle Type"
-                      variant="outlined"
+                      size="small"
                       color="warning"
-                      
                       value={formData.vehicleType || ''}
                       onChange={(e) => handleChange(e, 'vehicleType')}
-                      required
+
                     />
                   </div>
                 </div>
@@ -1028,7 +1116,7 @@ export default function Technicians() {
                 <circle cx="13.5" cy="10" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <FormControl fullWidth  variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.color}>
                 <InputLabel id="color" color="warning">Select color *</InputLabel>
                 <Select
                   labelId="color"
@@ -1037,35 +1125,70 @@ export default function Technicians() {
                   label="Select color"
                   name="color"
                   color="warning"
-                  required
                   onChange={(event) => handleSelectColor(event, 'color')}
-
+                  renderValue={(selected) => (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '50%',
+                          backgroundColor: selected,
+                          marginRight: '8px',
+                          border: selected === 'white' ? '1px solid #ccc' : 'none'
+                        }}
+                      />
+                      {selected.charAt(0).toUpperCase() + selected.slice(1)}
+                    </div>
+                  )}
                 >
-                  <MenuItem value='black'>Black</MenuItem>
-                  <MenuItem value='gray'>Gray</MenuItem>
-                  <MenuItem value='blue'>Blue</MenuItem>
-                  <MenuItem value='silver'>Silver</MenuItem>
-                  <MenuItem value='red'>Red</MenuItem>
-                  <MenuItem value='maroon'>Maroon</MenuItem>
-                  <MenuItem value='yellow'>Yellow</MenuItem>
-                  <MenuItem value='white'>White</MenuItem>
-                  <MenuItem value='brown'>Brown</MenuItem>
-                  <MenuItem value='tan'>Tan</MenuItem>
-                  <MenuItem value='gold'>Gold</MenuItem>
-                  <MenuItem value='green'>Green</MenuItem>
-                  <MenuItem value='orange'>Orange</MenuItem>
-
+                  {[
+                    { value: 'black', label: 'Black' },
+                    { value: 'gray', label: 'Gray' },
+                    { value: 'blue', label: 'Blue' },
+                    { value: 'silver', label: 'Silver' },
+                    { value: 'red', label: 'Red' },
+                    { value: 'maroon', label: 'Maroon' },
+                    { value: 'yellow', label: 'Yellow' },
+                    { value: 'white', label: 'White' },
+                    { value: 'brown', label: 'Brown' },
+                    { value: 'tan', label: 'Tan' },
+                    { value: 'gold', label: 'Gold' },
+                    { value: 'green', label: 'Green' },
+                    { value: 'orange', label: 'Orange' }
+                  ].map((color) => (
+                    <MenuItem key={color.value} value={color.value}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            backgroundColor: color.value,
+                            marginRight: '8px',
+                            border: color.value === 'white' ? '1px solid #ccc' : 'none'
+                          }}
+                        />
+                        {color.label}
+                      </div>
+                    </MenuItem>
+                  ))}
                 </Select>
+                {errors.color && (
+                  <FormHelperText>{errors.color}</FormHelperText>
+                )}
               </FormControl>
             </div>
             {/* Client Name and Business Name */}
-            <div className='mb-4 flex gap-3 relative' >
+            <div className='mb-4 flex items-start gap-3 relative' >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
-              <FormControl fullWidth  variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.assignCustomer}>
                 <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
                 <Select
                   labelId="assignCustomer"
@@ -1074,17 +1197,20 @@ export default function Technicians() {
                   value={formData.assignCustomer}
                   label="Select customer"
                   name="assignCustomer"
-                  required
+
                   onChange={(event) => handleSelectChange(event, 'assignCustomer')}
                 >
                   {customer.map((customer: any) => (
                     <MenuItem key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
                   ))}
                 </Select>
+                {errors.assignCustomer && (
+                  <FormHelperText>{errors.assignCustomer}</FormHelperText>
+                )}
               </FormControl>
               <Link href='/client/create' data-tooltip-id="create-customer"
-                data-tooltip-content="Create Customer" className='primary-bg text-sm p-3 rounded mb-4'>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                data-tooltip-content="Create Customer" className='primary-bg text-sm p-2 rounded'>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                   <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
                   <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
                 </svg>
@@ -1094,13 +1220,13 @@ export default function Technicians() {
 
             </div>
             {userType !== 'single-technician' && userType !== 'ifs' && (
-              <div className='mb-4 flex gap-3 relative'>
+              <div className='mb-4 flex items-start gap-3 relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
-                <FormControl fullWidth  variant="outlined">
+                <FormControl fullWidth size="small" error={!!errors.assignTechnicians}>
                   <InputLabel id="assignTechnicians" color="warning">Select technicians *</InputLabel>
 
                   <Select
@@ -1108,7 +1234,7 @@ export default function Technicians() {
                     id="select-assignTechnicians"
                     color="warning"
                     label="Select technicians"
-                    required
+
                     value={formData.assignTechnicians}
                     onChange={handleTechnicianChange}
                     renderValue={(selected) => selected.map(id => {
@@ -1122,11 +1248,13 @@ export default function Technicians() {
                       </MenuItem>
                     ))}
                   </Select>
-
+                  {errors.assignTechnicians && (
+                    <FormHelperText>{errors.assignTechnicians}</FormHelperText>
+                  )}
                 </FormControl>
                 <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
-                  data-tooltip-content="Create Technician" className='primary-bg text-sm p-3 rounded mb-4'>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                  data-tooltip-content="Create Technician" className='primary-bg text-sm p-2 rounded'>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                     <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
                     <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
                   </svg>
@@ -1145,27 +1273,50 @@ export default function Technicians() {
                   onChange={(e) =>
                     handleDescriptionCostChange(index, "jobDescription", e.target.value)
                   }
-                  placeholder='Enter Description *' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400" required></textarea>
+
+                  placeholder='Enter Description *' className={`input text-xs mt-1 input-bordered w-full p-3 rounded border ${errors.jobDescription ? 'border-red-500' : 'border-gray-400'
+                    }`}  ></textarea>
+                {index === 0 && errors.jobDescription && (
+                  <p className="text-[#d32f2f] text-xs font-[400] absolute left-[50%]">{errors.jobDescription}</p>
+                )}
               </div>
               <div className="mb-2 flex items-center gap-3 margin_remove">
-                <FormControl fullWidth sx={{ m: 1 }}  color="warning" >
-                  <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
-                  <OutlinedInput
-                    id={`cost-${index}`}
-                    value={field.cost}
-                    onChange={(e) =>
-                      handleDescriptionCostChange(index, "cost", e.target.value)
-                    }
-                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                    label="Amount"
-                    type='number'
-                    inputProps={{
-                      step: "0.01",
-                      min: 0
-                    }}
-                    required
-                  />
-                </FormControl>
+              <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning">
+  <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
+  <OutlinedInput
+    id={`cost-${index}`}
+    value={field.cost}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      // Allow empty string for deletion
+      if (value === "") {
+        handleDescriptionCostChange(index, "cost", value);
+        return;
+      }
+
+      // Allow only numbers and decimal
+      if (!/^\d*\.?\d*$/.test(value)) return;
+
+      // Split integer and decimal parts
+      const [intPart, decPart] = value.split(".");
+
+      // Enforce the limit: 5 digits max before decimal and 2 digits max after decimal
+      if (intPart.length <= 5 && (!decPart || decPart.length <= 2)) {
+        handleDescriptionCostChange(index, "cost", value);
+      }
+    }}
+    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+    label="Amount"
+    type="text"
+    inputProps={{
+      inputMode: "decimal", // shows numeric keyboard on mobile
+    }}
+    error={!!errors.jobDescription}
+  />
+</FormControl>
+
+
                 {descriptionCostFields.length > 1 && (
                   <button
                     type="button"
@@ -1181,7 +1332,7 @@ export default function Technicians() {
           <button
             type="button"
             onClick={handleAddMore}
-            className="primary-bg pl-5 pr-5 text-sm p-3 rounded mb-4">Add More + </button>
+            className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
           {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType !== 'single-technician' && (
             <div className="grid grid-cols-3 gap-4">
 
@@ -1194,14 +1345,14 @@ export default function Technicians() {
                 </svg>
 
                 {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth  variant="outlined">
+                <FormControl fullWidth size="small" error={!!errors.payRate}>
                   <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
                   <Select
                     labelId="payRate"
                     color="warning"
                     id="select-payRate"
                     value={formData.payRate}
-                    label="payRate"
+                    label="Select pay rate(R/1/R/R)"
                     name="payRate"
                     required
                     onChange={(event) => handleSelectChange(event, 'payRate')}
@@ -1212,6 +1363,9 @@ export default function Technicians() {
                     <MenuItem value='Percentage Flat Rate'>Simple Percentage Flat</MenuItem>
 
                   </Select>
+                  {errors.payRate && (
+                    <FormHelperText>{errors.payRate}</FormHelperText>
+                  )}
                 </FormControl>
               </div>
               {formData.payRate === 'Pay Per Vehicles' && (
@@ -1221,7 +1375,7 @@ export default function Technicians() {
                     <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
                     <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
                   </svg>
-                  <FormControl fullWidth  variant="outlined" className="mt-4">
+                  <FormControl fullWidth size="small" className="mt-4" error={!!errors.payVehicleType}>
                     <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
                     <Select
                       labelId="payVehicleType"
@@ -1236,6 +1390,9 @@ export default function Technicians() {
                         <MenuItem key={type} value={type}>{type}</MenuItem>
                       ))}
                     </Select>
+                    {errors.payVehicleType && (
+                      <FormHelperText>{errors.payVehicleType}</FormHelperText>
+                    )}
                   </FormControl>
                 </div>
               )}
@@ -1248,7 +1405,8 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number'  name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" variant="outlined" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
+
+                  <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
                 </div>
               )}
               {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
@@ -1259,7 +1417,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-                  <TextField fullWidth type='number'  name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" variant="outlined" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
+                  <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" size="small" value={formData.simpleFlatRate} onChange={(e) => handleChange(e, 'simpleFlatRate')}
                     inputProps={{
                       step: "0.01",
                       min: 0
@@ -1276,7 +1434,7 @@ export default function Technicians() {
                 <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth type='number'  name="labourCost" id="outlined-basic" color="warning" label="Labour Cost" variant="outlined" value={formData.labourCost} onChange={(e) => handleChange(e, 'labourCost')} required />
+              <TextField fullWidth type='number' error={!!errors.labourCost} helperText={errors.labourCost || ''} name="labourCost" id="outlined-basic" color="warning" label="Labour Cost" size="small" value={formData.labourCost} onChange={(e) => handleChange(e, 'labourCost')} required />
             </div>
           )}
           <div className='mb-4 mt-4'>
@@ -1288,7 +1446,7 @@ export default function Technicians() {
                   <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                 </svg>
                 <p className='text-sm mb-1 mt-1'>Upload File</p>
-                <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, PNG and GIF' images will be accepted)</span>
               </label>
               <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
               {/* onChange={handleFileChange} */}
@@ -1329,7 +1487,7 @@ export default function Technicians() {
 
             <button
               type="submit"
-              className="primary-bg pl-5 pr-5 p-3 rounded flex items-center justify-center gap-2 min-w-[100px]"
+              className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
               disabled={submitting}
             >
               {submitting ? (

@@ -8,6 +8,7 @@ import Breadcrumb from '@/app/component/breadcrumb';
 export default function ViewDetails() { 
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchTechnicianData = async (technicianId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -84,8 +85,8 @@ export default function ViewDetails() {
         </span></p>
         <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
               <strong className='w-[200px] inline-block'>Profile Image:</strong>  
-            <img
-                          onClick={() => window.open(technician?.image, '_blank')}
+            <img 
+                          onClick={() => setPreviewImage(technician?.image)}
                           src={technician?.image}
                           alt='Technician Tax Form'
                           className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer"
@@ -144,6 +145,15 @@ export default function ViewDetails() {
         </div>
       </div>
       <ToastContainer />
+
+      {previewImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setPreviewImage(null)} // Close on backdrop click
+          >
+            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+          </div>
+        )}
     </div>
     </>
   );

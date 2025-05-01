@@ -699,7 +699,9 @@ const JobTListing: React.FC = () => {
           </tbody>
         </table>
       </div>
+      {activeJob.length > 0 && (
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      )}
     </div>
   );
 };

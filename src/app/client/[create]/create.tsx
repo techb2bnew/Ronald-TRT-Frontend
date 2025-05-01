@@ -12,6 +12,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { FormHelperText } from '@mui/material';
 
 interface CustomerForm {
   id?: string;  // Optional ID for editing
@@ -45,6 +46,7 @@ export default function Technicians() {
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const router = useRouter();
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const handleSelectChange = (
     event: SelectChangeEvent<string>,
     child: React.ReactNode // You might not actually need to use this parameter in your function
@@ -55,6 +57,13 @@ export default function Technicians() {
       ...prev,
       [name]: value
     }));
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
   // Handle form field change
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
@@ -63,6 +72,13 @@ export default function Technicians() {
       ...prevData,
       [name]: value
     }));
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const fetchCustomerData = async (customerId: string) => {
@@ -117,6 +133,20 @@ export default function Technicians() {
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
+    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!formData.country?.trim()) newErrors.country = 'Country is required';
+    if (!formData.state?.trim()) newErrors.state = 'State is required';
+    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors); // Replace all errors with new ones
+      return;
+    }
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userID');
@@ -192,16 +222,16 @@ export default function Technicians() {
         items={[
           { label: 'Customers', href: '/client/listing' },
           isEdit
-                ? { label: 'Edit Customer' }
-                : { label: 'Create Customer', href: '/client/create' },
-          
+            ? { label: 'Edit Customer' }
+            : { label: 'Create Customer', href: '/client/create' },
+
         ]}
       />
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
+      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
@@ -212,7 +242,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth   name="firstName" id="outlined-basic" color="warning" label="Enter your first name" variant="outlined" value={formData.firstName} onChange={handleChange} required/>
+              <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} name="firstName" id="outlined-basic" color="warning" label="Enter your first name" size="small" value={formData.firstName} onChange={handleChange} />
 
             </div>
             <div className='mb-4 relative'>
@@ -221,7 +251,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth  name="lastName" id="outlined-basic" color="warning" label="Enter your last name" variant="outlined" value={formData.lastName} onChange={handleChange} required/>
+              <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Enter your last name" size="small" value={formData.lastName} onChange={handleChange} />
 
 
             </div>
@@ -244,16 +274,16 @@ export default function Technicians() {
                 <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
-              <TextField fullWidth  name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number" variant="outlined" value={formData.phoneNumber} onChange={handleChange} required />
+              <TextField fullWidth error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''} name="phoneNumber" id="outlined-basic" color="warning" label="Enter your phone number" size="small" value={formData.phoneNumber} onChange={handleChange}   />
 
 
             </div>
             <div className='mb-4 relative'>
-            <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth  name="email" id="outlined-basic" color="warning" label="Enter your email" variant="outlined" value={formData.email} onChange={handleChange} required/>
+              <TextField fullWidth error={!!errors.email} helperText={errors.email || ''} name="email" id="outlined-basic" color="warning" label="Enter your email" size="small" value={formData.email} onChange={handleChange}   />
 
 
             </div>
@@ -261,12 +291,12 @@ export default function Technicians() {
 
           {/* Address */}
           <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            <TextField fullWidth  name="address" id="outlined-basic" color="warning" label="Enter your address" variant="outlined" value={formData.address} onChange={handleChange} required/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Enter your address" size="small" value={formData.address} onChange={handleChange}   />
 
 
           </div>
@@ -280,7 +310,7 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg>
 
-              <FormControl fullWidth   variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.country}>
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
                   labelId="country"
@@ -289,24 +319,27 @@ export default function Technicians() {
                   value={formData.country}
                   label="Select country"
                   name="country"
-                  required
+                   
                   onChange={handleSelectChange}
                 >
                   {countries.map((country: ICountry) => (
                     <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
                   ))}
                 </Select>
+                {errors.country && (
+                  <FormHelperText>{errors.country}</FormHelperText>
+                )}
               </FormControl>
 
 
-            </div> 
-              <div className='mb-4 relative'>
+            </div>
+            <div className='mb-4 relative'>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <FormControl fullWidth  variant="outlined">
+              <FormControl fullWidth size="small" error={!!errors.country}>
                 <InputLabel id="demo-simple-select-label" color="warning">Select state *</InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
@@ -315,13 +348,16 @@ export default function Technicians() {
                   label="State state"
                   color="warning"
                   name="state"
-                  required
+                   
                   onChange={handleSelectChange}
                 >
                   {states.map((state: IState) => (
                     <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                   ))}
                 </Select>
+                {errors.state && (
+                  <FormHelperText>{errors.state}</FormHelperText>
+                )}
               </FormControl>
             </div>
             <div className='mb-4 relative'>
@@ -330,7 +366,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" variant="outlined" value={formData.city} onChange={handleChange} required/>
+              <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="Enter your city" size="small" value={formData.city} onChange={handleChange}   />
 
 
             </div>
@@ -339,7 +375,7 @@ export default function Technicians() {
                 <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" variant="outlined" value={formData.zipCode} onChange={handleChange} required/>
+              <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size="small" value={formData.zipCode} onChange={handleChange}   />
 
 
             </div>

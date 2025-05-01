@@ -9,6 +9,7 @@ export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const fetchCustomerData = async (vehicalId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -62,7 +63,7 @@ export default function ViewDetails() {
     return 0;
   };
 
-React.useEffect(() => {
+  React.useEffect(() => {
     const type = localStorage.getItem('types');
     setUserType(type);
   });
@@ -131,9 +132,9 @@ React.useEffect(() => {
                 <strong className='w-[200px] inline-block'>Total Cost:</strong> ${calculateTotalCost().toFixed(2)}
               </div>
               {userType === 'single-technician' && (
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[200px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
-              </div>
+                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                  <strong className='w-[200px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
+                </div>
               )}
 
 
@@ -146,7 +147,7 @@ React.useEffect(() => {
                 {jobData.images.map((form: any, index: any) => (
                   <img
                     key={index}
-                    onClick={() => window.open(form, '_blank')}
+                    onClick={() => setPreviewImage(form)}
                     src={form}
                     alt={`Technician Tax Form ${index + 1}`}
                     className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
@@ -157,6 +158,15 @@ React.useEffect(() => {
           </div>
         </div>
         <ToastContainer />
+        {previewImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setPreviewImage(null)} // Close on backdrop click
+          >
+            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+          </div>
+        )}
+
       </div>
     </>
   );
