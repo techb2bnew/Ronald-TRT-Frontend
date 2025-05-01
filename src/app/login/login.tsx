@@ -121,7 +121,7 @@ export default function Login() {
 
   return (
     <div className="items-center justify-items-center">
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-center" autoClose={500} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full ">
 
