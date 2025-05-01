@@ -871,7 +871,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="Enter your city" size="small" value={formData.city} onChange={handleChange} />
+              <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
 
             </div>
             <div className='mb-4 relative'>
@@ -880,7 +880,7 @@ export default function Technicians() {
                 <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
-              <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size="small" value={formData.zipCode} onChange={handleChange} />
+              <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Zip code" size="small" value={formData.zipCode} onChange={handleChange} />
 
             </div>
           </div>
@@ -895,7 +895,7 @@ export default function Technicians() {
 
 
             {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
-            <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Enter your address" size="small" value={formData.address} onChange={handleChange} />
+            <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Address" size="small" value={formData.address} onChange={handleChange} />
 
             {/* <input
               type="text"
@@ -924,7 +924,7 @@ export default function Technicians() {
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Enter your secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
+              <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
 
               {/* <input
                 type="number"
@@ -940,7 +940,7 @@ export default function Technicians() {
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Enter your secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
+              <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
 
               {/* <input
                 type="email"
@@ -962,7 +962,7 @@ export default function Technicians() {
               </svg>
 
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Enter your password" size="small" value={formData.password} onChange={handleChange} />
+              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password" size="small" value={formData.password} onChange={handleChange} />
               <button
                 type="button"
                 style={{ position: 'absolute', right: '10px', top: '10px' }}
@@ -986,7 +986,7 @@ export default function Technicians() {
                 name="confirmPassword"
                 id="confirmPassword"
                 color="warning"
-                label="Confirm your password"
+                label="Confirm password"
                 size="small"
                 value={formData.confirmPassword}
                 onChange={handleChange}
