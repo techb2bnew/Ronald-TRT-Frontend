@@ -17,7 +17,8 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
-import { toast, ToastContainer } from 'react-toastify';
+import toast  from 'react-hot-toast'; 
+
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -237,7 +238,7 @@ const JobTListing: React.FC = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.customer.id));
 
     if (selectedJobs.length === 0) {
-      toast.warning("Please select at least job group to export.");
+      toast.error("Please select at least job group to export.");
       return;
     }
 
@@ -634,8 +635,7 @@ const JobTListing: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-
+ 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>

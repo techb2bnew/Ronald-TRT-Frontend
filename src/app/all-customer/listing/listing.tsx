@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast, ToastContainer } from 'react-toastify';
+import toast  from 'react-hot-toast'; 
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
@@ -183,7 +183,7 @@ export default function ClientListing() {
     const selectedCustomers = customer.filter(c => selectedIds.includes(c.id));
 
     if (selectedCustomers.length === 0) {
-      toast.warning("Please select at least job group to export.");
+      toast.error("Please select at least job group to export.");
       return;
     }
     const csvOptions = {
@@ -366,8 +366,7 @@ export default function ClientListing() {
         ]}
       />
       <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-
+ 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>

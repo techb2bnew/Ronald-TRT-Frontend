@@ -418,14 +418,7 @@ export default function Technicians() {
 
     
 
-    // Validate job descriptions
-    const hasEmptyDescriptions = descriptionCostFields.some(
-      field => !field.jobDescription.trim() || !field.cost.trim()
-    );
-
-    if (hasEmptyDescriptions) {
-      newErrors.jobDescription = 'Please fill all descriptions and costs';
-    }
+    
 
     // Additional validations for edit mode
     // if (isEdit) {
@@ -593,6 +586,11 @@ export default function Technicians() {
 
   const handleChange = (event: any, key: any, target = 'formData') => {
     const value = event.target.value;
+    if (key === 'simpleFlatRate') {
+      const regex = /^\d{0,5}(\.\d{0,2})?$/;
+      if (value !== '' && !regex.test(value)) return;
+    }
+
     setFormData((prev) => ({ ...prev, [key]: value }));
     if (errors[key] && String(value).trim()) {
       setErrors((prev) => {
@@ -601,10 +599,7 @@ export default function Technicians() {
         return newErrors;
       });
     }
-    if (key === 'simpleFlatRate') {
-      const regex = /^\d+(\.\d{0,2})?$/;
-      if (value !== '' && !regex.test(value)) return; // Allow empty string
-    }
+   
 
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
@@ -1195,6 +1190,15 @@ export default function Technicians() {
                   name="assignCustomer"
 
                   onChange={(event) => handleSelectChange(event, 'assignCustomer')}
+                  MenuProps={{
+                    disablePortal: true,
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200,
+                        overflowY: 'auto',
+                      },
+                    },
+                  }}
                 >
                   {customer.map((customer: any) => (
                     <MenuItem key={customer.id} value={customer.id}>{customer.firstName} {customer.lastName}</MenuItem>
@@ -1263,22 +1267,19 @@ export default function Technicians() {
 
 
           {descriptionCostFields.map((field, index) => (
-            <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
+            <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4 mb-4">
               <div className='mb-2'>
                 <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
                   onChange={(e) =>
                     handleDescriptionCostChange(index, "jobDescription", e.target.value)
                   }
 
-                  placeholder='Enter Description *' className={`input text-xs mt-1 input-bordered w-full p-3 rounded border ${errors.jobDescription ? 'border-red-500' : 'border-gray-400'
-                    }`}  ></textarea>
-                {index === 0 && errors.jobDescription && (
-                  <p className="text-[#d32f2f] text-xs font-[400] absolute left-[50%]">{errors.jobDescription}</p>
-                )}
+                  placeholder='Enter Description' className="input text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
+               
               </div>
               <div className="mb-2 flex items-center gap-3 margin_remove">
               <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning">
-  <InputLabel htmlFor={`cost-${index}`}>Cost *</InputLabel>
+  <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
   <OutlinedInput
     id={`cost-${index}`}
     value={field.cost}
@@ -1308,7 +1309,7 @@ export default function Technicians() {
     inputProps={{
       inputMode: "decimal", // shows numeric keyboard on mobile
     }}
-    error={!!errors.jobDescription}
+    
   />
 </FormControl>
 

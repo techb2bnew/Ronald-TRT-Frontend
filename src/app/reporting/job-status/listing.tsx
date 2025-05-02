@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import { toast, ToastContainer } from 'react-toastify';
+import toast  from 'react-hot-toast'; 
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -232,7 +232,7 @@ const JobTable: React.FC = () => {
   const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
     if (selectedJobs.length === 0) {
-          toast.warning("Please select at least job group to export.");
+          toast.error("Please select at least job group to export.");
           return;
         }
 
@@ -548,8 +548,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="All IFS Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-
+ 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>

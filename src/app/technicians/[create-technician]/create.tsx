@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
@@ -117,7 +117,10 @@ export default function Technicians() {
         router.push('/');
       }
       const data = await response.json();
-
+      const technicianCountry = countries.find(c => c.name === data.technician.country || c.isoCode === data.technician.country);
+      const technicianState = states.find(
+        (s) => s.name.toLowerCase() === data.technician.state?.toLowerCase()
+      );
       if (response.ok) {
         setFormData(prev => ({
           ...prev,
@@ -125,6 +128,8 @@ export default function Technicians() {
           id: technicianId,
           password: '',
           taxForms: data.technician.taxForms || [],
+          country: technicianCountry?.isoCode || '', // Always store isoCode
+          state: technicianState?.isoCode || '',
         }));
         console.log(formData, 'formDataformData')
       } else {
@@ -173,26 +178,36 @@ export default function Technicians() {
     }
   };
 
-  const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
+  const handleChange: React.ChangeEventHandler<
+    HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
+  > = (e) => {
     const { name, value } = e.target;
+
+    let shouldUpdate = true;
+
     if (name === 'simpleFlatRate') {
-      // Regex to allow up to 2 decimal places
-      const regex = /^\d*(\.\d{0,2})?$/;
-      if (value !== '' && !regex.test(value)) return; // Reject invalid input
+      const valid = /^\d{0,5}(\.\d{0,2})?$/.test(value);
+      shouldUpdate = valid;
     }
-    setFormData({ ...formData, [name]: value });
+
+    if (shouldUpdate) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
     if (name === 'confirmPassword') {
       validateConfirmPassword(value);
     }
+
     if (errors[name]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
     }
-
   };
+
+
   const validateConfirmPassword = (confirmPassword: string) => {
     if (confirmPassword !== formData.password) {
       setErrors(prev => ({
@@ -324,10 +339,13 @@ export default function Technicians() {
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
+    if (!isEdit) {
+      if (!formData.password?.trim()) newErrors.password = 'Password is required';
+    }
     // if (!formData.simpleFlatRate?.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
     // if (!formData.payVehicleType?.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
     // if (!formData.amountPercentage?.trim()) newErrors.amountPercentage = 'Amount Percentage is required';
- 
+
 
     if (formData.password && formData.confirmPassword !== formData.password) {
       newErrors.confirmPassword = 'Passwords do not match';
@@ -441,7 +459,7 @@ export default function Technicians() {
         return newErrors;
       });
     }
-  
+
     if (!value) {
       // Handle empty value case
       setFormData(prev => ({
@@ -450,7 +468,7 @@ export default function Technicians() {
       }));
       return;
     }
-  
+
     const parsedNumber = parsePhoneNumberFromString(value);
     if (parsedNumber) {
       setFormData(prev => ({
@@ -466,7 +484,7 @@ export default function Technicians() {
     }
   };
 
- 
+
   useEffect(() => {
     // ✅ Get current domain dynamically
     if (typeof window !== "undefined") {
@@ -591,7 +609,7 @@ export default function Technicians() {
         ]}
       />
 
-       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
@@ -796,7 +814,11 @@ export default function Technicians() {
                   labelId="country"
                   color="warning"
                   id="country"
-                  value={formData.country}
+                  value={
+                    countries.some(c => c.isoCode === formData.country)
+                      ? formData.country
+                      : ''
+                  }
                   label="country"
                   name="country"
                   onChange={handleSelectChange}
@@ -834,7 +856,7 @@ export default function Technicians() {
                   labelId="state"
                   color="warning"
                   id="select-state"
-                  value={formData.state}
+                  value={states.some(s => s.isoCode === formData.state) ? formData.state : ''}
                   label="State"
                   name="state"
                   onChange={handleSelectChange}
@@ -960,7 +982,7 @@ export default function Technicians() {
               </svg>
 
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password" size="small" value={formData.password} onChange={handleChange} />
+              <TextField fullWidth error={!!errors.password} helperText={errors.password || ''} type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password" size="small" value={formData.password} onChange={handleChange} />
               <button
                 type="button"
                 style={{ position: 'absolute', right: '10px', top: '10px' }}

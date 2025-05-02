@@ -5,7 +5,7 @@ import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
 import SortableTable from '../../component/shorting'; // Import SortableTable
 import Link from 'next/link';
-import { toast, ToastContainer } from 'react-toastify';
+import toast  from 'react-hot-toast'; 
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Pagination from '../../component/pagination';
@@ -296,7 +296,7 @@ const TechnicianTable: React.FC = () => {
     const selectedTechnicians = technicians.filter(tech => selectedIds.includes(tech.id));
 
     if (selectedTechnicians.length === 0) {
-      toast.warning("Please select at least job group to export.");
+      toast.error("Please select at least job group to export.");
       return;
     }
     const csvOptions = {
@@ -555,8 +555,7 @@ const TechnicianTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <SortableTable
+       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Status', 'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}

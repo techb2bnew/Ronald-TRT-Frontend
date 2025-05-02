@@ -15,7 +15,8 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
-import { ToastContainer, toast } from 'react-toastify';
+import toast  from 'react-hot-toast'; 
+
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -41,9 +42,21 @@ const TechnicianTable: React.FC = () => {
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
-   
+  
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to change the account status to ${newStatus}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#383d71',
+      cancelButtonColor: 'black',
+      confirmButtonText: 'Yes, change it!',
+    });
+  
+    if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
+  
         const config = {
           headers: {
             'Content-Type': 'application/json',
@@ -52,22 +65,22 @@ const TechnicianTable: React.FC = () => {
         };
   
         const response = await axios.post(
-          `${apiUrl}/updateTechnicianAccountStatus`, // Correct API
+          `${apiUrl}/updateTechnicianAccountStatus`,
           {
             technicianId: techId,
-            accountStatus: accountStatus, // Corrected here
+            accountStatus: accountStatus,
           },
           config
         );
   
         if (response.data.status) {
-          Swal.fire({
+          await Swal.fire({
             title: 'Success!',
             text: `Account status changed to ${newStatus}.`,
             icon: 'success',
             confirmButtonColor: '#383d71',
-            confirmButtonText: 'OK',
           });
+  
           fetchTechnicians();
         } else {
           throw new Error('Account status API failed');
@@ -80,8 +93,10 @@ const TechnicianTable: React.FC = () => {
           icon: 'error',
           confirmButtonText: 'OK',
         });
-      } 
+      }
+    }
   };
+  
   
   const handleApprovalChange = async (techId: number, isApproved: boolean, tech: any) => {
      
@@ -105,6 +120,7 @@ const TechnicianTable: React.FC = () => {
           },
           config
         );
+        fetchTechnicians(currentPage, searchTerm, pageSize);
   
      
       } catch (error) {
@@ -153,7 +169,7 @@ const TechnicianTable: React.FC = () => {
         await handleAccountStatusChange(tech.id, !tech.accountStatus);
   
         // Step 5: Handle approval change
-        await handleApprovalChange(tech.id, !tech.isApproved, tech);
+        await handleApprovalChange(tech.id, true, tech);
       }
   
     } catch (error) {
@@ -167,6 +183,43 @@ const TechnicianTable: React.FC = () => {
     }
   };
   
+
+  const technicianRejectedAccount = async (techId: number, isApproved: boolean) => {
+     
+  
+    const newStatus = isApproved ? 'Approved' : 'Accept';
+   
+      try {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        };
+  
+        const response = await axios.post(
+          `${apiUrl}/technicianRejectedAccount`, // Correct API
+          {
+            technicianId: techId,
+            isApproved: isApproved, // Corrected here
+          },
+          config
+        );
+  
+        fetchTechnicians(currentPage, searchTerm, pageSize);
+     
+      } catch (error) {
+        console.error('Error updating approval status:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Error updating approval status.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+        });
+      } 
+  };
+
   // JSX Button to trigger both API calls
  
   
@@ -314,6 +367,8 @@ const TechnicianTable: React.FC = () => {
   };
 
 
+  
+
   const renderRow = (tech: any) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
@@ -368,11 +423,11 @@ const TechnicianTable: React.FC = () => {
         {/* <td>{tech.payRate}</td> */}
 
         <td
-          // onClick={() => {
-          //   if (tech.accountStatus || tech.isApproved) {
-          //     handleAccountStatusChange(tech.id, !tech.accountStatus);
-          //   }
-          // }} // Corrected here
+          onClick={() => {
+            if (tech.isApproved) {
+              handleAccountStatusChange(tech.id, !tech.accountStatus);
+            }
+          }} // Corrected here
           style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
         >
           <span
@@ -433,17 +488,41 @@ const TechnicianTable: React.FC = () => {
 
         </td>
         <td
-          onClick={() => handleChangeBothStatuses(tech)}
-          style={{ cursor: 'pointer' }}
+          
         >
+         <div className='flex gap-4'>
+          <div  
+           onClick={() => {
+            if (!tech.isApproved) {
+              handleChangeBothStatuses(tech);
+            }
+          }}
+          style={{ cursor: 'pointer' }}>
           <span
             className={`badge ${tech.isApproved
-              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
               }`}
           >
             {tech.isApproved ? 'Approved' : 'Accept'}
           </span>
+          </div>
+           {/* {!tech.isApproved && (
+
+          <div onClick={() => technicianRejectedAccount(tech.id, false)}
+          style={{ cursor: 'pointer' }}>
+          <span
+            className={`badge ${tech.isApproved
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-3 pr-3 rounded shadow block text-center w-[80px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-3 pr-3 rounded shadow block text-center w-[80px]'
+              }`}
+          >
+            {tech.isApproved ? 'Approved' : 'Reject'}
+          </span>
+          </div>
+           )} */}
+
+          </div>
         </td>
 
 
@@ -466,7 +545,7 @@ const TechnicianTable: React.FC = () => {
   const downloadCSV = () => {
     const selectedTechnicians = technicians.filter(tech => selectedIds.includes(tech.id));
     if (selectedTechnicians.length === 0) {
-      toast.warning("Please select at least one technician to export.");
+      toast.error("Please select at least one technician to export.");
       return;
     }
     const csvOptions = {
@@ -639,10 +718,9 @@ const TechnicianTable: React.FC = () => {
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
       />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+       <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Status', 'Create Work Order', 'Account Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Create Work Order', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -675,10 +753,10 @@ const TechnicianTable: React.FC = () => {
 
           return (
             <th
-              key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''}`}
-              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
-            >
+            key={index}
+            className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 7 ? 'w-[200px]' : ''} ${index === 5 ? 'w-[130px]' : ''}${index === 8 ? 'w-[100px]' : ''}`}
+            onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+          >
               {header}
               {sortableColumns.includes(columnKey) && sortBy === columnKey && (
                 <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>

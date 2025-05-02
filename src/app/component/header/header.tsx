@@ -53,7 +53,7 @@ export default function Header() {
 
   return (
     <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center border-[#383d71] border-b-[2px]">
-      <h1 className={`pl-[17%] text-xl font-bold transition-all duration-300  ${isCollapsed ? 'pl-[6%]' : 'pl-[17%]'}`}> <i>Hii, {technician?.firstName} {technician?.lastName} </i>
+      <h1 className={`pl-[17%] text-xl font-bold transition-all duration-300  ${isCollapsed ? 'pl-[6%]' : 'pl-[17%]'}`}> <i>Hi, {technician?.firstName} {technician?.lastName} </i>
       </h1>
       <div className="w-100 ml-auto flex items-center">
         <div className="relative" ref={dropdownRef}>
