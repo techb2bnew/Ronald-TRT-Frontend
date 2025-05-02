@@ -15,7 +15,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 
 
 
@@ -42,7 +42,7 @@ const TechnicianTable: React.FC = () => {
 
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
-  
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: `Do you want to change the account status to ${newStatus}?`,
@@ -52,18 +52,18 @@ const TechnicianTable: React.FC = () => {
       cancelButtonColor: 'black',
       confirmButtonText: 'Yes, change it!',
     });
-  
+
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-  
+
         const config = {
           headers: {
             'Content-Type': 'application/json',
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         };
-  
+
         const response = await axios.post(
           `${apiUrl}/updateTechnicianAccountStatus`,
           {
@@ -72,7 +72,7 @@ const TechnicianTable: React.FC = () => {
           },
           config
         );
-  
+
         if (response.data.status) {
           await Swal.fire({
             title: 'Success!',
@@ -80,7 +80,7 @@ const TechnicianTable: React.FC = () => {
             icon: 'success',
             confirmButtonColor: '#383d71',
           });
-  
+
           fetchTechnicians();
         } else {
           throw new Error('Account status API failed');
@@ -96,44 +96,44 @@ const TechnicianTable: React.FC = () => {
       }
     }
   };
-  
-  
+
+
   const handleApprovalChange = async (techId: number, isApproved: boolean, tech: any) => {
-     
-  
+
+
     const newStatus = isApproved ? 'Approved' : 'Accept';
-   
-      try {
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        };
-  
-        const response = await axios.post(
-          `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
-          {
-            technicianId: techId,
-            isApproved: isApproved, // Corrected here
-          },
-          config
-        );
-        fetchTechnicians(currentPage, searchTerm, pageSize);
-  
-     
-      } catch (error) {
-        console.error('Error updating approval status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating approval status.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        });
-      } 
+
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      const response = await axios.post(
+        `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
+        {
+          technicianId: techId,
+          isApproved: isApproved, // Corrected here
+        },
+        config
+      );
+      fetchTechnicians(currentPage, searchTerm, pageSize);
+
+
+    } catch (error) {
+      console.error('Error updating approval status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating approval status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
   };
-  
+
   const handleChangeBothStatuses = async (tech: any) => {
     try {
       // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
@@ -148,11 +148,11 @@ const TechnicianTable: React.FC = () => {
       //   });
       //   return; // Stop execution if payment info is missing
       // }
-  
+
       // Step 2: Confirm both account status change and approval status change
       const newAccountStatus = tech.accountStatus ? 'Active' : 'Inactive';
       const newApprovalStatus = tech.isApproved ? 'Approved' : 'Accept';
-  
+
       const result = await Swal.fire({
         title: 'Are you sure?',
         text: `Do you want to change the account status to ${newAccountStatus} and the technician status to ${newApprovalStatus}?`,
@@ -162,16 +162,16 @@ const TechnicianTable: React.FC = () => {
         cancelButtonColor: 'black',
         confirmButtonText: 'Yes, change them!',
       });
-  
+
       // Step 3: If user confirms, update both account status and approval status
       if (result.isConfirmed) {
         // Step 4: Handle account status change
         await handleAccountStatusChange(tech.id, !tech.accountStatus);
-  
+
         // Step 5: Handle approval change
         await handleApprovalChange(tech.id, true, tech);
       }
-  
+
     } catch (error) {
       console.error('Error updating both statuses:', error);
       Swal.fire({
@@ -182,47 +182,47 @@ const TechnicianTable: React.FC = () => {
       });
     }
   };
-  
+
 
   const technicianRejectedAccount = async (techId: number, isApproved: boolean) => {
-     
-  
+
+
     const newStatus = isApproved ? 'Approved' : 'Accept';
-   
-      try {
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        };
-  
-        const response = await axios.post(
-          `${apiUrl}/technicianRejectedAccount`, // Correct API
-          {
-            technicianId: techId,
-            isApproved: isApproved, // Corrected here
-          },
-          config
-        );
-  
-        fetchTechnicians(currentPage, searchTerm, pageSize);
-     
-      } catch (error) {
-        console.error('Error updating approval status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating approval status.',
-          icon: 'error',
-          confirmButtonText: 'OK',
-        });
-      } 
+
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      const response = await axios.post(
+        `${apiUrl}/technicianRejectedAccount`, // Correct API
+        {
+          technicianId: techId,
+          isApproved: isApproved, // Corrected here
+        },
+        config
+      );
+
+      fetchTechnicians(currentPage, searchTerm, pageSize);
+
+    } catch (error) {
+      console.error('Error updating approval status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating approval status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
   };
 
   // JSX Button to trigger both API calls
- 
-  
+
+
 
   const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -367,7 +367,7 @@ const TechnicianTable: React.FC = () => {
   };
 
 
-  
+
 
   const renderRow = (tech: any) => {
     const status = statuses[tech.id] || "Accept";
@@ -488,26 +488,26 @@ const TechnicianTable: React.FC = () => {
 
         </td>
         <td
-          
+
         >
-         <div className='flex gap-4'>
-          <div  
-           onClick={() => {
-            if (!tech.isApproved) {
-              handleChangeBothStatuses(tech);
-            }
-          }}
-          style={{ cursor: 'pointer' }}>
-          <span
-            className={`badge ${tech.isApproved
-              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
-              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
-              }`}
-          >
-            {tech.isApproved ? 'Approved' : 'Accept'}
-          </span>
-          </div>
-           {/* {!tech.isApproved && (
+          <div className='flex gap-4'>
+            <div
+              onClick={() => {
+                if (!tech.isApproved) {
+                  handleChangeBothStatuses(tech);
+                }
+              }}
+              style={{ cursor: 'pointer' }}>
+              <span
+                className={`badge ${tech.isApproved
+                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
+                  : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
+                  }`}
+              >
+                {tech.isApproved ? 'Approved' : 'Accept'}
+              </span>
+            </div>
+            {/* {!tech.isApproved && (
 
           <div onClick={() => technicianRejectedAccount(tech.id, false)}
           style={{ cursor: 'pointer' }}>
@@ -586,39 +586,40 @@ const TechnicianTable: React.FC = () => {
 
 
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-  
+
       const lines = text.split(/\r?\n/);
-  
+
       // ✅ Remove garbage line like "Technicians,Data"
       if (lines[0].toLowerCase().includes("technician")) {
         lines.shift();
       }
-  
+
       text = lines.join('\n');
-  
+
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
         'PayVehicleType', 'PayRate', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
-  
+
       Papa.parse(text, {
         header: false, // Don't use auto headers
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip CSV's own header row
             .map((row) => {
@@ -643,19 +644,19 @@ const TechnicianTable: React.FC = () => {
                   typeof val === 'string' &&
                   val.trim().toLowerCase() === key.trim().toLowerCase()
               );
-  
+
               const hasRealData = Object.values(row).some(
                 (val) =>
                   (typeof val === 'string' && val.trim() !== '') ||
                   (typeof val === 'number' && !isNaN(val)) ||
                   typeof val === 'boolean'
               );
-  
+
               return !isHeaderRow && hasRealData;
             });
-  
+
           console.log("✅ Final Cleaned Data:", cleanedData);
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importTechnician`,
@@ -668,6 +669,8 @@ const TechnicianTable: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+          setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -675,19 +678,19 @@ const TechnicianTable: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
-  
-  
-  
-  
-  
-  
-  
-  
 
- 
+
+
+
+
+
+
+
+
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Select All
@@ -718,7 +721,7 @@ const TechnicianTable: React.FC = () => {
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
       />
-       <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Create Work Order', 'Approval Status', 'Action']}
         data={technicians}
@@ -753,10 +756,10 @@ const TechnicianTable: React.FC = () => {
 
           return (
             <th
-            key={index}
-            className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 7 ? 'w-[200px]' : ''} ${index === 5 ? 'w-[130px]' : ''}${index === 8 ? 'w-[100px]' : ''}`}
-            onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
-          >
+              key={index}
+              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 7 ? 'w-[200px]' : ''} ${index === 5 ? 'w-[130px]' : ''}${index === 8 ? 'w-[100px]' : ''}`}
+              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+            >
               {header}
               {sortableColumns.includes(columnKey) && sortBy === columnKey && (
                 <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>

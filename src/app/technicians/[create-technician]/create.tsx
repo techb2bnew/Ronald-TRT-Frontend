@@ -55,7 +55,7 @@ export default function Technicians() {
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
-  const [copied, setCopied] = useState(false);
+  const [state, setStates] = useState<IState[]>([]);
   const [domain, setDomain] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConformPassword, setShowConformPassword] = useState(false);
@@ -96,31 +96,44 @@ export default function Technicians() {
 
     try {
       const token = localStorage.getItem('token');
-
-      // Create headers object
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
 
-      // If token exists, add it to Authorization header
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Make GET request with technicianId as query parameter
       const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
         method: 'POST',
         headers,
       });
+
       if (response.status == 400) {
         localStorage.removeItem('token');
         router.push('/');
+        return;
       }
+
       const data = await response.json();
-      const technicianCountry = countries.find(c => c.name === data.technician.country || c.isoCode === data.technician.country);
-      const technicianState = states.find(
-        (s) => s.name.toLowerCase() === data.technician.state?.toLowerCase()
+
+      // First find the country
+      const technicianCountry = countries.find(c =>
+        c.name === data.technician.country ||
+        c.isoCode === data.technician.country
       );
+
+      // Get states for this country
+      const countryStates = technicianCountry ? State.getStatesOfCountry(technicianCountry.isoCode) : [];
+
+      // Find matching state
+      const technicianState = countryStates.find(s =>
+        data.technician.state && (
+          s.name.toLowerCase() === data.technician.state.toLowerCase() ||
+          s.isoCode.toLowerCase() === data.technician.state.toLowerCase()
+        )
+      );
+
       if (response.ok) {
         setFormData(prev => ({
           ...prev,
@@ -128,12 +141,9 @@ export default function Technicians() {
           id: technicianId,
           password: '',
           taxForms: data.technician.taxForms || [],
-          country: technicianCountry?.isoCode || '', // Always store isoCode
+          country: technicianCountry?.isoCode || '',
           state: technicianState?.isoCode || '',
         }));
-        console.log(formData, 'formDataformData')
-      } else {
-        toast.error(data.error || 'Error fetching technician data');
       }
     } catch (error) {
       toast.error('An error occurred while fetching technician data');
@@ -535,17 +545,10 @@ export default function Technicians() {
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   const fetchRoles = async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL from env variable
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
     try {
       const token = localStorage.getItem('token');
-      // if (!token) {
-      //   localStorage.removeItem('token');
-      //   router.push('/');
-      //   return;
-      // }
-
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -567,11 +570,19 @@ export default function Technicians() {
 
       if (response.ok) {
         const data = await response.json();
-        setRoles(data.roles || []);
 
-        // ✅ Auto-select and disable role if 'singletechnician' is in URL
+        // Filter out "super admin" from the roles array
+        const filteredRoles = (data.roles || []).filter(
+          (role: any) => role.name.toLowerCase() !== "super admin"
+        );
+
+        setRoles(filteredRoles);
+
+        // Auto-select and disable role if 'singletechnician' is in URL
         if (searchParams.has('singletechnician')) {
-          const singleTechnicianRole = data.roles.find((role: any) => role.name === 'singletechnician');
+          const singleTechnicianRole = filteredRoles.find(
+            (role: any) => role.name === 'singletechnician'
+          );
           if (singleTechnicianRole) {
             setFormData((prev) => ({
               ...prev,
@@ -592,6 +603,18 @@ export default function Technicians() {
   useEffect(() => {
     fetchRoles();
   }, []);
+
+
+  useEffect(() => {
+    // Update states when country changes
+    const newStates = formData.country ? State.getStatesOfCountry(formData.country) : [];
+    setStates(newStates);
+
+    // Reset state if it's not valid for the new country
+    if (formData.state && !newStates.some(s => s.isoCode === formData.state)) {
+      setFormData(prev => ({ ...prev, state: '' }));
+    }
+  }, [formData.country]);
 
   return (
     <div className='container mb-5 m-auto'>
@@ -625,26 +648,39 @@ export default function Technicians() {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
-                <FormControl fullWidth size="small" >
-                  <InputLabel id="role" color="warning">Select role name *</InputLabel>
-                  <Select
-                    labelId="role"
-                    id="select-role-name"
-                    color="warning"
-                    value={formData.role}
-                    label="State role name"
-                    name="role"
-                    onChange={handleSelectChange}
-                  >
-                    {roles
-                      .filter((role) => role.name !== "super admin") // Filter out "super admin"
-                      .map((role, index) => (
-                        <MenuItem key={index} value={role.name}>
-                          {role.name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
+                <FormControl fullWidth size="small">
+  <InputLabel id="role" color="warning">Select role name *</InputLabel>
+  <Select
+    labelId="role"
+    id="select-role-name"
+    color="warning"
+    value={formData.role}
+    label="Select role name"
+    name="role"
+    onChange={handleSelectChange}
+  >
+    {roles.map((role, index) => {
+      // Properly format camelCase and PascalCase strings into spaced, capitalized words
+      const formattedRoleName = role.name
+        // Add space between lowercase and uppercase letters (camelCase or PascalCase to space-separated words)
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase or PascalCase handling
+        .replace(/\b\w/g, (char:any) => char.toUpperCase()); // Capitalize the first letter of each word
+
+      console.log("Formatted Role:", formattedRoleName);  // Debugging line
+
+      return (
+        <MenuItem key={index} value={role.name}>
+          {formattedRoleName}
+        </MenuItem>
+      );
+    })}
+  </Select>
+</FormControl>
+
+
+
+
+
               </div>
               {/* <div className='mb-4 relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -851,19 +887,28 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg>
               <FormControl fullWidth size="small" error={!!errors.state}>
-                <InputLabel id="state" color="warning"> Select state *</InputLabel>
+                <InputLabel id="state" color="warning">Select state *</InputLabel>
                 <Select
                   labelId="state"
                   color="warning"
                   id="select-state"
-                  value={states.some(s => s.isoCode === formData.state) ? formData.state : ''}
+                  value={formData.state || ''}
                   label="State"
                   name="state"
                   onChange={handleSelectChange}
+                  disabled={!formData.country}
                 >
-                  {states.map((state: IState) => (
-                    <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
-                  ))}
+                  {states.length > 0 ? (
+                    states.map((state: IState) => (
+                      <MenuItem key={state.isoCode} value={state.isoCode}>
+                        {state.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled value="">
+                      {formData.country ? 'No states available' : 'Select country first'}
+                    </MenuItem>
+                  )}
                 </Select>
                 {errors.state && (
                   <FormHelperText>{errors.state}</FormHelperText>

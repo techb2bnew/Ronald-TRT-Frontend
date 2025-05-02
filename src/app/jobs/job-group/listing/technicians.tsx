@@ -17,7 +17,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 
 
 
@@ -291,19 +291,20 @@ const JobTListing: React.FC = () => {
     csvExporter.generateCsv(formattedData);
   }
 
-   
+
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart(); // Remove leading whitespace/newlines
-  
+
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
@@ -312,13 +313,13 @@ const JobTListing: React.FC = () => {
         'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
         'jobDescription', 'cost'
       ];
-  
+
       Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip raw header row
             .map((row) => {
@@ -335,7 +336,7 @@ const JobTListing: React.FC = () => {
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
@@ -348,6 +349,8 @@ const JobTListing: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+          setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -355,7 +358,7 @@ const JobTListing: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -399,7 +402,7 @@ const JobTListing: React.FC = () => {
           </label>
         </td>
         <td> <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>{job.customer.id}</Link></td>
- 
+
         <td> <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</Link></td>
 
         {/* <td>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</td> */}
@@ -442,8 +445,8 @@ const JobTListing: React.FC = () => {
               ) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+                    {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="R/I/R/R price is not added for this job."
                       style={{
@@ -455,7 +458,8 @@ const JobTListing: React.FC = () => {
                         cursor: 'pointer',
                       }}
                     ></span>
-                    <Tooltip id={tooltipId} place="top" />
+                    <Tooltip id={tooltipId} place="top" /> */}
+                   Per job
                   </div>
                 );
               }
@@ -635,7 +639,7 @@ const JobTListing: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -710,7 +714,7 @@ const JobTListing: React.FC = () => {
         </table>
       </div>
       {activeJob.length > 0 && (
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

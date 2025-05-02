@@ -214,6 +214,7 @@ export default function ClientListing() {
   };
 
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -295,6 +296,8 @@ export default function ClientListing() {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+    setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);

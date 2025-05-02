@@ -323,6 +323,7 @@ const JobTable: React.FC = () => {
 
 
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -378,6 +379,8 @@ const JobTable: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+        setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -467,7 +470,7 @@ const JobTable: React.FC = () => {
               ) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
                     {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="R/I/R/R price is not added for this job."

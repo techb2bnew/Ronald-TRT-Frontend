@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
@@ -180,6 +180,7 @@ export default function ClientListing() {
   // };
   // CSV Export Functions
   const downloadCSV = () => {
+    setLoading(true);
     const selectedCustomers = customer.filter(c => selectedIds.includes(c.id));
 
     if (selectedCustomers.length === 0) {
@@ -221,34 +222,34 @@ export default function ClientListing() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-  
+
       const lines = text.split(/\r?\n/);
-  
+
       // ✅ Remove garbage line like "Technicians,Data"
       if (lines[0].toLowerCase().includes("technician")) {
         lines.shift();
       }
-  
+
       text = lines.join('\n');
-  
+
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'zipCode', 'DeletedStatus'
       ];
-  
+
       Papa.parse(text, {
         header: false, // Don't use auto headers
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip CSV's own header row
             .map((row) => {
@@ -273,19 +274,19 @@ export default function ClientListing() {
                   typeof val === 'string' &&
                   val.trim().toLowerCase() === key.trim().toLowerCase()
               );
-  
+
               const hasRealData = Object.values(row).some(
                 (val) =>
                   (typeof val === 'string' && val.trim() !== '') ||
                   (typeof val === 'number' && !isNaN(val)) ||
                   typeof val === 'boolean'
               );
-  
+
               return !isHeaderRow && hasRealData;
             });
-  
+
           console.log("✅ Final Cleaned Data:", cleanedData);
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importCustomer`,
@@ -299,6 +300,8 @@ export default function ClientListing() {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+          setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -306,7 +309,7 @@ export default function ClientListing() {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -333,10 +336,10 @@ export default function ClientListing() {
               </svg>
             </span>
           </label>
-        </td> 
+        </td>
         <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust?.id}</Link></td>
         <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust.firstName} {cust.lastName}</Link></td>
- 
+
         <td>{cust.email}</td>
         <td>{cust.phoneNumber}</td>
         <td>{cust.address}</td>
@@ -366,7 +369,7 @@ export default function ClientListing() {
         ]}
       />
       <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -460,8 +463,8 @@ export default function ClientListing() {
           </tbody>
         </table>
       </div>
-      {customer.length > 0 && ( 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {customer.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

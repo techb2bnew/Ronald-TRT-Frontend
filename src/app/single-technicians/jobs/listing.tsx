@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -278,26 +278,27 @@ const JobTable: React.FC = () => {
 
 
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '')
         .trimStart();
-  
+
       let lines = text.split(/\r?\n/);
-  
+
       // ✅ Remove garbage header line(s) like "Technician Jobs Data,,,,,"
       while (lines.length && !lines[0].toLowerCase().includes('id')) {
         lines.shift();
       }
-  
+
       text = lines.join('\n');
-  
+
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
@@ -306,45 +307,45 @@ const JobTable: React.FC = () => {
         'deletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
         'jobDescription', 'cost'
       ];
-  
+
       const requiredFieldsWithDefaults: Record<string, string> = {
         model: 'N/A'
       };
-  
+
       Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1)
             .map((row) => {
               const obj: any = {};
-  
+
               manualHeaders.forEach((key, idx) => {
                 let value: any = row[idx];
-  
+
                 if (typeof value === 'string') {
                   value = value.trim();
                   const lower = value.toLowerCase();
-  
+
                   if (lower === 'null' || lower === '') {
                     value = requiredFieldsWithDefaults[key] || '';
                   } else {
                     value = value;
                   }
                 }
-  
+
                 // Fix VIN from scientific notation (convert number to full string)
                 if (key === 'vin' && !isNaN(Number(value))) {
                   value = Number(value).toFixed(0);
                 }
-  
+
                 // ✅ Ensure value is always a string
                 obj[key] = String(value ?? '');
               });
-  
+
               return obj;
             })
             .filter((row) => {
@@ -352,16 +353,16 @@ const JobTable: React.FC = () => {
                 ([key, val]) =>
                   typeof val === 'string' && val.trim().toLowerCase() === key.toLowerCase()
               );
-  
+
               const hasRealData = Object.values(row).some(
                 (val) => typeof val === 'string' && val.trim() !== ''
               );
-  
+
               return !isHeaderRow && hasRealData;
             });
-  
+
           console.log("✅ Final Cleaned Data:", cleanedData);
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
@@ -374,6 +375,8 @@ const JobTable: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+          setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -381,13 +384,13 @@ const JobTable: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
-  
-  
-  
-  
+
+
+
+
   const [permissions, setPermissions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -444,10 +447,10 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td> 
+        </td>
         <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
         <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
- 
+
         <td>{job?.customer?.phoneNumber}</td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
@@ -498,7 +501,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Single Technician Work Order" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -572,7 +575,7 @@ const JobTable: React.FC = () => {
         </table>
       </div>
       {activeJob.length > 0 && (
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

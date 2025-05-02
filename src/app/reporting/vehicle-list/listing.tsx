@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -202,17 +202,18 @@ const VehicleTable: React.FC = () => {
   }
 
   const handleImportCSV = (file: File) => {
+    setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart(); // Remove leading whitespace/newlines
-  
+
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
@@ -221,13 +222,13 @@ const VehicleTable: React.FC = () => {
         'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
         'jobDescription', 'cost'
       ];
-  
+
       Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip raw header row
             .map((row) => {
@@ -244,7 +245,7 @@ const VehicleTable: React.FC = () => {
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
@@ -257,6 +258,8 @@ const VehicleTable: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('Import failed. Check console for details.');
           }
+          setLoading(false);
+
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -264,7 +267,7 @@ const VehicleTable: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -296,7 +299,7 @@ const VehicleTable: React.FC = () => {
           </label>
         </td>
         <td>{job?.id}</td>
-        
+
         <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
@@ -308,7 +311,7 @@ const VehicleTable: React.FC = () => {
         <td>{job.modelYear}</td>
         <td>{job.color}</td>
         <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
-        <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td>
+        {/* <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td> */}
         <td> <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -327,7 +330,7 @@ const VehicleTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Vehicles List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -378,7 +381,7 @@ const VehicleTable: React.FC = () => {
               <th className="w-[60px]">Year</th>
               <th className="w-[50px]">Color</th>
               <th className="w-[100px]">Start Date</th>
-              <th className="w-[100px]">Completion Date</th>
+              {/* <th className="w-[100px]">Completion Date</th> */}
               <th className="w-[100px]">Status</th>
             </tr>
           </thead>
@@ -401,8 +404,8 @@ const VehicleTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && ( 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {activeJob.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );
