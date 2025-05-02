@@ -457,7 +457,7 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
 .rightsidebar {
   width: 15%;
   position: fixed;
-  right: 0%;
+  left: 14%;
   top: 15%;
   padding: 20px;
   background: #ffffff;
