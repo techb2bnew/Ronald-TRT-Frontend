@@ -342,59 +342,77 @@ const TechnicianTable: React.FC = () => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
     const reader = new FileReader();
-
+  
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // remove BOM
+        .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-
-      let lines = text.split(/\r?\n/);
-
-      // ✅ Safe filter: remove blank or garbage lines
-      lines = lines.filter((line) => line.trim() !== '');
-
-      // ✅ Detect if first line is garbage (e.g., "Technicians Data")
-      if (lines[0].toLowerCase().includes('technician')) {
-        lines.shift(); // remove garbage line
+  
+      const lines = text.split(/\r?\n/);
+  
+      // ✅ Remove garbage line like "Technicians,Data"
+      if (lines[0].toLowerCase().includes("technician")) {
+        lines.shift();
       }
-
-      text = lines.join('\n'); // rebuild cleaned CSV text
-
+  
+      text = lines.join('\n');
+  
+      const manualHeaders = [
+        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
+        'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
+        'PayVehicleType', 'PayRate', 'Status',
+        'AccountStatus', 'DeletedStatus', 'IsApproved'
+      ];
+  
       Papa.parse(text, {
-        header: true,
+        header: false, // Don't use auto headers
         skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
         complete: async (result) => {
-          const parsedData = (result.data as any[]);
-
-          // ✅ Very Important: If still only "Technicians Data" field, fix manually
-          const correctedData = parsedData.map((row) => {
-            if (row['Technicians Data']) {
-              // Manual split fix
-              const values = (row['Technicians Data'] as string).split(',');
-              return {
-                id: values[0]?.trim() || '',
-                name: values[1]?.trim() || '',
-                email: values[2]?.trim() || '',
-                phone: values[3]?.trim() || '',
-                address: values[4]?.trim() || '',
-                country: values[5]?.trim() || '',
-                city: values[6]?.trim() || '',
-                state: values[7]?.trim() || '',
-                simpleFlatRate: values[8]?.trim() || '',
-                payRate: values[9]?.trim() || '',
-                // 👆 jitne fields hain utne daal lena
-              };
-            }
-            return row; // otherwise normal row
-          });
-
+          const rows = result.data as string[][];
+  
+          const cleanedData = rows
+            .slice(1) // Skip CSV's own header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value: any = row[idx];
+                if (typeof value === 'string') {
+                  value = value.trim();
+                  const lower = value.toLowerCase();
+                  if (lower === 'true') value = true;
+                  else if (lower === 'false') value = false;
+                  else if (lower === 'null' || lower === '') value = null;
+                }
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              // ✅ Skip row if all keys === values like { Id: "id", Name: "name", ... }
+              const isHeaderRow = Object.entries(row).every(
+                ([key, val]) =>
+                  typeof val === 'string' &&
+                  val.trim().toLowerCase() === key.trim().toLowerCase()
+              );
+  
+              const hasRealData = Object.values(row).some(
+                (val) =>
+                  (typeof val === 'string' && val.trim() !== '') ||
+                  (typeof val === 'number' && !isNaN(val)) ||
+                  typeof val === 'boolean'
+              );
+  
+              return !isHeaderRow && hasRealData;
+            });
+  
+          console.log("✅ Final Cleaned Data:", cleanedData);
+  
           try {
             const response = await axios.post(
               `${apiUrl}/importTechnician`,
-              { data: correctedData },
+              { data: cleanedData },
               { headers }
             );
             toast.success('CSV Import Successful!');
@@ -410,7 +428,7 @@ const TechnicianTable: React.FC = () => {
         },
       });
     };
-
+  
     reader.readAsText(file);
   };
 
@@ -453,8 +471,9 @@ const TechnicianTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>
-        <td>{tech.id}</td>
+        </td> 
+        <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td>
+
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
@@ -466,7 +485,7 @@ const TechnicianTable: React.FC = () => {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             )}
-            <span>{tech?.firstName} {tech?.lastName}</span>
+            <span><Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech?.firstName} {tech?.lastName}</Link> </span>
           </div>
         </td>
         <td>{tech.email}</td>

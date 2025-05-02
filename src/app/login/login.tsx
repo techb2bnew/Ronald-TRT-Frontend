@@ -10,7 +10,7 @@ import EyeOff from '../../../public/eye-off.svg'
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ToastContainer, toast } from 'react-toastify';
+import toast  from 'react-hot-toast';
 import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
 
@@ -121,8 +121,7 @@ export default function Login() {
 
   return (
     <div className="items-center justify-items-center">
-      <ToastContainer position="top-center" autoClose={500} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <section className="min-h-screen w-full">
+       <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">

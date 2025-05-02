@@ -1,8 +1,7 @@
 "use client";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast  from 'react-hot-toast'; 
 import user from "../../../public/user.png";
 import Edit from "../../../public/upload.png";
 import { useTechnician } from "@/app/techheaderprofile/headerprofile";
@@ -314,8 +313,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
 
   return (
     <div className="rounded-lg p-6 mx-auto">
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} />
-      <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
+       <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
         <div className="relative h-[88px] w-[88px]">
           {technician && technician.image ? (
             <img

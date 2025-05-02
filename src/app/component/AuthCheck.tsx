@@ -3,8 +3,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Loading from "./loader";
-import { toast, ToastContainer } from 'react-toastify';
+import Loading from "./loader"; 
 import Swal from 'sweetalert2';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -15,6 +14,8 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkAuthAndStatus = async () => {
+      setIsLoading(true); 
+
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userID");
   
@@ -91,9 +92,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white z-50">
-              <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-        
+      <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white z-[99999]"> 
         <Loading />
       </div>
     );

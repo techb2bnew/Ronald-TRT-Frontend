@@ -140,7 +140,8 @@ export default function ViewDetails() {
           { label: 'View Detail', href: '/jobs/job-group/listing' }
         ]}
       />
-      <div className="max-w-7xl mx-auto p-4 rounded-lg shadow bg-white">
+      <div>
+      <div className="w-[80%] p-4 rounded-lg shadow bg-white">
         {jobData.map((job, index) => (
           <div key={index} className="bg-blue rounded-lg shadow-md mb-6">
             <div className="flex justify-between items-center border-b border-[#ccc] pb-3 mb-2 pl-6 pr-6 pt-4">
@@ -450,6 +451,19 @@ export default function ViewDetails() {
             <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
           </div>
         )}
+      </div>
+      <div className="rightsidebar">
+      {jobData.map((job, index) => (
+          <div>
+             <div className="mb-4  text-sm mb-3 pb-4 flex gap-5 capitalize"> 
+                  {job.technicians?.map((t: any) => `${t.firstName} ${t.lastName}`).join(', ')} 
+                  <strong className="font-[600]  inline-block">  </strong> ${calculateTotalCost(job).toFixed(2)}
+                 
+                </div>
+          </div>
+        ))}
+
+      </div>
       </div>
     </>
 

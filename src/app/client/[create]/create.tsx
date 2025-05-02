@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import toast  from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
@@ -227,8 +226,7 @@ export default function Technicians() {
 
         ]}
       />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
+       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>

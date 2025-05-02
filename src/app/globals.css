@@ -453,6 +453,16 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
   font-size: 9px !important;
 
 }
+
+.rightsidebar {
+  width: 15%;
+  position: fixed;
+  right: 0%;
+  top: 15%;
+  padding: 20px;
+  background: #ffffff;
+  height: 100%;
+}
 /* .MuiSelect-select{
       padding: 14px 14px !important;
 } */

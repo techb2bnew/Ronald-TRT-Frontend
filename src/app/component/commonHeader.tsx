@@ -66,7 +66,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           </div>
           <select name="" id="" className='w-[180px] p-3' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
-            <option value="">Select option</option>
+            <option value="">Number of rows</option>
             <option value="10">10</option>
             <option value="20">20</option>
             <option value="30">30</option>

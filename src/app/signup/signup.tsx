@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import toast  from 'react-hot-toast'; 
 import { useRouter } from "next/navigation";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
@@ -461,8 +460,7 @@ export default function Role() {
 
   return (
     <div className='main-container mb-5 bg-white'>
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <div className="flex">
         <div className="w-1/2 md:block fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />

@@ -256,7 +256,11 @@ const Sidebar = () => {
                 activeLink === '/technicians/listing' ||
                 activeLink === '/technicians/create-technician' ||
                 activeLink === '/client/listing' ||
-                activeLink === '/client/create'
+                activeLink === '/client/create' ||
+                activeLink === '/jobs/create-job/create' ||
+                activeLink === '/jobs/active-job' ||
+                activeLink === '/jobs/complete-job/listing' ||
+                activeLink === '/jobs/job-group/listing'
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-2 transition-all duration-300 
@@ -273,7 +277,7 @@ const Sidebar = () => {
                 {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin') && (
                   <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>
 
-                    {userType === 'single-technician' ? 'Users' : 'IFS Users'}
+                    {userType === 'single-technician' ? 'Users' : 'IFS'}
                   </span>
                 )}
               </div>
@@ -304,7 +308,7 @@ const Sidebar = () => {
                   </li>
                 )}
                 {userType !== 'single-technician' && userType !== 'ifs' && (
-                  <li className='p-1'>
+                  <li className='pl-1'>
 
                     {isUsersOpen && (
                       <ul className="">
@@ -330,6 +334,29 @@ const Sidebar = () => {
                         </li>
                       </ul>
                     )}
+                  </li>
+                )}
+
+                <li  >
+                  <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
+                    <span>Create Work Order</span>
+                  </Link>
+                </li>
+                <li >
+                  <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/active-job' ? 'active text-[#fff900]' : ''}`} >
+                    <span>Active Work Order</span>
+                  </Link>
+                </li>
+                <li >
+                  <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#fff900]' : ''}`}>
+                    <span>Completed Work Order</span>
+                  </Link>
+                </li>
+                {userType !== 'single-technician' && (
+                  <li >
+                    <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
+                      <span>Group Work Orders</span>
+                    </Link>
                   </li>
                 )}
               </ul>
@@ -419,7 +446,7 @@ const Sidebar = () => {
           )}
         </li>
         )} */}
-          <li className='p-1 pl-4 relative group'>
+          {/* <li className='p-1 pl-4 relative group'>
             <button onClick={handleDropdownTogglesJobs} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
     ${isUser3Open ? 'text-[#fff900]' : ''}
     ${!isUser3Open && (
@@ -483,7 +510,7 @@ const Sidebar = () => {
                 )}
               </ul>
             )}
-          </li>
+          </li> */}
 
 
           <li className='p-1 pl-4 relative group'>
@@ -506,7 +533,7 @@ const Sidebar = () => {
                   <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                   <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
                 </svg>
-                <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>All Reports</span>
+                <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>Other Reports</span>
               </div>
               <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -540,7 +567,7 @@ const Sidebar = () => {
                 {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
                     <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900]  rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#fff900]' : ''}`} >
-                      <span>All TRT Customers</span>
+                      <span>All Prorevv Customers</span>
                     </Link>
                   </li>
                 )}

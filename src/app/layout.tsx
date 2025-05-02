@@ -8,7 +8,8 @@ import Loading from "@/app/component/loader";
 import { TechnicianProvider } from "@/app/techheaderprofile/headerprofile"; 
 import { SidebarProvider } from "@/app/component/SidebarContext";
 import ColorSettings from "@/app/component/colorsetting"; 
-import AuthCheck from "@/app/component/AuthCheck";
+import { Toaster } from 'react-hot-toast';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -68,6 +69,48 @@ export default function RootLayout({
              <ColorSettings /> 
           </main> 
         </div>
+        <Toaster
+        position="top-center"
+        toastOptions={{
+          // Default options for all toasts
+          duration: 5000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          // Success-specific options
+          success: {
+            duration: 3000,
+            style: {
+              background: '#4BB543', // Green color for success
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#4BB543',
+            },
+          },
+          // Error-specific options
+          error: {
+            duration: 5000,
+            style: {
+              background: '#FF3333', // Red color for error
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#FF3333',
+            },
+          },
+          // Loading-specific options (optional)
+          loading: {
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          },
+        }}
+      />
       </body>
     </html>
   );

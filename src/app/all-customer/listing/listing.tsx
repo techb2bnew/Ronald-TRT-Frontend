@@ -221,58 +221,75 @@ export default function ClientListing() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
     const reader = new FileReader();
-
+  
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // remove BOM
+        .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-
-      let lines = text.split(/\r?\n/);
-
-      // ✅ Safe filter: remove blank or garbage lines
-      lines = lines.filter((line) => line.trim() !== '');
-
-      // ✅ Detect if first line is garbage (e.g., "Technicians Data")
-      if (lines[0].toLowerCase().includes('customer')) {
-        lines.shift(); // remove garbage line
+  
+      const lines = text.split(/\r?\n/);
+  
+      // ✅ Remove garbage line like "Technicians,Data"
+      if (lines[0].toLowerCase().includes("technician")) {
+        lines.shift();
       }
-
-      text = lines.join('\n'); // rebuild cleaned CSV text
-
+  
+      text = lines.join('\n');
+  
+      const manualHeaders = [
+        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
+        'City', 'State', 'zipCode', 'DeletedStatus'
+      ];
+  
       Papa.parse(text, {
-        header: true,
+        header: false, // Don't use auto headers
         skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
         complete: async (result) => {
-          const parsedData = (result.data as any[]);
-
-          // ✅ Very Important: If still only "Customer Data" field, fix manually
-          const correctedData = parsedData.map((row) => {
-            if (row['Customer Data']) {
-              // Manual split fix
-              const values = (row['Customer Data'] as string).split(',');
-              return {
-                id: values[0]?.trim() || '',
-                name: values[1]?.trim() || '',
-                email: values[2]?.trim() || '',
-                phone: values[3]?.trim() || '',
-                address: values[4]?.trim() || '',
-                country: values[5]?.trim() || '',
-                city: values[6]?.trim() || '',
-                state: values[7]?.trim() || '',
-                zipCode: values[7]?.trim() || '',
-                deletedStatus: values[7]?.trim() || '',
-              };
-            }
-            return row;
-          });
-
+          const rows = result.data as string[][];
+  
+          const cleanedData = rows
+            .slice(1) // Skip CSV's own header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value: any = row[idx];
+                if (typeof value === 'string') {
+                  value = value.trim();
+                  const lower = value.toLowerCase();
+                  if (lower === 'true') value = true;
+                  else if (lower === 'false') value = false;
+                  else if (lower === 'null' || lower === '') value = null;
+                }
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              // ✅ Skip row if all keys === values like { Id: "id", Name: "name", ... }
+              const isHeaderRow = Object.entries(row).every(
+                ([key, val]) =>
+                  typeof val === 'string' &&
+                  val.trim().toLowerCase() === key.trim().toLowerCase()
+              );
+  
+              const hasRealData = Object.values(row).some(
+                (val) =>
+                  (typeof val === 'string' && val.trim() !== '') ||
+                  (typeof val === 'number' && !isNaN(val)) ||
+                  typeof val === 'boolean'
+              );
+  
+              return !isHeaderRow && hasRealData;
+            });
+  
+          console.log("✅ Final Cleaned Data:", cleanedData);
+  
           try {
             const response = await axios.post(
               `${apiUrl}/importCustomer`,
-              { data: correctedData },
+              { data: cleanedData },
               { headers }
             );
             toast.success('CSV Import Successful!');
@@ -289,7 +306,7 @@ export default function ClientListing() {
         },
       });
     };
-
+  
     reader.readAsText(file);
   };
 
@@ -316,9 +333,10 @@ export default function ClientListing() {
               </svg>
             </span>
           </label>
-        </td>
-        <td>{cust.id}</td>
-        <td>{cust.firstName} {cust.lastName}</td>
+        </td> 
+        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust?.id}</Link></td>
+        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust.firstName} {cust.lastName}</Link></td>
+ 
         <td>{cust.email}</td>
         <td>{cust.phoneNumber}</td>
         <td>{cust.address}</td>

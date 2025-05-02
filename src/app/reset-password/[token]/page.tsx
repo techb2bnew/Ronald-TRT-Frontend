@@ -2,8 +2,8 @@
 import Image from "next/image";
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import toast  from 'react-hot-toast'; 
+
 import Banner from "../../../../public/forgot.png";
 import Logo from "../../../../public/trt-logo.png";
 import TextField from '@mui/material/TextField';
@@ -120,8 +120,7 @@ export default function Reset() {
 
   return (
     <div className="items-center justify-items-center">
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <section className="min-h-screen w-full">
+       <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full">
           <div className="w-1/2 md:block hidden">
             <Image 

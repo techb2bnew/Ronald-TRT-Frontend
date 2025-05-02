@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import toast  from 'react-hot-toast';
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 // import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
@@ -417,9 +416,7 @@ export default function Technicians() {
       newErrors.assignCustomer = 'Customer is required';
     }
 
-    if (!formData.assignTechnicians || formData.assignTechnicians.length === 0) {
-      newErrors.assignTechnicians = 'Technicians is required';
-    }
+    
 
     // Validate job descriptions
     const hasEmptyDescriptions = descriptionCostFields.some(
@@ -858,8 +855,7 @@ export default function Technicians() {
             : { label: 'Create New Work Order', href: '/jobs/create-job/create' },
         ]}
       />
-      <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
+       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
 

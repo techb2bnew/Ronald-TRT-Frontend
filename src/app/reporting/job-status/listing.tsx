@@ -289,46 +289,53 @@ const JobTable: React.FC = () => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
     const reader = new FileReader();
+  
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // remove BOM
-        .trimStart(); // remove leading whitespace/newlines
-
-      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
-      if (text.startsWith('Work Order Data')) {
-        const lines = text.split(/\r?\n/);
-        if (lines.length > 1) {
-          // drop the first "Work Order Data" line if it doesn't contain valid headers
-          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
-            lines.shift(); // remove first line
-          }
-        }
-        text = lines.join('\n');
-      }
-
+        .replace(/^\uFEFF/, '') // Remove BOM
+        .trimStart(); // Remove leading whitespace/newlines
+  
+      const manualHeaders = [
+        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
+        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
+        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
+        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost'
+      ];
+  
       Papa.parse(text, {
-        header: true,
+        header: false,
         skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
         complete: async (result) => {
-
-          const cleanedData = (result.data as any[]).filter(
-            (row) => Object.values(row).some((val) => val !== '')
-          );
-
-          const finalData = cleanedData.map((row) => ({
-            ...row,
-          }));
-
+          const rows = result.data as string[][];
+  
+          const cleanedData = rows
+            .slice(1) // Skip raw header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value = row[idx];
+                value = typeof value === 'string' ? value.trim() : value;
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              const hasData = Object.values(row).some((val) => val && val !== '');
+              return !isHeaderRow && hasData;
+            });
+  
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: finalData },
+              { data: cleanedData },
               { headers }
             );
-            toast.success('CSV Import Successful!.');
+            toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error) {
             console.error('❌ Import failed:', error);
@@ -341,7 +348,7 @@ const JobTable: React.FC = () => {
         },
       });
     };
-
+  
     reader.readAsText(file);
   };
 
@@ -381,8 +388,9 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
         </td>
-        <td>{job.id}</td>
-        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline'>{job?.id}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+
         <td>{job?.customer?.phoneNumber}</td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id}>

@@ -262,8 +262,7 @@ const JobTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        AccountStatus: jobData.accountStatus,
-        DeletedStatus: jobData.deletedStatus,
+        deletedStatus: jobData.deletedStatus,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
@@ -277,50 +276,99 @@ const JobTable: React.FC = () => {
   }
 
 
+
   const handleImportCSV = (file: File) => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
     const reader = new FileReader();
+  
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // remove BOM
-        .trimStart(); // remove leading whitespace/newlines
-
-      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
-      if (text.startsWith('Work Order Data')) {
-        const lines = text.split(/\r?\n/);
-        if (lines.length > 1) {
-          // drop the first "Work Order Data" line if it doesn't contain valid headers
-          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
-            lines.shift(); // remove first line
-          }
-        }
-        text = lines.join('\n');
+        .replace(/^\uFEFF/, '')
+        .trimStart();
+  
+      let lines = text.split(/\r?\n/);
+  
+      // ✅ Remove garbage header line(s) like "Technician Jobs Data,,,,,"
+      while (lines.length && !lines[0].toLowerCase().includes('id')) {
+        lines.shift();
       }
-
+  
+      text = lines.join('\n');
+  
+      const manualHeaders = [
+        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
+        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
+        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState',
+        'deletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost'
+      ];
+  
+      const requiredFieldsWithDefaults: Record<string, string> = {
+        model: 'N/A'
+      };
+  
       Papa.parse(text, {
-        header: true,
+        header: false,
         skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
         complete: async (result) => {
-
-          const cleanedData = (result.data as any[]).filter(
-            (row) => Object.values(row).some((val) => val !== '')
-          );
-
-          const finalData = cleanedData.map((row) => ({
-            ...row,
-          }));
-
+          const rows = result.data as string[][];
+  
+          const cleanedData = rows
+            .slice(1)
+            .map((row) => {
+              const obj: any = {};
+  
+              manualHeaders.forEach((key, idx) => {
+                let value: any = row[idx];
+  
+                if (typeof value === 'string') {
+                  value = value.trim();
+                  const lower = value.toLowerCase();
+  
+                  if (lower === 'null' || lower === '') {
+                    value = requiredFieldsWithDefaults[key] || '';
+                  } else {
+                    value = value;
+                  }
+                }
+  
+                // Fix VIN from scientific notation (convert number to full string)
+                if (key === 'vin' && !isNaN(Number(value))) {
+                  value = Number(value).toFixed(0);
+                }
+  
+                // ✅ Ensure value is always a string
+                obj[key] = String(value ?? '');
+              });
+  
+              return obj;
+            })
+            .filter((row) => {
+              const isHeaderRow = Object.entries(row).every(
+                ([key, val]) =>
+                  typeof val === 'string' && val.trim().toLowerCase() === key.toLowerCase()
+              );
+  
+              const hasRealData = Object.values(row).some(
+                (val) => typeof val === 'string' && val.trim() !== ''
+              );
+  
+              return !isHeaderRow && hasRealData;
+            });
+  
+          console.log("✅ Final Cleaned Data:", cleanedData);
+  
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: finalData },
+              { data: cleanedData },
               { headers }
             );
-            toast.success('CSV Import Successful!.');
+            toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error) {
             console.error('❌ Import failed:', error);
@@ -333,9 +381,13 @@ const JobTable: React.FC = () => {
         },
       });
     };
-
+  
     reader.readAsText(file);
   };
+  
+  
+  
+  
   const [permissions, setPermissions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -392,9 +444,10 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>
-        <td>{job.id}</td>
-        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+        </td> 
+        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+ 
         <td>{job?.customer?.phoneNumber}</td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id}>

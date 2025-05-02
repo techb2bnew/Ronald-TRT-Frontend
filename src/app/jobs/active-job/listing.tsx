@@ -16,6 +16,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Papa from 'papaparse';
+import Link from 'next/link';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -327,44 +328,51 @@ const JobTable: React.FC = () => {
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const reader = new FileReader();
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // remove BOM
-        .trimStart(); // remove leading whitespace/newlines
+        .replace(/^\uFEFF/, '') // Remove BOM
+        .trimStart(); // Remove leading whitespace/newlines
 
-      // ✅ Fix: Remove invalid header prefix like "Work Order Data ,"
-      if (text.startsWith('Work Order Data')) {
-        const lines = text.split(/\r?\n/);
-        if (lines.length > 1) {
-          // drop the first "Work Order Data" line if it doesn't contain valid headers
-          if (!lines[0].includes('id') || lines[0].split(',').length < lines[1].split(',').length) {
-            lines.shift(); // remove first line
-          }
-        }
-        text = lines.join('\n');
-      }
+      const manualHeaders = [
+        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
+        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
+        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
+        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost'
+      ];
 
       Papa.parse(text, {
-        header: true,
+        header: false,
         skipEmptyLines: true,
-        transformHeader: (header) => header.trim(),
         complete: async (result) => {
+          const rows = result.data as string[][];
 
-          const cleanedData = (result.data as any[]).filter(
-            (row) => Object.values(row).some((val) => val !== '')
-          );
-
-          const finalData = cleanedData.map((row) => ({
-            ...row,
-          }));
+          const cleanedData = rows
+            .slice(1) // Skip raw header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value = row[idx];
+                value = typeof value === 'string' ? value.trim() : value;
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              const hasData = Object.values(row).some((val) => val && val !== '');
+              return !isHeaderRow && hasData;
+            });
 
           try {
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: finalData },
+              { data: cleanedData },
               { headers }
             );
-            toast.success('CSV Import Successful!.');
+            toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error) {
             console.error('❌ Import failed:', error);
@@ -380,6 +388,10 @@ const JobTable: React.FC = () => {
 
     reader.readAsText(file);
   };
+
+
+
+
 
 
   const handleCheckboxChange = (id: string) => {
@@ -416,9 +428,11 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>
-        <td>{job.id}</td>
-        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
+        </td> 
+        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+         
+
+        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
         <td>{job?.customer?.phoneNumber}</td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
@@ -454,7 +468,7 @@ const JobTable: React.FC = () => {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span
+                    {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="R/I/R/R price is not added for this job."
                       style={{
@@ -466,7 +480,8 @@ const JobTable: React.FC = () => {
                         cursor: 'pointer',
                       }}
                     ></span>
-                    <Tooltip id={tooltipId} place="top" />
+                    <Tooltip id={tooltipId} place="top" /> */}
+                    R/I/R/R
                   </div>
                 );
               }
@@ -549,10 +564,20 @@ const JobTable: React.FC = () => {
               // Step 3: Calculate percentage amount
               const percentageAmount = (amountPercentage * subtotalcost) / 100;
 
-              // Step 4: Total = subtotal + flat rate + percentage amount
+              // Step 4: Check if flat rate or percentage amount is missing and display accordingly
+              if (simpleFlatRate === 0 && amountPercentage === 0) {
+                // If no valid flat rate or percentage, just show the subtotal
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${subtotalcost.toFixed(2)}
+                  </div>
+                );
+              }
+
+              // Step 5: Calculate total = subtotal + flat rate + percentage amount
               const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
 
-              // Step 5: Show red dot tooltip if neither flat rate nor percentage are valid
+              // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
               if (simpleFlatRate === 0 && amountPercentage === 0) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
@@ -574,7 +599,7 @@ const JobTable: React.FC = () => {
                 );
               }
 
-              // Step 6: Return total cost
+              // Step 7: Return total cost
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   ${totalCost.toFixed(2)}
@@ -582,6 +607,7 @@ const JobTable: React.FC = () => {
               );
             })()}
           </td>
+
         )}
 
         {roleType === 'single-technician' && (
@@ -748,7 +774,7 @@ const JobTable: React.FC = () => {
       </div>
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )} 
+      )}
     </div>
   );
 };

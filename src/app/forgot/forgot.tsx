@@ -2,8 +2,7 @@ import Image from "next/image";
 import Banner from "../../../public/forgot.png";
 import Logo from "../../../public/trt-logo.png"; 
 import { useState, FormEvent } from "react";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import toast  from 'react-hot-toast';  
 import TextField from '@mui/material/TextField';
 import Swal from "sweetalert2";
 import { useRouter } from 'next/navigation';
@@ -94,8 +93,7 @@ export default function Forgot() {
 
   return (
     <div className="items-center justify-items-center">
-            <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-
+ 
       <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full "> 
           <div className="w-1/2 md:block hidden  ">
