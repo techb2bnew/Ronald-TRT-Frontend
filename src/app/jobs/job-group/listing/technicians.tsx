@@ -636,7 +636,7 @@ const JobTListing: React.FC = () => {
           { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
         ]}
       />
-      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedClick={() => {
+      <CommonHeader heading="" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedClick={() => {
   setFilterType('completed');
   fetchJobs(1, '', pageSize, 'completed');
 }}
