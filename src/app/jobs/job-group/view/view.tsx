@@ -285,8 +285,8 @@ export default function ViewDetails() {
                     <div className="mb-2 text-sm flex capitalize">
 
                       {job.technicians?.map((t: any, index: number) => (
-                        <a key={index} href={`tel:${t.phoneNumber}`} className="hover:underline">
-                          {t.phoneNumber || 'N/A'}
+                        <a className="hover:underline">
+                          {t.firstName || 'N/A'} {t.lastName || 'N/A'}
                         </a>
                       ))}
                     </div>

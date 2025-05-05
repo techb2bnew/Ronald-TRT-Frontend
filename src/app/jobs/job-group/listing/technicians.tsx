@@ -404,7 +404,7 @@ const JobTListing: React.FC = () => {
             const completedJobs = group.jobs.filter((j: any) => j.jobStatus === true).length;
 
             // Return formatted string "X/Y"
-            return `${completedJobs}/${group.count}`;
+            return `${completedJobs}/${group.count} Jobs Done`;
           })()}
         </td>
         <td>${(job?.customer?.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
