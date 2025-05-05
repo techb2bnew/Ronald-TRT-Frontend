@@ -177,7 +177,7 @@ export default function ViewDetails() {
         <div className="w-[1000px] ml-auto p-4 laptop-narrow">
           <div className='flex items-center gap-4 justify-between mb-5 bg-white p-3 sticky top-[4.8rem]'>
             {/* Keep your search and filter buttons here */}
-            <div className="flex w-[300] relative search__input">
+            <div className="flex w-[300px] relative search__input">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
