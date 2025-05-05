@@ -16,10 +16,12 @@ interface CommonHeaderProps {
   onExport?: () => void;
   onPageSizeChange?: (size: number) => void;
   onImport?: (file: File) => void;
+  onCompletedClick?: () => void;
+  onInProgressClick?: () => void;
 }
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport, onImport, onPageSizeChange }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
 
@@ -56,6 +58,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           {/* <p className='text-sm'>{title}</p> */}
         </div>
         <div className='flex items-center gap-4'>
+          {onSearch && (
+
           <div className="flex w-[350] relative search__input">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
@@ -65,6 +69,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
 
           </div>
+          )}
+
+          {onPageSizeChange && (
+
           <select name="" id="" className='w-[180px] p-3' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
             <option value="">Number of rows</option>
             <option value="10">10</option>
@@ -73,29 +81,52 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             <option value="40">40</option>
             <option value="50">50</option>
             <option value="100">100</option>
-          </select> 
-            <label className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 cursor-pointer hover:text-white hover:bg-[#383d71]">
-             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
+          </select>
+          )}
+
+          {onCompletedClick && (
+            <button
+              className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded hover:text-white hover:bg-green-600"
+              onClick={onCompletedClick}
+            >
+              Completed Jobs
+            </button>
+          )}
+
+          {onInProgressClick && (
+            <button
+              className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded hover:text-white hover:bg-yellow-500"
+              onClick={onInProgressClick}
+            >
+              In Progress Jobs
+            </button>
+          )}
+{onImport && (
+
+          <label className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 cursor-pointer hover:text-white hover:bg-[#383d71]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
               <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
               <polyline points="3 4 5 6 7 4" />
               <line x1="5" y1="6" x2="5" y2="1" />
             </svg>
-            
 
 
-              Import
-              <input
-                type="file"
-                accept=".csv"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    onImport?.(e.target.files[0]);
-                    e.target.value = ''; // reset input
-                  }
-                }}
-              />
-            </label> 
+
+            Import
+            <input
+              type="file"
+              accept=".csv"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  onImport?.(e.target.files[0]);
+                  e.target.value = ''; // reset input
+                }
+              }}
+            />
+          </label>
+)}
+{onExport && (
 
           <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
@@ -106,6 +137,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
             Export
           </button>
+)}
           {buttonLink && buttonLabel && canCreate && (
             <Link href={buttonLink} className="primary-bg text-xs border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
               {buttonLabel}

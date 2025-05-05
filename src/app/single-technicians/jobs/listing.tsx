@@ -371,10 +371,24 @@ const JobTable: React.FC = () => {
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+
+            // Check if it's an Axios error with a response
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
+
           setLoading(false);
 
         },
@@ -558,13 +572,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={9} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={9} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

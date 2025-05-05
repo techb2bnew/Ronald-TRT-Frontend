@@ -28,8 +28,12 @@ interface Jobs {
   email: string;
   deletedStatus?: boolean;
 }
+interface ActiveJobState {
+  jobs: any[];
+  totalGroupJob: any[];
+}
 const JobTListing: React.FC = () => {
-  const [activeJob, setActiveJob] = useState<any[]>([]);
+  const [activeJob, setActiveJob] = useState<ActiveJobState>({ jobs: [], totalGroupJob: [] });
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
@@ -41,48 +45,56 @@ const JobTListing: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [filterType, setFilterType] = useState<'' | 'completed' | 'inProgress'>('');
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
   };
-  const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
-  };
-  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
+ 
+  const fetchJobs = async (
+    page = 1,
+    query = '',
+    limit = pageSize,
+    filterType: 'completed' | 'inProgress' | '' = ''
+  ) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const roleType = localStorage.getItem('types') || "";
+      const roleType = localStorage.getItem('types') || '';
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
-
-      const endpoint = query.trim()
-        ? roleType === 'superadmin'
-          ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'superadmin'
-          ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-
-
+  
+      let endpoint = '';
+  
+      if (filterType) {
+        endpoint = `${apiUrl}/fetchGroupJob?filterType=${filterType}`;
+      } else if (query.trim()) {
+        endpoint =
+          roleType === 'superadmin'
+            ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+            : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`;
+      } else {
+        endpoint =
+          roleType === 'superadmin'
+            ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+            : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+      }
+  
       const response = await fetch(endpoint, { method: 'GET', headers });
-
       const data = await response.json();
+  
       if (response.ok) {
         const fetchedTechnicians: Jobs[] = query.trim()
           ? data.searchGroup || []
           : data.GroupJob || [];
-        //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
-
-        setActiveJob(fetchedTechnicians);
+  
+        setActiveJob({
+          jobs: fetchedTechnicians,
+          totalGroupJob: data.totalGroupJob || [],
+        });
         setTotalPages(data.jobs?.totalPages || 1);
-
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -96,6 +108,7 @@ const JobTListing: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
 
   useEffect(() => {
@@ -129,7 +142,7 @@ const JobTListing: React.FC = () => {
     setSortDirection(direction);
     setSortBy(column);
 
-    const sortedJobs = [...activeJob].sort((a, b) => {
+    const sortedJobs = [...activeJob.jobs].sort((a, b) => {
       if (column === 'id') {
         const idA = Number(a.customer.id);  // Directly access a.id
         const idB = Number(b.customer.id);
@@ -151,82 +164,13 @@ const JobTListing: React.FC = () => {
       return 0;
     });
 
-    setActiveJob(sortedJobs);
+    setActiveJob((prev) => ({
+      ...prev,
+      jobs: sortedJobs,
+    }));
   };
 
-
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-
-        if (response.data.status) {
-          // Optimistically update the local state
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === jobId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor: '#383d71',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
+ 
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -235,7 +179,7 @@ const JobTListing: React.FC = () => {
 
   // CSV Export Functions
   const downloadCSV = () => {
-    const selectedJobs = activeJob.filter(c => selectedIds.includes(c.customer.id));
+    const selectedJobs = activeJob.jobs.filter(c => selectedIds.includes(c.customer.id));
 
     if (selectedJobs.length === 0) {
       toast.error("Please select at least job group to export.");
@@ -258,6 +202,9 @@ const JobTListing: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
+      const subTotal = jobData.customer.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
       return {
         id: jobData?.customer?.id,
         vin: jobData.customer?.vin,
@@ -277,14 +224,16 @@ const JobTListing: React.FC = () => {
         'plantCompanyName': jobData.customer?.plantCompanyName,
         'plantCountry': jobData.customer?.plantCountry,
         'plantState': jobData.customer?.plantState,
-        AccountStatus: jobData.accountStatus,
-        DeletedStatus: jobData.deletedStatus,
+        deletedStatus: jobData.customer.deletedStatus,
+        estimatedBy: jobData.customer.estimatedBy,
         notes: jobData.customer?.notes,
         jobStatus: jobData.customer?.jobStatus ? 'true' : 'false',
         technicians: jobData.customer?.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.customer?.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.customer.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
         cost: jobData.customer.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+        subTotal: subTotal.toFixed(2),
+
 
       };
     });
@@ -309,9 +258,9 @@ const JobTListing: React.FC = () => {
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
         'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
-        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost'
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost', 'subTotal'
       ];
 
       Papa.parse(text, {
@@ -332,25 +281,45 @@ const JobTListing: React.FC = () => {
               return obj;
             })
             .filter((row) => {
+              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
 
           try {
+            // Only filter out the first object if it's a header row
+            const payloadData = cleanedData.filter(row => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              return !isHeaderRow;
+            });
+
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: cleanedData },
+              { data: payloadData },
               { headers }
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
-          }
-          setLoading(false);
 
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
+          }
+
+          setLoading(false);
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -401,12 +370,14 @@ const JobTListing: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>{job.customer.id}</Link></td>
+        {/* <td> <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>{job.customer.id}</Link></td> */}
 
         <td> <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</Link></td>
 
         {/* <td>{job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}</td> */}
         <td>{job?.customer?.customer?.phoneNumber}</td>
+
+
         <td>
           {job?.customer?.technicians?.map((technicianData: any, index: number) => (
             <div key={`${technicianData.id}-${index}`}>
@@ -414,13 +385,27 @@ const JobTListing: React.FC = () => {
             </div>
           ))}
         </td>
+        <td>{job?.customer.vin}</td>
+        <td> <span
+          className={`badge ${job.customer.jobStatus
+            ? "badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow"
+            : "badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow"
+            }`}
+        >
+          {job.customer.jobStatus ? "Completed" : "Inprogress"}
+        </span></td>
         <td>
-          {job?.customer?.technicians?.map((tech: any, index: number) => (
-            <div key={`${tech.id}-${index}`}>
+          {(() => {
+            // Find the group for this VIN
+            const group = activeJob.totalGroupJob?.find((g: any) => g.vin === job.vin);
+            if (!group) return '0/0';
 
-              {tech.phoneNumber}
-            </div>
-          ))}
+            // Count completed jobs
+            const completedJobs = group.jobs.filter((j: any) => j.jobStatus === true).length;
+
+            // Return formatted string "X/Y"
+            return `${completedJobs}/${group.count}`;
+          })()}
         </td>
         <td>${(job?.customer?.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
         {roleType !== 'single-technician' && (
@@ -432,11 +417,14 @@ const JobTListing: React.FC = () => {
                 return sum + Number(item.cost || 0);
               }, 0);
 
-              // Use job's simpleFlatRate or fallback to technician's simpleFlatRate
-              const simpleFlatRate = job.customer.simpleFlatRate ? Number(job.customer.simpleFlatRate) : (job.customer.technicians[0]?.simpleFlatRate ? Number(job.customer.technicians[0].simpleFlatRate) : 0);
+              const jobFlatRate = Number(job.customer.simpleFlatRate);
+              const techFlatRate = Number(job.customer.technicians[0]?.simpleFlatRate);
+              const simpleFlatRate = !isNaN(jobFlatRate) && jobFlatRate > 0 ? jobFlatRate : (!isNaN(techFlatRate) && techFlatRate > 0 ? techFlatRate : 0);
 
               // Use job's amountPercentage or fallback to technician's amountPercentage
-              const amountPercentage = job.customer.amountPercentage ? Number(job.customer.amountPercentage) : (job.customer.technicians[0]?.amountPercentage ? Number(job.customer.technicians[0].amountPercentage) : 0);
+              const jobPercentage = Number(job.customer.amountPercentage);
+              const techPercentage = Number(job.customer.technicians[0]?.amountPercentage);
+              const amountPercentage = !isNaN(jobPercentage) && jobPercentage > 0 ? jobPercentage : (!isNaN(techPercentage) && techPercentage > 0 ? techPercentage : 0);
 
               // Neither is valid — show red dot with tooltip
               if (
@@ -445,7 +433,7 @@ const JobTListing: React.FC = () => {
               ) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
                     {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="R/I/R/R price is not added for this job."
@@ -459,7 +447,7 @@ const JobTListing: React.FC = () => {
                       }}
                     ></span>
                     <Tooltip id={tooltipId} place="top" /> */}
-                   Per job
+                    Per job
                   </div>
                 );
               }
@@ -532,7 +520,7 @@ const JobTListing: React.FC = () => {
               // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
               const technician = job.customer.technicians?.[0] || {};
               const simpleFlatRate = !isNaN(Number(job.customer.simpleFlatRate)) && Number(job.customer.simpleFlatRate) > 0
-                ? Number(job.simpleFlatRate)
+                ? Number(job.customer.simpleFlatRate)
                 : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
 
               const amountPercentage = !isNaN(Number(job.customer.amountPercentage)) && Number(job.customer.amountPercentage) > 0
@@ -542,12 +530,22 @@ const JobTListing: React.FC = () => {
               // Step 3: Calculate percentage amount
               const percentageAmount = (amountPercentage * subtotalcost) / 100;
 
-              // Step 4: Total = subtotal + flat rate + percentage amount
+              // Step 4: Check if flat rate or percentage amount is missing and display accordingly
+              if (simpleFlatRate === 0 && amountPercentage === 0) {
+                // If no valid flat rate or percentage, just show the subtotal
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${subtotalcost.toFixed(2)}
+                  </div>
+                );
+              }
+
+              // Step 5: Calculate total = subtotal + flat rate + percentage amount
               const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
 
-              // Step 5: Show red dot tooltip if neither flat rate nor percentage are valid
+              // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
               if (simpleFlatRate === 0 && amountPercentage === 0) {
-                const tooltipId = `tooltip-${job.id}`;
+                const tooltipId = `tooltip-${job.customer.id}`;
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <span
@@ -567,7 +565,7 @@ const JobTListing: React.FC = () => {
                 );
               }
 
-              // Step 6: Return total cost
+              // Step 7: Return total cost
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   ${totalCost.toFixed(2)}
@@ -638,7 +636,16 @@ const JobTListing: React.FC = () => {
           { label: 'Group Work Orders', href: '/jobs/job-group/listing' }
         ]}
       />
-      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Group Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedClick={() => {
+  setFilterType('completed');
+  fetchJobs(1, '', pageSize, 'completed');
+}}
+
+onInProgressClick={() => {
+  setFilterType('inProgress');
+  fetchJobs(1, '', pageSize, 'inProgress');
+}}
+ />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -649,12 +656,12 @@ const JobTListing: React.FC = () => {
 
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === activeJob.length}
+                    checked={selectedIds.length === activeJob.jobs.length}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
                     onChange={() =>
                       setSelectedIds(
-                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.customer.id)
+                        selectedIds.length === activeJob.jobs.length ? [] : activeJob.jobs.map((cust) => cust.customer.id)
                       )
                     }
                   />
@@ -665,14 +672,14 @@ const JobTListing: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
+              {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
+              </th> */}
               <th className="w-[150px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
@@ -684,13 +691,20 @@ const JobTListing: React.FC = () => {
               <th className="w-[120px]">
                 Customer Number
               </th>
+
               <th className="w-[150px]" >
                 Technician Name
               </th>
-              <th className="w-[100px]">Tech. Number</th>
+              <th className="w-[150px]" >
+                VIN
+              </th>
+              <th className="w-[100px]" >
+                Status
+              </th>
+              <th className="w-[100px]">Jobs Progress</th>
               <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[120px]">R/I R/R</th>
-              <th className="w-[120px]">Total Cost</th>
+              <th className="w-[100px]">R/I R/R</th>
+              <th className="w-[100px]">Total Cost</th>
               <th className="w-[100px]">Action</th>
             </tr>
           </thead>
@@ -701,19 +715,19 @@ const JobTListing: React.FC = () => {
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob?.length === 0 ? (
+            ) : activeJob?.jobs.length === 0 ? (
               <tr>
                 <td colSpan={9} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob.map((job) => renderRow(job))
+              activeJob.jobs.map((job) => renderRow(job))
             )}
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
+      {activeJob.jobs.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>

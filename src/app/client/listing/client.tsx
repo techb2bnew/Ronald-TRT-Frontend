@@ -272,10 +272,24 @@ export default function ClientListing() {
             toast.success('CSV Import Successful!');
             fetchCustomer(currentPage, searchTerm, pageSize);
 
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+
+            // Check if it's an Axios error with a response
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
+
           setLoading(false);
 
         },
@@ -323,9 +337,20 @@ export default function ClientListing() {
         </td>
         <td>{cust.id}</td>
         <td>
-          <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline'>
-            {cust?.firstName} {cust?.lastName}
-          </Link>
+          <div className="flex items-center gap-2"> 
+            {cust?.image ? (
+              <img src={cust.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
+            <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline'>
+              {cust?.firstName} {cust?.lastName}
+            </Link>
+          </div>
         </td>
         <td>
           <a href={`mailto:${cust.email}`} style={{ color: '#383d71' }} className='hover:underline'>

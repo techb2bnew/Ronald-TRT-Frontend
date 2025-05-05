@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import toast  from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 // import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
@@ -154,90 +154,122 @@ export default function Technicians() {
   });
 
   const fetchJobData = async (jobid: string) => {
-
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
       const token = localStorage.getItem('token');
-
-      // Create headers object
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-
-      // If token exists, add it to Authorization header
+  
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
-      // Make GET request with technicianId as query parameter
+  
       const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobid}`, {
         method: 'POST',
         headers,
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok && data.jobs) {
         const jobData = data.jobs;
-        // ✅ Ensure jobDescription is an array of objects
+        
+        // Helper function to properly handle null/undefined/"null" values
+        const getValidValue = (value: any) => {
+          if (value === null || value === undefined || value === "null" || value === "") {
+            return '';
+          }
+          return value;
+        };
+  
+        // Process jobDescription
         const jobDescriptionsArray = Array.isArray(jobData.jobDescription)
           ? jobData.jobDescription.map((item: any) => ({
-            id: crypto.randomUUID(), // Assign unique IDs
-            jobDescription: item.jobDescription || '',
-            cost: item.cost || '',
+            id: crypto.randomUUID(),
+            jobDescription: getValidValue(item.jobDescription),
+            cost: getValidValue(item.cost),
           }))
           : [{ id: crypto.randomUUID(), jobDescription: '', cost: '' }];
+  
+        // Get first technician or empty object
         const technician = jobData.technicians?.[0] || {};
-        const fallbackSimpleFlatRate = jobData.simpleFlatRate !== null && jobData.simpleFlatRate !== ''
-          ? jobData.simpleFlatRate
-          : technician.simpleFlatRate || '';
-
-        const fallbackAmountPercentage = jobData.amountPercentage !== null && jobData.amountPercentage !== ''
-          ? jobData.amountPercentage
-          : technician.amountPercentage || '';
-
-        const fallbackPayRate = jobData.payRate !== null && jobData.payRate !== ''
-          ? jobData.payRate
-          : technician.payRate || '';
-        // ✅ Update `descriptionCostFields` for UI display
+  
+        // Improved fallback logic with proper null handling
+        const fallbackSimpleFlatRate = getValidValue(
+          jobData.simpleFlatRate !== null && 
+          jobData.simpleFlatRate !== undefined && 
+          jobData.simpleFlatRate !== "null" && 
+          jobData.simpleFlatRate !== ""
+            ? jobData.simpleFlatRate
+            : technician.simpleFlatRate
+        );
+  
+        const fallbackAmountPercentage = getValidValue(
+          jobData.amountPercentage !== null && 
+          jobData.amountPercentage !== undefined && 
+          jobData.amountPercentage !== "null" && 
+          jobData.amountPercentage !== ""
+            ? jobData.amountPercentage
+            : technician.amountPercentage
+        );
+  
+        const fallbackPayRate = getValidValue(
+          jobData.payRate !== null && 
+          jobData.payRate !== undefined && 
+          jobData.payRate !== "null" && 
+          jobData.payRate !== ""
+            ? jobData.payRate
+            : technician.payRate
+        );
+  
+        const fallbackPayVehicleType = getValidValue(
+          jobData.payVehicleType !== null && 
+          jobData.payVehicleType !== undefined && 
+          jobData.payVehicleType !== "null" && 
+          jobData.payVehicleType !== ""
+            ? jobData.payVehicleType
+            : technician.payVehicleType
+        );
+  
+        // Set form data
         setDescriptionCostFields(jobDescriptionsArray);
         setFormData((prev) => ({
           ...prev,
-          vin: jobData.vin || '',
-          make: jobData.make || '',
-          model: jobData.model || '',
-          modelYear: jobData.modelYear || '',
-          manufacturerName: jobData.manufacturerName || '',
-          vehicleDescriptor: jobData.vehicleDescriptor || '',
-          vehicleType: jobData.vehicleType || '',
+          vin: getValidValue(jobData.vin),
+          make: getValidValue(jobData.make),
+          model: getValidValue(jobData.model),
+          modelYear: getValidValue(jobData.modelYear),
+          manufacturerName: getValidValue(jobData.manufacturerName),
+          vehicleDescriptor: getValidValue(jobData.vehicleDescriptor),
+          vehicleType: getValidValue(jobData.vehicleType),
           jobDescription: jobDescriptionsArray,
-          notes: jobData.notes || '',
-          color: jobData.color || '',
-          labourCost: jobData.labourCost,
-          // Assuming 'jobData.technicians' is an array of 'Technicians'
-          assignTechnicians: jobData.technicians.map((tech: Technicians) => String(tech.id)),
+          notes: getValidValue(jobData.notes),
+          color: getValidValue(jobData.color),
+          labourCost: getValidValue(jobData.labourCost),
+          assignTechnicians: jobData.technicians?.map((tech: any) => String(tech.id)) || [],
           payRate: fallbackPayRate,
           simpleFlatRate: fallbackSimpleFlatRate,
           amountPercentage: fallbackAmountPercentage,
-          payVehicleType: jobData.payVehicleType || '',
-          // Using Technician interface
-          assignCustomer: jobData.assignCustomer || '',
-          createdBy: jobData.createdBy || '',
-          plantCountry: jobData.plantCountry || '',
-          plantCompanyName: jobData.plantCompanyName || '',
-          plantState: jobData.plantState || '',
-          bodyClass: jobData.bodyClass || '',
-          schedule: jobData.schedule || '',
-          ip: jobData.ip || '',  // Assuming ip needs to be updated too
-          jobId: jobData.id || '',  // jobId might be necessary for updates
-          images: jobData.images || [],  // Assuming images are handled separately
+          payVehicleType: fallbackPayVehicleType,
+          assignCustomer: getValidValue(jobData.assignCustomer),
+          createdBy: getValidValue(jobData.createdBy),
+          plantCountry: getValidValue(jobData.plantCountry),
+          plantCompanyName: getValidValue(jobData.plantCompanyName),
+          plantState: getValidValue(jobData.plantState),
+          bodyClass: getValidValue(jobData.bodyClass),
+          schedule: jobData.schedule || false,
+          ip: getValidValue(jobData.ip),
+          jobId: getValidValue(jobData.id),
+          images: jobData.images || [],
         }));
-
+  
       } else {
-        toast.error(data.error || 'Error fetching technician data');
+        toast.error(data.error || 'Error fetching job data');
       }
     } catch (error) {
-      toast.error('An error occurred while fetching technician data');
+      console.error('Error fetching job data:', error);
+      toast.error('An error occurred while fetching job data');
     }
   };
 
@@ -416,9 +448,9 @@ export default function Technicians() {
       newErrors.assignCustomer = 'Customer is required';
     }
 
-    
 
-    
+
+
 
     // Additional validations for edit mode
     // if (isEdit) {
@@ -440,6 +472,7 @@ export default function Technicians() {
     const formDataObj = new FormData();
     const roleType = localStorage.getItem('types');
     const userId = localStorage.getItem('userID');
+    const technicianData = localStorage.getItem('technicianData');
     // Manually append necessary fields
     if (roleType !== null) {
       formDataObj.append('roleType', roleType);
@@ -462,6 +495,17 @@ export default function Technicians() {
     formDataObj.append('schedule', formData.schedule);
     formDataObj.append('ip', formData.ip);
     formDataObj.append('labourCost', formData.labourCost);
+    let estimatedByName = '';
+    if (technicianData) {
+      try {
+        const parsed = JSON.parse(technicianData);
+        estimatedByName = `${parsed.firstName} ${parsed.lastName}`;
+      } catch (err) {
+        console.error('Failed to parse technicianData:', err);
+      }
+    }
+
+    formDataObj.append('estimatedBy', estimatedByName);
 
     // Append all formData fields to formDataObj
     // Flatten the formData object and append each item
@@ -599,7 +643,7 @@ export default function Technicians() {
         return newErrors;
       });
     }
-   
+
 
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
@@ -850,7 +894,7 @@ export default function Technicians() {
             : { label: 'Create New Work Order', href: '/jobs/create-job/create' },
         ]}
       />
-       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
 
@@ -1275,43 +1319,43 @@ export default function Technicians() {
                   }
 
                   placeholder='Enter Description' className="input text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
-               
+
               </div>
               <div className="mb-2 flex items-center gap-3 margin_remove">
-              <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning">
-  <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
-  <OutlinedInput
-    id={`cost-${index}`}
-    value={field.cost}
-    onChange={(e) => {
-      const value = e.target.value;
+                <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning">
+                  <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
+                  <OutlinedInput
+                    id={`cost-${index}`}
+                    value={field.cost}
+                    onChange={(e) => {
+                      const value = e.target.value;
 
-      // Allow empty string for deletion
-      if (value === "") {
-        handleDescriptionCostChange(index, "cost", value);
-        return;
-      }
+                      // Allow empty string for deletion
+                      if (value === "") {
+                        handleDescriptionCostChange(index, "cost", value);
+                        return;
+                      }
 
-      // Allow only numbers and decimal
-      if (!/^\d*\.?\d*$/.test(value)) return;
+                      // Allow only numbers and decimal
+                      if (!/^\d*\.?\d*$/.test(value)) return;
 
-      // Split integer and decimal parts
-      const [intPart, decPart] = value.split(".");
+                      // Split integer and decimal parts
+                      const [intPart, decPart] = value.split(".");
 
-      // Enforce the limit: 5 digits max before decimal and 2 digits max after decimal
-      if (intPart.length <= 5 && (!decPart || decPart.length <= 2)) {
-        handleDescriptionCostChange(index, "cost", value);
-      }
-    }}
-    startAdornment={<InputAdornment position="start">$</InputAdornment>}
-    label="Amount"
-    type="text"
-    inputProps={{
-      inputMode: "decimal", // shows numeric keyboard on mobile
-    }}
-    
-  />
-</FormControl>
+                      // Enforce the limit: 5 digits max before decimal and 2 digits max after decimal
+                      if (intPart.length <= 5 && (!decPart || decPart.length <= 2)) {
+                        handleDescriptionCostChange(index, "cost", value);
+                      }
+                    }}
+                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                    label="Amount"
+                    type="text"
+                    inputProps={{
+                      inputMode: "decimal", // shows numeric keyboard on mobile
+                    }}
+
+                  />
+                </FormControl>
 
 
                 {descriptionCostFields.length > 1 && (
@@ -1354,7 +1398,7 @@ export default function Technicians() {
                     required
                     onChange={(event) => handleSelectChange(event, 'payRate')}
                   >
-                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
+                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicles</MenuItem>
                     <MenuItem value='per job'>Pay Per Job</MenuItem>
                     <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
                     <MenuItem value='Percentage Flat Rate'>Simple Percentage Flat</MenuItem>

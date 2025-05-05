@@ -257,8 +257,8 @@ export default function ViewDetails() {
                       // Show red dot with tooltip if both fallback values are invalid
                       const tooltipId = `tooltip-${jobData.id}`;
                       return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                          {/* <span
                             data-tooltip-id={tooltipId}
                             data-tooltip-content="R/I/R/R price is not added for this job."
                             style={{
@@ -270,7 +270,8 @@ export default function ViewDetails() {
                               cursor: 'pointer',
                             }}
                           ></span>
-                          <Tooltip id={tooltipId} place="top" />
+                          <Tooltip id={tooltipId} place="top" /> */}
+                          Per Job
                         </div>
                       );
                     }

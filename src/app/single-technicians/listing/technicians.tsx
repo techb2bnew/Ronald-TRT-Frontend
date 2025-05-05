@@ -418,10 +418,24 @@ const TechnicianTable: React.FC = () => {
             );
             toast.success('CSV Import Successful!');
             fetchTechnicians(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+          
+            // Check if it's an Axios error with a response
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
+          
     setLoading(false);
 
         },

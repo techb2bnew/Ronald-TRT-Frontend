@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -256,6 +256,10 @@ const JobTable: React.FC = () => {
 
 
     const formattedData = selectedJobs.map((jobData) => {
+      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
+     
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -275,14 +279,15 @@ const JobTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        AccountStatus: jobData.accountStatus,
-        DeletedStatus: jobData.deletedStatus,
+        deletedStatus: jobData.deletedStatus,
+        estimatedBy:jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+        subTotal: subTotal.toFixed(2),
 
       };
     });
@@ -339,9 +344,9 @@ const JobTable: React.FC = () => {
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
         'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
-        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost'
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost', 'subTotal'
       ];
 
       Papa.parse(text, {
@@ -362,25 +367,45 @@ const JobTable: React.FC = () => {
               return obj;
             })
             .filter((row) => {
+              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
 
           try {
+            // Only filter out the first object if it's a header row
+            const payloadData = cleanedData.filter(row => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              return !isHeaderRow;
+            });
+
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: cleanedData },
+              { data: payloadData },
               { headers }
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+          
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
-        setLoading(false);
-
+          
+          setLoading(false);
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -431,9 +456,9 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td> 
+        </td>
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
-         
+
 
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
         <td>{job?.customer?.phoneNumber}</td>
@@ -457,11 +482,14 @@ const JobTable: React.FC = () => {
                 return sum + Number(item.cost || 0);
               }, 0);
 
-              // Use job's simpleFlatRate or fallback to technician's simpleFlatRate
-              const simpleFlatRate = job.simpleFlatRate ? Number(job.simpleFlatRate) : (job.technicians[0]?.simpleFlatRate ? Number(job.technicians[0].simpleFlatRate) : 0);
+              const jobFlatRate = Number(job.simpleFlatRate);
+              const techFlatRate = Number(job.technicians[0]?.simpleFlatRate);
+              const simpleFlatRate = !isNaN(jobFlatRate) && jobFlatRate > 0 ? jobFlatRate : (!isNaN(techFlatRate) && techFlatRate > 0 ? techFlatRate : 0);
 
               // Use job's amountPercentage or fallback to technician's amountPercentage
-              const amountPercentage = job.amountPercentage ? Number(job.amountPercentage) : (job.technicians[0]?.amountPercentage ? Number(job.technicians[0].amountPercentage) : 0);
+              const jobPercentage = Number(job.amountPercentage);
+              const techPercentage = Number(job.technicians[0]?.amountPercentage);
+              const amountPercentage = !isNaN(jobPercentage) && jobPercentage > 0 ? jobPercentage : (!isNaN(techPercentage) && techPercentage > 0 ? techPercentage : 0);
 
               // Neither is valid — show red dot with tooltip
               if (
@@ -470,7 +498,7 @@ const JobTable: React.FC = () => {
               ) {
                 const tooltipId = `tooltip-${job.id}`;
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
                     {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="R/I/R/R price is not added for this job."
@@ -484,7 +512,7 @@ const JobTable: React.FC = () => {
                       }}
                     ></span>
                     <Tooltip id={tooltipId} place="top" /> */}
-                   Per job
+                    Per job
                   </div>
                 );
               }
@@ -700,7 +728,7 @@ const JobTable: React.FC = () => {
       />
 
       <CommonHeader heading="Active Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>

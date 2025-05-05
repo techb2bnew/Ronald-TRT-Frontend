@@ -168,6 +168,9 @@ const VehicleTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
+      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -187,14 +190,15 @@ const VehicleTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        AccountStatus: jobData.accountStatus,
-        DeletedStatus: jobData.deletedStatus,
+        deletedStatus: jobData.deletedStatus,
+        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+        subTotal: subTotal.toFixed(2),
 
       };
     });
@@ -218,9 +222,9 @@ const VehicleTable: React.FC = () => {
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
         'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
-        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost'
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost', 'subTotal'
       ];
 
       Papa.parse(text, {
@@ -241,25 +245,45 @@ const VehicleTable: React.FC = () => {
               return obj;
             })
             .filter((row) => {
+              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
 
           try {
+            // Only filter out the first object if it's a header row
+            const payloadData = cleanedData.filter(row => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              return !isHeaderRow;
+            });
+
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: cleanedData },
+              { data: payloadData },
               { headers }
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+          
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
+          
           setLoading(false);
-
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
@@ -218,34 +218,34 @@ export default function ClientListing() {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-  
+
       const lines = text.split(/\r?\n/);
-  
+
       // ✅ Remove garbage line like "Technicians,Data"
       if (lines[0].toLowerCase().includes("technician")) {
         lines.shift();
       }
-  
+
       text = lines.join('\n');
-  
+
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'zipCode', 'DeletedStatus'
       ];
-  
+
       Papa.parse(text, {
         header: false, // Don't use auto headers
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip CSV's own header row
             .map((row) => {
@@ -270,19 +270,19 @@ export default function ClientListing() {
                   typeof val === 'string' &&
                   val.trim().toLowerCase() === key.trim().toLowerCase()
               );
-  
+
               const hasRealData = Object.values(row).some(
                 (val) =>
                   (typeof val === 'string' && val.trim() !== '') ||
                   (typeof val === 'number' && !isNaN(val)) ||
                   typeof val === 'boolean'
               );
-  
+
               return !isHeaderRow && hasRealData;
             });
-  
+
           console.log("✅ Final Cleaned Data:", cleanedData);
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importCustomer`,
@@ -292,11 +292,25 @@ export default function ClientListing() {
             toast.success('CSV Import Successful!');
             fetchCustomer(currentPage, searchTerm, pageSize);
 
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+
+            // Check if it's an Axios error with a response
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
-    setLoading(false);
+
+          setLoading(false);
 
         },
         error: (err: any) => {
@@ -305,7 +319,7 @@ export default function ClientListing() {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -366,7 +380,7 @@ export default function ClientListing() {
         ]}
       />
       <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>

@@ -252,6 +252,9 @@ const JobTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
+      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -271,14 +274,15 @@ const JobTable: React.FC = () => {
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        AccountStatus: jobData.accountStatus,
-        DeletedStatus: jobData.deletedStatus,
+        deletedStatus: jobData.deletedStatus,
+        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+        subTotal: subTotal.toFixed(2),
 
       };
     });
@@ -290,29 +294,29 @@ const JobTable: React.FC = () => {
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart(); // Remove leading whitespace/newlines
-  
+
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
         'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'AccountStatus',
-        'DeletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost'
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost', 'subTotal'
       ];
-  
+
       Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           const cleanedData = rows
             .slice(1) // Skip raw header row
             .map((row) => {
@@ -325,25 +329,45 @@ const JobTable: React.FC = () => {
               return obj;
             })
             .filter((row) => {
+              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
-  
+
           try {
+            // Only filter out the first object if it's a header row
+            const payloadData = cleanedData.filter(row => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              return !isHeaderRow;
+            });
+
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: cleanedData },
+              { data: payloadData },
               { headers }
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-            toast.error('Import failed. Check console for details.');
+          
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as any).response?.data?.error === 'string'
+            ) {
+              toast.error((error as any).response.data.error);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error(String(error));
+            }
           }
-        setLoading(false);
-
+          
+          setLoading(false);
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -351,7 +375,7 @@ const JobTable: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
 
@@ -407,123 +431,137 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
 
-            <td>
-          {(() => {
-            if (!job) return null;
-        
-            const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-              return sum + Number(item.cost || 0);
-            }, 0);
-        
-            // Use job's simpleFlatRate or fallback to technician's simpleFlatRate
-            const simpleFlatRate = job.simpleFlatRate ? Number(job.simpleFlatRate) : (job.technicians[0]?.simpleFlatRate ? Number(job.technicians[0].simpleFlatRate) : 0);
-        
-            // Use job's amountPercentage or fallback to technician's amountPercentage
-            const amountPercentage = job.amountPercentage ? Number(job.amountPercentage) : (job.technicians[0]?.amountPercentage ? Number(job.technicians[0].amountPercentage) : 0);
-        
-            // Neither is valid — show red dot with tooltip
-            if (
-              (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-              (isNaN(amountPercentage) || amountPercentage === 0)
-            ) {
-              const tooltipId = `tooltip-${job.id}`;
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span
-                    data-tooltip-id={tooltipId}
-                    data-tooltip-content="R/I/R/R price is not added for this job."
-                    style={{
-                      height: '12px',
-                      width: '12px',
-                      backgroundColor: 'red',
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                      cursor: 'pointer',
-                    }}
-                  ></span>
-                  <Tooltip id={tooltipId} place="top" />
-                </div>
-              );
-            }
-        
-            // Show simpleFlatRate if valid
-            if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${simpleFlatRate.toFixed(2)}
-                </div>
-              );
-            }
-        
-            // Show percentage-based calculation
-            if (!isNaN(amountPercentage) && amountPercentage > 0) {
-              const percentageAmount = (totalCost * amountPercentage) / 100;
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                </div>
-              );
-            }
-        
-            return null;
-          })()}
-        </td>
+        <td>
+            {(() => {
+              if (!job) return null;
+
+              const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+                return sum + Number(item.cost || 0);
+              }, 0);
+
+              const jobFlatRate = Number(job.simpleFlatRate);
+              const techFlatRate = Number(job.technicians[0]?.simpleFlatRate);
+              const simpleFlatRate = !isNaN(jobFlatRate) && jobFlatRate > 0 ? jobFlatRate : (!isNaN(techFlatRate) && techFlatRate > 0 ? techFlatRate : 0);
+
+              // Use job's amountPercentage or fallback to technician's amountPercentage
+              const jobPercentage = Number(job.amountPercentage);
+              const techPercentage = Number(job.technicians[0]?.amountPercentage);
+              const amountPercentage = !isNaN(jobPercentage) && jobPercentage > 0 ? jobPercentage : (!isNaN(techPercentage) && techPercentage > 0 ? techPercentage : 0);
+
+              // Neither is valid — show red dot with tooltip
+              if (
+                (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+                (isNaN(amountPercentage) || amountPercentage === 0)
+              ) {
+                const tooltipId = `tooltip-${job.id}`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                    {/* <span
+                      data-tooltip-id={tooltipId}
+                      data-tooltip-content="R/I/R/R price is not added for this job."
+                      style={{
+                        height: '12px',
+                        width: '12px',
+                        backgroundColor: 'red',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        cursor: 'pointer',
+                      }}
+                    ></span>
+                    <Tooltip id={tooltipId} place="top" /> */}
+                    Per job
+                  </div>
+                );
+              }
+
+              // Show simpleFlatRate if valid
+              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    ${simpleFlatRate.toFixed(2)}
+                  </div>
+                );
+              }
+
+              // Show percentage-based calculation
+              if (!isNaN(amountPercentage) && amountPercentage > 0) {
+                const percentageAmount = (totalCost * amountPercentage) / 100;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+                  </div>
+                );
+              }
+
+              return null;
+            })()}
+          </td>
 
         <td>
-          {(() => {
-            if (!job) return null;
-        
-            // Step 1: Calculate subtotal from jobDescription
-            const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-              return sum + Number(item.cost || 0);
-            }, 0);
-        
-            // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
-            const technician = job.technicians?.[0] || {};
-            const simpleFlatRate = !isNaN(Number(job.simpleFlatRate)) && Number(job.simpleFlatRate) > 0
-              ? Number(job.simpleFlatRate)
-              : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
-        
-            const amountPercentage = !isNaN(Number(job.amountPercentage)) && Number(job.amountPercentage) > 0
-              ? Number(job.amountPercentage)
-              : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
-        
-            // Step 3: Calculate percentage amount
-            const percentageAmount = (amountPercentage * subtotalcost) / 100;
-        
-            // Step 4: Total = subtotal + flat rate + percentage amount
-            const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
-        
-            // Step 5: Show red dot tooltip if neither flat rate nor percentage are valid
-            if (simpleFlatRate === 0 && amountPercentage === 0) {
-              const tooltipId = `tooltip-${job.id}`;
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span
-                    data-tooltip-id={tooltipId}
-                    data-tooltip-content="R/I/R/R price is not added for this job."
-                    style={{
-                      height: '12px',
-                      width: '12px',
-                      backgroundColor: 'red',
-                      borderRadius: '50%',
-                      display: 'inline-block',
-                      cursor: 'pointer',
-                    }}
-                  ></span>
-                  <Tooltip id={tooltipId} place="top" />
-                </div>
-              );
-            }
-        
-            // Step 6: Return total cost
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                ${totalCost.toFixed(2)}
-              </div>
-            );
-          })()}
-        </td>
+                   {(() => {
+                     if (!job) return null;
+       
+                     // Step 1: Calculate subtotal from jobDescription
+                     const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
+                       return sum + Number(item.cost || 0);
+                     }, 0);
+       
+                     // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
+                     const technician = job.technicians?.[0] || {};
+                     const simpleFlatRate = !isNaN(Number(job.simpleFlatRate)) && Number(job.simpleFlatRate) > 0
+                       ? Number(job.simpleFlatRate)
+                       : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+       
+                     const amountPercentage = !isNaN(Number(job.amountPercentage)) && Number(job.amountPercentage) > 0
+                       ? Number(job.amountPercentage)
+                       : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+       
+                     // Step 3: Calculate percentage amount
+                     const percentageAmount = (amountPercentage * subtotalcost) / 100;
+       
+                     // Step 4: Check if flat rate or percentage amount is missing and display accordingly
+                     if (simpleFlatRate === 0 && amountPercentage === 0) {
+                       // If no valid flat rate or percentage, just show the subtotal
+                       return (
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                           ${subtotalcost.toFixed(2)}
+                         </div>
+                       );
+                     }
+       
+                     // Step 5: Calculate total = subtotal + flat rate + percentage amount
+                     const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
+       
+                     // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
+                     if (simpleFlatRate === 0 && amountPercentage === 0) {
+                       const tooltipId = `tooltip-${job.id}`;
+                       return (
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                           <span
+                             data-tooltip-id={tooltipId}
+                             data-tooltip-content="R/I/R/R price is not added for this job."
+                             style={{
+                               height: '12px',
+                               width: '12px',
+                               backgroundColor: 'red',
+                               borderRadius: '50%',
+                               display: 'inline-block',
+                               cursor: 'pointer',
+                             }}
+                           ></span>
+                           <Tooltip id={tooltipId} place="top" />
+                         </div>
+                       );
+                     }
+       
+                     // Step 7: Return total cost
+                     return (
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                         ${totalCost.toFixed(2)}
+                       </div>
+                     );
+                   })()}
+                 </td>
         <td style={{ cursor: 'pointer' }}>
           <span
             className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -609,13 +647,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

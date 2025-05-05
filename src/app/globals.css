@@ -455,12 +455,12 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
 }
 
 .rightsidebar {
-  width: 15%;
+  width: 250px;
   position: fixed;
   left: 14%;
-  top: 15%;
-  padding: 20px;
-  background: #ffffff;
+  top: 80px;
+  padding: 12px;
+  background: #fff;
   height: 100%;
 }
 /* .MuiSelect-select{
@@ -553,6 +553,12 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 .css-1q55ijt-MuiInputBase-input-MuiOutlinedInput-input{
   height: 22px !important;
 }
+@media (min-width: 1200px) and (max-width: 1500px) {
+  .laptop-narrow {
+    max-width: 840px;
+  }
+}
+
 @media screen and (max-width: 1420px) {
 .laptop_size li a , .laptop_size li span{
   font-size: 11px;
