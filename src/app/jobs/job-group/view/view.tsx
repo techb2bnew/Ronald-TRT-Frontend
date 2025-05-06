@@ -329,7 +329,7 @@ export default function ViewDetails() {
                     <p className="text-[14px]">Technician</p>
                   </div>
                   </div>
-                <div className="flex pl-2 pr-2 pt-4  bg-white">
+                <div className="flex pl-2 pr-2 pb-3 pt-4 bg-white">
 
                   <div className="pl-2 pr-2">
                     {/* Technicians Section */}
@@ -509,7 +509,7 @@ export default function ViewDetails() {
                     </div>
                   </div>
                 </div>
-                <p className="text-[14px] flex items-start gap-1 mb-3 pb-3 bg-white pl-4 pr-4 border-t border-gray-500 pt-3 ">
+                <p className="text-[14px] flex items-start gap-1 mb-3 pb-3 bg-white pl-4 pr-4 border-t border-gray-500 pt-3  ">
                   <strong className="mr-3 pl-1 inline-block">Job Description:</strong>
                   {job?.jobDescription && Array.isArray(job.jobDescription) ? (
                     <ul className="list-none">
