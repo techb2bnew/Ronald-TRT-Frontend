@@ -339,7 +339,7 @@ export default function ViewDetails() {
 
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] inline-block">Job Description:</strong>
+                <strong className="w-[210px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
                   <ul className="list-none">
                     {jobData.jobDescription.map((item: string | object, index: number) => {
