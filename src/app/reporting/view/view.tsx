@@ -88,8 +88,15 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Id:</strong> {jobData?.id}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong>
+                <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
+                  {jobData?.customer?.email}
+                </a></p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong>
+                <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
+                  {jobData?.customer?.phoneNumber}
+                </a>
+              </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>VIN:</strong> {jobData?.vin}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</p>
@@ -106,8 +113,14 @@ export default function ViewDetails() {
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong> {jobData.technicians[0]?.email}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong> {jobData.technicians[0]?.phoneNumber} </p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong>
+                <a className="hover:underline" href={`mailto:${jobData.technicians[0]?.email}`}>
+                  {jobData.technicians[0]?.email}
+                </a>
+              </p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong>
+                <a className="hover:underline" href={`tel:${jobData.technicians[0]?.phoneNumber}`}>
+                  {jobData.technicians[0]?.phoneNumber} </a></p>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[200px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (

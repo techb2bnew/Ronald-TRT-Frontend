@@ -83,41 +83,63 @@ export default function Technicians() {
   };
 
   const fetchCustomerData = async (customerId: string) => {
-
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
       const token = localStorage.getItem('token');
-
-      // Create headers object
+  
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-
-      // If token exists, add it to Authorization header
+  
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
-      // Make GET request with technicianId as query parameter
+  
       const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
         method: 'POST',
         headers,
       });
       const data = await response.json();
-
-      if (response.ok) {
-        setFormData(prev => ({
-          ...prev,
-          ...data.customers.customer,
-          id: data.customers.customer.id,
-        }));
+  
+      if (data.customers && data.customers.customer) {
+        const customerData = data.customers.customer;
+  
+        const customerCountry = countries.find(c =>
+          c.isoCode.toLowerCase() === customerData.country.toLowerCase() ||
+          c.name.toLowerCase() === customerData.country.toLowerCase()
+        );
+  
+        const countryStates = customerCountry
+          ? State.getStatesOfCountry(customerCountry.isoCode)
+          : [];
+  
+        const customerState = countryStates.find(s =>
+          customerData.state &&
+          (s.isoCode.toLowerCase() === customerData.state.toLowerCase() ||
+           s.name.toLowerCase() === customerData.state.toLowerCase())
+        );
+  
+        if (response.ok) {
+          setFormData(prev => ({
+            ...prev,
+            ...customerData,
+            id: customerData.id,
+            country: customerCountry?.isoCode || '',
+            state: customerState?.isoCode || '',
+          }));
+        } else {
+          toast.error(data.error || 'Error fetching technician data');
+        }
       } else {
-        toast.error(data.error || 'Error fetching technician data');
+        toast.error('Customer data not found');
       }
     } catch (error) {
       toast.error('An error occurred while fetching technician data');
     }
   };
+  
+  
+  
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -293,7 +315,7 @@ export default function Technicians() {
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   return (
-    <div className='main-container mb-5'>
+    <div className='w-[60%] m-auto mb-5'>
       <Breadcrumb
         items={[
           { label: 'Customers', href: '/client/listing' },
@@ -306,7 +328,7 @@ export default function Technicians() {
        {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 '>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">

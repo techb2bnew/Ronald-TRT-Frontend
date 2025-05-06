@@ -374,11 +374,7 @@ export default function ClientListing() {
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
-      <Breadcrumb
-        items={[
-          { label: 'All Customer', href: '/all-customer/listing' }
-        ]}
-      />
+       
       <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">

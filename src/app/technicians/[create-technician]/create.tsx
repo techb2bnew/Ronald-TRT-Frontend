@@ -617,7 +617,7 @@ export default function Technicians() {
   }, [formData.country]);
 
   return (
-    <div className='container mb-5 m-auto'>
+    <div className='w-[60%] m-auto mb-5 m-auto'>
       <Breadcrumb
         items={[
           {
@@ -635,7 +635,7 @@ export default function Technicians() {
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 '>
         <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Share Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
 
         <form onSubmit={handleSubmit}>
@@ -1241,7 +1241,7 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload Profile Image</p>
                   <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
                 </label>
-                <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
+                <input type="file" accept="image/jpeg, image/png, image/webp" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
               </div>
 
               {formData.image && (

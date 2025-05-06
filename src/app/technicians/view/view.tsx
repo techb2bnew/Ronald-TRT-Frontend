@@ -65,7 +65,7 @@ export default function ViewDetails() {
         ]}
       />
 
-      <div className='mx-auto p-4 '>
+      <div className='mx-auto'>
         <div className='rounded-lg shadow bg-white mb-5'>
           <div className='flex gap-4 p-4'>
             {technician?.image ? (

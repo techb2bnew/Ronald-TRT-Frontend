@@ -105,7 +105,9 @@ export default function Technicians() {
   const [ip, setIpAddress] = useState('');
   const [createdBy, setRole] = useState('admin');
   const [technicians, setTechnicians] = useState<any[]>([]);
-  const [customer, setCustomer] = useState<any[]>([]);
+  const [customer, setCustomer] = useState<any[]>([]); 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const router = useRouter();
   const [isEdit, setIsEdit] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -279,39 +281,60 @@ export default function Technicians() {
   });
 
   // Fetch Customers api
-  const fetchData = async (endpoint: string, setState: (data: any) => void, params: Record<string, string> = {}) => {
+  const fetchData = async (
+    endpoint: string,
+    setState: React.Dispatch<React.SetStateAction<any[]>>,
+    params: Record<string, string> = {},
+    append: boolean = false
+  ) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userID');
       const roleType = localStorage.getItem('types');
-
-      if (endpoint === 'fetchCustomer' && !userId && !roleType) {
+  
+      if (endpoint === 'fetchCustomer' && (!userId || !roleType)) {
         console.error("User ID not found in localStorage!");
         return;
       }
-
+  
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      // Construct query params
+  
       const queryParams = new URLSearchParams(params).toString();
       const url = `${apiUrl}/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
-
+  
       const response = await fetch(url, { method: 'GET', headers });
-
       if (response.status == 400) {
         localStorage.removeItem('token');
         router.push('/');
       }
-
+  
       const data = await response.json();
-      setState(endpoint === 'fetchTechnicianJob' ? data.technician.technicians : data.customers.customers);
+      const customers = data.customers?.customers || [];
+      const technicians = data.technician?.technicians || [];
+  
+      setState(prev => {
+        if (endpoint === 'fetchCustomer' && append) {
+          return [...prev, ...customers];
+        } else {
+          return endpoint === 'fetchTechnicianJob' ? technicians : customers;
+        }
+      });
+  
     } catch (error) {
       console.error(`Error fetching ${endpoint}:`, error);
     }
   };
+  
+  const handleScroll = (e: any) => {
+    const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
+    if (bottom && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
 
+  
   useEffect(() => {
     const roleType = localStorage.getItem('types');
     const types = localStorage.getItem('types');
@@ -320,12 +343,17 @@ export default function Technicians() {
       fetchData('fetchTechnicianJob', setTechnicians, { types }); // Pass roleType to fetchTechnician
     } else {
       console.error("Role type is missing for fetching technicians!");
-    }
+    } 
     const userId = localStorage.getItem('userID');
     if (userId) {
-      fetchData('fetchCustomer', setCustomer, { userId }); // ✅ Pass userId as query param
+      fetchData(
+        'fetchCustomer',
+        setCustomer,
+        { userId, page: page.toString(), limit: '10' },
+        page > 1 // ✅ append only if page > 1
+      );
     }
-  }, []);
+  }, [page]);
 
 
 
@@ -886,7 +914,7 @@ export default function Technicians() {
 
 
   return (
-    <div className='main-container mb-5'>
+    <div className='w-[60%] m-auto mb-5'>
       <Breadcrumb
         items={[
           isEdit
@@ -896,7 +924,7 @@ export default function Technicians() {
       />
       <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 w-[60%] m-auto'>
+      <div className='bg-white p-4 mt-5 '>
 
         <form className="" onSubmit={handleSubmit}>
           <div className="grid grid-cols-3 gap-4 mb-4" style={{ display: 'none' }}>
@@ -1234,13 +1262,15 @@ export default function Technicians() {
                   name="assignCustomer"
 
                   onChange={(event) => handleSelectChange(event, 'assignCustomer')}
+                   
                   MenuProps={{
                     disablePortal: true,
                     PaperProps: {
+                      onScroll: handleScroll, 
                       style: {
                         maxHeight: 200,
                         overflowY: 'auto',
-                      },
+                      }, 
                     },
                   }}
                 >
@@ -1311,7 +1341,7 @@ export default function Technicians() {
 
 
           {descriptionCostFields.map((field, index) => (
-            <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4 mb-4">
+            <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
               <div className='mb-2'>
                 <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
                   onChange={(e) =>

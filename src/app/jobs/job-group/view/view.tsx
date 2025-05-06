@@ -9,8 +9,9 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Link from "next/link";
 import Image from "next/image";
-import Edit from "../../../../../public/edit.svg"; 
+import Edit from "../../../../../public/edit.svg";
 import Empty from '@/app/component/empty';
+import User from '../../../../../public/user.png'
 
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any[]>([]); // Array to store multiple jobs
@@ -22,18 +23,18 @@ export default function ViewDetails() {
 
   const fetchCustomerData = async (vin: string, filterType: string = '') => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
-  
+
     try {
       const token = localStorage.getItem("token");
       const roleType = localStorage.getItem("types");
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-  
+
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-  
+
       const response = await fetch(
         `${apiUrl}/fetchGroupJobByVin?roleType=${roleType}&vin=${vin}&filterType=${filterType}`,
         {
@@ -41,9 +42,9 @@ export default function ViewDetails() {
           headers,
         }
       );
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         setJobsData(data.GroupJob);
       } else {
@@ -95,7 +96,7 @@ export default function ViewDetails() {
 
     if (vin) {
       setIsEdit(true);
-      setVin(vin); 
+      setVin(vin);
       fetchCustomerData(vin);
     } else {
       setIsEdit(false);
@@ -170,11 +171,11 @@ export default function ViewDetails() {
       </div>
     );
   }
- 
+
   if (jobData.length === 0) {
     return (
       <>
-        <div className="w-[1000px] ml-auto p-4 laptop-narrow">
+        <div className="w-[80%] ml-auto p-4 laptop-narrow">
           <div className='flex items-center gap-4 justify-between mb-5 bg-white p-3 sticky top-[4.8rem]'>
             {/* Keep your search and filter buttons here */}
             <div className="flex w-[300px] relative search__input">
@@ -183,8 +184,15 @@ export default function ViewDetails() {
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
               <TextField fullWidth size="small" type='search' id="filled" color="warning" label="Search" variant="filled" onChange={(e) => {
-                const query = e.target.value.trim();
-                fetchSearchedCustomerData(query);
+                const value = e.target.value;
+                const query = value.trim();
+
+                if (value === "") {
+                  const vin = new URLSearchParams(window.location.search).get("vin") || "";
+                  fetchCustomerData(vin);
+                } else {
+                  fetchSearchedCustomerData(query);
+                }
               }} />
             </div>
             <div className='flex items-center gap-4'>
@@ -206,6 +214,11 @@ export default function ViewDetails() {
               }}>
                 Pay Rates Missing
               </button>
+              <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]" onClick={() => {
+                fetchCustomerData(vin);
+              }}>
+                All Data
+              </button>
             </div>
           </div>
           <Empty />
@@ -217,55 +230,60 @@ export default function ViewDetails() {
     <>
 
       <div>
-        <div className="w-[1000px] ml-auto p-4 laptop-narrow">
-       
-                  <div className='flex items-center gap-4 justify-between mb-5 bg-white p-3 sticky top-[4.8rem]'>
+        <div className="w-[80%] ml-auto p-4 laptop-narrow">
 
-                    <div className="flex w-[300] relative search__input">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                      </svg>
+          <div className='flex items-center gap-4 justify-between mb-5 bg-white p-3 sticky top-[4.8rem]'>
 
-                      <TextField fullWidth size="small" type='search' id="filled" color="warning" label="Search" variant="filled" onChange={(e) => {
-                        const query = e.target.value.trim();
-                        fetchSearchedCustomerData(query);
-                      }} />
+            <div className="flex w-[300px] relative search__input">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
 
-                    </div>
-                    <div className='flex items-center gap-4'>
-                      <button
-                        className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-green-600"
-                        onClick={() => {
-                          setFilterType('completed');
-                          fetchCustomerData(vin, 'completed');
-                        }}
-                        
-                      
-                      >
-                        Completed Jobs
-                      </button>
-                      <button
-                        className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-yellow-500"
-                        onClick={() => {
-                          setFilterType('inProgress');
-                          fetchCustomerData(vin, 'inProgress');
-                        }}
-                      >
-                        In Progress Jobs
-                      </button>
-                      <button
-                        className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]"
-                        onClick={() => {
-                          setFilterType('missingPayRates');
-                          fetchCustomerData(vin, 'missingPayRates');
-                        }}
-                      >
-                        Pay Rates Missing
-                      </button>
-                    </div>
-                  </div>
-           
+              <TextField fullWidth size="small" type='search' id="filled" color="warning" label="Search" variant="filled" onChange={(e) => {
+                const query = e.target.value.trim();
+                fetchSearchedCustomerData(query);
+              }} />
+
+            </div>
+            <div className='flex items-center gap-4'>
+              <button
+                className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-green-600"
+                onClick={() => {
+                  setFilterType('completed');
+                  fetchCustomerData(vin, 'completed');
+                }}
+
+
+              >
+                Completed Jobs
+              </button>
+              <button
+                className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-yellow-500"
+                onClick={() => {
+                  setFilterType('inProgress');
+                  fetchCustomerData(vin, 'inProgress');
+                }}
+              >
+                In Progress Jobs
+              </button>
+              <button
+                className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]"
+                onClick={() => {
+                  setFilterType('missingPayRates');
+                  fetchCustomerData(vin, 'missingPayRates');
+                }}
+              >
+                Pay Rates Missing
+              </button>
+              <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]" onClick={() => {
+                fetchCustomerData(vin);
+              }}>
+                All Data
+              </button>
+            </div>
+          </div>
+
           <div className="rounded-lg    ">
             {jobData.map((job, index) => (
               <div key={job?.id} className="bg-blue rounded-lg shadow-md mb-6">
@@ -273,23 +291,50 @@ export default function ViewDetails() {
                   <h2 className="text-xl font-bold ">
                     Work Order Id - {job?.id}
                   </h2>
-                  <Link className="p-2 bg-white rounded" href={`/jobs/create-job/create?jobId=${job.id}&groupjob`} data-tooltip-id="edit"
+                  <Link className="p-2" href={`/jobs/create-job/create?jobId=${job.id}&groupjob`} data-tooltip-id="edit"
                     data-tooltip-content="Edit">
-                    <Image alt="edit" src={Edit} className="w-[14px]" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18.5 2.50023C18.8978 2.1024 19.4374 1.87891 20 1.87891C20.5626 1.87891 21.1022 2.1024 21.5 2.50023C21.8978 2.89805 22.1213 3.43762 22.1213 4.00023C22.1213 4.56284 21.8978 5.1024 21.5 5.50023L12 15.0002L8 16.0002L9 12.0002L18.5 2.50023Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+
                   </Link>
                 </div>
+                <div className="flex items-center gap-3 pl-2 pr-2 pt-4  bg-white">
+                  {job.technicians && job.technicians[0].image !== '' ? (
+                    job.technicians.map((t: any, index: number) => (
+                      <img
+                        key={index}
+                        src={t.image}
+                        alt=""
+                        onClick={() => setPreviewImage(t.image)}
+                        className="w-[60px] h-[60px] rounded object-cover"
+                      />
+                    ))
+                  ) : (
+                    <Image
+                      key={index}
+                      src={User}
+                      alt=""
+                      className="w-[60px] h-[60px] rounded object-contain"
+                    />
+                  )}
+                  <div className="text-sm capitalize">
+
+                    {job.technicians?.map((t: any, index: number) => (
+                      <h1 className="text-[16px] font-bold mb-0">
+                        {t.firstName || 'N/A'} {t.lastName || 'N/A'}
+                      </h1>
+                    ))}
+                    <p className="text-[14px]">Technician</p>
+                  </div>
+                  </div>
                 <div className="flex pl-2 pr-2 pt-4  bg-white">
 
                   <div className="pl-2 pr-2">
                     {/* Technicians Section */}
-                    <div className="mb-2 text-sm flex capitalize">
 
-                      {job.technicians?.map((t: any, index: number) => (
-                        <a className="hover:underline">
-                          {t.firstName || 'N/A'} {t.lastName || 'N/A'}
-                        </a>
-                      ))}
-                    </div>
+
 
                     <div className="mb-2 text-sm items-center flex">
                       <strong className="mr-3 inline-block">Technician Email: </strong>
@@ -301,7 +346,7 @@ export default function ViewDetails() {
                     </div>
 
                     <div className="mb-2 text-sm items-center flex">
-                      <strong className="mr-3 inline-block">Technician Number: </strong>
+                      <strong className="mr-3 inline-block">Technician Ph. Number: </strong>
                       {job.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
                     </div>
 
@@ -507,40 +552,68 @@ export default function ViewDetails() {
           )}
         </div>
         <div className="rightsidebar shadow-lg">
+          <h2 className="text-[18px] font-[600] mb-5 mt-4 text-[#383D71]">Customer Details</h2>
           {jobData.map((job, index) => (
             <div key={job.id} className="mb-4">
-              <h2 className="font-[600]">{job.customer.firstName}{job.customer.lastName}</h2>
-              <p className="text-[14px] flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75L6.75 3m0 0h10.5m-10.5 0v3.75m10.5 0L21.75 6.75m0 0v10.5m0 0L17.25 21m0 0H6.75m10.5 0v-3.75M6.75 21L2.25 17.25m0 0V6.75" /></svg>
-                <a className="hover:underline" href={`tel:${job.customer?.phoneNumber}`}>{job.customer?.phoneNumber || '-'}</a>
+              <div className="flex gap-2 mb-4">
+                {job?.customer?.image ? (
+                  <img
+                    key={index}
+                    src={job.customer.image}
+                    alt=""
+                    onClick={() => setPreviewImage(job.customer.image)}
+                    className="w-[40px] h-[40px] rounded-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    key={index}
+                    src={User}
+                    alt=""
+                    className="w-[40px] h-[40px] rounded-full object-contain"
+                  />
+                )}
+                <div>
+                  <h2 className="font-[600] text-[#383D71]">{job.customer.firstName}{job.customer.lastName}</h2>
+                  <p className="text-[12px] text-[#383D71]">Customer</p>
+                </div>
+              </div>
+              <p className="text-[14px] flex items-center gap-1 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.86 19.86 0 01-3.07-8.63A2 2 0 014.08 2h3a2 2 0 012 1.72 12.37 12.37 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.37 12.37 0 002.81.7A2 2 0 0122 16.92z" />
+                </svg>
+
+                <a className="hover:underline text-[#383D71]" href={`tel:${job.customer?.phoneNumber}`}>{job.customer?.phoneNumber || '-'}</a>
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2">
                 <svg className="w-4 h-4 w-min-[20px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 0v8a2 2 0 002 2h14a2 2 0 002-2V8m-18 0l9-6 9 6" /></svg>
-                <a className="hover:underline" href={`mailto:${job.customer?.email}`}>{job.customer?.email || '-'}</a>
+                <a className="hover:underline text-[#383D71]" href={`mailto:${job.customer?.email}`}>{job.customer?.email || '-'}</a>
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
-                <svg className="w-4 h-4 w-min-[20px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 12.414a2 2 0 00-2.828 0L6.343 16.657a8 8 0 1111.314 0z" /></svg>
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 11.5a2 2 0 100-4 2 2 0 000 4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-5.5 7-11.5A7 7 0 005 9.5C5 15.5 12 21 12 21z" />
+                </svg>
                 {job.customer?.address || '-'}
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
                 <svg className="w-4 h-4 w-min-[20px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                 {job.vin || '-'}
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
                 <svg className="w-4 h-4 w-min-[20px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                 {job.make || '-'}
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
                 <svg className="w-4 h-4 w-min-[20px]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.75L15.25 8H18a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h2.75L12 4.75z" /></svg>
                 {job.model || '-'}
               </p>
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
                 <svg className="w-4 h-4 w-min-[20px] text-gray-600" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -548,7 +621,7 @@ export default function ViewDetails() {
               </p>
 
 
-              <p className="text-[14px] flex items-center gap-1">
+              <p className="text-[14px] flex items-center gap-1 mb-2 text-[#383D71]">
                 <svg className="w-4 h-4 w-min-[20px]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16z" /></svg>
                 {job.color || '-'}
               </p>
@@ -558,6 +631,7 @@ export default function ViewDetails() {
 
         </div>
       </div>
+
     </>
 
   );

@@ -65,7 +65,7 @@ export default function ViewDetails() {
                     ]}
                   />
     
-    <div className='max-w-6xl mx-auto p-4 rounded-lg shadow bg-white'>
+    <div className='mx-auto p-4 rounded-lg shadow bg-white'>
       <div className="bg-blue rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Single Technician Details</h2>
    
@@ -74,10 +74,15 @@ export default function ViewDetails() {
           <div className='shadow-lg p-5 bg-white rounded'>
             <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
             <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
-            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> {technician?.email}</p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong>
+            <a className="hover:underline" href={`mailto:${technician?.email}`}> 
+            
+             {technician?.email}</a></p>
+            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong>
+            <a className="hover:underline" href={`tel:${technician?.phoneNumber}`}> 
+             {technician?.phoneNumber}</a></p>
             <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</p>
             <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</p>
-            <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong> {technician?.phoneNumber}</p>
             <p className=' border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Status:</strong><span
           className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >

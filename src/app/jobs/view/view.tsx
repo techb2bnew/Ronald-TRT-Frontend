@@ -172,8 +172,16 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong> {jobData?.customer?.email}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong> {jobData?.customer?.phoneNumber}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
+              <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
+               {jobData?.customer?.email}
+               </a>
+               </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
+              <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
+               {jobData?.customer?.phoneNumber}
+               </a>
+                </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>VIN:</strong> {jobData?.vin}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model:</strong> {jobData?.model}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
@@ -198,12 +206,16 @@ export default function ViewDetails() {
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                <a className="hover:underline" href={`mailto:${jobData.technicians?.map((t: any) => t.email)}`}>
                 {jobData.technicians?.map((t: any) => t.email).join(', ')}
+                </a>
               </div>
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                <a className="hover:underline" href={`tel:${jobData.technicians?.map((t: any) => t.phoneNumber)}`}>
                 {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
+                </a>
               </div>
 
 
