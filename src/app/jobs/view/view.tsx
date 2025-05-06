@@ -173,19 +173,35 @@ export default function ViewDetails() {
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
-              <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
-               {jobData?.customer?.email}
-               </a>
-               </div>
+                <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
+                  {jobData?.customer?.email}
+                </a>
+              </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
-              <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
-               {jobData?.customer?.phoneNumber}
-               </a>
-                </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>VIN:</strong> {jobData?.vin}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model:</strong> {jobData?.model}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</div>
+                <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
+                  {jobData?.customer?.phoneNumber}
+                </a>
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>VIN:</strong>
+                {jobData?.vin?.trim() ? jobData.vin : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Model:</strong>
+                {jobData?.model?.trim() ? jobData.model : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
+                {jobData?.vehicleDescriptor?.trim() ? jobData.vehicleDescriptor : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Manufacture Name:</strong>
+                {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
+              </div>
+
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
@@ -207,19 +223,19 @@ export default function ViewDetails() {
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData.technicians?.map((t: any) => t.email)}`}>
-                {jobData.technicians?.map((t: any) => t.email).join(', ')}
+                  {jobData.technicians?.map((t: any) => t.email).join(', ')}
                 </a>
               </div>
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
                 <a className="hover:underline" href={`tel:${jobData.technicians?.map((t: any) => t.phoneNumber)}`}>
-                {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
+                  {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
                 </a>
               </div>
 
 
-              {  userType !== 'single-technician' && (
+              {userType !== 'single-technician' && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
                   <strong className="w-[210px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
 
@@ -312,15 +328,34 @@ export default function ViewDetails() {
                 </div>
               )}
 
-                {userType === 'single-technician' && (
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData?.labourCost}</div>
+              {userType === 'single-technician' && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData?.labourCost}</div>
 
-                )}
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Make:</strong> {jobData?.make}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Model Year:</strong> {jobData?.modelYear}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Color:</strong> {jobData?.color}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
+              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Make:</strong>
+                {jobData?.make?.trim() ? jobData.make : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Model Year:</strong>
+                {jobData?.modelYear?.toString().trim() ? jobData.modelYear : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
+                {jobData?.vehicleType?.trim() ? jobData.vehicleType : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Color:</strong>
+                {jobData?.color?.trim() ? jobData.color : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                <strong className="w-[200px] inline-block">Notes:</strong>
+                {jobData?.notes?.trim() ? jobData.notes : <span className="text-gray-500">No notes available</span>}
+              </p>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
                 {jobData.images.map((form: any, index: any) => (
                   <img

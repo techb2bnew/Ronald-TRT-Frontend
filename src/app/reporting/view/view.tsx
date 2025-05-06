@@ -97,10 +97,26 @@ export default function ViewDetails() {
                   {jobData?.customer?.phoneNumber}
                 </a>
               </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>VIN:</strong> {jobData?.vin}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model:</strong> {jobData?.model}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Descriptor:</strong> {jobData?.vehicleDescriptor}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Manufacture Name:</strong> {jobData?.manufacturerName}</p>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>VIN:</strong>
+                {jobData?.vin?.trim() ? jobData.vin : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Model:</strong>
+                {jobData?.model?.trim() ? jobData.model : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
+                {jobData?.vehicleDescriptor?.trim() ? jobData.vehicleDescriptor : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Manufacture Name:</strong>
+                {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
+              </div>
+
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -124,22 +140,29 @@ export default function ViewDetails() {
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[200px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-                  <ul className="list-none">
-                    {jobData.jobDescription.map((item: any, index: any) => {
-                      const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
-                      return (
-                        <li key={index}>
-                          <span className="block">{jobItem.jobDescription}</span>
-                          {/* Optional: Show individual costs */}
-                          {/* <span className="block">${jobItem.cost}</span> */}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  jobData.jobDescription.filter((item: any) => {
+                    const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
+                    return jobItem.jobDescription?.trim(); // only include non-empty descriptions
+                  }).length > 0 ? (
+                    <ul className="list-none">
+                      {jobData.jobDescription.map((item: any, index: any) => {
+                        const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
+                        if (!jobItem.jobDescription?.trim()) return null; // skip empty ones
+                        return (
+                          <li key={index}>
+                            <span className="block">{jobItem.jobDescription}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <span>No job descriptions available</span>
+                  )
                 ) : (
-                  "No job descriptions available"
+                  <span>No job descriptions available</span>
                 )}
               </div>
+
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className='w-[200px] inline-block'>Total Cost:</strong> ${calculateTotalCost().toFixed(2)}
@@ -151,22 +174,46 @@ export default function ViewDetails() {
               )}
 
 
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Make:</strong> {jobData?.make}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {jobData?.modelYear}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {jobData?.vehicleType}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {jobData?.color}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Notes:</strong>  {jobData?.notes} </p>
-              <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-                {jobData.images.map((form: any, index: any) => (
-                  <img
-                    key={index}
-                    onClick={() => setPreviewImage(form)}
-                    src={form}
-                    alt={`Technician Tax Form ${index + 1}`}
-                    className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
-                  />
-                ))}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Make:</strong>
+                {jobData?.make?.trim() ? jobData.make : <span className="text-gray-500">No data available</span>}
               </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Model Year:</strong>
+                {jobData?.modelYear?.toString().trim() ? jobData.modelYear : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
+                {jobData?.vehicleType?.trim() ? jobData.vehicleType : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Color:</strong>
+                {jobData?.color?.trim() ? jobData.color : <span className="text-gray-500">No data available</span>}
+              </div>
+
+              <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                <strong className="w-[200px] inline-block">Notes:</strong>
+                {jobData?.notes?.trim() ? jobData.notes : <span className="text-gray-500">No notes available</span>}
+              </p>
+              <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
+                {jobData?.images && Array.isArray(jobData.images) && jobData.images.length > 0 ? (
+                  jobData.images.map((form: any, index: any) => (
+                    <img
+                      key={index}
+                      onClick={() => setPreviewImage(form)}
+                      src={form}
+                      alt={`Technician Tax Form ${index + 1}`}
+                      className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
+                    />
+                  ))
+                ) : (
+                  <span className="text-sm text-gray-500">No data available</span>
+                )}
+              </div>
+
             </div>
           </div>
         </div>

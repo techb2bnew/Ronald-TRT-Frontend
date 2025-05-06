@@ -43,17 +43,7 @@ const TechnicianTable: React.FC = () => {
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: `Do you want to change the account status to ${newStatus}?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!',
-    });
-
-    if (result.isConfirmed) {
+    
       try {
         const token = localStorage.getItem('token');
 
@@ -79,9 +69,7 @@ const TechnicianTable: React.FC = () => {
             text: `Account status changed to ${newStatus}.`,
             icon: 'success',
             confirmButtonColor: '#383d71',
-          });
-
-          fetchTechnicians();
+          }); 
         } else {
           throw new Error('Account status API failed');
         }
@@ -93,8 +81,7 @@ const TechnicianTable: React.FC = () => {
           icon: 'error',
           confirmButtonText: 'OK',
         });
-      }
-    }
+      } 
   };
 
 
@@ -120,7 +107,6 @@ const TechnicianTable: React.FC = () => {
         },
         config
       );
-      fetchTechnicians(currentPage, searchTerm, pageSize);
 
 
     } catch (error) {
@@ -137,17 +123,17 @@ const TechnicianTable: React.FC = () => {
   const handleChangeBothStatuses = async (tech: any) => {
     try {
       // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
-      // if ((!tech.amountPercentage && !tech.simpleFlatRate) || !tech.payRate || tech.payRate === "") {
-      //   // Show SweetAlert for missing payment info and stop further execution
-      //   await Swal.fire({
-      //     title: 'Missing Payment Info',
-      //     text: 'Please enter payrate for this technician.',
-      //     icon: 'info',
-      //     confirmButtonColor: '#383d71',
-      //     confirmButtonText: 'OK',
-      //   });
-      //   return; // Stop execution if payment info is missing
-      // }
+      if ((!tech.amountPercentage && !tech.simpleFlatRate) || !tech.payRate || tech.payRate === "") {
+        // Show SweetAlert for missing payment info and stop further execution
+        await Swal.fire({
+          title: 'Missing Payment Info',
+          text: 'Please enter payrate for this technician.',
+          icon: 'info',
+          confirmButtonColor: '#383d71',
+          confirmButtonText: 'OK',
+        });
+        return; // Stop execution if payment info is missing
+      }
 
       // Step 2: Confirm both account status change and approval status change
       const newAccountStatus = tech.accountStatus ? 'Active' : 'Inactive';
@@ -170,6 +156,8 @@ const TechnicianTable: React.FC = () => {
 
         // Step 5: Handle approval change
         await handleApprovalChange(tech.id, true, tech);
+      fetchTechnicians(currentPage, searchTerm, pageSize);
+        
       }
 
     } catch (error) {

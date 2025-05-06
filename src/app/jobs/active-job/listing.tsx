@@ -548,8 +548,8 @@ const JobTable: React.FC = () => {
               if (labourCost === 0) {
                 const tooltipId = `tooltip-${job.id}-labour`;
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+                    {/* <span
                       data-tooltip-id={tooltipId}
                       data-tooltip-content="Labour cost is not added for this job."
                       style={{
@@ -561,7 +561,8 @@ const JobTable: React.FC = () => {
                         cursor: 'pointer',
                       }}
                     ></span>
-                    <Tooltip id={tooltipId} place="top" />
+                    <Tooltip id={tooltipId} place="top" /> */}
+                     Per job
                   </div>
                 );
               }

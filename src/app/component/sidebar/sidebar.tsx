@@ -2,11 +2,11 @@
 // components/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import logo from '../../../../public/trt-logo.png'
 import Image from 'next/image';
 import { useSidebar } from "@/app/component/SidebarContext";
-
 
 const Sidebar = () => {
   const [userType, setUserType] = useState<string | null>(null);
@@ -20,6 +20,9 @@ const Sidebar = () => {
   const [isUser7Open, setIsUser7Open] = useState(false);
   const [activeLink, setActiveLink] = useState('');
   const [isHovered, setIsHovered] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
   useEffect(() => {
     const isFirstLogin = sessionStorage.getItem('firstLogin');
 
@@ -93,6 +96,12 @@ const Sidebar = () => {
         setIsUser3Open(false);
         setIsUser6Open(false);
         setIsUser5Open(false);
+        if(userType == 'ifs' || userType == 'superadmin' ){ 
+          router.push('/technicians/listing');
+        } else{
+          router.push('/client/listing');
+
+        }
 
       }
       localStorage.setItem('isUsersOpen', JSON.stringify(newState)); // Store in localStorage
@@ -134,6 +143,7 @@ const Sidebar = () => {
         setIsUser1Open(false);
         setIsUser3Open(false);
         setIsUser6Open(false);
+        router.push('/reporting/vehicle-info');
 
       }
       localStorage.setItem('isUser5Open', JSON.stringify(newState)); // Store in localStorage
@@ -148,8 +158,10 @@ const Sidebar = () => {
         setIsUser1Open(false);
         setIsUser3Open(false);
         setIsUser5Open(false);
+        router.push('/single-technicians/listing');
       }
       localStorage.setItem('isUser6Open', JSON.stringify(newState)); // Store in localStorage
+
       return newState;
     });
   };
@@ -178,7 +190,6 @@ const Sidebar = () => {
     });
   };
 
-  const pathname = usePathname();
   React.useEffect(() => {
     setActiveLink(pathname);
     const type = localStorage.getItem('types');
@@ -292,7 +303,7 @@ const Sidebar = () => {
               <ul className={`ml-6 space-y-1 transition-all duration-300
             ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                 {userType == 'single-technician' && (
-                  <li className='mt-3'>
+                  <li className='mt-1 pl-1'>
                     <Link href="/client/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#fff900]' : ''}`}   >
                       Customers
                     </Link>
@@ -301,7 +312,7 @@ const Sidebar = () => {
 
 
                 {userType == 'ifs' && (
-                  <li className='mt-3'>
+                  <li className='mt-3 pl-1'>
                     <Link href="/client/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#fff900]' : ''}`}   >
                       Customers
                     </Link>
@@ -575,48 +586,7 @@ const Sidebar = () => {
             )}
           </li>
 
-          {userType !== 'single-technician' && userType !== 'ifs' && (
-            <li className='p-1 pl-4 relative group'>
-              <button onClick={handleDropdownTogglesSingleTechnician} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
-    ${isUser6Open ? 'text-[#fff900]' : ''}
-    ${!isUser6Open && (
-                  activeLink === '/single-technicians/listing' ||
-                  activeLink === '/single-technicians/jobs'
-                ) ? 'text-[#fff900]' : 'text-[#fff]'}
-  `}>
-                <div className={`flex items-center gap-2 transition-all duration-300 
-            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
 
-                  <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
-
-                  <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>Single Technician</span>
-                </div>
-                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-
-
-
-              </button>
-
-              {isUser6Open && (
-                <ul className={`ml-6 space-y-1 transition-all duration-300
-                ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
-                  <li  >
-                    <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
-                      <span>Technicians</span>
-                    </Link>
-                  </li>
-                  <li >
-                    <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
-                      <span>All Work Orders</span>
-                    </Link>
-                  </li>
-
-                </ul>
-              )}
-            </li>
-          )}
 
           {/* {userType !== 'single-technician' && userType !== 'ifs' && (
           <li className='p-1'>
@@ -753,7 +723,7 @@ const Sidebar = () => {
           </li>
           {userType !== 'ifs' && (
 
-            <li className='p-1 pl-4'>
+            <li className='p-1 pl-4 mb-2'>
               <Link href="/banner" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/banner' ? 'active text-[#fff900]' : ''}`}>
                 <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -764,6 +734,52 @@ const Sidebar = () => {
                   <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Mobile Banner</span>
                 </div>
               </Link>
+            </li>
+          )}
+
+          <hr />
+          {userType !== 'single-technician' && userType !== 'ifs' && (
+            <li className='p-1 pl-4 relative group mt-3'>
+              <button onClick={handleDropdownTogglesSingleTechnician}
+                className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser6Open ? 'text-[#fff900]' : ''}
+               ${!isUser6Open && (
+                    activeLink === '/single-technicians/listing' ||
+                    activeLink === '/single-technicians/jobs'
+                  ) ? 'text-[#fff900]' : 'text-[#fff]'}`}>
+                <div className={`flex items-center gap-2 transition-all duration-300 
+            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
+
+                  <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
+
+                  <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>Single Technician</span>
+                </div>
+                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+
+
+
+              </button>
+
+              {isUser6Open && (
+                <ul className={`ml-6 space-y-1 transition-all duration-300
+                ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
+                  <li  >
+                    <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
+                      <span>Technicians</span>
+                    </Link>
+                  </li>
+                  <li >
+                    <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
+                      <span>All Work Orders</span>
+                    </Link>
+                    <Link href="/single-technicians/single-archive/listing" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/single-technicians/single-archive/listing' ? 'active text-[#fff900]' : ''}`}>
+                      <span>Archives</span>
+                    </Link>
+                  </li>
+
+                </ul>
+              )}
             </li>
           )}
 

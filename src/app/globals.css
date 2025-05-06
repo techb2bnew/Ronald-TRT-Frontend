@@ -462,6 +462,7 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
   padding: 12px;
   background: #fff;
   height: 100%;
+  overflow: auto;
 }
 /* .MuiSelect-select{
       padding: 14px 14px !important;

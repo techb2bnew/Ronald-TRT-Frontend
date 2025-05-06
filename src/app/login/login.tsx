@@ -187,7 +187,7 @@ export default function Login() {
                   style={{ position: 'absolute', right: '10px', top: '10px' }}
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Image src={Eye} width='16' height='16' alt="eye" /> : <Image src={EyeOff} width='16' height='16' alt="eye" />
+                  {showPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                   }
                 </button>
               </div>
@@ -207,8 +207,8 @@ export default function Login() {
                   </label>
                 </div>
                 </div> */}
-                <div className="pt-4">
-                <Link href="/forgot" className="text-sm  primary-text">Forgot Password?</Link>
+                <div className="pt-4 text-right">
+                <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
                 </div> 
                 <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6"

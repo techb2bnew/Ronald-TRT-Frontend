@@ -348,7 +348,6 @@ export default function Technicians() {
     if (!formData.city?.trim()) newErrors.city = 'City is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
-    if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
     if (!isEdit) {
       if (!formData.password?.trim()) newErrors.password = 'Password is required';
     }
@@ -839,11 +838,11 @@ export default function Technicians() {
           <div className="grid grid-cols-4 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
-              </svg>
+              </svg> */}
               <FormControl fullWidth size="small" error={!!errors.country}>
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
@@ -855,7 +854,7 @@ export default function Technicians() {
                       ? formData.country
                       : ''
                   }
-                  label="country"
+                  label="select-country"
                   name="country"
                   onChange={handleSelectChange}
                 >
@@ -881,19 +880,19 @@ export default function Technicians() {
               </select> */}
             </div>
             <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
-              </svg>
+              </svg> */}
               <FormControl fullWidth size="small" error={!!errors.state}>
                 <InputLabel id="state" color="warning">Select state *</InputLabel>
                 <Select
                   labelId="state"
+                  label="select-state"
                   color="warning"
-                  id="select-state"
+                  id="state"
                   value={formData.state || ''}
-                  label="State"
                   name="state"
                   onChange={handleSelectChange}
                   disabled={!formData.country}
@@ -931,7 +930,7 @@ export default function Technicians() {
               </select> */}
             </div>
             <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style={{width:'14px'}} fill="none" stroke="currentColor" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -951,7 +950,7 @@ export default function Technicians() {
           </div>
           {/* Address and Email */}
           <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" style={{width:'14px'}} stroke="currentColor" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
@@ -1020,11 +1019,11 @@ export default function Technicians() {
           <div className="grid grid-cols-2 gap-4">
 
             <div className='mb-4 relative'>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              {/* <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
                 <circle cx="10" cy="12" r="1" fill="#5B5B99" />
-              </svg>
+              </svg> */}
 
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
               <TextField fullWidth error={!!errors.password} helperText={errors.password || ''} type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password" size="small" value={formData.password} onChange={handleChange} />
@@ -1033,17 +1032,17 @@ export default function Technicians() {
                 style={{ position: 'absolute', right: '10px', top: '10px' }}
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
+                {showPassword ? <Image src={Eye} width='16' height='16' alt="eye" /> : <Image src={EyeOff} width='16' height='16' alt="eye" />
                 }
               </button>
 
             </div>
             <div className='mb-4 relative'>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              {/* <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <path d="M5 8H15C15.55 8 16 8.45 16 9V16C16 16.55 15.55 17 15 17H5C4.45 17 4 16.55 4 16V9C4 8.45 4.45 8 5 8Z" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M7 8V6C7 4.34 8.34 3 10 3C11.66 3 13 4.34 13 6V8" stroke="#5B5B99" strokeWidth="1.5" />
                 <circle cx="10" cy="12" r="1" fill="#5B5B99" />
-              </svg>
+              </svg> */}
               <TextField
                 fullWidth
 
@@ -1064,7 +1063,7 @@ export default function Technicians() {
                 style={{ position: 'absolute', right: '10px', top: '10px' }}
                 onClick={() => setShowConformPassword(!showConformPassword)}
               >
-                {showConformPassword ? <Image src={EyeOff} width='18' height='18' alt="eye" /> : <Image src={Eye} width='18' height='18' alt="eye" />
+                {showConformPassword ? <Image src={Eye} width='16' height='16' alt="eye" /> : <Image src={EyeOff} width='16' height='16' alt="eye" />
                 }
               </button>
             </div>
@@ -1080,7 +1079,7 @@ export default function Technicians() {
                 </svg>
 
                 {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth size="small" error={!!errors.payRate}>
+                <FormControl fullWidth size="small">
                   <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
                   <Select
                     labelId="payRate"
@@ -1096,10 +1095,7 @@ export default function Technicians() {
                     <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
                     <MenuItem value='Percentage Flat Rate'>Simple Percentage</MenuItem>
 
-                  </Select>
-                  {errors.payRate && (
-                    <FormHelperText>{errors.payRate}</FormHelperText>
-                  )}
+                  </Select> 
                 </FormControl>
               </div>
             )}
@@ -1187,7 +1183,7 @@ export default function Technicians() {
                   <p className='text-sm mb-1 mt-1'>Upload Tax Form</p>
                   <span className="text-center m-auto text-xs block"> (Only JPEG, Webp, PNG, GIF & PDF files are accepted.)</span>
                 </label>
-                <input type="file" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
+                <input type="file" multiple accept=".jpeg,.jpg,.png,.webp,.pdf" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
                 {/* onChange={handleFileChange} */}
               </div>
               <div className="flex flex-wrap gap-5 items-center relative mt-5">
