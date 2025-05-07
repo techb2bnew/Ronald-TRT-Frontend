@@ -87,10 +87,6 @@ const TechnicianTable: React.FC = () => {
 
 
   const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
-
-
-    const newStatus = isApproved ? 'Approved' : 'Accept';
-
     try {
       const token = localStorage.getItem('token');
       const config = {
@@ -100,15 +96,22 @@ const TechnicianTable: React.FC = () => {
         },
       };
 
-      const response = await axios.post(
-        `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
+      await axios.post(
+        `${apiUrl}/technicianActiveUnactiveAccount`,
         {
           technicianId: techId,
-          isApproved: isApproved, // Corrected here
+          isApproved: isApproved,
         },
         config
       );
 
+      // Show success message
+      Swal.fire({
+        title: 'Success!',
+        text: `Technician status changed to ${isApproved === 'accept' ? 'Accepted' : 'Rejected'}`,
+        icon: 'success',
+        confirmButtonText: 'OK',
+      });
 
     } catch (error) {
       console.error('Error updating approval status:', error);
@@ -512,25 +515,27 @@ const TechnicianTable: React.FC = () => {
 
         >
           <div className='flex gap-4'>
-            <div
-              onClick={() => {
-                if (tech.isApproved !== 'accept') {
-                  handleChangeBothStatuses(tech);
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              <span
-                className={`badge ${tech.isApproved === 'accept'
-                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  : 'badge-error bg-[#FFE4E1] text-[#FF0000]'
-                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]`}
-              >
-                {tech.isApproved === 'accept' ? 'Accept' : 'Rejected'}
-              </span>
-            </div>
+          <div
+  onClick={() => {
+    // Only allow click if status is not already 'accept'
+    if (tech.isApproved !== 'accept') {
+      handleChangeBothStatuses(tech);
+    }
+  }}
+  style={{ cursor: tech.isApproved !== 'accept' ? 'pointer' : 'default' }}
+>
+  <span
+    className={`badge ${
+      tech.isApproved === 'accept'
+        ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
+        : 'badge-error bg-[#FFE4E1] text-[#FF0000] hover:bg-[#FFD0D0]'
+    } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]`}
+  >
+    {tech.isApproved === 'accept' ? 'Accepted' : 'Accept'}
+  </span>
+</div>
 
-            {tech.isApproved === 'accept' && (
+            {tech.isApproved !== 'accept' && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -541,7 +546,6 @@ const TechnicianTable: React.FC = () => {
                 Reject
               </button>
             )}
-
           </div>
         </td>
 
