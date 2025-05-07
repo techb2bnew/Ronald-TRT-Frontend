@@ -1072,8 +1072,9 @@ export default function Technicians() {
               </button>
             </div>
           </div>
+
           <div className="grid grid-cols-3 gap-4">
-            {!isSingleTechnician && (
+            {!isSingleTechnician && formData.role !== 'singletechnician' &&(
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />

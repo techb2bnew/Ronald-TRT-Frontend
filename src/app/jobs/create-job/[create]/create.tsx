@@ -206,6 +206,15 @@ export default function Technicians() {
             ? jobData.simpleFlatRate
             : technician.simpleFlatRate
         );
+
+        const fallbackLabourRate = getValidValue(
+          jobData.simpleFlatRate !== null && 
+          jobData.simpleFlatRate !== undefined && 
+          jobData.simpleFlatRate !== "null" && 
+          jobData.simpleFlatRate !== ""
+            ? jobData.labourCost
+            : technician.simpleFlatRate
+        );
   
         const fallbackAmountPercentage = getValidValue(
           jobData.amountPercentage !== null && 
@@ -248,7 +257,7 @@ export default function Technicians() {
           jobDescription: jobDescriptionsArray,
           notes: getValidValue(jobData.notes),
           color: getValidValue(jobData.color),
-          labourCost: getValidValue(jobData.labourCost),
+          labourCost: fallbackLabourRate,
           assignTechnicians: jobData.technicians?.map((tech: any) => String(tech.id)) || [],
           payRate: fallbackPayRate,
           simpleFlatRate: fallbackSimpleFlatRate,

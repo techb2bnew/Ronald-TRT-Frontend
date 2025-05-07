@@ -541,36 +541,31 @@ const JobTable: React.FC = () => {
           </td>
         )}
 
-        {roleType === 'single-technician' && (
-          <td>
-            {(() => {
-              const labourCost = Number(job?.labourCost || 0);
-              if (labourCost === 0) {
-                const tooltipId = `tooltip-${job.id}-labour`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
-                    {/* <span
-                      data-tooltip-id={tooltipId}
-                      data-tooltip-content="Labour cost is not added for this job."
-                      style={{
-                        height: '12px',
-                        width: '12px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                      }}
-                    ></span>
-                    <Tooltip id={tooltipId} place="top" /> */}
-                     Per job
-                  </div>
-                );
-              }
+{roleType === 'single-technician' && (
+  <td>
+    {(() => {
+      // Get the first technician's simpleFlatRate if available
+      const technician = job.technicians?.[0] || {};
+      const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate)) 
+        ? Number(technician.simpleFlatRate) 
+        : 0;
 
-              return `$${labourCost.toFixed(2)}`;
-            })()}
-          </td>
-        )}
+      // Use labourCost if available, otherwise use technician's flat rate
+      const labourCost = Number(job?.labourCost || technicianFlatRate);
+
+      if (labourCost === 0) {
+        const tooltipId = `tooltip-${job.id}-labour`;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+            Per job
+          </div>
+        );
+      }
+
+      return `$${labourCost.toFixed(2)}`;
+    })()}
+  </td>
+)}
 
         {roleType !== 'single-technician' && (
 
@@ -643,46 +638,40 @@ const JobTable: React.FC = () => {
         )}
 
         {roleType === 'single-technician' && (
-          <td>
-            {(() => {
-              if (!job) return null;
-
-              const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-                return sum + Number(item.cost || 0);
-              }, 0);
-
-              const labourCost = Number(job.labourCost || 0); // <-- Fix here
-
-              const totalCost = subtotalcost + labourCost;
-
-              if (subtotalcost === 0) {
-                const tooltipId = `tooltip-${job.id}`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span
-                      data-tooltip-id={tooltipId}
-                      data-tooltip-content="R/I/R/R price is not added for this job."
-                      style={{
-                        height: '12px',
-                        width: '12px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                      }}
-                    ></span>
-                    <Tooltip id={tooltipId} place="top" />
-                  </div>
-                );
-              }
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              );
-            })()}
-          </td>
+         <td>
+         {(() => {
+           if (!job) return null;
+       
+           const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
+             return sum + Number(item.cost || 0);
+           }, 0);
+       
+           // Get the first technician's simpleFlatRate if available
+           const technician = job.technicians?.[0] || {};
+           const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate)) 
+             ? Number(technician.simpleFlatRate) 
+             : 0;
+       
+           // Use labourCost if available, otherwise use technician's flat rate
+           const labourCost = Number(job.labourCost || technicianFlatRate);
+       
+           const totalCost = subtotalcost + labourCost;
+       
+           if (subtotalcost === 0) {
+             return (
+               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
+                 Per Job
+               </div>
+             );
+           }
+       
+           return (
+             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+               ${totalCost.toFixed(2)}
+             </div>
+           );
+         })()}
+       </td>
 
         )}
 
