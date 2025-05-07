@@ -96,7 +96,7 @@ const Sidebar = () => {
         setIsUser3Open(false);
         setIsUser6Open(false);
         setIsUser5Open(false);
-        if(userType == 'ifs' || userType == 'superadmin' ){ 
+        if(userType == 'superadmin' ){ 
           router.push('/technicians/listing');
         } else{
           router.push('/client/listing');
@@ -726,8 +726,8 @@ const Sidebar = () => {
             <li className='p-1 pl-4 mb-2'>
               <Link href="/banner" className={`flex items-center p-2 space-x-2 hover:text-[#fff900] rounded ${activeLink === '/banner' ? 'active text-[#fff900]' : ''}`}>
                 <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <svg className='ml-[2px]' width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="4" width="16" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none" />
                     <circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="2" fill="none" />
                     <path d="M21 18L16 13L10 18" stroke="currentColor" strokeWidth="2" fill="none" />
                   </svg>
@@ -736,8 +736,9 @@ const Sidebar = () => {
               </Link>
             </li>
           )}
-
+          {userType === 'superadmin' && (
           <hr />
+          )}
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group mt-3'>
               <button onClick={handleDropdownTogglesSingleTechnician}

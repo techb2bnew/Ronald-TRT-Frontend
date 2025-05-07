@@ -443,7 +443,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                             color="warning"
                             id="country"
                             value={formData.country}
-                            label="country"
+                            label="selectcountry"
                             name="country"
                             required
                             disabled={!isEditing}
@@ -480,7 +480,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
                               color="warning"
                               id="select-state"
                               value={formData.state}
-                              label="State"
+                              label="selectState"
                               name="state"
                               required
                               disabled={!isEditing}

@@ -18,10 +18,11 @@ interface CommonHeaderProps {
   onImport?: (file: File) => void;
   onCompletedClick?: () => void;
   onInProgressClick?: () => void;
+  additionalComponents?: React.ReactNode;
 }
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
 
@@ -60,28 +61,30 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         <div className='flex items-center gap-4'>
           {onSearch && (
 
-          <div className="flex w-[350px] relative search__input">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-
-            <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
-
-          </div>
+            <div className="flex w-[350px] relative search__input">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <TextField fullWidth size="small" type='search' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
+            </div>
           )}
-
+          {additionalComponents && (
+            <div className="flex items-center gap-4">
+              {additionalComponents}
+            </div>
+          )}
           {onPageSizeChange && (
 
-          <select name="" id="" className='w-[180px] p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
-            <option value="">Number of rows</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="40">40</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
+            <select name="" id="" className='w-[180px] p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+              <option value="">Number of rows</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="40">40</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
           )}
 
           {onCompletedClick && (
@@ -101,43 +104,43 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               In Progress Jobs
             </button>
           )}
-{onImport && (
+          {onImport && (
 
-          <label className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 cursor-pointer hover:text-white hover:bg-[#383d71]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
-              <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
-              <polyline points="3 4 5 6 7 4" />
-              <line x1="5" y1="6" x2="5" y2="1" />
-            </svg>
+            <label className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 cursor-pointer hover:text-white hover:bg-[#383d71]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
+                <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
+                <polyline points="3 4 5 6 7 4" />
+                <line x1="5" y1="6" x2="5" y2="1" />
+              </svg>
 
 
 
-            Import
-            <input
-              type="file"
-              accept=".csv"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  onImport?.(e.target.files[0]);
-                  e.target.value = ''; // reset input
-                }
-              }}
-            />
-          </label>
-)}
-{onExport && (
+              Import
+              <input
+                type="file"
+                accept=".csv"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    onImport?.(e.target.files[0]);
+                    e.target.value = ''; // reset input
+                  }
+                }}
+              />
+            </label>
+          )}
+          {onExport && (
 
-          <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
-              <polyline points="3 4 5 6 7 4" />
-              <line x1="5" y1="6" x2="5" y2="1" />
-            </svg>
+            <button className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-[#383d71]" onClick={onExport}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
+                <polyline points="3 4 5 6 7 4" />
+                <line x1="5" y1="6" x2="5" y2="1" />
+              </svg>
 
-            Export
-          </button>
-)}
+              Export
+            </button>
+          )}
           {buttonLink && buttonLabel && canCreate && (
             <Link href={buttonLink} className="primary-bg text-xs border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
               {buttonLabel}

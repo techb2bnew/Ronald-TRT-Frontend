@@ -53,7 +53,7 @@ export default function Header() {
 
   return (
     <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center border-[#383d71] border-b-[2px]">
-      <h1 className={`pl-[17%] text-xl font-bold transition-all duration-300  ${isCollapsed ? 'pl-[6%]' : 'pl-[17%]'}`}> <i>Hi, {technician?.firstName} {technician?.lastName} </i>
+      <h1 className={`pl-[17%] text-xl font-bold transition-all duration-300 capitalize ${isCollapsed ? 'pl-[6%]' : 'pl-[17%]'}`}> <i>Hi, {technician?.firstName} {technician?.lastName} </i>
       </h1>
       <div className="w-100 ml-auto flex items-center">
         <div className="relative" ref={dropdownRef}>
@@ -69,18 +69,18 @@ export default function Header() {
               className="rounded-full h-[30px]"
             />
             <div className="text-left">
-              <span className="text-sm">
+              <span className="text-sm capitalize">
                 {technician
                   ? `${technician.firstName} ${technician.lastName}`
                   : "User"}
               </span>
               <p className="text-xs text-black-500">
-              {
-    technician?.types === "superadmin" ? "Super Admin" :
-    technician?.types === "single-technician" ? "Single Technician" :
-    technician?.types === "ifs" ? "IFS" :
-    technician?.types
-  }
+                {
+                  technician?.types === "superadmin" ? "Super Admin" :
+                    technician?.types === "single-technician" ? "Single Technician" :
+                      technician?.types === "ifs" ? "IFS" :
+                        technician?.types
+                }
               </p>
             </div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -43,49 +43,50 @@ const TechnicianTable: React.FC = () => {
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
-    
-      try {
-        const token = localStorage.getItem('token');
 
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        };
+    try {
+      const token = localStorage.getItem('token');
 
-        const response = await axios.post(
-          `${apiUrl}/updateTechnicianAccountStatus`,
-          {
-            technicianId: techId,
-            accountStatus: accountStatus,
-          },
-          config
-        );
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
 
-        if (response.data.status) {
-          await Swal.fire({
-            title: 'Success!',
-            text: `Account status changed to ${newStatus}.`,
-            icon: 'success',
-            confirmButtonColor: '#383d71',
-          }); 
-        } else {
-          throw new Error('Account status API failed');
-        }
-      } catch (error) {
-        console.error('Error updating account status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating account status.',
-          icon: 'error',
-          confirmButtonText: 'OK',
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+      fetchTechnicians(currentPage, searchTerm, pageSize);
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
         });
-      } 
+      } else {
+        throw new Error('Account status API failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating account status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
   };
 
 
-  const handleApprovalChange = async (techId: number, isApproved: boolean, tech: any) => {
+  const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
 
 
     const newStatus = isApproved ? 'Approved' : 'Accept';
@@ -137,7 +138,7 @@ const TechnicianTable: React.FC = () => {
 
       // Step 2: Confirm both account status change and approval status change
       const newAccountStatus = tech.accountStatus ? 'Active' : 'Inactive';
-      const newApprovalStatus = tech.isApproved ? 'Approved' : 'Accept';
+      const newApprovalStatus = tech.isApproved ? 'accept' : 'reject';
 
       const result = await Swal.fire({
         title: 'Are you sure?',
@@ -155,9 +156,9 @@ const TechnicianTable: React.FC = () => {
         await handleAccountStatusChange(tech.id, !tech.accountStatus);
 
         // Step 5: Handle approval change
-        await handleApprovalChange(tech.id, true, tech);
-      fetchTechnicians(currentPage, searchTerm, pageSize);
-        
+        await handleApprovalChange(tech.id, newApprovalStatus, tech);
+        fetchTechnicians(currentPage, searchTerm, pageSize);
+
       }
 
     } catch (error) {
@@ -172,30 +173,61 @@ const TechnicianTable: React.FC = () => {
   };
 
 
-  const technicianRejectedAccount = async (techId: number, isApproved: boolean) => {
-
-
-    const newStatus = isApproved ? 'Approved' : 'Accept';
-
+  const handleCancelClick = async (techId: number, tech: any) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      };
+      // Step 1: Ask for confirmation before rejecting
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want to reject this technician?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: 'gray',
+        confirmButtonText: 'Yes, reject',
+      });
 
-      const response = await axios.post(
-        `${apiUrl}/technicianRejectedAccount`, // Correct API
-        {
-          technicianId: techId,
-          isApproved: isApproved, // Corrected here
-        },
-        config
-      );
+      // Step 2: Proceed only if confirmed
+      if (result.isConfirmed) {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        };
 
-      fetchTechnicians(currentPage, searchTerm, pageSize);
+        // First API call - technicianRejectedAccount
+        await axios.post(
+          `${apiUrl}/technicianRejectedAccount`,
+          {
+            technicianId: techId,
+            isApproved: 'reject',
+          },
+          config
+        );
+
+        // Second API call - updateTechnicianAccountStatus
+        await axios.post(
+          `${apiUrl}/updateTechnicianAccountStatus`,
+          {
+            technicianId: techId,
+            accountStatus: 'false', // or whatever status value your API expects
+          },
+          config
+        );
+
+
+        // Optional: Reload technician list
+        fetchTechnicians(currentPage, searchTerm, pageSize);
+
+        // Step 3: Show success message
+        await Swal.fire({
+          title: 'Rejected!',
+          text: 'Technician has been successfully rejected.',
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+      }
 
     } catch (error) {
       console.error('Error updating approval status:', error);
@@ -207,6 +239,7 @@ const TechnicianTable: React.FC = () => {
       });
     }
   };
+
 
   // JSX Button to trigger both API calls
 
@@ -412,7 +445,7 @@ const TechnicianTable: React.FC = () => {
 
         <td
           onClick={() => {
-            if (tech.isApproved) {
+            if (tech.isApproved === 'accept') {
               handleAccountStatusChange(tech.id, !tech.accountStatus);
             }
           }} // Corrected here
@@ -481,34 +514,33 @@ const TechnicianTable: React.FC = () => {
           <div className='flex gap-4'>
             <div
               onClick={() => {
-                if (!tech.isApproved) {
+                if (tech.isApproved !== 'accept') {
                   handleChangeBothStatuses(tech);
                 }
               }}
-              style={{ cursor: 'pointer' }}>
+              style={{ cursor: 'pointer' }}
+            >
               <span
-                className={`badge ${tech.isApproved
-                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
-                  : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]'
-                  }`}
+                className={`badge ${tech.isApproved === 'accept'
+                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
+                  : 'badge-error bg-[#FFE4E1] text-[#FF0000]'
+                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]`}
               >
-                {tech.isApproved ? 'Approved' : 'Accept'}
+                {tech.isApproved === 'accept' ? 'Accept' : 'Rejected'}
               </span>
             </div>
-            {/* {!tech.isApproved && (
 
-          <div onClick={() => technicianRejectedAccount(tech.id, false)}
-          style={{ cursor: 'pointer' }}>
-          <span
-            className={`badge ${tech.isApproved
-              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-3 pr-3 rounded shadow block text-center w-[80px]'
-              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-3 pr-3 rounded shadow block text-center w-[80px]'
-              }`}
-          >
-            {tech.isApproved ? 'Approved' : 'Reject'}
-          </span>
-          </div>
-           )} */}
+            {tech.isApproved === 'accept' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancelClick(tech.id, tech);
+                }}
+                className="ml-2 text-sm pl-2 pr-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+              >
+                Reject
+              </button>
+            )}
 
           </div>
         </td>
@@ -655,7 +687,7 @@ const TechnicianTable: React.FC = () => {
             fetchTechnicians(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-          
+
             // Check if it's an Axios error with a response
             if (
               typeof error === 'object' &&
@@ -670,8 +702,8 @@ const TechnicianTable: React.FC = () => {
               toast.error(String(error));
             }
           }
-          
-          
+
+
           setLoading(false);
 
         },

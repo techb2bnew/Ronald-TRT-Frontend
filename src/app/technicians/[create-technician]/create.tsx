@@ -85,8 +85,8 @@ export default function Technicians() {
     image: null,
     payVehicleType: '',
     amountPercentage: '',
-    role: 'technician',
-    types: 'superadmin',
+    role: '',
+    types: '',
     agreeTerms: 'true',
   });
 
@@ -543,6 +543,8 @@ export default function Technicians() {
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
+
+  
   const fetchRoles = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -648,33 +650,35 @@ export default function Technicians() {
                   <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                 </svg>
                 <FormControl fullWidth size="small">
-  <InputLabel id="role" color="warning">Select role name *</InputLabel>
-  <Select
-    labelId="role"
-    id="select-role-name"
-    color="warning"
-    value={formData.role}
-    label="Select role name"
-    name="role"
-    onChange={handleSelectChange}
-  >
-    {roles.map((role, index) => {
-      // Properly format camelCase and PascalCase strings into spaced, capitalized words
-      const formattedRoleName = role.name
-        // Add space between lowercase and uppercase letters (camelCase or PascalCase to space-separated words)
-        .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase or PascalCase handling
-        .replace(/\b\w/g, (char:any) => char.toUpperCase()); // Capitalize the first letter of each word
+                  <InputLabel id="role" color="warning">Select role name *</InputLabel>
+                  <Select
+                    labelId="role"
+                    id="select-role-name"
+                    color="warning"
+                    value={formData.role}
+                    label="Select role name"
+                    name="role"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value="" disabled>
+                      Select role
+                    </MenuItem>
+                    {roles.map((role, index) => {
+                      // Properly format camelCase and PascalCase strings into spaced, capitalized words
+                      const formattedRoleName = role.name
+                        // Add space between lowercase and uppercase letters (camelCase or PascalCase to space-separated words)
+                        .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase or PascalCase handling
+                        .replace(/\b\w/g, (char: any) => char.toUpperCase()); // Capitalize the first letter of each word
 
-      console.log("Formatted Role:", formattedRoleName);  // Debugging line
 
-      return (
-        <MenuItem key={index} value={role.name}>
-          {formattedRoleName}
-        </MenuItem>
-      );
-    })}
-  </Select>
-</FormControl>
+                      return (
+                        <MenuItem key={index} value={role.name}>
+                          {formattedRoleName}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
 
 
 
@@ -930,7 +934,7 @@ export default function Technicians() {
               </select> */}
             </div>
             <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style={{width:'14px'}} fill="none" stroke="currentColor" className="icon__tech"
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style={{ width: '14px' }} fill="none" stroke="currentColor" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -950,7 +954,7 @@ export default function Technicians() {
           </div>
           {/* Address and Email */}
           <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" style={{width:'14px'}} stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" style={{ width: '14px' }} stroke="currentColor" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
@@ -1095,7 +1099,7 @@ export default function Technicians() {
                     <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
                     <MenuItem value='Percentage Flat Rate'>Simple Percentage</MenuItem>
 
-                  </Select> 
+                  </Select>
                 </FormControl>
               </div>
             )}

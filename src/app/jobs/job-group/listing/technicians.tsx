@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import Eye from '../../../../../public/eye.svg'
+import Delete from "../../../../../public/delete.svg";
 import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
@@ -368,7 +369,55 @@ function JobTListing({}: Props) {
     });
   }
   
-
+  const handleDeleteGroupJob = async (vin: string) => {
+    try {
+      // Step 1: Confirm before proceeding
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'Do you really want to delete this job group?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: 'gray',
+        confirmButtonText: 'Yes, delete it!',
+      }); 
+      if (result.isConfirmed) {
+        const token = localStorage.getItem('token');
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        };
+  
+        await axios.post(
+          `${apiUrl}/deleteGroupJobs`,
+          {
+            vin: vin,
+            deletedStatus: false,
+          },
+          config
+        ); 
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Job group has been marked as not deleted.',
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+        fetchJobs(currentPage, searchTerm, pageSize);
+      }
+  
+    } catch (error) {
+      console.error('Error deleting job group:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Something went wrong while deleting.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+  
   
   
   
@@ -524,10 +573,16 @@ function JobTListing({}: Props) {
         )}
   
         <td>
+          <div className="flex items-center gap-3">
           <Link href={`/jobs/job-group/view?vin=${job?.vin}`}>
             <Image alt="eye" src={Eye} className="w-[16px]" data-tooltip-id="view" data-tooltip-content="View" />
           </Link>
+          <div onClick={() => handleDeleteGroupJob(job.vin)} className='cursor-pointer'>
+            <Image alt="delete" src={Delete} className="w-[12px]" data-tooltip-id="Delete" data-tooltip-content="Delete" />
+          </div>
           <Tooltip id="view" place="top" />
+          <Tooltip id="Delete" place="top" />
+          </div>
         </td>
       </tr>
     );
