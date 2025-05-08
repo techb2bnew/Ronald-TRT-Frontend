@@ -205,7 +205,8 @@ const TechnicianTable: React.FC = () => {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus}`,
+        confirmButtonText: `Yes, ${newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1)}`,
+
       });
 
       if (result.isConfirmed) {
