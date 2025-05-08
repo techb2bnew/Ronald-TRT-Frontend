@@ -5,7 +5,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
+import Swal from 'sweetalert2';
+import axios from 'axios';
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -64,6 +67,207 @@ export default function ViewDetails() {
     return state?.name || stateCode; // Fallback to code if name not found
   };
 
+
+  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+      const searchParams = new URLSearchParams(window.location.search);
+      const techId = searchParams.get('technicianId') || '';
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+
+
+      if (techId) {
+        fetchTechnicianData(techId);
+      }
+
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+      } else {
+        throw new Error('Account status API failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating account status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${newStatus} this technician?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, ${newStatus} them!`,
+      });
+
+      if (!result.isConfirmed) return;
+
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+        const searchParams = new URLSearchParams(window.location.search);
+        const techId = searchParams.get('technicianId') || '';
+
+        if (techId) {
+
+          fetchTechnicianData(techId);
+        }
+      } else {
+        throw new Error(response.data.message || 'Account status update failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Error updating account status',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+
+  const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      await axios.post(
+        `${apiUrl}/technicianActiveUnactiveAccount`,
+        {
+          technicianId: techId,
+          isApproved: isApproved,
+        },
+        config
+      );
+
+    } catch (error) {
+      console.error('Error updating approval status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating approval status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+  const handleChangeBothStatuses = async (tech: any) => {
+    try {
+      // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
+      if ((!tech.amountPercentage && !tech.simpleFlatRate) || !tech.payRate || tech.payRate === "") {
+        await Swal.fire({
+          title: 'Missing Payment Info',
+          text: 'Please enter payrate for this technician.',
+          icon: 'info',
+          confirmButtonColor: '#383d71',
+          confirmButtonText: 'OK',
+        });
+        return;
+      }
+
+      // Determine the new status (toggle between 'accept' and 'reject')
+      const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
+      const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
+
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${newApprovalStatus} this technician?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, ${newApprovalStatus} them!`,
+      });
+
+      if (result.isConfirmed) {
+        // Update account status first
+        await handleAccountStatusChange(tech.id, newAccountStatus);
+
+        // Then update approval status
+        await handleApprovalChange(tech.id, newApprovalStatus, tech);
+
+        // Refresh the list
+        const searchParams = new URLSearchParams(window.location.search);
+        const techId = searchParams.get('technicianId') || '';
+
+        if (techId) {
+
+          fetchTechnicianData(techId);
+        }
+      }
+
+    } catch (error) {
+      console.error('Error updating both statuses:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating technician statuses.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+
   if (!technician) {
     return <div><Loading /></div>;
   }
@@ -88,11 +292,12 @@ export default function ViewDetails() {
                 className="w-[100px] h-[100px] rounded shadow-lg cursor-pointer object-cover"
               />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-[100px] h-[100px] text-black-400 bg-gray-300 p-2 rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+
+              <div
+                className="w-[100px] h-[100px] rounded bg-[#383D71] flex items-center justify-center text-white font-bold text-2xl"
+              >
+                {technician.firstName?.charAt(0)?.toUpperCase() || 'T'}
+              </div>
             )}
 
 
@@ -103,7 +308,7 @@ export default function ViewDetails() {
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                   <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <a href={`mailto:${technician?.email}`}>
+                <a href={`mailto:${technician?.email}`} className='hover:underline'>
                   {technician?.email}
                 </a></p>
 
@@ -130,7 +335,7 @@ export default function ViewDetails() {
                   <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                   <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
                 </svg>
-                <a href={`tel:${technician?.phoneNumber}`}>
+                <a href={`tel:${technician?.phoneNumber}`} className='hover:underline'>
                   {technician?.phoneNumber}
                 </a></p>
             </div>
@@ -147,7 +352,7 @@ export default function ViewDetails() {
                 <strong className='w-[200px] inline-block'>Country:</strong>
                 {getCountryName(technician?.country)}
               </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
+              <p className='border-b border-gray-500 mb-3 pb-2 flex'>
                 <strong className='w-[200px] inline-block'>State:</strong>
                 {getStateName(technician?.country, technician?.state)}
               </p>
@@ -156,9 +361,12 @@ export default function ViewDetails() {
 
 
               <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Secondary Ph:</strong>
+                <strong className='w-[200px] inline-block'>Secondary Phone:</strong>
                 {technician?.secondaryContactName ? (
-                  technician.secondaryContactName
+                  <a href={`tel:${technician?.secondaryContactName}`} className='hover:underline'>
+
+                    {technician.secondaryContactName}
+                  </a>
                 ) : (
                   <span className="text-sm text-gray-500">No data available</span>
                 )}
@@ -166,7 +374,10 @@ export default function ViewDetails() {
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Secondary Email:</strong>
                 {technician?.secondaryEmail ? (
-                  technician.secondaryEmail
+                  <a href={`mailto:${technician?.secondaryEmail}`} className='hover:underline'>
+
+                    {technician.secondaryEmail}
+                  </a>
                 ) : (
                   <span className="text-sm text-gray-500">No data available</span>
                 )}
@@ -210,18 +421,61 @@ export default function ViewDetails() {
               )}
 
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Account Status:</strong><span
-                className={`badge ${technician.accountStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-              >
-                {technician.accountStatus ? 'Approved' : 'Unapproved'}
-              </span></p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Status:</strong><span
-                className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-              >
-                {technician.isApproved ? 'Active' : 'Inactive'}
-              </span></p>
+              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Approval Status:</strong>
+              <td
+          onClick={() => {
+            if (technician.isApproved === 'accept') {
+              handleAccountStatusChanges(technician.id, !technician.accountStatus);
+            }
+          }} // Corrected here
+          style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}
+        >
+          <span
+            className={`badge ${technician.accountStatus
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+              }`}
+          >
+            {technician.accountStatus ? 'Active' : 'Inactive'}
+          </span>
+        </td></p>
+              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Account Status:</strong>
+
+
+                <div className='flex gap-4 items-center'>
+                  {technician.isApproved === 'accept' ? (
+                    // Step 2: Show "Accepted", clicking sends 'cancel'
+                    <span
+                      onClick={() => handleChangeBothStatuses(technician)}
+                      className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
+                    >
+                      Accepted
+                    </span>
+                  ) : technician.isApproved === 'cancel' ? (
+                    // Step 3: Show "Rejected", clicking sends 'accept'
+                    <span
+                      onClick={() => handleChangeBothStatuses(technician)}
+                      className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
+                    >
+                      Rejected
+                    </span>
+                  ) : (
+                    // Step 1: First time — show Accept + Reject
+                    <>
+                      <span
+                        onClick={() => handleChangeBothStatuses(technician)}
+                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
+                      >
+                        Accept
+                      </span> 
+                    </>
+                  )}
+                </div>
+
+
+              </div>
               <div className='flex items-center'>
-                <strong className='w-[200px] inline-block'>Tax Form</strong>
+                <strong className='w-[200px] inline-block'>Tax Form:</strong>
 
                 {technician?.taxForms && technician.taxForms.length > 0 ? (
                   <div className="mt-1 block mb-2 flex gap-2 items-center">

@@ -654,7 +654,13 @@ export default function Technicians() {
             }
           });
         } else {
-          toast.error(result.error || 'Failed to create job.');
+          if (result.error) {
+            if (result.error.toLowerCase().includes('technician')) {
+              setErrors(prev => ({ ...prev, assignTechnicians: result.error }));
+            } else {
+              toast.error(result.error || 'Error fetching job data');
+            }
+          } 
         }
       }
     } catch (error) {
@@ -1012,9 +1018,9 @@ export default function Technicians() {
                       <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
                     </svg>
 
-                    <TextField fullWidth error={!!errors.vin} helperText={errors.vin || ''} name="vin" id="outlined-basic" color="warning" label="Enter vin number *" size="small" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} />
+                    <TextField fullWidth error={!!errors.vin} helperText={errors.vin || ''} name="vin" id="outlined-basic" color="warning" label="Enter vin number *" size="small" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} inputProps={{ maxLength: 17 }} />
                   </div>
-                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[300px] rounded">Add New Vehicle</button>
+                  <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[200px] rounded">Fetch</button>
                 </div>
 
                 <div className="relative">
@@ -1178,15 +1184,7 @@ export default function Technicians() {
 
           <div className="grid grid-cols-3 gap-4">
             <div className='mb-4 relative'>
-              {/* <p className='text-sm mb-2'>Color <span className='text-[red]'>*</span></p> */}
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <path d="M10 2C5.6 2 2 5.1 2 9C2 12.9 5.4 14 7 14C8.3 14 8.5 15.5 9 16.3C9.6 17.2 10.5 18 12 18C14.8 18 18 15.1 18 10.5C18 5.9 14.4 2 10 2Z" stroke="#5B5B99" strokeWidth="1.2" fill="none" />
-
-                <circle cx="7" cy="7" r="0.8" fill="#5B5B99" />
-                <circle cx="10" cy="5.5" r="0.8" fill="#5B5B99" />
-                <circle cx="13" cy="7" r="0.8" fill="#5B5B99" />
-                <circle cx="13.5" cy="10" r="0.8" fill="#5B5B99" />
-              </svg>
+               
 
               <FormControl fullWidth size="small" error={!!errors.color}>
                 <InputLabel id="color" color="warning">Select color *</InputLabel>

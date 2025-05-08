@@ -67,15 +67,22 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errors) {
-          setErrors(prev => ({ ...prev, ...data.errors }));
-          Object.values(data.errors).forEach(error => {
-            toast.error(data.error);
-          });
-        } else if (data.error) {
-          setErrors(prev => ({ ...prev, general: data.error }));
-          toast.error(data.error);
-        }
+          // Clear previous errors
+          setErrors({ email: '', password: '', form: '' });
+      
+          // Handle specific error cases
+          if (data.error) {
+            if (data.error.includes('email') || data.error.includes('account')) {
+              // Email related errors
+              setErrors(prev => ({ ...prev, email: data.error }));
+            } else if (data.error.includes('password') || data.error.includes('Invalid')) {
+              // Password related errors
+              setErrors(prev => ({ ...prev, password: data.error }));
+            } else {
+              // General errors
+              toast.error(data.error);
+            }
+          }
       } else { 
         toast.success("Login successful!");
         localStorage.setItem('token', data.token);

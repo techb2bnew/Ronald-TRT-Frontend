@@ -335,7 +335,7 @@ const VehicleTable: React.FC = () => {
         <td>{job.modelYear}</td>
         <td>{job.color}</td>
         <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
-        {/* <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td> */}
+        <td> {new Date(job.updatedAt).toLocaleDateString('en-GB')}</td>
         <td> <span
           className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
@@ -405,7 +405,7 @@ const VehicleTable: React.FC = () => {
               <th className="w-[60px]">Year</th>
               <th className="w-[50px]">Color</th>
               <th className="w-[100px]">Start Date</th>
-              {/* <th className="w-[100px]">Completion Date</th> */}
+              <th className="w-[100px]">End Date</th>
               <th className="w-[100px]">Status</th>
             </tr>
           </thead>

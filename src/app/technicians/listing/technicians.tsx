@@ -16,6 +16,7 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
+import { Country, State } from 'country-state-city';
 
 
 
@@ -87,20 +88,20 @@ const TechnicianTable: React.FC = () => {
 
   const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
-    
+
     try {
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to ${newStatus} this technician?`,
+        text: `Do you want to change this account status to Active/Deactive?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newStatus} them!`,
+        confirmButtonText: `Yes, Activate`,
       });
-  
+
       if (!result.isConfirmed) return;
-  
+
       const token = localStorage.getItem('token');
       const config = {
         headers: {
@@ -108,7 +109,7 @@ const TechnicianTable: React.FC = () => {
           ...(token && { Authorization: `Bearer ${token}` }),
         },
       };
-  
+
       const response = await axios.post(
         `${apiUrl}/updateTechnicianAccountStatus`,
         {
@@ -117,7 +118,7 @@ const TechnicianTable: React.FC = () => {
         },
         config
       );
-  
+
       if (response.data.status) {
         await Swal.fire({
           title: 'Success!',
@@ -194,17 +195,17 @@ const TechnicianTable: React.FC = () => {
       }
 
       // Determine the new status (toggle between 'accept' and 'reject')
-      const newApprovalStatus = tech.isApproved === 'accept' ? 'reject' : 'accept';
+      const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
 
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to ${newApprovalStatus} this technician?`,
+        text: `Do you want to change this account status to Active/Deactive?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus} them!`,
+        confirmButtonText: `Yes, ${newApprovalStatus}`,
       });
 
       if (result.isConfirmed) {
@@ -230,7 +231,7 @@ const TechnicianTable: React.FC = () => {
   };
 
 
-  const handleCancelClick = async (techId: number, tech: any) => {
+  const handleCancelClick = async (techId: number,) => {
     try {
       // Step 1: Ask for confirmation before rejecting
       const result = await Swal.fire({
@@ -258,22 +259,10 @@ const TechnicianTable: React.FC = () => {
           `${apiUrl}/technicianRejectedAccount`,
           {
             technicianId: techId,
-            isApproved: 'reject',
+            isApproved: 'cancel',
           },
           config
         );
-
-        // Second API call - updateTechnicianAccountStatus
-        await axios.post(
-          `${apiUrl}/updateTechnicianAccountStatus`,
-          {
-            technicianId: techId,
-            accountStatus: 'false', // or whatever status value your API expects
-          },
-          config
-        );
-
-
         // Optional: Reload technician list
         fetchTechnicians(currentPage, searchTerm, pageSize);
 
@@ -398,12 +387,6 @@ const TechnicianTable: React.FC = () => {
 
     setTechnicians(sortedData);
   };
-
-
-
-
-
-
 
 
 
@@ -565,8 +548,8 @@ const TechnicianTable: React.FC = () => {
 
         <td className='font-sm'>
           <Link
-            href={tech.accountStatus === true && tech.isApproved === true ? '/jobs/create-job/create' : '#'}
-            className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === true
+            href={tech.accountStatus === true && tech.isApproved === 'accept' ? '/jobs/create-job/create' : '#'}
+            className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === 'accept'
               ? 'cursor-pointer bg-white hover:bg-[#383d71] hover:text-[#fff] '  // Active styles
               : 'cursor-not-allowed bg-gray-200' // Disabled styles
               }`}
@@ -612,37 +595,45 @@ const TechnicianTable: React.FC = () => {
         <td
 
         >
-          <div className='flex gap-4'>
-            <div
-              onClick={() => {
-                // Only allow click if status is not already 'accept'
-
-                handleChangeBothStatuses(tech);
-
-              }}
-            >
+          <div className='flex gap-4 items-center'>
+            {tech.isApproved === 'accept' ? (
+              // Step 2: Show "Accepted", clicking sends 'cancel'
               <span
-                className={`badge ${tech.isApproved === 'accept'
-                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  : 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px] cursor-pointer`}
+                onClick={() => handleChangeBothStatuses(tech)}
+                className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
               >
-                {tech.isApproved === 'accept' ? 'Accepted' : 'Accept'}
+                Accepted
               </span>
-            </div>
-
-            {tech.isApproved !== 'accept' && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteTechnician(tech.id);
-                }}
-                className="ml-2 text-sm pl-2 pr-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+            ) : tech.isApproved === 'cancel' ? (
+              // Step 3: Show "Rejected", clicking sends 'accept'
+              <span
+                onClick={() => handleChangeBothStatuses(tech)}
+                className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
               >
-                Reject
-              </button>
+                Rejected
+              </span>
+            ) : (
+              // Step 1: First time — show Accept + Reject
+              <>
+                <span
+                  onClick={() => handleChangeBothStatuses(tech)}
+                  className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                >
+                  Accept
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCancelClick(tech.id);
+                  }}
+                  className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+                >
+                  Reject
+                </button>
+              </>
             )}
           </div>
+
         </td>
 
 
@@ -683,23 +674,27 @@ const TechnicianTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => ({
-      Id: tech.id,
-      Name: `${tech.firstName} ${tech.lastName}`,
-      Email: tech.email,
-      Phone: tech.phoneNumber,
-      Address: tech.address,
-      Country: tech.country,
-      City: tech.city,
-      State: tech.state,
-      SimpleFlatRate: tech.simpleFlatRate,
-      AmountPercentage: tech.simpleFlatRate,
-      PayVehicleType: tech.payVehicleType,
-      PayRate: tech.payRate,
-      AccountStatus: tech.accountStatus,
-      DeletedStatus: tech.deletedStatus,
-      IsApproved: tech.isApproved,
-    }));
+    const formattedData = selectedTechnicians.map((tech) => {
+      const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
+      const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
+      return {
+        Id: tech.id,
+        Name: `${tech.firstName} ${tech.lastName}`,
+        Email: tech.email,
+        Phone: tech.phoneNumber,
+        Address: tech.address,
+        Country: countryName,
+        City: tech.city,
+        State: stateName,
+        SimpleFlatRate: tech.simpleFlatRate,
+        AmountPercentage: tech.simpleFlatRate,
+        PayVehicleType: tech.payVehicleType,
+        PayRate: tech.payRate,
+        AccountStatus: tech.accountStatus,
+        DeletedStatus: tech.deletedStatus,
+        IsApproved: tech.isApproved,
+      }
+    });
 
     csvExporter.generateCsv(formattedData);
   };
@@ -887,7 +882,7 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status', 'action'];
+          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status'];
 
           return (
             <th

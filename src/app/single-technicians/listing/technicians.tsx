@@ -127,19 +127,7 @@ const TechnicianTable: React.FC = () => {
   };
 
   const handleChangeBothStatuses = async (tech: any) => {
-    try {
-      // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
-      if ((!tech.simpleFlatRate)) {
-        await Swal.fire({
-          title: 'Missing Payment Info',
-          text: 'Please enter payrate for this technician.',
-          icon: 'info',
-          confirmButtonColor: '#383d71',
-          confirmButtonText: 'OK',
-        });
-        return;
-      }
-
+    try { 
       // Determine the new status (toggle between 'accept' and 'reject')
       const newApprovalStatus = tech.isApproved === 'accept' ? 'reject' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
@@ -426,7 +414,7 @@ const handleDeleteTechnician = async (id: number) => {
     const selectedTechnicians = technicians.filter(tech => selectedIds.includes(tech.id));
 
     if (selectedTechnicians.length === 0) {
-      toast.error("Please select at least job group to export.");
+      toast.error("Please select at least one job group to export.");
       return;
     }
     const csvOptions = {

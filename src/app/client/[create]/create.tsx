@@ -234,7 +234,37 @@ export default function Technicians() {
   
         router.push('/client/listing');
       } else {
-        toast.error(data.error);
+        const apiErrors: { [key: string]: string } = {};
+
+        // Handle different error response formats
+        if (data.error) {
+          // Check if the error message indicates email or phone number issues
+          if (data.error.toLowerCase().includes('email')) {
+            apiErrors.email = data.error;
+          } else if (data.error.toLowerCase().includes('phone')) {
+            apiErrors.phoneNumber = data.error;
+          } else {
+            // For other general errors
+            toast.error(data.error);
+          }
+        }
+
+        // Also check if there are field-specific errors in data.errors
+        if (data.errors && typeof data.errors === 'object') {
+          Object.entries(data.errors).forEach(([key, value]) => {
+            if (key === 'phoneNumber' || key === 'email') {
+              apiErrors[key] = String(value);
+            }
+          });
+        }
+
+        // Update the errors state if we found field-specific errors
+        if (Object.keys(apiErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...apiErrors }));
+        } else if (data.error && Object.keys(apiErrors).length === 0) {
+          // Show general error toast if no field-specific errors were found
+          toast.error(data.error);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || 'An unexpected error occurred');

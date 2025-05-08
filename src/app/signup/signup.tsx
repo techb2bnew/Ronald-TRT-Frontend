@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import { useRouter } from "next/navigation";
 import InputLabel from '@mui/material/InputLabel';
 import TextField from '@mui/material/TextField';
@@ -62,7 +62,7 @@ export default function Role() {
   const [formData, setFormData] = useState<registerForm>({
     firstName: '',
     lastName: '',
-    businessName:'',
+    businessName: '',
     phoneNumber: '',
     email: '',
     address: '',
@@ -130,7 +130,7 @@ export default function Role() {
     if (confirmPassword !== formData.password) {
       setErrors(prev => ({
         ...prev,
-        confirmPassword: 'Passwords do not match'
+        confirmPassword: 'Enter confirm password'
       }));
     } else {
       setErrors(prev => ({
@@ -285,11 +285,11 @@ export default function Role() {
     if (!formData.state?.trim()) newErrors.state = 'State is required';
     if (!formData.city?.trim()) newErrors.city = 'City is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required'; 
+    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     if (!formData.password?.trim()) newErrors.password = 'Password is required';
 
     if (formData.password && formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Enter confirm password';
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors); // Replace all errors with new ones
@@ -338,13 +338,35 @@ export default function Role() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errors) {
-          setErrors(prev => ({ ...prev, ...data.errors }));
-          Object.values(data.errors).forEach(error => {
+        const apiErrors: { [key: string]: string } = {};
+
+        // Handle different error response formats
+        if (data.error) {
+          // Check if the error message indicates email or phone number issues
+          if (data.error.toLowerCase().includes('email')) {
+            apiErrors.email = data.error;
+          } else if (data.error.toLowerCase().includes('phone')) {
+            apiErrors.phoneNumber = data.error;
+          } else {
+            // For other general errors
             toast.error(data.error);
+          }
+        }
+
+        // Also check if there are field-specific errors in data.errors
+        if (data.errors && typeof data.errors === 'object') {
+          Object.entries(data.errors).forEach(([key, value]) => {
+            if (key === 'phoneNumber' || key === 'email') {
+              apiErrors[key] = String(value);
+            }
           });
-        } else if (data.error) {
-          setErrors(prev => ({ ...prev, general: data.error }));
+        }
+
+        // Update the errors state if we found field-specific errors
+        if (Object.keys(apiErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...apiErrors }));
+        } else if (data.error && Object.keys(apiErrors).length === 0) {
+          // Show general error toast if no field-specific errors were found
           toast.error(data.error);
         }
       } else {
@@ -419,40 +441,40 @@ export default function Role() {
   }, []);
 
 
- const handlePhoneChange = (value: string | undefined) => {
-     // Clear phone number error if it exists
-     if (errors.phoneNumber) {
-       setErrors(prev => {
-         const newErrors = { ...prev };
-         delete newErrors.phoneNumber;
-         return newErrors;
-       });
-     }
-   
-     if (!value) {
-       // Handle empty value case
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: ''
-       }));
-       return;
-     }
-   
-     const parsedNumber = parsePhoneNumberFromString(value);
-     if (parsedNumber) {
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: parsedNumber.number // E.164 format
-       }));
-     } else {
-       // Handle invalid phone number case
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: value // Fallback to raw input
-       }));
-     }
-   };
-  
+  const handlePhoneChange = (value: string | undefined) => {
+    // Clear phone number error if it exists
+    if (errors.phoneNumber) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
+    }
+
+    if (!value) {
+      // Handle empty value case
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      return;
+    }
+
+    const parsedNumber = parsePhoneNumberFromString(value);
+    if (parsedNumber) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: parsedNumber.number // E.164 format
+      }));
+    } else {
+      // Handle invalid phone number case
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: value // Fallback to raw input
+      }));
+    }
+  };
+
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
@@ -460,7 +482,7 @@ export default function Role() {
 
   return (
     <div className='main-container mb-5 bg-white'>
-       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
       <div className="flex">
         <div className="w-1/2 md:block fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
@@ -486,7 +508,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                       <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                     </svg>
-                    <FormControl fullWidth  size="small" error={!!errors.role}>
+                    <FormControl fullWidth size="small" error={!!errors.role}>
                       <InputLabel id="role" color="warning">Select role name *</InputLabel>
                       <Select
                         labelId="role"
@@ -498,17 +520,22 @@ export default function Role() {
                         onChange={handleSelectChange}
                       >
                         {roles
-                          .filter((role) => role.name !== "super admin") // Filter out "super admin"
+                          .filter((role) => role.name !== "super admin")
                           .map((role, index) => (
                             <MenuItem key={index} value={role.name}>
-                              {role.name}
+                              {role.name === "technician"
+                                ? "IFS Technician"
+                                : role.name === "singletechnician"
+                                  ? "Single Technician"
+                                  : role.name}
                             </MenuItem>
                           ))}
                       </Select>
                       {errors.role && (
-                                        <FormHelperText>{errors.role}</FormHelperText>
-                                      )}
+                        <FormHelperText>{errors.role}</FormHelperText>
+                      )}
                     </FormControl>
+
                   </div>
                   {/* <div className='mb-4 relative'>
                     <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -520,7 +547,7 @@ export default function Role() {
  
                   </div> */}
                 </div>
- 
+
                 <div className={`grid ${selectedRole?.type === 'single-technician' ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
 
                   {/* Client Name and Business Name */}
@@ -531,7 +558,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="First name *"   value={formData.firstName} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="First name *" value={formData.firstName} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -541,20 +568,20 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Last name *"   value={formData.lastName} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Last name *" value={formData.lastName} onChange={handleChange} />
 
 
                   </div>
                   {selectedRole?.type === 'single-technician' && (
-                  <div className='mb-4 relative'>
+                    <div className='mb-4 relative'>
 
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                      <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                      <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="businessName" id="outlined-basic" color="warning" label="Business name *" size="small" value={formData.businessName} onChange={handleChange} />
-                  </div>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                        <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                        <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
+                      <TextField fullWidth name="businessName" id="outlined-basic" color="warning" label="Business name *" size="small" value={formData.businessName} onChange={handleChange} />
+                    </div>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -568,11 +595,11 @@ export default function Role() {
                       value={formData.phoneNumber}
                       error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''}
                       onChange={handlePhoneChange}
-                      className="input text-xs  input-bordered w-full p-2 rounded border border-gray-400"
+                      className={`input text-xs input-bordered w-full p-2 rounded border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-400'}`}
                     />
-                     {errors.phoneNumber && (
-                <div className="text-red-500 text-xs mt-1">{errors.phoneNumber}</div>
-              )}
+                    {errors.phoneNumber && (
+                      <div className="text-red-500 text-xs mt-1">{errors.phoneNumber}</div>
+                    )}
                   </div>
                   <div className='mb-4 relative'>
                     <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -580,7 +607,7 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth  name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
+                    <TextField fullWidth name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
 
                   </div>
                 </div>
@@ -594,7 +621,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg> */}
-                    <FormControl fullWidth  size="small" error={!!errors.country}>
+                    <FormControl fullWidth size="small" error={!!errors.country}>
                       <InputLabel id="country" color="warning">Select country *</InputLabel>
                       <Select
                         labelId="country"
@@ -610,8 +637,8 @@ export default function Role() {
                         ))}
                       </Select>
                       {errors.country && (
-                                        <FormHelperText>{errors.country}</FormHelperText>
-                                      )}
+                        <FormHelperText>{errors.country}</FormHelperText>
+                      )}
                     </FormControl>
 
 
@@ -622,7 +649,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg> */}
-                    <FormControl fullWidth  size="small" error={!!errors.state}>
+                    <FormControl fullWidth size="small" error={!!errors.state}>
                       <InputLabel id="state" color="warning">Select state *</InputLabel>
                       <Select
                         labelId="state"
@@ -638,8 +665,8 @@ export default function Role() {
                         ))}
                       </Select>
                       {errors.state && (
-                                        <FormHelperText>{errors.state}</FormHelperText>
-                                      )}
+                        <FormHelperText>{errors.state}</FormHelperText>
+                      )}
                     </FormControl>
 
 
@@ -652,7 +679,7 @@ export default function Role() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                     {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth  error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="City *" size="small" value={formData.city} onChange={handleChange} />
+                    <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="City *" size="small" value={formData.city} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -672,7 +699,7 @@ export default function Role() {
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  <TextField fullWidth  error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Address *" size="small" value={formData.address} onChange={handleChange} />
+                  <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Address *" size="small" value={formData.address} onChange={handleChange} />
 
 
                 </div>
@@ -693,7 +720,7 @@ export default function Role() {
                       <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                       <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
                     </svg>
-                    <TextField fullWidth  name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
+                    <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
 
 
                   </div>
@@ -702,7 +729,7 @@ export default function Role() {
                       <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <TextField fullWidth  name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
+                    <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
 
 
                   </div>
@@ -710,23 +737,23 @@ export default function Role() {
                 <div className="grid grid-cols-2 gap-4">
 
                   <div className='mb-4 relative'>
-                     
+
                     <TextField fullWidth error={!!errors.password} helperText={errors.password || ''} type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password *" size="small" value={formData.password} onChange={handleChange} />
                     <button
                       type="button"
                       style={{ position: 'absolute', right: '10px', top: '10px' }}
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={ EyeOff} width='14' height='14' alt="eye" />
+                      {showPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                       }
                     </button>
 
                   </div>
                   <div className='mb-4 relative'>
-                     
+
                     <TextField
                       fullWidth
-                      
+
                       type={showConformPassword ? "text" : "password"}
                       name="confirmPassword"
                       id="confirmPassword"
@@ -759,10 +786,10 @@ export default function Role() {
                         <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                         </svg>
-                        <p className='text-sm mb-1 mt-1'>Upload File</p>
-                        <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, PNG and PDF' will be accepted)</span>
+                        <p className='text-sm mb-1 mt-1 laptop__font'>Upload Tax Form</p>
+                        <span className="text-center m-auto text-xs block laptop__size"> (Only 'JPEG, WEBP, PNG and PDF' will be accepted)</span>
                       </label>
-                      <input type="file" multiple   accept=".jpeg,.jpg,.png,.webp,.pdf" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
+                      <input type="file" multiple accept=".jpeg,.jpg,.png,.webp,.pdf" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
                       {/* onChange={handleFileChange} */}
                     </div>
                     <div className="flex flex-wrap gap-5 items-center relative mt-5">
@@ -805,8 +832,8 @@ export default function Role() {
                         <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                         </svg>
-                        <p className='text-sm mb-1 mt-1'>Upload Profile Image</p>
-                        <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
+                        <p className='text-sm mb-1 mt-1 laptop__font'>Upload Profile Image</p>
+                        <span className="text-center m-auto text-xs block laptop__size"> (Only 'JPEG, WEBP, GIF and PNG' images will be accepted)</span>
                       </label>
                       <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleImageChange} />
                     </div>
@@ -827,33 +854,33 @@ export default function Role() {
                     )}
                   </div>
                   {selectedRole?.type === 'single-technician' && (
-                  <div className='mb-0'>
-                    <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
-                      <label className="label text-center">
-                        <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
-                        </svg>
-                        <p className='text-sm mb-1 mt-1'>Upload Business Logo</p>
-                        <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
-                      </label>
-                      <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
-                    </div>
-
-                    {formData.businessLogo && (
-                      <div className='flex items-center mt-5 shadow rounded p-2 relative w-[fit-content]'>
-                        {formData.businessLogo instanceof File ? (
-                          <img src={URL.createObjectURL(formData.businessLogo)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                        ) : (
-                          <img src={formData.businessLogo} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                        )}
-                        <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <div className='mb-0'>
+                      <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
+                        <label className="label text-center">
+                          <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                           </svg>
-                        </button>
+                          <p className='text-sm mb-1 mt-1 laptop__font'>Upload Business Logo</p>
+                          <span className="text-center m-auto text-xs block laptop__size"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                        </label>
+                        <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
                       </div>
-                    )}
-                  </div>
+
+                      {formData.businessLogo && (
+                        <div className='flex items-center mt-5 shadow rounded p-2 relative w-[fit-content]'>
+                          {formData.businessLogo instanceof File ? (
+                            <img src={URL.createObjectURL(formData.businessLogo)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                          ) : (
+                            <img src={formData.businessLogo} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                          )}
+                          <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
 

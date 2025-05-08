@@ -68,14 +68,15 @@ export default function Forgot() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errors) {
-          setErrors(prev => ({ ...prev, ...data.errors }));
-          Object.values(data.errors).forEach(error => {
+        if (data.error) {
+          if (data.error.includes('email') || data.error.includes('account') || data.error.includes('User not found')) {
+            // Email related errors
+            setErrors(prev => ({ ...prev, emailOrPhone: data.error }));
+          } else {
+            // Other general errors
+            setErrors(prev => ({ ...prev, general: data.error }));
             toast.error(data.error);
-          });
-        } else if (data.error) {
-          setErrors(prev => ({ ...prev, general: data.error }));
-          toast.error(data.error);
+          }
         }
       } else {
         await Swal.fire({

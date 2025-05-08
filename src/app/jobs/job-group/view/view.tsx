@@ -280,7 +280,23 @@ export default function ViewDetails() {
               <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]" onClick={() => {
                 fetchCustomerData(vin);
               }}>
-                All Data
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M14.2519 9.2266C14.1894 9.2266 14.1308 9.21879 14.0683 9.20707C13.6347 9.10551 13.3652 8.67192 13.4667 8.23442L14.3573 4.42582C14.4823 3.89067 15.0214 3.55473 15.5566 3.67582L19.3691 4.5391C19.8027 4.63676 20.0761 5.07035 19.9784 5.50395C19.8808 5.93754 19.4472 6.21098 19.0136 6.11332L15.7909 5.38285L15.037 8.6016C14.9511 8.9766 14.6191 9.2266 14.2519 9.2266Z"
+                    fill="black"
+                  />
+                  <path
+                    d="M9.07031 19.0703C6.64844 19.0703 4.37109 18.1289 2.65625 16.4141C0.941406 14.6992 0 12.4219 0 10C0 7.57812 0.941406 5.30078 2.65625 3.58594C4.36719 1.875 6.64453 0.929688 9.07031 0.929688C9.97656 0.929688 10.8711 1.0625 11.7266 1.32422C12.1523 1.45313 12.3945 1.90625 12.2617 2.33203C12.1328 2.75781 11.6797 3 11.2539 2.86719C10.5508 2.65234 9.8125 2.54297 9.07031 2.54297C4.96094 2.54687 1.61719 5.89062 1.61719 10C1.61719 14.1094 4.96094 17.4531 9.07031 17.4531C13.1797 17.4531 16.5234 14.1094 16.5234 10C16.5234 8.16406 15.8516 6.40234 14.6289 5.03516C14.332 4.70312 14.3594 4.19141 14.6914 3.89453C15.0234 3.59766 15.5352 3.625 15.832 3.95703C17.3203 5.62109 18.1406 7.76562 18.1406 10C18.1406 12.4219 17.1992 14.6992 15.4844 16.4141C13.7695 18.125 11.4922 19.0703 9.07031 19.0703Z"
+                    fill="black"
+                  />
+                </svg>
+
               </button>
             </div>
           </div>
@@ -354,11 +370,15 @@ export default function ViewDetails() {
 
                     <div className="mb-2 text-sm items-center flex">
                       <strong className="mr-3 inline-block w-[180px]">Technician Number: </strong>
-                      {job.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
+                      {job.technicians?.map((t: any, index: number) => (
+                        <a key={index} href={`tel:${t.phoneNumber}`} className="hover:underline">
+                          {t.phoneNumber}
+                        </a>
+                      ))}
                     </div>
 
                     <div className="mb-2 text-sm items-center flex">
-                      <strong className="mr-3 block w-[180px]">
+                      <strong className="mr-3 block w-[180px]" style={{ minWidth: '180px' }}>
                         Vehicle Type:
                       </strong>{" "}
                       {job?.vehicleType}
@@ -471,7 +491,29 @@ export default function ViewDetails() {
                         <strong className='mr-3 inline-block w-[180px]'>Labour Cost:</strong> ${job?.labourCost}</div>
 
                     )}
+                    <div className="mb-2 text-sm items-center flex">
 
+                      <strong className="mr-3 inline-block w-[180px] capitalize ">Sub Total: </strong>
+
+                      {(() => {
+                        if (!job) return null;
+
+                        // Parse jobDescription items and calculate total cost
+                        let totalCost = 0;
+
+                        if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+                          totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+                            return sum + Number(item?.cost || 0); // Accumulate the cost
+                          }, 0);
+                        }
+
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            ${totalCost.toFixed(2)}
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <div className="mb-2 text-sm items-center flex">
                       <strong className="mr-3 inline-block w-[180px]">Total Cost: </strong> ${calculateTotalCost(job).toFixed(2)}
                     </div>
@@ -577,7 +619,7 @@ export default function ViewDetails() {
                   </div>
                 )}
                 <div>
-                  <h2 className="font-[600] text-[#383D71]">{job.customer.firstName}{job.customer.lastName}</h2>
+                  <h2 className="font-[600] text-[#383D71]">{job.customer.firstName} {job.customer.lastName}</h2>
                   <p className="text-[12px] text-[#383D71]">Customer</p>
                 </div>
               </div>

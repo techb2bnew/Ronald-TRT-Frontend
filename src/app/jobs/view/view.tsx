@@ -202,7 +202,8 @@ export default function ViewDetails() {
                 {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
               </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Date:</strong> {new Date(jobData.updatedAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {new Date(jobData.createdAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>End Date:</strong> {new Date(jobData.completedDate).toLocaleDateString('en-GB')} </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -401,6 +402,13 @@ export default function ViewDetails() {
                   'No job descriptions available'
                 )}
               </div>
+              {jobData?.jobDescription && Array.isArray(jobData.jobDescription) && (
+                <div className="mb-4 border-b border-gray-500 text-sm pb-4">
+                  <strong className='w-[210px] inline-block'>Sub Total: </strong>
+                  ${jobData.jobDescription.reduce((total:any, item:any) => total + parseFloat(item.cost || '0'), 0)}
+                </div>
+              )}
+
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
                 <strong className='w-[210px] inline-block'>Total Cost: </strong>  ${calculateTotalCost(jobData).toFixed(2)}
               </div>

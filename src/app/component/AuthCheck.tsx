@@ -14,8 +14,8 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const checkAuthAndStatus = async () => {
-      setIsLoading(true); 
-
+      setIsLoading(true);
+  
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userID");
   
@@ -44,39 +44,49 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
   
         const data = await response.json();
         const currentUser = data.technician;
-        console.log(currentUser, 'currentUser')
-        // ✅ If any of these are false → logout
-         
-        if (!currentUser.isApproved || !currentUser.accountStatus || !currentUser.deletedStatus) {
-          if (!currentUser.isApproved) {
-            await Swal.fire({
-              icon: 'error',
-              title: 'Access Revoked',
-              text: 'Technician access revoked. Logging out...',
-            });
-          }
-  
-          if (!currentUser.accountStatus) {
-            await Swal.fire({
-              icon: 'warning',
-              title: 'Account Inactive',
-              text: 'Your technician account is inactive. Please contact support.',
-            });
-          }
-  
-          if (!currentUser.deletedStatus) {
-            await Swal.fire({
-              icon: 'warning',
-              title: 'Account Deleted',
-              text: 'Your technician account has been deleted. Please contact support.',
-            });
-          }
+        console.log(currentUser,'currentUsercurrentUser');
+        
+        // 🛑 Check account restrictions
+        if (currentUser?.isApproved === 'cancel' || currentUser?.isApproved === 'reject') {
+          await Swal.fire({
+            icon: 'error',
+            title: 'Access Revoked',
+            text: 'Technician access revoked. Logging out...',
+            customClass: {
+              container: 'z-[999999]'
+            }
+          });
+          localStorage.clear();
+          router.push("/");
+          return;
+        }   
+        if (!currentUser?.accountStatus) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Account Inactive',
+            text: 'Your technician account is inactive. Please contact support.',
+            customClass: {
+              container: 'z-[999999]'
+            }
+          });
+          localStorage.clear();
+          router.push("/");
+          return;
+        }   if (!currentUser?.deletedStatus) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Account Deleted',
+            text: 'Your technician account has been deleted. Please contact support.',
+            customClass: {
+              container: 'z-[999999]'
+            }
+          });
           localStorage.clear();
           router.push("/");
           return;
         }
   
-        // Passed all checks
+        // ✅ Passed all checks
         setIsLoading(false);
   
       } catch (error) {
@@ -88,6 +98,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
   
     checkAuthAndStatus();
   }, [router]);
+  
   
 
   if (isLoading) {

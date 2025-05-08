@@ -125,11 +125,11 @@ export default function ViewDetails() {
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Role Type:</strong> {CustomerData?.roleType}</p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
                 <strong className='w-[200px] inline-block'>Country:</strong>
                 {getCountryName(CustomerData?.country)}
               </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
                 <strong className='w-[200px] inline-block'>State:</strong>
                 {getStateName(CustomerData?.country, CustomerData?.state)}
               </p>  

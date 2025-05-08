@@ -469,7 +469,9 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>{job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
+              <a className="hover:underline" href={`tel:${tech.technicians}`}> 
             {tech.phoneNumber}
+            </a>
           </div>
         ))}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
@@ -717,7 +719,7 @@ const JobTable: React.FC = () => {
         ]}
       />
 
-      <CommonHeader heading="Active Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Active Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Work Order" buttonLink="/jobs/create-job/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -73,14 +73,14 @@ export default function RootLayout({
         position="top-center"
         toastOptions={{
           // Default options for all toasts
-          duration: 5000,
+          duration: 2000,
           style: {
             background: '#363636',
             color: '#fff',
           },
           // Success-specific options
           success: {
-            duration: 3000,
+            duration: 2000,
             style: {
               background: '#4BB543', // Green color for success
               color: '#fff',

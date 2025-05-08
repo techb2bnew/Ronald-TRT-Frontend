@@ -251,6 +251,7 @@ export default function Technicians() {
                 </svg>
                 <p className='text-sm mb-1 mt-1'>Upload File</p>
                 <span className="text-center m-auto text-xs block"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                <p  className='text-sm mt-2'>Please upload banners with size 321x173</p>
               </label>
               <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleFileChange} />
             </div>
