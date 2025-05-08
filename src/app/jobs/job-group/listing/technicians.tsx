@@ -74,17 +74,17 @@ function JobTListing({}: Props) {
       let endpoint = '';
   
       if (filterType) {
-        endpoint = `${apiUrl}/fetchGroupJob?filterType=${filterType}`;
+        endpoint = `${apiUrl}/fetchGroupJob?filterType=${filterType}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
       } else if (query.trim()) {
         endpoint =
           roleType === 'superadmin'
-            ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-            : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`;
+            ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`
+            : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
       } else {
         endpoint =
           roleType === 'superadmin'
-            ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-            : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+            ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`
+            : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`;
       }
   
       const response = await fetch(endpoint, { method: 'GET', headers });

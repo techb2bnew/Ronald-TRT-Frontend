@@ -356,8 +356,7 @@ export default function ClientListing() {
 
         <td>{cust.email}</td>
         <td>{cust.phoneNumber}</td>
-        <td>{cust.address}</td>
-        <td>{cust.country}</td>
+        <td>{cust.address}</td> 
         <td>
           {/* <TableActions 
          editRoute={`/client/create?customerId=${cust.id}`}   
@@ -446,28 +445,20 @@ export default function ClientListing() {
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
-              <th className="w-[100px]" onClick={() => handleSort('country')}>
-                Country
-                {sortBy === 'country' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
+              </th> 
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={7} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : customer.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={7} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

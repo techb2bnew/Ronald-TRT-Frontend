@@ -4,6 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { Country, State } from 'country-state-city';
 
 export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
@@ -51,6 +52,17 @@ export default function ViewDetails() {
       setIsEdit(false);
     }
   }, []);
+
+  const getCountryName = (isoCode: string) => {
+    if (!isoCode) return 'No country selected';
+    const country = Country.getCountryByCode(isoCode);
+    return country?.name || isoCode; // Fallback to ISO code if country not found
+  };
+  const getStateName = (countryCode: string, stateCode: string) => {
+    if (!countryCode || !stateCode) return 'No state selected';
+    const state = State.getStateByCodeAndCountry(stateCode, countryCode);
+    return state?.name || stateCode; // Fallback to code if name not found
+  };
 
   if (!technician) {
     return <div><Loading /></div>;
@@ -131,13 +143,19 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
 
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Country:</strong> {technician?.country}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
+              <p className='border-b border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] inline-block'>Country:</strong>
+                {getCountryName(technician?.country)}
+              </p>
+              <p className='border-b border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] inline-block'>State:</strong>
+                {getStateName(technician?.country, technician?.state)}
+              </p>
+              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
+              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
 
 
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
+              <p className='border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Secondary Ph:</strong>
                 {technician?.secondaryContactName ? (
                   technician.secondaryContactName
@@ -225,7 +243,7 @@ export default function ViewDetails() {
                             </button>
                           ) : (
                             <img
-                            onClick={() => setPreviewImage(form)}
+                              onClick={() => setPreviewImage(form)}
                               src={form}
                               alt={`Technician Tax Form ${index + 1}`}
                               className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer"
