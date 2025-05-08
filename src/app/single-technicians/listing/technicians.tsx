@@ -89,10 +89,6 @@ const TechnicianTable: React.FC = () => {
 
 
   const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
-
-
-    const newStatus = isApproved ? 'Approved' : 'Accept';
-
     try {
       const token = localStorage.getItem('token');
       const config = {
@@ -102,15 +98,22 @@ const TechnicianTable: React.FC = () => {
         },
       };
 
-      const response = await axios.post(
-        `${apiUrl}/technicianActiveUnactiveAccount`, // Correct API
+      await axios.post(
+        `${apiUrl}/technicianActiveUnactiveAccount`,
         {
           technicianId: techId,
-          isApproved: isApproved, // Corrected here
+          isApproved: isApproved,
         },
         config
       );
 
+      // Show success message
+      // Swal.fire({
+      //   title: 'Success!',
+      //   text: `Technician status changed to ${isApproved === 'accept' ? 'Accepted' : 'Rejected'}`,
+      //   icon: 'success',
+      //   confirmButtonText: 'OK',
+      // });
 
     } catch (error) {
       console.error('Error updating approval status:', error);
@@ -127,7 +130,6 @@ const TechnicianTable: React.FC = () => {
     try {
       // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
       if ((!tech.simpleFlatRate)) {
-        // Show SweetAlert for missing payment info and stop further execution
         await Swal.fire({
           title: 'Missing Payment Info',
           text: 'Please enter payrate for this technician.',
@@ -135,32 +137,32 @@ const TechnicianTable: React.FC = () => {
           confirmButtonColor: '#383d71',
           confirmButtonText: 'OK',
         });
-        return; // Stop execution if payment info is missing
+        return;
       }
 
-      // Step 2: Confirm both account status change and approval status change
-      const newAccountStatus = tech.accountStatus ? 'Active' : 'Inactive';
-      const newApprovalStatus = tech.isApproved ? 'accept' : 'reject';
+      // Determine the new status (toggle between 'accept' and 'reject')
+      const newApprovalStatus = tech.isApproved === 'accept' ? 'reject' : 'accept';
+      const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
 
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to change the account status to ${newAccountStatus} and the technician status to ${newApprovalStatus}?`,
+        text: `Do you want to ${newApprovalStatus} this technician?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: 'Yes, change them!',
+        confirmButtonText: `Yes, ${newApprovalStatus} them!`,
       });
 
-      // Step 3: If user confirms, update both account status and approval status
       if (result.isConfirmed) {
-        // Step 4: Handle account status change
-        await handleAccountStatusChange(tech.id, !tech.accountStatus);
+        // Update account status first
+        await handleAccountStatusChange(tech.id, newAccountStatus);
 
-        // Step 5: Handle approval change
+        // Then update approval status
         await handleApprovalChange(tech.id, newApprovalStatus, tech);
-        fetchTechnicians(currentPage, searchTerm, pageSize);
 
+        // Refresh the list
+        fetchTechnicians(currentPage, searchTerm, pageSize);
       }
 
     } catch (error) {
@@ -240,7 +242,50 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
+const handleDeleteTechnician = async (id: number) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You can undo this action!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
 
+    if (!result.isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const body = JSON.stringify({
+        technicianId: id,  // Changed from [idKey] to explicit field name
+        deletedStatus: false,
+      });
+
+      const response = await fetch(`${apiUrl}/deleteTechnician`, {
+        method: "POST",
+        headers,
+        body,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await Swal.fire("Deleted!", "Technician has been deleted.", "success");
+        fetchTechnicians(currentPage, searchTerm, pageSize); // Refresh the list
+      } else {
+        Swal.fire("Error!", data.message || "Failed to delete technician.", "error");
+      }
+    } catch (error) {
+      Swal.fire("Error!", "An error occurred while deleting technician.", "error");
+    }
+  };
 
 
 
@@ -616,35 +661,31 @@ const TechnicianTable: React.FC = () => {
         >
           <div className='flex gap-4'>
             <div
-              onClick={() => {
-                if (tech.isApproved !== 'accept') {
-                  handleChangeBothStatuses(tech);
-                }
+              onClick={() => { 
+                handleChangeBothStatuses(tech); 
               }}
-              style={{ cursor: 'pointer' }}
             >
               <span
                 className={`badge ${tech.isApproved === 'accept'
                   ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  : 'badge-error bg-[#FFE4E1] text-[#FF0000]'
-                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]`}
+                  : 'badge-success bg-[#E6F9DD] text-[#1A932E]'
+                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px] cursor-pointer`}
               >
-                {tech.isApproved === 'accept' ? 'Accept' : 'Rejected'}
+                {tech.isApproved === 'accept' ? 'Accepted' : 'Accept'}
               </span>
             </div>
 
-            {tech.isApproved === 'accept' && (
+            {tech.isApproved !== 'accept' && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCancelClick(tech.id, tech);
+                  handleDeleteTechnician(tech.id);
                 }}
                 className="ml-2 text-sm pl-2 pr-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
               >
                 Reject
               </button>
             )}
-
           </div>
         </td>
 
@@ -679,7 +720,7 @@ const TechnicianTable: React.FC = () => {
       />
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Status', 'Account Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}

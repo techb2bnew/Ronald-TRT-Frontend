@@ -485,7 +485,7 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>${SubTotal.toFixed(2)}</td>
         <td>
-          ${job.labourCost}
+          ${job.labourCost ?? job.technicians?.[0]?.simpleFlatRate ?? "0"}
         </td>
         <td>${totalCost.toFixed(2)}</td>
         <td>
