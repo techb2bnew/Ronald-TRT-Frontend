@@ -570,7 +570,7 @@ const TechnicianTable: React.FC = () => {
                 className={`badge ${tech.isApproved === 'accept'
                   ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
                   : 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px]`}
+                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px] cursor-pointer`}
               >
                 {tech.isApproved === 'accept' ? 'Accepted' : 'Accept'}
               </span>

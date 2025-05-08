@@ -255,11 +255,9 @@ const ArchivePage = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchArchive(currentPage, searchTerm, pageSize);
-    }, 500);
-    return () => clearTimeout(timeoutId);
+  useEffect(() => { 
+      fetchArchive(currentPage, searchTerm, pageSize); 
+    return;
   }, [currentPage, searchTerm, pageSize, selectedArchiveType, singleTechnicianId]);
 
   const handlePageSizeChange = (size: number) => {
