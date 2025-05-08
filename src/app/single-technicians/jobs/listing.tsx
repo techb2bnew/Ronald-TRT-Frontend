@@ -441,10 +441,17 @@ const JobTable: React.FC = () => {
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
 
-    const totalCost = job.jobDescription.reduce((sum: number, job: any) => {
+    const SubTotal = job.jobDescription.reduce((sum: number, job: any) => {
       const parsedJob = (job);
       return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
     }, 0);
+
+    const labourTotal = job.labourCost
+      ? Number(job.labourCost)
+      : job.technicians?.reduce((sum: number, tech: any) => sum + Number(tech.simpleFlatRate || 0), 0) || 0;
+
+    const totalCost = SubTotal + labourTotal;
+
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -476,7 +483,11 @@ const JobTable: React.FC = () => {
             {tech.phoneNumber}
           </div>
         ))}</td>
-        <td>${totalCost}</td>
+        <td>${SubTotal.toFixed(2)}</td>
+        <td>
+          ${job.labourCost}
+        </td>
+        <td>${totalCost.toFixed(2)}</td>
         <td>
           {canCreate && (
 
@@ -564,7 +575,9 @@ const JobTable: React.FC = () => {
                 Technician Name
               </th>
               <th className="w-[100px]">Tech. Number</th>
-              <th className="w-[160px]">Total Cost</th>
+              <th className="w-[100px]">Sub Total</th>
+              <th className="w-[100px]">R/I/R/R</th>
+              <th className="w-[100px]">Total Cost</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[160px]">Action</th>
             </tr>
