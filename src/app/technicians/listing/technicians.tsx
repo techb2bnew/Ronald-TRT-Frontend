@@ -197,6 +197,7 @@ const TechnicianTable: React.FC = () => {
       // Determine the new status (toggle between 'accept' and 'reject')
       const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
+      const statusText = newApprovalStatus.toLowerCase() === 'cancel' ? 'Reject' : newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1);
 
       const result = await Swal.fire({
         title: 'Are you sure?',
@@ -205,7 +206,7 @@ const TechnicianTable: React.FC = () => {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1)}`,
+        confirmButtonText: `Yes, ${statusText}`,
 
       });
 
