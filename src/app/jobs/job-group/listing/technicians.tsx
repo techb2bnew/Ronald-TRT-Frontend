@@ -33,9 +33,9 @@ interface ActiveJobState {
   jobs: any[];
   totalGroupJob: any[];
 }
-type Props = { 
+type Props = {
 };
-function JobTListing({}: Props) {
+function JobTListing({ }: Props) {
   const [activeJob, setActiveJob] = useState<ActiveJobState>({ jobs: [], totalGroupJob: [] });
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
@@ -56,7 +56,7 @@ function JobTListing({}: Props) {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
   };
- 
+
   const fetchJobs = async (
     page = 1,
     query = '',
@@ -70,9 +70,9 @@ function JobTListing({}: Props) {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
       let endpoint = '';
-  
+
       if (filterType) {
         endpoint = `${apiUrl}/fetchGroupJob?filterType=${filterType}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
       } else if (query.trim()) {
@@ -86,24 +86,24 @@ function JobTListing({}: Props) {
             ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`
             : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`;
       }
-  
+
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-  
+
       if (response.ok) {
         const isSearch = query.trim() !== '';
         const fetchedTechnicians: Jobs[] = query.trim()
           ? data.searchGroup || []
           : data.GroupJob || [];
-          setIsSearchActive(isSearch);
-          if (isSearch) {
-            setSearchResults(fetchedTechnicians); // ✅ Add this
-          }
+        setIsSearchActive(isSearch);
+        if (isSearch) {
+          setSearchResults(fetchedTechnicians); // ✅ Add this
+        }
         setActiveJob({
           jobs: fetchedTechnicians,
           totalGroupJob: data.totalGroupJob || [],
         });
-        console.log(fetchedTechnicians,'fetchedTechnicians')
+        console.log(fetchedTechnicians, 'fetchedTechnicians')
         setTotalPages(data.jobs?.totalPages || 1);
       } else {
         if (data.error === 'Invalid Token') {
@@ -118,7 +118,7 @@ function JobTListing({}: Props) {
       setLoading(false);
     }
   };
-  
+
 
 
   useEffect(() => {
@@ -180,7 +180,7 @@ function JobTListing({}: Props) {
     }));
   };
 
- 
+
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -349,7 +349,7 @@ function JobTListing({}: Props) {
   const normalizedJobs: any[] = [];
 
   const sourceJobs = isSearchActive ? searchResults : activeJob.jobs;
-  
+
   if (Array.isArray(sourceJobs)) {
     sourceJobs.forEach((jobGroup: any) => {
       if (Array.isArray(jobGroup.customer)) {
@@ -368,7 +368,7 @@ function JobTListing({}: Props) {
       }
     });
   }
-  
+
   const handleDeleteGroupJob = async (vin: string) => {
     try {
       // Step 1: Confirm before proceeding
@@ -380,7 +380,7 @@ function JobTListing({}: Props) {
         confirmButtonColor: '#d33',
         cancelButtonColor: 'gray',
         confirmButtonText: 'Yes, delete it!',
-      }); 
+      });
       if (result.isConfirmed) {
         const token = localStorage.getItem('token');
         const config = {
@@ -389,7 +389,7 @@ function JobTListing({}: Props) {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
         };
-  
+
         await axios.post(
           `${apiUrl}/deleteGroupJobs`,
           {
@@ -397,7 +397,7 @@ function JobTListing({}: Props) {
             deletedStatus: false,
           },
           config
-        ); 
+        );
         Swal.fire({
           title: 'Deleted!',
           text: 'Job group has been marked as not deleted.',
@@ -406,7 +406,7 @@ function JobTListing({}: Props) {
         });
         fetchJobs(currentPage, searchTerm, pageSize);
       }
-  
+
     } catch (error) {
       console.error('Error deleting job group:', error);
       Swal.fire({
@@ -417,25 +417,25 @@ function JobTListing({}: Props) {
       });
     }
   };
-  
-  
-  
-  
+
+
+
+
   const renderRow = (job: any) => {
     const roleType = localStorage.getItem('types') || "";
-  
+
     const subtotalcost = job.customer.jobDescription?.reduce((sum: number, job: any) => {
       return sum + Number(job.cost || 0);
     }, 0) || 0;
-    
-  
+
+
     const simpleFlatRate = Number(job.customer.simpleFlatRate);
     const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
       ? subtotalcost + simpleFlatRate
       : subtotalcost;
-  
+
     const isChecked = selectedIds.includes(job.customer.id);
-  
+
     return (
       <tr key={job?.customer?.id}>
         <td>
@@ -453,23 +453,23 @@ function JobTListing({}: Props) {
             </span>
           </label>
         </td>
-  
+
         <td>
           <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>
             {job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}
           </Link>
         </td>
-  
+
         <td>{job?.customer?.customer?.phoneNumber}</td>
-  
+
         <td>
           {job?.customer?.technicians?.map((t: any, i: number) => (
             <div key={`${t.id}-${i}`}>{t.firstName} {t.lastName}</div>
           ))}
         </td>
-  
+
         <td>{job?.customer.vin}</td>
-  
+
         <td>
           <span className={`badge ${job.customer.jobStatus
             ? "bg-[#E6F9DD] text-[#1A932E]"
@@ -478,37 +478,42 @@ function JobTListing({}: Props) {
             {job.customer.jobStatus ? "Completed" : "Inprogress"}
           </span>
         </td>
-  
+
         <td>
-  {(() => {
-    // For regular non-search case, we use totalGroupJob
-    const group = activeJob.totalGroupJob?.find((g: any) => g.vin === job.vin);
+          {(() => {
+            // For regular non-search case, we use totalGroupJob
+            const group = activeJob.totalGroupJob?.find((g: any) => g.vin === job.vin);
 
-    // If it's a search, we need to look in searchResults (which corresponds to searchGroup)
-    if (isSearchActive) {
-      const searchGroupItem = searchResults.find((s: any) => s.vin === job.vin);
-      
-      // Check if the searchGroupItem exists in the searchResults
-      if (searchGroupItem && searchGroupItem.customer) {
-        const completedJobsSearch = searchGroupItem.customer.filter((c: any) => c.jobStatus).length;
-        return `${completedJobsSearch}/${searchGroupItem.vinCount} Jobs Done`;
-      } else {
-        return '0/0'; // Return if no matching group in search results
-      }
-    }
+            // If it's a search, we need to look in searchResults (which corresponds to searchGroup)
+            if (isSearchActive) {
+              const searchGroupItem = searchResults.find((s: any) => s.vin === job.vin);
 
-    // Regular case (non-search): Use totalGroupJob
-    if (!group) return '0/0';
+              // Check if the searchGroupItem exists in the searchResults
+              if (searchGroupItem && searchGroupItem.customer) {
+                const customers = Array.isArray(searchGroupItem.customer)
+                  ? searchGroupItem.customer
+                  : [searchGroupItem.customer]; // convert to array if it's a single object
 
-    const completedJobs = group.jobs.filter((j: any) => j.jobStatus).length;
-    return `${completedJobs}/${group.count} Jobs Done`;
-  })()}
-</td>
+                const completedJobsSearch = customers.filter((c: any) => c.jobStatus).length;
+                return `${completedJobsSearch}/${searchGroupItem.vinCount} Jobs Done`;
+
+              } else {
+                return '0/0'; // Return if no matching group in search results
+              }
+            }
+
+            // Regular case (non-search): Use totalGroupJob
+            if (!group) return '0/0';
+
+            const completedJobs = group.jobs.filter((j: any) => j.jobStatus).length;
+            return `${completedJobs}/${group.count} Jobs Done`;
+          })()}
+        </td>
 
 
-  
+
         <td>${(job?.customer?.simpleFlatRate && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-  
+
         {roleType !== 'single-technician' && (
           <td>
             {(() => {
@@ -516,25 +521,25 @@ function JobTListing({}: Props) {
               const jobFlat = Number(job.customer.simpleFlatRate);
               const techFlat = Number(tech.simpleFlatRate);
               const flatRate = jobFlat > 0 ? jobFlat : (techFlat > 0 ? techFlat : 0);
-  
+
               const jobPerc = Number(job.customer.amountPercentage);
               const techPerc = Number(tech.amountPercentage);
               const percentage = jobPerc > 0 ? jobPerc : (techPerc > 0 ? techPerc : 0);
-  
+
               if (flatRate === 0 && percentage === 0) {
                 return <span style={{ color: 'red' }}>Per job</span>;
               }
-  
+
               if (flatRate > 0) {
                 return `$${flatRate.toFixed(2)}`;
               }
-  
+
               const amount = (subtotalcost * percentage) / 100;
               return `$${amount.toFixed(2)} (${percentage}%)`;
             })()}
           </td>
         )}
-  
+
         {roleType === 'single-technician' && (
           <td>
             {(() => {
@@ -546,7 +551,7 @@ function JobTListing({}: Props) {
             })()}
           </td>
         )}
-  
+
         {roleType !== 'single-technician' && (
           <td>
             {(() => {
@@ -560,7 +565,7 @@ function JobTListing({}: Props) {
             })()}
           </td>
         )}
-  
+
         {roleType === 'single-technician' && (
           <td>
             {(() => {
@@ -571,23 +576,23 @@ function JobTListing({}: Props) {
             })()}
           </td>
         )}
-  
+
         <td>
           <div className="flex items-center gap-3">
-          <Link href={`/jobs/job-group/view?vin=${job?.vin}`}>
-            <Image alt="eye" src={Eye} className="w-[16px]" data-tooltip-id="view" data-tooltip-content="View" />
-          </Link>
-          <div onClick={() => handleDeleteGroupJob(job.vin)} className='cursor-pointer'>
-            <Image alt="delete" src={Delete} className="w-[12px]" data-tooltip-id="Delete" data-tooltip-content="Delete" />
-          </div>
-          <Tooltip id="view" place="top" />
-          <Tooltip id="Delete" place="top" />
+            <Link href={`/jobs/job-group/view?vin=${job?.vin}`}>
+              <Image alt="eye" src={Eye} className="w-[16px]" data-tooltip-id="view" data-tooltip-content="View" />
+            </Link>
+            <div onClick={() => handleDeleteGroupJob(job.vin)} className='cursor-pointer'>
+              <Image alt="delete" src={Delete} className="w-[12px]" data-tooltip-id="Delete" data-tooltip-content="Delete" />
+            </div>
+            <Tooltip id="view" place="top" />
+            <Tooltip id="Delete" place="top" />
           </div>
         </td>
       </tr>
     );
   };
-  
+
 
 
   return (
@@ -598,15 +603,15 @@ function JobTListing({}: Props) {
         ]}
       />
       <CommonHeader heading="" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedClick={() => {
-  setFilterType('completed');
-  fetchJobs(1, '', pageSize, 'completed');
-}}
+        setFilterType('completed');
+        fetchJobs(1, '', pageSize, 'completed');
+      }}
 
-onInProgressClick={() => {
-  setFilterType('inProgress');
-  fetchJobs(1, '', pageSize, 'inProgress');
-}}
- />
+        onInProgressClick={() => {
+          setFilterType('inProgress');
+          fetchJobs(1, '', pageSize, 'inProgress');
+        }}
+      />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

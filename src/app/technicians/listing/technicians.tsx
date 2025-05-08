@@ -85,6 +85,61 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
+  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+    
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${newStatus} this technician?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, ${newStatus} them!`,
+      });
+  
+      if (!result.isConfirmed) return;
+  
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+  
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+  
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+        fetchTechnicians(currentPage, searchTerm, pageSize);
+      } else {
+        throw new Error(response.data.message || 'Account status update failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Error updating account status',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
 
   const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
     try {
@@ -492,7 +547,7 @@ const TechnicianTable: React.FC = () => {
         <td
           onClick={() => {
             if (tech.isApproved === 'accept') {
-              handleAccountStatusChange(tech.id, !tech.accountStatus);
+              handleAccountStatusChanges(tech.id, !tech.accountStatus);
             }
           }} // Corrected here
           style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
