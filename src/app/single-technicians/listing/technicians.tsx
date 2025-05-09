@@ -87,6 +87,61 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
+  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to change this account ${newStatus}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, Activate`,
+      });
+
+      if (!result.isConfirmed) return;
+
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+        fetchTechnicians(currentPage, searchTerm, pageSize);
+      } else {
+        throw new Error(response.data.message || 'Account status update failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Error updating account status',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
 
   const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
     try {
@@ -127,19 +182,33 @@ const TechnicianTable: React.FC = () => {
   };
 
   const handleChangeBothStatuses = async (tech: any) => {
-    try { 
+    try {
+      // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
+      // if ((!tech.labourCost)) {
+      //   await Swal.fire({
+      //     title: 'Missing Payment Info',
+      //     text: 'Please enter payrate for this technician.',
+      //     icon: 'info',
+      //     confirmButtonColor: '#383d71',
+      //     confirmButtonText: 'OK',
+      //   });
+      //   return;
+      // }
+
       // Determine the new status (toggle between 'accept' and 'reject')
-      const newApprovalStatus = tech.isApproved === 'accept' ? 'reject' : 'accept';
+      const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
+      const statusText = newApprovalStatus.toLowerCase() === 'cancel' ? 'Reject' : newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1);
 
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to ${newApprovalStatus} this technician?`,
+        text: `Do you want to change this account status to ${statusText}`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus} them!`,
+        confirmButtonText: `Yes, ${statusText}`,
+
       });
 
       if (result.isConfirmed) {
@@ -163,7 +232,9 @@ const TechnicianTable: React.FC = () => {
       });
     }
   };
-  const handleCancelClick = async (techId: number, tech: any) => {
+
+
+  const handleCancelClick = async (techId: number,) => {
     try {
       // Step 1: Ask for confirmation before rejecting
       const result = await Swal.fire({
@@ -191,22 +262,10 @@ const TechnicianTable: React.FC = () => {
           `${apiUrl}/technicianRejectedAccount`,
           {
             technicianId: techId,
-            isApproved: 'reject',
+            isApproved: 'cancel',
           },
           config
         );
-
-        // Second API call - updateTechnicianAccountStatus
-        await axios.post(
-          `${apiUrl}/updateTechnicianAccountStatus`,
-          {
-            technicianId: techId,
-            accountStatus: 'false', // or whatever status value your API expects
-          },
-          config
-        );
-
-
         // Optional: Reload technician list
         fetchTechnicians(currentPage, searchTerm, pageSize);
 
@@ -646,36 +705,47 @@ const handleDeleteTechnician = async (id: number) => {
 
         <td
 
+>
+  <div className='flex gap-4 items-center'>
+    {tech.isApproved === 'accept' ? (
+      // Step 2: Show "Accepted", clicking sends 'cancel'
+      <span
+        onClick={() => handleChangeBothStatuses(tech)}
+        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+      >
+        Accepted
+      </span>
+    ) : tech.isApproved === 'cancel' ? (
+      // Step 3: Show "Rejected", clicking sends 'accept'
+      <span
+        onClick={() => handleChangeBothStatuses(tech)}
+        className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+      >
+        Rejected
+      </span>
+    ) : (
+      // Step 1: First time — show Accept + Reject
+      <>
+        <span
+          onClick={() => handleChangeBothStatuses(tech)}
+          className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
         >
-          <div className='flex gap-4'>
-            <div
-              onClick={() => { 
-                handleChangeBothStatuses(tech); 
-              }}
-            >
-              <span
-                className={`badge ${tech.isApproved === 'accept'
-                  ? 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  : 'badge-success bg-[#E6F9DD] text-[#1A932E]'
-                  } p-2 pl-2 pr-2 rounded shadow block text-center w-[80px] cursor-pointer`}
-              >
-                {tech.isApproved === 'accept' ? 'Accepted' : 'Accept'}
-              </span>
-            </div>
+          Accept
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCancelClick(tech.id);
+          }}
+          className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+        >
+          Reject
+        </button>
+      </>
+    )}
+  </div>
 
-            {tech.isApproved !== 'accept' && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteTechnician(tech.id);
-                }}
-                className="ml-2 text-sm pl-2 pr-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
-              >
-                Reject
-              </button>
-            )}
-          </div>
-        </td>
+</td>
 
         <td>
           <TableActions

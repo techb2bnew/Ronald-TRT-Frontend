@@ -374,7 +374,7 @@ export default function ClientListing() {
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
-       
+
       <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">
@@ -469,9 +469,10 @@ export default function ClientListing() {
             )}
           </tbody>
         </table>
-      </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      </div> 
+         {customer.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      )}
 
     </div>
   );

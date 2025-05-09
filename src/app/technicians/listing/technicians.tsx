@@ -92,7 +92,7 @@ const TechnicianTable: React.FC = () => {
     try {
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to change this account status to Active/Deactive?`,
+        text: `Do you want to change this account ${newStatus}`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
@@ -183,10 +183,10 @@ const TechnicianTable: React.FC = () => {
   const handleChangeBothStatuses = async (tech: any) => {
     try {
       // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
-      if ((!tech.amountPercentage && !tech.simpleFlatRate) || !tech.payRate || tech.payRate === "") {
+      if (!tech.payRate || tech.payRate === "") {
         await Swal.fire({
           title: 'Missing Payment Info',
-          text: 'Please enter payrate for this technician.',
+          text: 'Edit the technician to update his payrate and then approve or reject the request.',
           icon: 'info',
           confirmButtonColor: '#383d71',
           confirmButtonText: 'OK',
@@ -201,7 +201,7 @@ const TechnicianTable: React.FC = () => {
 
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to change this account status to Active/Deactive?`,
+        text: `Do you want to change this account status to ${statusText}`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
@@ -866,7 +866,7 @@ const TechnicianTable: React.FC = () => {
           { label: 'IFS Technicians', href: '/technicians/listing' }
         ]}
       />
-      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician" />
+      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?technician" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Create Work Order', 'Approval Status', 'Action']}
         data={technicians}

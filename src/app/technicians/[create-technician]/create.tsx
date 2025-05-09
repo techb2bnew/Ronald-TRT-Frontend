@@ -25,6 +25,7 @@ interface TechnicianForm {
   id?: string;
   firstName: string;
   lastName: string;
+  businessName:string;
   phoneNumber: string;
   secondaryContactName: string;
   email: string;
@@ -86,6 +87,7 @@ export default function Technicians() {
     taxForms: [],
     image: null,
     businessLogo: null,
+    businessName:'',
     payVehicleType: '',
     amountPercentage: '',
     role: '',
@@ -136,7 +138,8 @@ export default function Technicians() {
           s.isoCode.toLowerCase() === data.technician.state.toLowerCase()
         )
       );
-
+      const matchedRole = roles.find(role => role.id === data.technician.roleId);
+      const roleName = matchedRole?.name || '';
       if (response.ok) {
         setFormData(prev => ({
           ...prev,
@@ -146,6 +149,8 @@ export default function Technicians() {
           taxForms: data.technician.taxForms || [],
           country: technicianCountry?.isoCode || '',
           state: technicianState?.isoCode || '',
+          role: roleName,
+          types: data.technician.types || '',
         }));
       }
     } catch (error) {
@@ -164,26 +169,45 @@ export default function Technicians() {
       }
     }
   }, []);
+
+
+
   const handleSelectChange = (
     event: SelectChangeEvent<string>,
-    child: React.ReactNode // You might not actually need to use this parameter in your function
+    child: React.ReactNode
   ) => {
-    const name = event.target.name; // The name of the select element if you set it
+    const name = event.target.name;
     const value = event.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+  
     if (name === "role") {
       const selectedRole = roles.find((role) => role.name === value);
       setSelectedRole(selectedRole);
-
       setFormData((prev) => ({
         ...prev,
         role: value,
-        types: selectedRole ? selectedRole.type : "", // Auto-fill role type
+        types: selectedRole?.type || "",
+      }));
+  
+      const newQuery = new URLSearchParams(Array.from(searchParams.entries()));
+  
+      // Remove ?singletechnician if "technician" is selected
+      if (value === 'technician') {
+        newQuery.delete('singletechnician');
+      }
+  
+      // Add ?singletechnician if "singletechnician" is selected
+      if (value === 'singletechnician') {
+        newQuery.set('singletechnician', 'true'); // or use empty string if preferred
+      }
+  
+      router.replace(`${pathname}?${newQuery.toString()}`);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
       }));
     }
+  
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -192,6 +216,9 @@ export default function Technicians() {
       });
     }
   };
+  
+
+
 
   const handleChange: React.ChangeEventHandler<
     HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
@@ -387,7 +414,7 @@ export default function Technicians() {
     if (formData.image) {
       formDataObj.append('image', formData.image);
     }
-    if(formData.businessLogo){
+    if (formData.businessLogo) {
       formDataObj.append('businessLogo', formData.businessLogo);
 
     }
@@ -434,7 +461,7 @@ export default function Technicians() {
             apiErrors.phoneNumber = data.error;
           } else if (data.error.toLowerCase().includes('password')) {
             apiErrors.password = data.error;
-          } else{
+          } else {
             // For other general errors
             // toast.error(data.error);
           }
@@ -457,9 +484,9 @@ export default function Technicians() {
           toast.error(data.error);
         }
       } else {
-        if(isSingleTechnician){
+        if (isSingleTechnician) {
           toast.success('Single technician added successfully');
-        }else{
+        } else {
           toast.success('Technician added successfully');
         }
         if (searchParams.has('singletechnician')) {
@@ -492,22 +519,22 @@ export default function Technicians() {
     }
   };
 
-    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]; // Sirf ek file lene ke liye
-      if (!file) return;
-  
-      const maxWidth = 800; // Maximum image width
-      const maxHeight = 600; // Maximum image height
-      const quality = 0.7; // Compression quality
-  
-      try {
-        const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
-        setFormData((prev: any) => ({ ...prev, businessLogo: compressedFile }));
-      } catch (error) {
-        console.error('Compression error:', error);
-        toast.error('Failed to compress image.');
-      }
-    };
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; // Sirf ek file lene ke liye
+    if (!file) return;
+
+    const maxWidth = 800; // Maximum image width
+    const maxHeight = 600; // Maximum image height
+    const quality = 0.7; // Compression quality
+
+    try {
+      const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
+      setFormData((prev: any) => ({ ...prev, businessLogo: compressedFile }));
+    } catch (error) {
+      console.error('Compression error:', error);
+      toast.error('Failed to compress image.');
+    }
+  };
 
   const handleRemoveImage = () => {
     setFormData((prev: any) => ({ ...prev, image: null }));
@@ -599,7 +626,7 @@ export default function Technicians() {
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
 
-  
+
   const fetchRoles = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -634,19 +661,31 @@ export default function Technicians() {
 
         setRoles(filteredRoles);
 
-        // Auto-select and disable role if 'singletechnician' is in URL
-        // if (searchParams.has('singletechnician')) {
-        //   const singleTechnicianRole = filteredRoles.find(
-        //     (role: any) => role.name === 'singletechnician'
-        //   );
-        //   if (singleTechnicianRole) {
-        //     setFormData((prev) => ({
-        //       ...prev,
-        //       role: singleTechnicianRole.name,
-        //       types: singleTechnicianRole.type || '',
-        //     }));
-        //   }
-        // }
+        if (searchParams.has('singletechnician')) {
+          const singleTechnicianRole = filteredRoles.find(
+            (role: any) => role.name === 'singletechnician'
+          );
+          if (singleTechnicianRole) {
+            setFormData((prev) => ({
+              ...prev,
+              role: singleTechnicianRole.name,
+              types: singleTechnicianRole.type || '',
+            }));
+          }
+        } else {
+          if (searchParams.has('technician')) {
+            const ifstechnician = filteredRoles.find(
+              (role: any) => role.name === 'technician'
+            );
+            if (ifstechnician) {
+              setFormData((prev) => ({
+                ...prev,
+                role: ifstechnician.name,
+                types: ifstechnician.type || '',
+              }));
+            }
+          }
+        }
       } else {
         console.error('Error fetching roles:', response.statusText);
       }
@@ -694,47 +733,41 @@ export default function Technicians() {
       <div className='bg-white p-4 mt-5 '>
         <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Copy Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
 
-        <form onSubmit={handleSubmit}> 
-            <div className="grid grid-cols-1 gap-4">
-            
-              <div className='mb-4 relative'>
-                 
-                <FormControl fullWidth size="small">
-                  <InputLabel id="role" color="warning">Select role name *</InputLabel>
-                  <Select
-                    labelId="role"
-                    id="select-role-name"
-                    color="warning"
-                    value={formData.role}
-                    label="Select role name"
-                    name="role"
-                    onChange={handleSelectChange}
-                  >
-                    <MenuItem value="" disabled>
-                      Select role
-                    </MenuItem>
-                    {roles
-                          .filter((role) => role.name !== "super admin")
-                          .map((role, index) => (
-                            <MenuItem key={index} value={role.name}>
-                              {role.name === "technician"
-                                ? "IFS Technician"
-                                : role.name === "singletechnician"
-                                  ? "Single Technician"
-                                  : role.name}
-                            </MenuItem>
-                          ))}
-                  </Select>
-                </FormControl>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 gap-4">
+
+            <div className='mb-4 relative'>
+              <FormControl fullWidth size="small">
+                <InputLabel id="role" color="warning">Select role name *</InputLabel>
+                <Select
+                  labelId="role"
+                  id="select-role-name"
+                  color="warning"
+                  value={formData.role}
+                  label="Select role name"
+                  name="role"
+                  onChange={handleSelectChange}
+                >
+                  <MenuItem value="" disabled>
+                    Select role
+                  </MenuItem>
+                  {roles
+                    .filter((role) => role.name !== "super admin")
+                    .map((role, index) => (
+                      <MenuItem key={index} value={role.name}>
+                        {role.name === "technician"
+                          ? "IFS Technician"
+                          : role.name === "singletechnician"
+                            ? "Single Technician"
+                            : role.name}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            </div>
 
 
-
-
-
-              </div>
-             
-
-              {/* <div className='mb-4 relative'>
+            {/* <div className='mb-4 relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -758,9 +791,9 @@ export default function Technicians() {
                   </Select>
                 </FormControl>
               </div> */}
-            </div> 
-          
-          <div className="grid grid-cols-2 gap-4">
+          </div>
+
+          <div className={`grid ${isSingleTechnician || selectedRole?.type === 'single-technician'  ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}> 
             {/* Client Name and Business Name */}
             <div className='mb-4 relative'>
 
@@ -770,14 +803,7 @@ export default function Technicians() {
               </svg>
 
               <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} className='form__input' name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
-              {/* <input
-                type="text"
-                placeholder="Enter your first name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              /> */}
+
             </div>
             <div className='mb-4 relative'>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -786,15 +812,19 @@ export default function Technicians() {
               </svg>
               <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
 
-              {/* <input
-                type="text"
-                name="lastName"
-                placeholder="Enter your last name"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              /> */}
-            </div>
+
+            </div> 
+            {isSingleTechnician && ( 
+              <div className='mb-4 relative'> 
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                  <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                  <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
+                <TextField fullWidth name="businessName" id="outlined-basic" color="warning" label="Business name *" size="small" value={formData.businessName} onChange={handleChange} />
+              </div> 
+            )}
+
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
@@ -822,7 +852,7 @@ export default function Technicians() {
 
 
               {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" error={!!errors.email} helperText={errors.email || ''} value={formData.email} onChange={handleChange} />
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" error={!!errors.email} helperText={errors.email || ''} value={formData.email} onChange={handleChange} disabled={isEdit} />
 
 
             </div>
@@ -1063,7 +1093,7 @@ export default function Technicians() {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            {!isSingleTechnician && formData.role !== 'singletechnician' &&(
+            {!isSingleTechnician && formData.role !== 'singletechnician' && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -1141,7 +1171,7 @@ export default function Technicians() {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate" size="small" value={formData.simpleFlatRate} onChange={handleChange}
+                <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate ($)" size="small" value={formData.simpleFlatRate} onChange={handleChange}
                   inputProps={{
                     step: "0.01",
                     min: 0
@@ -1149,21 +1179,7 @@ export default function Technicians() {
               </div>
             )}
           </div>
-          {!isSingleTechnician || userType !== 'ifs' && (
-            <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-              <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Flat Rate" size="small" value={formData.simpleFlatRate} onChange={handleChange}
-                inputProps={{
-                  step: "0.01",
-                  min: 0
-                }} />
-            </div>
-          )}
+
           <div className="grid grid-cols-3 gap-4 mt-4">
 
             <div className='mb-2'>
@@ -1249,35 +1265,35 @@ export default function Technicians() {
                 </div>
               )}
             </div>
-            {selectedRole?.type === 'single-technician' &&(
-                    <div className='mb-0'>
-                      <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
-                        <label className="label text-center">
-                          <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
-                          </svg>
-                          <p className='text-sm mb-1 mt-1 laptop__font'>Upload Business Logo</p>
-                          <span className="text-center m-auto text-xs block laptop__size"> (Only 'jpeg, webp, and png' images will be accepted)</span>
-                        </label>
-                        <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
-                      </div>
+            {isSingleTechnician && (
+              <div className='mb-0'>
+                <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
+                  <label className="label text-center">
+                    <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
+                    </svg>
+                    <p className='text-sm mb-1 mt-1 laptop__font'>Upload Business Logo</p>
+                    <span className="text-center m-auto text-xs block laptop__size"> (Only 'jpeg, webp, and png' images will be accepted)</span>
+                  </label>
+                  <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
+                </div>
 
-                      {formData.businessLogo && (
-                        <div className='flex items-center mt-5 shadow rounded p-2 relative w-[fit-content]'>
-                          {formData.businessLogo instanceof File ? (
-                            <img src={URL.createObjectURL(formData.businessLogo)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                          ) : (
-                            <img src={formData.businessLogo} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
-                          )}
-                          <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                {formData.businessLogo && (
+                  <div className='flex items-center mt-5 shadow rounded p-2 relative w-[fit-content]'>
+                    {formData.businessLogo instanceof File ? (
+                      <img src={URL.createObjectURL(formData.businessLogo)} alt="Uploaded file" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                    ) : (
+                      <img src={formData.businessLogo} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                    )}
+                    <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
 
