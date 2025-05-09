@@ -259,7 +259,19 @@ const JobTable: React.FC = () => {
       const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
         return sum + Number(item.cost || 0);
       }, 0);
-     
+      const technician = jobData.technicians?.[0] || {};
+              const simpleFlatRate = !isNaN(Number(jobData.simpleFlatRate)) && Number(jobData.simpleFlatRate) > 0
+                ? Number(jobData.simpleFlatRate)
+                : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+
+              const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
+                ? Number(jobData.amountPercentage)
+                : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+
+              // Step 3: Calculate percentage amount
+              const percentageAmount = (amountPercentage * subTotal) / 100;
+              const totalCost = subTotal + simpleFlatRate + percentageAmount;
+
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -270,9 +282,7 @@ const JobTable: React.FC = () => {
         make: jobData.make,
         model: jobData.model,
         amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
@@ -286,8 +296,11 @@ const JobTable: React.FC = () => {
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        payRate: jobData.payRate,
+        simpleFlatRate: jobData.simpleFlatRate,
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
         subTotal: subTotal.toFixed(2),
+        totalCost: totalCost.toFixed(2),
 
       };
     });
@@ -342,11 +355,11 @@ const JobTable: React.FC = () => {
 
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'make', 'model', 'amountPercentage', 'vehicleType',
+        'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
+        'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
       ];
 
       Papa.parse(text, {

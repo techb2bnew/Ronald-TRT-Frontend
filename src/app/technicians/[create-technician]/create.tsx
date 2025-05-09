@@ -455,7 +455,11 @@ export default function Technicians() {
           toast.error(data.error);
         }
       } else {
-        toast.success(data.message);
+        if(isSingleTechnician){
+          toast.success('Single technician added successfully');
+        }else{
+          toast.success(data.message);
+        }
         if (searchParams.has('singletechnician')) {
           router.push('/single-technicians/listing');
         } else {
@@ -581,6 +585,7 @@ export default function Technicians() {
       preConfirm: () => {
         const input = document.getElementById("copyInput") as HTMLInputElement;
         navigator.clipboard.writeText(input.value);
+        toast.success('Copied link');
         return false;
       },
     });
@@ -628,18 +633,18 @@ export default function Technicians() {
         setRoles(filteredRoles);
 
         // Auto-select and disable role if 'singletechnician' is in URL
-        if (searchParams.has('singletechnician')) {
-          const singleTechnicianRole = filteredRoles.find(
-            (role: any) => role.name === 'singletechnician'
-          );
-          if (singleTechnicianRole) {
-            setFormData((prev) => ({
-              ...prev,
-              role: singleTechnicianRole.name,
-              types: singleTechnicianRole.type || '',
-            }));
-          }
-        }
+        // if (searchParams.has('singletechnician')) {
+        //   const singleTechnicianRole = filteredRoles.find(
+        //     (role: any) => role.name === 'singletechnician'
+        //   );
+        //   if (singleTechnicianRole) {
+        //     setFormData((prev) => ({
+        //       ...prev,
+        //       role: singleTechnicianRole.name,
+        //       types: singleTechnicianRole.type || '',
+        //     }));
+        //   }
+        // }
       } else {
         console.error('Error fetching roles:', response.statusText);
       }
@@ -689,7 +694,7 @@ export default function Technicians() {
 
         <form onSubmit={handleSubmit}> 
             <div className="grid grid-cols-1 gap-4">
-
+            
               <div className='mb-4 relative'>
                  
                 <FormControl fullWidth size="small">
@@ -725,6 +730,8 @@ export default function Technicians() {
 
 
               </div>
+             
+
               {/* <div className='mb-4 relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
@@ -750,66 +757,7 @@ export default function Technicians() {
                 </FormControl>
               </div> */}
             </div> 
-          {searchParams.has('singletechnician') && !isEdit && (
-            <div className="grid grid-cols-1 gap-4">
-
-              <div className='mb-4 relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                  <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
-                </svg>
-
-                <FormControl fullWidth size="small" >
-                  <InputLabel id="role" color="warning">Select role name *</InputLabel>
-                  <Select
-                    labelId="role"
-                    id="select-role-name"
-                    color="warning"
-                    value={formData.role}
-                    label="State role name"
-                    name="role"
-                    onChange={handleSelectChange}
-                    disabled={searchParams.has('singletechnician')}
-                  >
-                    {roles
-                      .filter((role) => role.name !== "super admin") // Filter out "super admin"
-                      .map((role, index) => (
-                        <MenuItem key={index} value={role.name}>
-                          {role.name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </div>
-              {/* <div className='mb-4 relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" className="icon__tech" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                  <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
-                </svg>
-                <FormControl fullWidth  size="small" >
-                  <InputLabel id="types" color="warning">Select role type *</InputLabel>
-                  <Select
-                    labelId="types"
-                    id="select-role-type"
-                    color="warning"
-                    value={formData.types}
-                    label="State role type"
-                    name="types"
-                    disabled
-                    onChange={handleSelectChange}
-                  >
-                    {formData.types ? (
-                      <MenuItem value={formData.types}>{formData.types}</MenuItem>
-                    ) : (
-                      <MenuItem value="">Select a role first</MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
-              </div> */}
-            </div>
-          )}
+          
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4 relative'>

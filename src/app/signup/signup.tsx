@@ -347,16 +347,18 @@ export default function Role() {
             apiErrors.email = data.error;
           } else if (data.error.toLowerCase().includes('phone')) {
             apiErrors.phoneNumber = data.error;
-          } else {
+          } else if (data.error.toLowerCase().includes('password')) {
+            apiErrors.password = data.error;
+          } else{
             // For other general errors
-            toast.error(data.error);
+            // toast.error(data.error);
           }
         }
 
         // Also check if there are field-specific errors in data.errors
         if (data.errors && typeof data.errors === 'object') {
           Object.entries(data.errors).forEach(([key, value]) => {
-            if (key === 'phoneNumber' || key === 'email') {
+            if (key === 'phoneNumber' || key === 'email' || key === 'password') {
               apiErrors[key] = String(value);
             }
           });
@@ -763,7 +765,7 @@ export default function Role() {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       error={!!errors.confirmPassword}
-                      helperText={errors.confirmPassword}
+                      helperText={errors.confirmPassword} 
                     />
                     <button
                       type="button"

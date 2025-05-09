@@ -171,7 +171,23 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Customer Name:</strong>
+                <div className="flex gap-3 items-center capitalize">
+                  {jobData.customer.image ? (
+                    <img
+                    onClick={() => setPreviewImage(jobData.customer.image)}
+                      src={jobData.customer.image}
+                      alt={jobData.customer.name}
+                      className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                      {jobData.customer.firstName?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                  {jobData?.customer?.firstName} {jobData?.customer?.lastName}
+                </div>
+              </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
                   {jobData?.customer?.email}
@@ -216,10 +232,29 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
+              <div className="mb-4 border-b border-gray-500 text-sm pb-4 flex items-start gap-2">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
-                {jobData.technicians?.map((t: any) => `${t.firstName} ${t.lastName}`).join(', ')}
+                <div className="flex flex-wrap gap-3">
+                  {jobData.technicians?.map((t: any, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {t.image ? (
+                        <img
+                          onClick={() => setPreviewImage(t.image)} 
+                          src={t.image}
+                          alt={`${t.firstName} ${t.lastName}`}
+                          className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                          {t.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
+                      <span>{`${t.firstName} ${t.lastName}`}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
@@ -405,7 +440,7 @@ export default function ViewDetails() {
               {jobData?.jobDescription && Array.isArray(jobData.jobDescription) && (
                 <div className="mb-4 border-b border-gray-500 text-sm pb-4">
                   <strong className='w-[210px] inline-block'>Sub Total: </strong>
-                  ${jobData.jobDescription.reduce((total:any, item:any) => total + parseFloat(item.cost || '0'), 0)}
+                  ${jobData.jobDescription.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0)}
                 </div>
               )}
 

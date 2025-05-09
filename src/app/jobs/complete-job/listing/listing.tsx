@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import TableActions from '../../../component/action';
 import CommonHeader from '../../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -149,13 +149,13 @@ const CompletedJobs: React.FC = () => {
       return;
     }
     const csvOptions = {
-      filename: 'Completed Work Orders',
+      filename: 'Complete Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Completed Work Orders',
+      title: 'Complete Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -168,7 +168,19 @@ const CompletedJobs: React.FC = () => {
       const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
         return sum + Number(item.cost || 0);
       }, 0);
-     
+      const technician = jobData.technicians?.[0] || {};
+      const simpleFlatRate = !isNaN(Number(jobData.simpleFlatRate)) && Number(jobData.simpleFlatRate) > 0
+        ? Number(jobData.simpleFlatRate)
+        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+
+      const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
+        ? Number(jobData.amountPercentage)
+        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+
+      // Step 3: Calculate percentage amount
+      const percentageAmount = (amountPercentage * subTotal) / 100;
+      const totalCost = subTotal + simpleFlatRate + percentageAmount;
+
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -179,9 +191,7 @@ const CompletedJobs: React.FC = () => {
         make: jobData.make,
         model: jobData.model,
         amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
@@ -189,14 +199,17 @@ const CompletedJobs: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
-        estimatedBy:jobData.estimatedBy,
+        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        payRate: jobData.payRate,
+        simpleFlatRate: jobData.simpleFlatRate,
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
         subTotal: subTotal.toFixed(2),
+        totalCost: totalCost.toFixed(2),
 
       };
     });
@@ -204,7 +217,7 @@ const CompletedJobs: React.FC = () => {
   }
 
 
-   
+
 
 
   const handleImportCSV = (file: File) => {
@@ -222,11 +235,11 @@ const CompletedJobs: React.FC = () => {
 
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'make', 'model', 'amountPercentage', 'vehicleType',
+        'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
+        'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
       ];
 
       Papa.parse(text, {
@@ -270,7 +283,7 @@ const CompletedJobs: React.FC = () => {
             fetchCompleteJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-          
+
             if (
               typeof error === 'object' &&
               error !== null &&
@@ -284,7 +297,7 @@ const CompletedJobs: React.FC = () => {
               toast.error(String(error));
             }
           }
-          
+
           setLoading(false);
         },
         error: (err: any) => {
@@ -359,12 +372,12 @@ const CompletedJobs: React.FC = () => {
                 </svg>
               </span>
             </label>
-          </td>  
-        <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob.id}</Link></td>
-        <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</Link></td>
+          </td>
+          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob.id}</Link></td>
+          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</Link></td>
 
           {/* <td>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</td> */}
-        <td> <Link href={`/technicians/view?technicianId=${completejob.technicians?.map((tech: any) => tech.id).join(',')}`} className='hover:underline'>{completejob?.technicians?.map((tech: any, index: number) => (
+          <td> <Link href={`/technicians/view?technicianId=${completejob.technicians?.map((tech: any) => tech.id).join(',')}`} className='hover:underline'>{completejob?.technicians?.map((tech: any, index: number) => (
             <div key={`${tech.id}-${index}`}>
               {tech.firstName} {tech.lastName}
             </div>
@@ -461,7 +474,7 @@ const CompletedJobs: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -550,7 +563,7 @@ const CompletedJobs: React.FC = () => {
         </table>
       </div>
       {activeJob.length > 0 && (
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );
