@@ -661,6 +661,7 @@ const TechnicianTable: React.FC = () => {
       toast.error("Please select at least one technician to export.");
       return;
     }
+  
     const csvOptions = {
       filename: 'IFS Technicians',
       fieldSeparator: ',',
@@ -673,9 +674,9 @@ const TechnicianTable: React.FC = () => {
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
     };
-
+  
     const csvExporter = new ExportToCsv(csvOptions);
-
+  
     const formattedData = selectedTechnicians.map((tech) => {
       const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
       const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
@@ -695,85 +696,100 @@ const TechnicianTable: React.FC = () => {
         AccountStatus: tech.accountStatus,
         DeletedStatus: tech.deletedStatus,
         IsApproved: tech.isApproved,
-      }
+      };
     });
-
+  
+    // Ensure no headers are included in the data when downloading
     csvExporter.generateCsv(formattedData);
   };
+  
 
 
+  
   const handleImportCSV = (file: File) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
     const reader = new FileReader();
-
+  
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-
+  
       const lines = text.split(/\r?\n/);
-
-      // ✅ Remove garbage line like "Technicians,Data"
-      if (lines[0].toLowerCase().includes("technician")) {
+  
+      // Remove any garbage lines at the start (empty rows, or headers like 'technician')
+      while (lines.length > 0 && (lines[0].toLowerCase().includes("technician") || lines[0].trim() === "")) {
         lines.shift();
       }
-
+  
       text = lines.join('\n');
-
+  
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
         'PayVehicleType', 'PayRate', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
-
+  
       Papa.parse(text, {
-        header: false, // Don't use auto headers
+        header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-
-          const cleanedData = rows
-            .slice(1) // Skip CSV's own header row
-            .map((row) => {
+  
+          // Log raw data for debugging
+          console.log("Raw CSV data:", rows);
+  
+          // Remove the first row explicitly (header row) to avoid it being imported as data
+          const cleanedData = rows.slice(1) // Skip the first row
+            .map((row, index) => {
               const obj: any = {};
+  
+              // Create an object for each row
               manualHeaders.forEach((key, idx) => {
-                let value: any = row[idx];
+                let value: any = row[idx] ?? null;
                 if (typeof value === 'string') {
                   value = value.trim();
-                  const lower = value.toLowerCase();
+                  if (value === '') value = null;
+                  const lower = value?.toLowerCase();
                   if (lower === 'true') value = true;
                   else if (lower === 'false') value = false;
-                  else if (lower === 'null' || lower === '') value = null;
+                  else if (lower === 'null') value = null;
+                }
+  
+                if (key.toLowerCase() === 'id' && !isNaN(Number(value))) {
+                  value = parseInt(value, 10);
                 }
                 obj[key] = value;
               });
+  
               return obj;
             })
             .filter((row) => {
-              // ✅ Skip row if all keys === values like { Id: "id", Name: "name", ... }
-              const isHeaderRow = Object.entries(row).every(
-                ([key, val]) =>
-                  typeof val === 'string' &&
-                  val.trim().toLowerCase() === key.trim().toLowerCase()
+              // Skip rows where any value exactly matches the header name (e.g., Id: 'Id')
+              const isHeaderRow = Object.entries(row).some(([key, value]) => value === key);
+              if (isHeaderRow) return false;
+  
+              // Skip rows that are null (e.g., rows with empty data)
+              if (!row) return false;
+  
+              // Skip rows where all values are null/empty
+              const allEmpty = Object.values(row).every(
+                val => val === null || val === '' || val === undefined
               );
-
-              const hasRealData = Object.values(row).some(
-                (val) =>
-                  (typeof val === 'string' && val.trim() !== '') ||
-                  (typeof val === 'number' && !isNaN(val)) ||
-                  typeof val === 'boolean'
-              );
-
-              return !isHeaderRow && hasRealData;
+              if (allEmpty) return false;
+  
+              // Only keep rows with actual data
+              return true;
             });
-
+  
+          // Log cleaned data
           console.log("✅ Final Cleaned Data:", cleanedData);
-
+  
           try {
             const response = await axios.post(
               `${apiUrl}/importTechnician`,
@@ -784,35 +800,32 @@ const TechnicianTable: React.FC = () => {
             fetchTechnicians(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-
-            // Check if it's an Axios error with a response
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error(String(error));
-            }
+            toast.error('We could not find records matching the IDs you provided for updating. To ensure successful updates, please export the current data, compare the IDs in the exported file with the IDs in your import file, and make any necessary corrections');
           }
-
-
+  
           setLoading(false);
-
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
+          setLoading(false);
         },
       });
     };
-
+  
     reader.readAsText(file);
   };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
