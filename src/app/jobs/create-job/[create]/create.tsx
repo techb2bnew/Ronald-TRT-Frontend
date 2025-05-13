@@ -105,7 +105,7 @@ export default function Technicians() {
   const [ip, setIpAddress] = useState('');
   const [createdBy, setRole] = useState('admin');
   const [technicians, setTechnicians] = useState<any[]>([]);
-  const [customer, setCustomer] = useState<any[]>([]); 
+  const [customer, setCustomer] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const router = useRouter();
@@ -162,21 +162,21 @@ export default function Technicians() {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-  
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-  
+
       const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobid}`, {
         method: 'POST',
         headers,
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok && data.jobs) {
         const jobData = data.jobs;
-        
+
         // Helper function to properly handle null/undefined/"null" values
         const getValidValue = (value: any) => {
           if (value === null || value === undefined || value === "null" || value === "") {
@@ -184,7 +184,7 @@ export default function Technicians() {
           }
           return value;
         };
-  
+
         // Process jobDescription
         const jobDescriptionsArray = Array.isArray(jobData.jobDescription)
           ? jobData.jobDescription.map((item: any) => ({
@@ -193,56 +193,64 @@ export default function Technicians() {
             cost: getValidValue(item.cost),
           }))
           : [{ id: crypto.randomUUID(), jobDescription: '', cost: '' }];
-  
+
         // Get first technician or empty object
         const technician = jobData.technicians?.[0] || {};
-  
+
         // Improved fallback logic with proper null handling
+        const isSimpleFlatRateValid =
+          jobData.simpleFlatRate !== null &&
+          jobData.simpleFlatRate !== undefined &&
+          jobData.simpleFlatRate !== "null" &&
+          jobData.simpleFlatRate !== "";
+
+        const isAmountPercentageValid =
+          jobData.amountPercentage !== null &&
+          jobData.amountPercentage !== undefined &&
+          jobData.amountPercentage !== "null" &&
+          jobData.amountPercentage !== "";
+
+        const fallbackAmountPercentage = getValidValue(
+          isAmountPercentageValid || isSimpleFlatRateValid
+            ? jobData.amountPercentage
+            : technician.amountPercentage
+        );
+
         const fallbackSimpleFlatRate = getValidValue(
-          jobData.simpleFlatRate !== null && 
-          jobData.simpleFlatRate !== undefined && 
-          jobData.simpleFlatRate !== "null" && 
-          jobData.simpleFlatRate !== ""
+          isAmountPercentageValid || isSimpleFlatRateValid
             ? jobData.simpleFlatRate
             : technician.simpleFlatRate
         );
 
         const fallbackLabourRate = getValidValue(
-          jobData.simpleFlatRate !== null && 
-          jobData.simpleFlatRate !== undefined && 
-          jobData.simpleFlatRate !== "null" && 
-          jobData.simpleFlatRate !== ""
+          jobData.simpleFlatRate !== null &&
+            jobData.simpleFlatRate !== undefined &&
+            jobData.simpleFlatRate !== "null" &&
+            jobData.simpleFlatRate !== ""
             ? jobData.labourCost
             : technician.simpleFlatRate
         );
-  
-        const fallbackAmountPercentage = getValidValue(
-          jobData.amountPercentage !== null && 
-          jobData.amountPercentage !== undefined && 
-          jobData.amountPercentage !== "null" && 
-          jobData.amountPercentage !== ""
-            ? jobData.amountPercentage
-            : technician.amountPercentage
-        );
-  
+
+
+
         const fallbackPayRate = getValidValue(
-          jobData.payRate !== null && 
-          jobData.payRate !== undefined && 
-          jobData.payRate !== "null" && 
-          jobData.payRate !== ""
+          jobData.payRate !== null &&
+            jobData.payRate !== undefined &&
+            jobData.payRate !== "null" &&
+            jobData.payRate !== ""
             ? jobData.payRate
             : technician.payRate
         );
-  
+
         const fallbackPayVehicleType = getValidValue(
-          jobData.payVehicleType !== null && 
-          jobData.payVehicleType !== undefined && 
-          jobData.payVehicleType !== "null" && 
-          jobData.payVehicleType !== ""
+          jobData.payVehicleType !== null &&
+            jobData.payVehicleType !== undefined &&
+            jobData.payVehicleType !== "null" &&
+            jobData.payVehicleType !== ""
             ? jobData.payVehicleType
             : technician.payVehicleType
         );
-  
+
         // Set form data
         setDescriptionCostFields(jobDescriptionsArray);
         setFormData((prev) => ({
@@ -274,7 +282,7 @@ export default function Technicians() {
           jobId: getValidValue(jobData.id),
           images: jobData.images || [],
         }));
-  
+
       } else {
         toast.error(data.error || 'Error fetching job data');
       }
@@ -301,28 +309,28 @@ export default function Technicians() {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userID');
       const roleType = localStorage.getItem('types');
-  
+
       if (endpoint === 'fetchCustomer' && (!userId || !roleType)) {
         console.error("User ID not found in localStorage!");
         return;
       }
-  
+
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
       const queryParams = new URLSearchParams(params).toString();
       const url = `${apiUrl}/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
-  
+
       const response = await fetch(url, { method: 'GET', headers });
       if (response.status == 400) {
         localStorage.removeItem('token');
         router.push('/');
       }
-  
+
       const data = await response.json();
       const customers = data.customers?.customers || [];
       const technicians = data.technician?.technicians || [];
-  
+
       setState(prev => {
         if (endpoint === 'fetchCustomer' && append) {
           return [...prev, ...customers];
@@ -330,12 +338,12 @@ export default function Technicians() {
           return endpoint === 'fetchTechnicianJob' ? technicians : customers;
         }
       });
-  
+
     } catch (error) {
       console.error(`Error fetching ${endpoint}:`, error);
     }
   };
-  
+
   const handleScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
     if (bottom && hasMore) {
@@ -343,7 +351,7 @@ export default function Technicians() {
     }
   };
 
-  
+
   useEffect(() => {
     const roleType = localStorage.getItem('types');
     const types = localStorage.getItem('types');
@@ -352,7 +360,7 @@ export default function Technicians() {
       fetchData('fetchTechnicianJob', setTechnicians, { types }); // Pass roleType to fetchTechnician
     } else {
       console.error("Role type is missing for fetching technicians!");
-    } 
+    }
     const userId = localStorage.getItem('userID');
     if (userId) {
       fetchData(
@@ -660,7 +668,7 @@ export default function Technicians() {
             } else {
               toast.error(result.error || 'Error fetching job data');
             }
-          } 
+          }
         }
       }
     } catch (error) {
@@ -1002,8 +1010,8 @@ export default function Technicians() {
             {/* Client Name and Business Name */}
             <div className='mb-2'>
               {/* <p className='text-sm mb-2'>ViN <span className='text-[red]'>*</span> </p> */}
-              <div className='flex gap-3 items-center'>
-                <div className="flex gap-3 items-center w-[70%]">
+              <div className='flex gap-3 items-start'>
+                <div className="flex gap-3 items-start w-[70%]">
                   <div className='relative w-[100%]'>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                       <path d="M4 12V10L6 6H14L16 10V12" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1018,7 +1026,12 @@ export default function Technicians() {
                       <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
                     </svg>
 
-                    <TextField fullWidth error={!!errors.vin} helperText={errors.vin || ''} name="vin" id="outlined-basic" color="warning" label="Enter vin number *" size="small" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} inputProps={{ maxLength: 17 }} />
+                    <TextField fullWidth name="vin" id="outlined-basic" color="warning" label="Enter vin number *" size="small" value={formData.vin} onChange={(e) => handleChange(e, 'vin')} inputProps={{ maxLength: 17 }} />
+                    {errors.vin && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.vin}
+                      </div>
+                    )}
                   </div>
                   <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[200px] rounded">Fetch</button>
                 </div>
@@ -1081,11 +1094,15 @@ export default function Technicians() {
                       label="Vehicle Descriptor *"
                       size="small"
                       color="warning"
-                      error={!!errors.vehicleDescriptor} helperText={errors.vehicleDescriptor || ''}
                       value={formData.vehicleDescriptor || ''}
                       onChange={(e) => handleChange(e, 'vehicleDescriptor')}
 
                     />
+                    {errors.vehicleDescriptor && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.vehicleDescriptor}
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs mb-2 relative">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -1184,9 +1201,9 @@ export default function Technicians() {
 
           <div className="grid grid-cols-3 gap-4">
             <div className='mb-4 relative'>
-               
 
-              <FormControl fullWidth size="small" error={!!errors.color}>
+
+              <FormControl fullWidth size="small">
                 <InputLabel id="color" color="warning">Select color *</InputLabel>
                 <Select
                   labelId="color"
@@ -1246,10 +1263,12 @@ export default function Technicians() {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.color && (
-                  <FormHelperText>{errors.color}</FormHelperText>
-                )}
               </FormControl>
+              {errors.color && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.color}
+                </div>
+              )}
             </div>
             {/* Client Name and Business Name */}
             <div className='mb-4 flex items-start gap-3 relative' >
@@ -1258,7 +1277,7 @@ export default function Technicians() {
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
-              <FormControl fullWidth size="small" error={!!errors.assignCustomer}>
+              <FormControl fullWidth size="small">
                 <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
                 <Select
                   labelId="assignCustomer"
@@ -1269,15 +1288,15 @@ export default function Technicians() {
                   name="assignCustomer"
 
                   onChange={(event) => handleSelectChange(event, 'assignCustomer')}
-                   
+
                   MenuProps={{
                     disablePortal: true,
                     PaperProps: {
-                      onScroll: handleScroll, 
+                      onScroll: handleScroll,
                       style: {
                         maxHeight: 200,
                         overflowY: 'auto',
-                      }, 
+                      },
                     },
                   }}
                 >
@@ -1286,7 +1305,9 @@ export default function Technicians() {
                   ))}
                 </Select>
                 {errors.assignCustomer && (
-                  <FormHelperText>{errors.assignCustomer}</FormHelperText>
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {errors.assignCustomer}
+                  </div>
                 )}
               </FormControl>
               <Link href='/client/create' data-tooltip-id="create-customer"
@@ -1435,10 +1456,10 @@ export default function Technicians() {
                     required
                     onChange={(event) => handleSelectChange(event, 'payRate')}
                   >
-                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicles</MenuItem>
-                    <MenuItem value='per job'>Pay Per Job</MenuItem>
-                    <MenuItem value='Flat Rate'>Simple Flat Rate</MenuItem>
-                    <MenuItem value='Percentage Flat Rate'>Simple Percentage Flat</MenuItem>
+                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
+                    <MenuItem value='Pay Per Job'>Pay Per Job</MenuItem>
+                    <MenuItem value='Simple Flat Rate'>Simple Flat Rate</MenuItem>
+                    <MenuItem value='Simple Percentage'>Simple Percentage</MenuItem>
 
                   </Select>
                   {errors.payRate && (
@@ -1475,7 +1496,7 @@ export default function Technicians() {
                 </div>
               )}
 
-              {(formData.payRate === 'Percentage Flat Rate' || formData.payRate === 'per job') && (
+              {(formData.payRate === 'Simple Percentage' || formData.payRate === 'Pay Per Job') && (
                 <div className=' relative'>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                     <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -1487,7 +1508,7 @@ export default function Technicians() {
                   <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
                 </div>
               )}
-              {formData.payRate !== 'Percentage Flat Rate' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Flat Rate' || formData.payRate === 'per job') && (
+              {formData.payRate !== 'Simple Percentage' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Simple Flat Rate' || formData.payRate === 'Pay Per Job') && (
                 <div className=' relative'>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                     <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />

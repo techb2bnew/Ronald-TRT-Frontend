@@ -53,14 +53,52 @@ export default function ViewDetails() {
     }
   }, []);
 
-  const calculateTotalCost = () => {
+   const calculateTotalCost = (jobData: any) => {
+    let subtotalcost = 0;
+
+    // Check if jobDescription exists and is an array
     if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-      return jobData.jobDescription.reduce((total: any, item: any) => {
-        const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
-        return total + parseFloat(jobItem.cost || '0');
+      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+        let parsedItem = item;
+
+        // Only parse if item is a string
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item); // Parse the stringified JSON
+          } catch (error) {
+            console.error("Error parsing job description:", error);
+            return total; // Skip this item if parsing fails
+          }
+        }
+
+        // Check if parsedItem has a cost property and is a number
+        const cost = parseFloat(parsedItem?.cost || '0');
+        return total + (isNaN(cost) ? 0 : cost);
       }, 0);
     }
-    return 0;
+
+    // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
+    const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
+    const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
+
+    // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
+    const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
+      ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
+      : simpleFlatRate;
+
+    const finalAmountPercentage = isNaN(amountPercentage) || amountPercentage <= 0
+      ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
+      : amountPercentage;
+
+    // Calculate the percentage amount
+    const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
+      ? (subtotalcost * finalAmountPercentage) / 100
+      : 0;
+
+    // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
+    const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
+
+    return totalCost;
   };
 
   React.useEffect(() => {
@@ -86,13 +124,13 @@ export default function ViewDetails() {
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Id:</strong> {jobData?.id}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Email:</strong>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Id:</strong> {jobData?.id}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
                   {jobData?.customer?.email}
                 </a></p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Ph. Number:</strong>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
                 <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
                   {jobData?.customer?.phoneNumber}
                 </a>
@@ -117,7 +155,7 @@ export default function ViewDetails() {
                 {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
               </div>
 
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Status:</strong>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
                 >
@@ -128,17 +166,17 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Email:</strong>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData.technicians[0]?.email}`}>
                   {jobData.technicians[0]?.email}
                 </a>
               </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Technician Ph. Number:</strong>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Ph. Number:</strong>
                 <a className="hover:underline" href={`tel:${jobData.technicians[0]?.phoneNumber}`}>
                   {jobData.technicians[0]?.phoneNumber} </a></p>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[200px] inline-block">Job Description:</strong>
+                <strong className="w-[210px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
                   jobData.jobDescription.filter((item: any) => {
                     const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
@@ -165,11 +203,11 @@ export default function ViewDetails() {
 
 
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[200px] inline-block'>Total Cost:</strong> ${calculateTotalCost().toFixed(2)}
+                <strong className='w-[210px] inline-block'>Total Cost:</strong>  ${calculateTotalCost(jobData).toFixed(2)}
               </div>
               {userType === 'single-technician' && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                  <strong className='w-[200px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
+                  <strong className='w-[210px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
                 </div>
               )}
 
@@ -195,7 +233,7 @@ export default function ViewDetails() {
               </div>
 
               <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className="w-[200px] inline-block">Notes:</strong>
+                <strong className="w-[210px] inline-block">Notes:</strong>
                 {jobData?.notes?.trim() ? jobData.notes : <span className="text-gray-500">No notes available</span>}
               </p>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">

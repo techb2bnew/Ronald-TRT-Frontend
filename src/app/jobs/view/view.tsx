@@ -18,6 +18,7 @@ export default function ViewDetails() {
   const searchParams = useSearchParams();
 
   const isSingleTechnician = searchParams.has('ActiveWorkOrder');
+  const isSingleTechnicianWorkOrder = searchParams.has('workorder');
 
   const fetchCustomerData = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -175,7 +176,7 @@ export default function ViewDetails() {
                 <div className="flex gap-3 items-center capitalize">
                   {jobData.customer.image ? (
                     <img
-                    onClick={() => setPreviewImage(jobData.customer.image)}
+                      onClick={() => setPreviewImage(jobData.customer.image)}
                       src={jobData.customer.image}
                       alt={jobData.customer.name}
                       className="w-8 h-8 rounded-full object-cover cursor-pointer"
@@ -239,7 +240,7 @@ export default function ViewDetails() {
                     <div key={index} className="flex items-center gap-2">
                       {t.image ? (
                         <img
-                          onClick={() => setPreviewImage(t.image)} 
+                          onClick={() => setPreviewImage(t.image)}
                           src={t.image}
                           alt={`${t.firstName} ${t.lastName}`}
                           className="w-8 h-8 rounded-full object-cover cursor-pointer"
@@ -271,7 +272,7 @@ export default function ViewDetails() {
               </div>
 
 
-              {userType !== 'single-technician' && (
+              {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
                   <strong className="w-[210px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
 
@@ -364,7 +365,7 @@ export default function ViewDetails() {
                 </div>
               )}
 
-              {userType === 'single-technician' && (
+              {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData?.labourCost}</div>
 
               )}
@@ -389,7 +390,7 @@ export default function ViewDetails() {
               </div>
 
               <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className="w-[200px] inline-block">Notes:</strong>
+                <strong className="w-[210px] inline-block">Notes:</strong>
                 {jobData?.notes?.trim() ? jobData.notes : <span className="text-gray-500">No notes available</span>}
               </p>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
@@ -443,10 +444,20 @@ export default function ViewDetails() {
                   ${jobData.jobDescription.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0)}
                 </div>
               )}
-
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[210px] inline-block'>Total Cost: </strong>  ${calculateTotalCost(jobData).toFixed(2)}
-              </div>
+              {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (
+                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                  <strong className='w-[210px] inline-block'>Total Cost: </strong>  ${calculateTotalCost(jobData).toFixed(2)}
+                </div>
+              )}
+              {(userType === 'single-technician' || isSingleTechnicianWorkOrder) && (
+                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
+                  <strong className='w-[210px] inline-block'>Total Cost: </strong>
+                  ${(
+                    (jobData?.jobDescription?.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0) || 0)
+                    + parseFloat(jobData?.labourCost || '0')
+                  ).toFixed(2)}
+                </div>
+              )}
             </div>
           </div>
         </div>

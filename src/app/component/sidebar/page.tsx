@@ -1,8 +1,11 @@
 "use client";
 import Sidebar from './sidebar';
 import Header from '../header/page';
+import AuthCheck from '@/app/component/AuthCheck';
+
 export default function Home() {
   return (
+    <AuthCheck>
     <div className='combine__sidebar__with__header'>
         <div className='main-sidebar z-10 relative'>
         <Sidebar />
@@ -11,5 +14,6 @@ export default function Home() {
             <Header />
         </div>
     </div>
+    </AuthCheck>
   );
 }

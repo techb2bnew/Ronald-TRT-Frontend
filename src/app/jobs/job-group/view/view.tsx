@@ -518,10 +518,16 @@ export default function ViewDetails() {
                       <strong className="mr-3 inline-block w-[180px]">Total Cost: </strong> ${calculateTotalCost(job).toFixed(2)}
                     </div>
                     <div className="mb-2 text-sm items-center flex">
-
                       <strong className="mr-3 inline-block capitalize w-[180px]">Pay Rate:</strong>
-                      {job.technicians?.map((t: any) => t.payRate || capitalize)}
+                      {job.payRate ? (
+                        <span>{job.payRate}</span>
+                      ) : (
+                        job.technicians?.map((t: any, index: number) => (
+                          <span key={index} className="mr-2">{t.payRate || `${t.firstName} ${t.lastName}`}</span>
+                        ))
+                      )}
                     </div>
+
                     <div className=" text-sm items-center flex">
 
                       <strong className="mr-3 inline-block w-[180px]">Job Status:</strong>

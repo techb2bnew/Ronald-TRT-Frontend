@@ -160,10 +160,13 @@ export default function Login() {
                     if (errors.email) {
                       setErrors(prev => ({ ...prev, email: '' }));
                     }
-                  }}
-                  error={!!errors.email}
-                  helperText={errors.email}
+                  }} 
                 />
+                 {errors.email && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.email}
+                </div>
+              )}
               </div>
 
               <div className="mt-5 relative">
@@ -176,12 +179,7 @@ export default function Login() {
                   color="warning" 
                   label="Password" 
                   value={password} 
-                  variant="outlined" 
-                  inputProps={{
-                    minLength: 8,  
-                  }}
-                  error={!!errors.password}
-                  helperText={errors.password}
+                  variant="outlined"  
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) {
@@ -197,6 +195,12 @@ export default function Login() {
                   {showPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                   }
                 </button>
+
+                {errors.password && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.password}
+                </div>
+              )}
               </div>
 
               {/* <div className="flex justify-between items-center mt-4">

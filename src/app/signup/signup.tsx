@@ -349,7 +349,7 @@ export default function Role() {
             apiErrors.phoneNumber = data.error;
           } else if (data.error.toLowerCase().includes('password')) {
             apiErrors.password = data.error;
-          } else{
+          } else {
             // For other general errors
             // toast.error(data.error);
           }
@@ -510,7 +510,7 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                       <path d="M14.5 5L15.1 6.6L16.8 6.8L15.4 8L15.8 9.7L14.5 8.9L13.2 9.7L13.6 8L12.2 6.8L13.9 6.6L14.5 5Z" fill="#5B5B99" />
                     </svg>
-                    <FormControl fullWidth size="small" error={!!errors.role}>
+                    <FormControl fullWidth size="small">
                       <InputLabel id="role" color="warning">Select role name *</InputLabel>
                       <Select
                         labelId="role"
@@ -534,7 +534,9 @@ export default function Role() {
                           ))}
                       </Select>
                       {errors.role && (
-                        <FormHelperText>{errors.role}</FormHelperText>
+                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                          {errors.role}
+                        </div>
                       )}
                     </FormControl>
 
@@ -560,8 +562,12 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>First Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} size="small" name="firstName" id="outlined-basic" color="warning" label="First name *" value={formData.firstName} onChange={handleChange} />
-
+                    <TextField fullWidth size="small" name="firstName" id="outlined-basic" color="warning" label="First name *" value={formData.firstName} onChange={handleChange} />
+                    {errors.firstName && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.firstName}
+                      </div>
+                    )}
                   </div>
                   <div className='mb-4 relative'>
 
@@ -570,8 +576,12 @@ export default function Role() {
                       <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} size="small" name="lastName" id="outlined-basic" color="warning" label="Last name *" value={formData.lastName} onChange={handleChange} />
-
+                    <TextField fullWidth size="small" name="lastName" id="outlined-basic" color="warning" label="Last name *" value={formData.lastName} onChange={handleChange} />
+                    {errors.lastName && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.lastName}
+                      </div>
+                    )}
 
                   </div>
                   {selectedRole?.type === 'single-technician' && (
@@ -595,12 +605,13 @@ export default function Role() {
                       international
                       defaultCountry="US"
                       value={formData.phoneNumber}
-                      error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''}
                       onChange={handlePhoneChange}
-                      className={`input text-xs input-bordered w-full p-2 rounded border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-400'}`}
+                      className={`input text-xs input-bordered w-full p-2 rounded border`}
                     />
                     {errors.phoneNumber && (
-                      <div className="text-red-500 text-xs mt-1">{errors.phoneNumber}</div>
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.phoneNumber}
+                      </div>
                     )}
                   </div>
                   <div className='mb-4 relative'>
@@ -609,8 +620,12 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth name="email" error={!!errors.email} helperText={errors.email || ''} id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
-
+                    <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
+                    {errors.email && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.email}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {/* Address and Email */}
@@ -623,7 +638,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg> */}
-                    <FormControl fullWidth size="small" error={!!errors.country}>
+                    <FormControl fullWidth size="small">
                       <InputLabel id="country" color="warning">Select country *</InputLabel>
                       <Select
                         labelId="country"
@@ -639,7 +654,9 @@ export default function Role() {
                         ))}
                       </Select>
                       {errors.country && (
-                        <FormHelperText>{errors.country}</FormHelperText>
+                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                          {errors.country}
+                        </div>
                       )}
                     </FormControl>
 
@@ -651,7 +668,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg> */}
-                    <FormControl fullWidth size="small" error={!!errors.state}>
+                    <FormControl fullWidth size="small">
                       <InputLabel id="state" color="warning">Select state *</InputLabel>
                       <Select
                         labelId="state"
@@ -667,7 +684,9 @@ export default function Role() {
                         ))}
                       </Select>
                       {errors.state && (
-                        <FormHelperText>{errors.state}</FormHelperText>
+                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                          {errors.state}
+                        </div>
                       )}
                     </FormControl>
 
@@ -681,8 +700,12 @@ export default function Role() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                     {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="City *" size="small" value={formData.city} onChange={handleChange} />
-
+                    <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City *" size="small" value={formData.city} onChange={handleChange} />
+                    {errors.city && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.city}
+                      </div>
+                    )}
                   </div>
                   <div className='mb-4 relative'>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" className="icon__tech"
@@ -691,8 +714,12 @@ export default function Role() {
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Zip code *" size="small" value={formData.zipCode} onChange={handleChange} />
-
+                    <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Zip code *" size="small" value={formData.zipCode} onChange={handleChange} />
+                    {errors.zipCode && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.zipCode}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className='mb-4 relative'>
@@ -701,8 +728,12 @@ export default function Role() {
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Address *" size="small" value={formData.address} onChange={handleChange} />
-
+                  <TextField fullWidth name="address" id="outlined-basic" color="warning" label="Address *" size="small" value={formData.address} onChange={handleChange} />
+                  {errors.address && (
+                    <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                      {errors.address}
+                    </div>
+                  )}
 
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -740,7 +771,7 @@ export default function Role() {
 
                   <div className='mb-4 relative'>
 
-                    <TextField fullWidth error={!!errors.password} helperText={errors.password || ''} type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password *" size="small" value={formData.password} onChange={handleChange} />
+                    <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password *" size="small" value={formData.password} onChange={handleChange} />
                     <button
                       type="button"
                       style={{ position: 'absolute', right: '10px', top: '10px' }}
@@ -749,7 +780,11 @@ export default function Role() {
                       {showPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                       }
                     </button>
-
+                    {errors.password && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.password}
+                      </div>
+                    )}
                   </div>
                   <div className='mb-4 relative'>
 
@@ -763,9 +798,7 @@ export default function Role() {
                       label="Confirm password *"
                       size="small"
                       value={formData.confirmPassword}
-                      onChange={handleChange}
-                      error={!!errors.confirmPassword}
-                      helperText={errors.confirmPassword} 
+                      onChange={handleChange} 
                     />
                     <button
                       type="button"
@@ -775,6 +808,11 @@ export default function Role() {
                       {showConformPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                       }
                     </button>
+                     {errors.confirmPassword && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.confirmPassword}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className={`grid ${selectedRole?.type === 'single-technician' ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>

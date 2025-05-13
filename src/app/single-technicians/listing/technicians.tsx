@@ -41,8 +41,12 @@ const TechnicianTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [rejectionError, setRejectionError] = useState("");
 
-  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+ const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
 
@@ -98,7 +102,7 @@ const TechnicianTable: React.FC = () => {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, Activate`,
+        confirmButtonText: `Yes, ${newStatus}`,
       });
 
       if (!result.isConfirmed) return;
@@ -182,19 +186,7 @@ const TechnicianTable: React.FC = () => {
   };
 
   const handleChangeBothStatuses = async (tech: any) => {
-    try {
-      // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
-      // if ((!tech.labourCost)) {
-      //   await Swal.fire({
-      //     title: 'Missing Payment Info',
-      //     text: 'Please enter payrate for this technician.',
-      //     icon: 'info',
-      //     confirmButtonColor: '#383d71',
-      //     confirmButtonText: 'OK',
-      //   });
-      //   return;
-      // }
-
+    try { 
       // Determine the new status (toggle between 'accept' and 'reject')
       const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
@@ -230,107 +222,6 @@ const TechnicianTable: React.FC = () => {
         icon: 'error',
         confirmButtonText: 'OK',
       });
-    }
-  };
-
-
-  const handleCancelClick = async (techId: number,) => {
-    try {
-      // Step 1: Ask for confirmation before rejecting
-      const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'Do you really want to reject this technician?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: 'gray',
-        confirmButtonText: 'Yes, reject',
-      });
-
-      // Step 2: Proceed only if confirmed
-      if (result.isConfirmed) {
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        };
-
-        // First API call - technicianRejectedAccount
-        await axios.post(
-          `${apiUrl}/technicianRejectedAccount`,
-          {
-            technicianId: techId,
-            isApproved: 'cancel',
-          },
-          config
-        );
-        // Optional: Reload technician list
-        fetchTechnicians(currentPage, searchTerm, pageSize);
-
-        // Step 3: Show success message
-        await Swal.fire({
-          title: 'Rejected!',
-          text: 'Technician has been successfully rejected.',
-          icon: 'success',
-          confirmButtonColor: '#383d71',
-        });
-      }
-
-    } catch (error) {
-      console.error('Error updating approval status:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Error updating approval status.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      });
-    }
-  };
-
-const handleDeleteTechnician = async (id: number) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You can undo this action!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-      const body = JSON.stringify({
-        technicianId: id,  // Changed from [idKey] to explicit field name
-        deletedStatus: false,
-      });
-
-      const response = await fetch(`${apiUrl}/deleteTechnician`, {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await Swal.fire("Deleted!", "Technician has been deleted.", "success");
-        fetchTechnicians(currentPage, searchTerm, pageSize); // Refresh the list
-      } else {
-        Swal.fire("Error!", data.message || "Failed to delete technician.", "error");
-      }
-    } catch (error) {
-      Swal.fire("Error!", "An error occurred while deleting technician.", "error");
     }
   };
 
@@ -688,7 +579,7 @@ const handleDeleteTechnician = async (id: number) => {
         <td
           onClick={() => {
             if (tech.isApproved === 'accept') {
-              handleAccountStatusChange(tech.id, !tech.accountStatus);
+              handleAccountStatusChanges(tech.id, !tech.accountStatus);
             }
           }} // Corrected here
           style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
@@ -706,44 +597,45 @@ const handleDeleteTechnician = async (id: number) => {
         <td
 
 >
-  <div className='flex gap-4 items-center'>
-    {tech.isApproved === 'accept' ? (
-      // Step 2: Show "Accepted", clicking sends 'cancel'
-      <span
-        onClick={() => handleChangeBothStatuses(tech)}
-        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-      >
-        Accepted
-      </span>
-    ) : tech.isApproved === 'cancel' ? (
-      // Step 3: Show "Rejected", clicking sends 'accept'
-      <span
-        onClick={() => handleChangeBothStatuses(tech)}
-        className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-      >
-        Rejected
-      </span>
-    ) : (
-      // Step 1: First time — show Accept + Reject
-      <>
-        <span
-          onClick={() => handleChangeBothStatuses(tech)}
-          className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-        >
-          Accept
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCancelClick(tech.id);
-          }}
-          className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
-        >
-          Reject
-        </button>
-      </>
-    )}
-  </div>
+   <div className='flex gap-4 items-center'>
+            {tech.isApproved === 'accept' ? (
+              // Step 2: Show "Accepted", clicking sends 'cancel'
+              <span
+                onClick={() => handleChangeBothStatuses(tech)}
+                className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+              >
+                Accepted
+              </span>
+            ) : tech.isApproved === 'cancel' ? (
+              // Step 3: Show "Rejected", clicking sends 'accept'
+              <span
+                onClick={() => handleChangeBothStatuses(tech)}
+                className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+              >
+                Rejected
+              </span>
+            ) : (
+              // Step 1: First time — show Accept + Reject
+              <>
+                <span
+                  onClick={() => handleChangeBothStatuses(tech)}
+                  className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                >
+                  Accept
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTechId(tech.id);
+                    setShowRejectModal(true);
+                  }}
+                  className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+                >
+                  Reject
+                </button>
+              </>
+            )}
+          </div>
 
 </td>
 

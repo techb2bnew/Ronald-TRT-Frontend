@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
-import toast  from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
@@ -86,39 +86,39 @@ export default function Technicians() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     try {
       const token = localStorage.getItem('token');
-  
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-  
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-  
+
       const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
         method: 'POST',
         headers,
       });
       const data = await response.json();
-  
+
       if (data.customers && data.customers.customer) {
         const customerData = data.customers.customer;
-  
+
         const customerCountry = countries.find(c =>
           c.isoCode.toLowerCase() === customerData.country.toLowerCase() ||
           c.name.toLowerCase() === customerData.country.toLowerCase()
         );
-  
+
         const countryStates = customerCountry
           ? State.getStatesOfCountry(customerCountry.isoCode)
           : [];
-  
+
         const customerState = countryStates.find(s =>
           customerData.state &&
           (s.isoCode.toLowerCase() === customerData.state.toLowerCase() ||
-           s.name.toLowerCase() === customerData.state.toLowerCase())
+            s.name.toLowerCase() === customerData.state.toLowerCase())
         );
-  
+
         if (response.ok) {
           setFormData(prev => ({
             ...prev,
@@ -137,9 +137,9 @@ export default function Technicians() {
       toast.error('An error occurred while fetching technician data');
     }
   };
-  
-  
-  
+
+
+
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -166,25 +166,25 @@ export default function Technicians() {
     if (!formData.state?.trim()) newErrors.state = 'State is required';
     if (!formData.city?.trim()) newErrors.city = 'City is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-  
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userID');
     const roleType = localStorage.getItem('types');
-  
+
     if (!userId && !roleType) {
       toast.error("User ID not found!");
       return;
     }
-  
+
     try {
       setSubmitting(true);
-  
+
       const formPayload = new FormData();
       formPayload.append("firstName", formData.firstName);
       formPayload.append("lastName", formData.lastName);
@@ -197,15 +197,15 @@ export default function Technicians() {
       formPayload.append("zipCode", formData.zipCode);
       formPayload.append("userId", userId || '');
       formPayload.append("roleType", roleType || '');
-  
+
       if (isEdit && formData.id) {
         formPayload.append("customerId", formData.id);
       }
-  
+
       if (formData.image) {
         formPayload.append("image", formData.image);
       }
-  
+
       const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {
         method: 'POST',
         headers: {
@@ -213,7 +213,7 @@ export default function Technicians() {
         },
         body: formPayload,
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message);
@@ -231,7 +231,7 @@ export default function Technicians() {
           roleType: '',
           image: null
         });
-  
+
         router.push('/client/listing');
       } else {
         const apiErrors: { [key: string]: string } = {};
@@ -272,8 +272,8 @@ export default function Technicians() {
       setSubmitting(false);
     }
   };
-  
- function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
+
+  function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
     return new Promise((resolve, reject) => {
       const image = new window.Image();
       image.src = URL.createObjectURL(file);
@@ -355,7 +355,7 @@ export default function Technicians() {
 
         ]}
       />
-       {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
@@ -369,8 +369,12 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth error={!!errors.firstName} helperText={errors.firstName || ''} name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
-
+              <TextField fullWidth name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
+              {errors.firstName && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.firstName}
+                </div>
+              )}
             </div>
             <div className='mb-4 relative'>
 
@@ -378,8 +382,12 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth error={!!errors.lastName} helperText={errors.lastName || ''} name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
-
+              <TextField fullWidth name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
+              {errors.lastName && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.lastName}
+                </div>
+              )}
 
             </div>
           </div>
@@ -401,8 +409,12 @@ export default function Technicians() {
                 <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
-              <TextField fullWidth error={!!errors.phoneNumber} helperText={errors.phoneNumber || ''} name="phoneNumber" id="outlined-basic" color="warning" label="Phone number" size="small" value={formData.phoneNumber} onChange={handleChange}   />
-
+              <TextField fullWidth name="phoneNumber" id="outlined-basic" color="warning" label="Phone number" size="small" value={formData.phoneNumber} onChange={handleChange} />
+              {errors.phoneNumber && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.phoneNumber}
+                </div>
+              )}
 
             </div>
             <div className='mb-4 relative'>
@@ -410,8 +422,12 @@ export default function Technicians() {
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth error={!!errors.email} helperText={errors.email || ''} name="email" id="outlined-basic" color="warning" label="Email" size="small" value={formData.email} onChange={handleChange}   />
-
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" value={formData.email} onChange={handleChange} />
+              {errors.email && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.email}
+                </div>
+              )}
 
             </div>
           </div>
@@ -423,8 +439,12 @@ export default function Technicians() {
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <TextField fullWidth error={!!errors.address} helperText={errors.address || ''} name="address" id="outlined-basic" color="warning" label="Address" size="small" value={formData.address} onChange={handleChange}   />
-
+            <TextField fullWidth name="address" id="outlined-basic" color="warning" label="Address" size="small" value={formData.address} onChange={handleChange} />
+            {errors.address && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.address}
+              </div>
+            )}
 
           </div>
 
@@ -437,7 +457,7 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg> */}
 
-              <FormControl fullWidth size="small" error={!!errors.country}>
+              <FormControl fullWidth size="small">
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
                   labelId="country"
@@ -446,18 +466,19 @@ export default function Technicians() {
                   value={formData.country}
                   label="Select country"
                   name="country"
-                   
+
                   onChange={handleSelectChange}
                 >
                   {countries.map((country: ICountry) => (
                     <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
                   ))}
                 </Select>
-                {errors.country && (
-                  <FormHelperText>{errors.country}</FormHelperText>
-                )}
               </FormControl>
-
+              {errors.country && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.country}
+                </div>
+              )}
 
             </div>
             <div className='mb-4 relative'>
@@ -466,7 +487,7 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg> */}
-              <FormControl fullWidth size="small" error={!!errors.country}>
+              <FormControl fullWidth size="small">
                 <InputLabel id="demo-simple-select-label" color="warning">Select state *</InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
@@ -475,17 +496,19 @@ export default function Technicians() {
                   label="State state"
                   color="warning"
                   name="state"
-                   
+
                   onChange={handleSelectChange}
                 >
                   {states.map((state: IState) => (
                     <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                   ))}
                 </Select>
-                {errors.state && (
-                  <FormHelperText>{errors.state}</FormHelperText>
-                )}
               </FormControl>
+              {errors.state && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.state}
+                </div>
+              )}
             </div>
             <div className='mb-4 relative'>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
@@ -493,8 +516,12 @@ export default function Technicians() {
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <TextField fullWidth error={!!errors.city} helperText={errors.city || ''} name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange}   />
-
+              <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
+              {errors.city && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.city}
+                </div>
+              )}
 
             </div>
             <div className='mb-4 relative'>
@@ -502,14 +529,18 @@ export default function Technicians() {
                 <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth error={!!errors.zipCode} helperText={errors.zipCode || ''} name="zipCode" id="outlined-basic" color="warning" label="Zip code" size="small" value={formData.zipCode} onChange={handleChange}   />
-
+              <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Zip code" size="small" value={formData.zipCode} onChange={handleChange} />
+              {errors.zipCode && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.zipCode}
+                </div>
+              )}
 
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
 
-          <div className='mb-0'>
+            <div className='mb-0'>
               <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
                 <label className="label text-center">
                   <svg className='m-auto' width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -536,7 +567,7 @@ export default function Technicians() {
                 </div>
               )}
             </div>
-            </div>
+          </div>
           {/* Submit Button */}
           <div className="text-left mt-5">
             <button

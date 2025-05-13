@@ -5,11 +5,18 @@ import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
+import Swal from 'sweetalert2';
+import axios from 'axios';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [rejectionError, setRejectionError] = useState("");
 
   const fetchTechnicianData = async (technicianId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -65,6 +72,195 @@ export default function ViewDetails() {
     return state?.name || stateCode; // Fallback to code if name not found
   };
 
+
+
+    const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+      const searchParams = new URLSearchParams(window.location.search);
+      const techId = searchParams.get('technicianId') || '';
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+
+
+      if (techId) {
+        fetchTechnicianData(techId);
+      }
+
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+      } else {
+        throw new Error('Account status API failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating account status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+    const newStatus = accountStatus ? 'Active' : 'Inactive';
+
+    try {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${newStatus} this technician?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, ${newStatus} them!`,
+      });
+
+      if (!result.isConfirmed) return;
+
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      const response = await axios.post(
+        `${apiUrl}/updateTechnicianAccountStatus`,
+        {
+          technicianId: techId,
+          accountStatus: accountStatus,
+        },
+        config
+      );
+
+      if (response.data.status) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Account status changed to ${newStatus}.`,
+          icon: 'success',
+          confirmButtonColor: '#383d71',
+        });
+        const searchParams = new URLSearchParams(window.location.search);
+        const techId = searchParams.get('technicianId') || '';
+
+        if (techId) {
+
+          fetchTechnicianData(techId);
+        }
+      } else {
+        throw new Error(response.data.message || 'Account status update failed');
+      }
+    } catch (error) {
+      console.error('Error updating account status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Error updating account status',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+
+  const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      };
+
+      await axios.post(
+        `${apiUrl}/technicianActiveUnactiveAccount`,
+        {
+          technicianId: techId,
+          isApproved: isApproved,
+        },
+        config
+      );
+
+    } catch (error) {
+      console.error('Error updating approval status:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating approval status.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
+  const handleChangeBothStatuses = async (tech: any) => {
+    try { 
+      // Determine the new status (toggle between 'accept' and 'reject')
+      const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
+      const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
+
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${newApprovalStatus} this technician?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#383d71',
+        cancelButtonColor: 'black',
+        confirmButtonText: `Yes, ${newApprovalStatus}`,
+      });
+
+      if (result.isConfirmed) {
+        // Update account status first
+        await handleAccountStatusChange(tech.id, newAccountStatus);
+
+        // Then update approval status
+        await handleApprovalChange(tech.id, newApprovalStatus, tech);
+
+        // Refresh the list
+        const searchParams = new URLSearchParams(window.location.search);
+        const techId = searchParams.get('technicianId') || '';
+
+        if (techId) {
+
+          fetchTechnicianData(techId);
+        }
+      }
+
+    } catch (error) {
+      console.error('Error updating both statuses:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error updating technician statuses.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+    }
+  };
+
   if (!technician) {
     return <div><Loading /></div>;
   }
@@ -106,11 +302,70 @@ export default function ViewDetails() {
                   {technician?.secondaryEmail || 'No data available'}
                 </span>
               </p>
-              <p className=' border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Status:</strong><span
-                className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-              >
-                {technician.isApproved ? 'Active' : 'Inactive'}
-              </span></p>
+              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
+                <td
+                  onClick={() => {
+                    if (technician.isApproved === 'accept') {
+                      handleAccountStatusChanges(technician.id, !technician.accountStatus);
+                    }
+                  }} // Corrected here
+                  style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}
+                >
+                  <span
+                    className={`badge ${technician.accountStatus
+                      ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                      : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                      }`}
+                  >
+                    {technician.accountStatus ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                </p>
+              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
+ 
+                  <div className='flex gap-4 items-center'>
+                    {technician.isApproved === 'accept' ? (
+                      // Step 2: Show "Accepted", clicking sends 'cancel'
+                      <span
+                        onClick={() => handleChangeBothStatuses(technician)}
+                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                      >
+                        Accepted
+                      </span>
+                    ) : technician.isApproved === 'cancel' ? (
+                      // Step 3: Show "Rejected", clicking sends 'accept'
+                      <span
+                        onClick={() => handleChangeBothStatuses(technician)}
+                        className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                      >
+                        Rejected
+                      </span>
+                    ) : (
+                      // Step 1: First time — show Accept + Reject
+                      <>
+                        <span
+                          onClick={() => handleChangeBothStatuses(technician)}
+                          className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                        >
+                          Accept
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTechId(technician.id);
+                            setShowRejectModal(true);
+                          }}
+                          className="badges text-sm px-3 p-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+ 
+
+
+              </div>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Profile Image:</strong>
 

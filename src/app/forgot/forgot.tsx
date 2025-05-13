@@ -113,9 +113,12 @@ export default function Forgot() {
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                   <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <TextField fullWidth error={!!errors.emailOrPhone}
-                  helperText={errors.emailOrPhone} name="email" id="outlined-basic" color="warning" label="Enter your email *" size="small" onChange={handleChange} />
-                {/* <input type="email" name="" onChange={handleChange} id="" placeholder="Enter your email" className="w-full px-4 py-2 rounded-lg bg-white mt-2 border border-gray-400 focus:border-black-500 focus:bg-white focus:outline-none" autoFocus required /> */}
+                <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Enter your email *" size="small" onChange={handleChange} />
+                 {errors.emailOrPhone && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.emailOrPhone}
+                </div>
+              )}
               </div>
               <button type="submit" className="w-full block  hover:bg-black focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6">Forgot Password</button>

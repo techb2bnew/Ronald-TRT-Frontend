@@ -510,7 +510,7 @@ const JobTable: React.FC = () => {
           onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
            /> */}
 
-          <Link href={`/jobs/view?jobId=${job.id}`}>
+          <Link href={`/jobs/view?jobId=${job.id}&workorder`}>
             <Image alt='eye' src={Eye} className='w-[16px]' />
           </Link>
         </td>

@@ -7,13 +7,23 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
+import RejectReasonModal from '@/app/component/rejectReasonModal';
+
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const handleRejectionSuccess = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const techId = searchParams.get('technicianId') || '';
+    fetchTechnicianData(techId);
 
+  };
   const fetchTechnicianData = async (technicianId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -130,7 +140,7 @@ export default function ViewDetails() {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newStatus} them!`,
+        confirmButtonText: `Yes, ${newStatus}`,
       });
 
       if (!result.isConfirmed) return;
@@ -236,7 +246,7 @@ export default function ViewDetails() {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus} them!`,
+        confirmButtonText: `Yes, ${newApprovalStatus}`,
       });
 
       if (result.isConfirmed) {
@@ -421,57 +431,37 @@ export default function ViewDetails() {
               )}
 
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
-              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Approval Status:</strong>
-              <td
-          onClick={() => {
-            if (technician.isApproved === 'accept') {
-              handleAccountStatusChanges(technician.id, !technician.accountStatus);
-            }
-          }} // Corrected here
-          style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}
-        >
-          <span
-            className={`badge ${technician.accountStatus
-              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-              }`}
-          >
-            {technician.accountStatus ? 'Active' : 'Inactive'}
-          </span>
-        </td></p>
-              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3'><strong className='w-[200px] inline-block'>Account Status:</strong>
+              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
+                <td
+                  onClick={() => {
+                    if (technician.isApproved === 'accept') {
+                      handleAccountStatusChanges(technician.id, !technician.accountStatus);
+                    }
+                  }} // Corrected here
+                  style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}
+                >
+                  <span
+                    className={`badge ${technician.accountStatus
+                      ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                      : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
+                      }`}
+                  >
+                    {technician.accountStatus ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+              </p>
+              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
 
-
-                <div className='flex gap-4 items-center'>
-                  {technician.isApproved === 'accept' ? (
-                    // Step 2: Show "Accepted", clicking sends 'cancel'
-                    <span
-                      onClick={() => handleChangeBothStatuses(technician)}
-                      className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                    >
-                      Accepted
-                    </span>
-                  ) : technician.isApproved === 'cancel' ? (
-                    // Step 3: Show "Rejected", clicking sends 'accept'
-                    <span
-                      onClick={() => handleChangeBothStatuses(technician)}
-                      className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                    >
-                      Rejected
-                    </span>
-                  ) : (
-                    // Step 1: First time — show Accept + Reject
-                    <>
-                      <span
-                        onClick={() => handleChangeBothStatuses(technician)}
-                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                      >
-                        Accept
-                      </span> 
-                    </>
-                  )}
-                </div>
-
+                <TechnicianApprovalActions
+                  technician={technician}
+                  apiUrl={apiUrl}
+                  fetchTechnicians={() => fetchTechnicianData(technician.id)}
+                  token={localStorage.getItem('token')}
+                  onRejectClick={(id) => {
+                    setSelectedTechId(id.toString());
+                    setShowRejectModal(true);
+                  }}
+                />
 
               </div>
               <div className='flex items-center'>
@@ -516,6 +506,13 @@ export default function ViewDetails() {
             </div>
           </div>
         </div>
+        <RejectReasonModal
+          isOpen={showRejectModal}
+          onClose={() => setShowRejectModal(false)}
+          technicianId={selectedTechId}
+          apiUrl={apiUrl}
+          onSuccess={handleRejectionSuccess}
+        />
         <ToastContainer />
 
         {previewImage && (

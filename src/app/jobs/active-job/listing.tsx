@@ -491,68 +491,91 @@ const JobTable: React.FC = () => {
         {roleType !== 'single-technician' && (
           <td>
             {(() => {
-              if (!job) return null;
+                    if (!job) return null;
 
-              const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-                return sum + Number(item.cost || 0);
-              }, 0);
+                    // Parse jobDescription items and calculate total cost
+                    let totalCost = 0;
 
-              const jobFlatRate = Number(job.simpleFlatRate);
-              const techFlatRate = Number(job.technicians[0]?.simpleFlatRate);
-              const simpleFlatRate = !isNaN(jobFlatRate) && jobFlatRate > 0 ? jobFlatRate : (!isNaN(techFlatRate) && techFlatRate > 0 ? techFlatRate : 0);
+                    if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+                      totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+                        return sum + Number(item?.cost || 0); // Accumulate the cost
+                      }, 0);
+                    }
 
-              // Use job's amountPercentage or fallback to technician's amountPercentage
-              const jobPercentage = Number(job.amountPercentage);
-              const techPercentage = Number(job.technicians[0]?.amountPercentage);
-              const amountPercentage = !isNaN(jobPercentage) && jobPercentage > 0 ? jobPercentage : (!isNaN(techPercentage) && techPercentage > 0 ? techPercentage : 0);
+                    const simpleFlatRate = Number(job.simpleFlatRate);
+                    const amountPercentage = Number(job.amountPercentage);
 
-              // Neither is valid — show red dot with tooltip
-              if (
-                (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-                (isNaN(amountPercentage) || amountPercentage === 0)
-              ) {
-                const tooltipId = `tooltip-${job.id}`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    {/* <span
-                      data-tooltip-id={tooltipId}
-                      data-tooltip-content="R/I/R/R price is not added for this job."
-                      style={{
-                        height: '12px',
-                        width: '12px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                      }}
-                    ></span>
-                    <Tooltip id={tooltipId} place="top" /> */}
-                    Per job
-                  </div>
-                );
-              }
+                    // If both are invalid in the first job data, fallback to jobnician data
+                    const fallbackSimpleFlatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0);
+                    const fallbackAmountPercentage = Number(job?.technicians?.[0]?.amountPercentage || 0);
 
-              // Show simpleFlatRate if valid
-              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ${simpleFlatRate.toFixed(2)}
-                  </div>
-                );
-              }
+                    // Check if both simpleFlatRate and amountPercentage are invalid
+                    if (
+                      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+                      (isNaN(amountPercentage) || amountPercentage === 0)
+                    ) {
+                      // Fallback to technician data if primary values are invalid
+                      if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            ${fallbackSimpleFlatRate.toFixed(2)}
+                          </div>
+                        );
+                      }
 
-              // Show percentage-based calculation
-              if (!isNaN(amountPercentage) && amountPercentage > 0) {
-                const percentageAmount = (totalCost * amountPercentage) / 100;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                  </div>
-                );
-              }
+                      // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
+                      if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
+                        const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
+                          </div>
+                        );
+                      }
 
-              return null;
-            })()}
+                      // Show red dot with tooltip if both fallback values are invalid
+                      const tooltipId = `tooltip-${job.id}`;
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                          {/* <span
+                            data-tooltip-id={tooltipId}
+                            data-tooltip-content="R/I/R/R price is not added for this job."
+                            style={{
+                              height: '12px',
+                              width: '12px',
+                              backgroundColor: 'red',
+                              borderRadius: '50%',
+                              display: 'inline-block',
+                              cursor: 'pointer',
+                            }}
+                          ></span>
+                          <Tooltip id={tooltipId} place="top" /> */}
+                          Per Job
+                        </div>
+                      );
+                    }
+
+                    // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
+                    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          ${simpleFlatRate.toFixed(2)}
+                        </div>
+                      );
+                    }
+
+                    // Show percentage-based calculation
+                    if (!isNaN(amountPercentage) && amountPercentage > 0) {
+                      const percentageAmount = (totalCost * amountPercentage) / 100;
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+                        </div>
+                      );
+                    }
+
+                    return null;
+                  })()}
           </td>
         )}
 

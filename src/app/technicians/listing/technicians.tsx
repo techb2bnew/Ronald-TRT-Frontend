@@ -17,6 +17,8 @@ import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { Country, State } from 'country-state-city';
+import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
+import RejectReasonModal from '@/app/component/rejectReasonModal';
 
 
 
@@ -40,50 +42,12 @@ const TechnicianTable: React.FC = () => {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
 
-  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
-    const newStatus = accountStatus ? 'Active' : 'Inactive';
-
-
-    try {
-      const token = localStorage.getItem('token');
-
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      };
-
-      const response = await axios.post(
-        `${apiUrl}/updateTechnicianAccountStatus`,
-        {
-          technicianId: techId,
-          accountStatus: accountStatus,
-        },
-        config
-      );
-      fetchTechnicians(currentPage, searchTerm, pageSize);
-
-      if (response.data.status) {
-        await Swal.fire({
-          title: 'Success!',
-          text: `Account status changed to ${newStatus}.`,
-          icon: 'success',
-          confirmButtonColor: '#383d71',
-        });
-      } else {
-        throw new Error('Account status API failed');
-      }
-    } catch (error) {
-      console.error('Error updating account status:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Error updating account status.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      });
-    }
+  // Fetch technicians on success
+  const handleRejectionSuccess = () => {
+    fetchTechnicians(currentPage, searchTerm, pageSize);
   };
 
   const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
@@ -97,7 +61,7 @@ const TechnicianTable: React.FC = () => {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, Activate`,
+        confirmButtonText: `Yes, ${newStatus}`,
       });
 
       if (!result.isConfirmed) return;
@@ -135,97 +99,6 @@ const TechnicianTable: React.FC = () => {
       Swal.fire({
         title: 'Error!',
         text: error instanceof Error ? error.message : 'Error updating account status',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      });
-    }
-  };
-
-
-  const handleApprovalChange = async (techId: number, isApproved: string, tech: any) => {
-    try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      };
-
-      await axios.post(
-        `${apiUrl}/technicianActiveUnactiveAccount`,
-        {
-          technicianId: techId,
-          isApproved: isApproved,
-        },
-        config
-      );
-
-      // Show success message
-      // Swal.fire({
-      //   title: 'Success!',
-      //   text: `Technician status changed to ${isApproved === 'accept' ? 'Accepted' : 'Rejected'}`,
-      //   icon: 'success',
-      //   confirmButtonText: 'OK',
-      // });
-
-    } catch (error) {
-      console.error('Error updating approval status:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Error updating approval status.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      });
-    }
-  };
-
-  const handleChangeBothStatuses = async (tech: any) => {
-    try {
-      // Step 1: Check if payment info is missing (amountPercentage or simpleFlatRate or payRate)
-      if (!tech.payRate || tech.payRate === "") {
-        await Swal.fire({
-          title: 'Missing Payment Info',
-          text: 'Edit the technician to update his payrate and then approve or reject the request.',
-          icon: 'info',
-          confirmButtonColor: '#383d71',
-          confirmButtonText: 'OK',
-        });
-        return;
-      }
-
-      // Determine the new status (toggle between 'accept' and 'reject')
-      const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
-      const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
-      const statusText = newApprovalStatus.toLowerCase() === 'cancel' ? 'Reject' : newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1);
-
-      const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: `Do you want to change this account status to ${statusText}`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#383d71',
-        cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${statusText}`,
-
-      });
-
-      if (result.isConfirmed) {
-        // Update account status first
-        await handleAccountStatusChange(tech.id, newAccountStatus);
-
-        // Then update approval status
-        await handleApprovalChange(tech.id, newApprovalStatus, tech);
-
-        // Refresh the list
-        fetchTechnicians(currentPage, searchTerm, pageSize);
-      }
-
-    } catch (error) {
-      console.error('Error updating both statuses:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Error updating technician statuses.',
         icon: 'error',
         confirmButtonText: 'OK',
       });
@@ -287,11 +160,6 @@ const TechnicianTable: React.FC = () => {
       });
     }
   };
-
-
-  // JSX Button to trigger both API calls
-
-
 
   const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -359,8 +227,6 @@ const TechnicianTable: React.FC = () => {
     setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
   };
 
-
-
   // Function to handle sorting logic
   const handleSort = (column: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -390,14 +256,10 @@ const TechnicianTable: React.FC = () => {
     setTechnicians(sortedData);
   };
 
-
-
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
     setCurrentPage(data.selected + 1);
   };
-
-
 
   // Render row function for SortableTable
   const [statuses, setStatuses] = useState<{ [key: string]: string }>({});
@@ -429,51 +291,6 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-
-  const handleDeleteTechnician = async (id: number) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You can undo this action!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-      const body = JSON.stringify({
-        technicianId: id,  // Changed from [idKey] to explicit field name
-        deletedStatus: false,
-      });
-
-      const response = await fetch(`${apiUrl}/deleteTechnician`, {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await Swal.fire("Deleted!", "Technician has been deleted.", "success");
-        fetchTechnicians(currentPage, searchTerm, pageSize); // Refresh the list
-      } else {
-        Swal.fire("Error!", data.message || "Failed to delete technician.", "error");
-      }
-    } catch (error) {
-      Swal.fire("Error!", "An error occurred while deleting technician.", "error");
-    }
-  };
 
 
   const renderRow = (tech: any) => {
@@ -594,47 +411,17 @@ const TechnicianTable: React.FC = () => {
           </Link>
 
         </td>
-        <td
-
-        >
-          <div className='flex gap-4 items-center'>
-            {tech.isApproved === 'accept' ? (
-              // Step 2: Show "Accepted", clicking sends 'cancel'
-              <span
-                onClick={() => handleChangeBothStatuses(tech)}
-                className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-              >
-                Accepted
-              </span>
-            ) : tech.isApproved === 'cancel' ? (
-              // Step 3: Show "Rejected", clicking sends 'accept'
-              <span
-                onClick={() => handleChangeBothStatuses(tech)}
-                className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-              >
-                Rejected
-              </span>
-            ) : (
-              // Step 1: First time — show Accept + Reject
-              <>
-                <span
-                  onClick={() => handleChangeBothStatuses(tech)}
-                  className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-                >
-                  Accept
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancelClick(tech.id);
-                  }}
-                  className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
-                >
-                  Reject
-                </button>
-              </>
-            )}
-          </div>
+        <td>
+          <TechnicianApprovalActions
+            technician={tech}
+            apiUrl={apiUrl}
+            token={localStorage.getItem('token')}
+            fetchTechnicians={() => fetchTechnicians(currentPage, searchTerm, pageSize)}
+            onRejectClick={(id) => {
+              setSelectedTechId(id.toString());
+              setShowRejectModal(true);
+            }}
+          />
 
         </td>
 
@@ -661,7 +448,7 @@ const TechnicianTable: React.FC = () => {
       toast.error("Please select at least one technician to export.");
       return;
     }
-  
+
     const csvOptions = {
       filename: 'IFS Technicians',
       fieldSeparator: ',',
@@ -674,9 +461,9 @@ const TechnicianTable: React.FC = () => {
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
     };
-  
+
     const csvExporter = new ExportToCsv(csvOptions);
-  
+
     const formattedData = selectedTechnicians.map((tech) => {
       const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
       const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
@@ -698,57 +485,55 @@ const TechnicianTable: React.FC = () => {
         IsApproved: tech.isApproved,
       };
     });
-  
+
     // Ensure no headers are included in the data when downloading
     csvExporter.generateCsv(formattedData);
   };
-  
 
 
-  
   const handleImportCSV = (file: File) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart();
-  
+
       const lines = text.split(/\r?\n/);
-  
+
       // Remove any garbage lines at the start (empty rows, or headers like 'technician')
       while (lines.length > 0 && (lines[0].toLowerCase().includes("technician") || lines[0].trim() === "")) {
         lines.shift();
       }
-  
+
       text = lines.join('\n');
-  
+
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
         'PayVehicleType', 'PayRate', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
-  
+
       Papa.parse(text, {
         header: false,
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
-  
+
           // Log raw data for debugging
           console.log("Raw CSV data:", rows);
-  
+
           // Remove the first row explicitly (header row) to avoid it being imported as data
           const cleanedData = rows.slice(1) // Skip the first row
             .map((row, index) => {
               const obj: any = {};
-  
+
               // Create an object for each row
               manualHeaders.forEach((key, idx) => {
                 let value: any = row[idx] ?? null;
@@ -760,36 +545,36 @@ const TechnicianTable: React.FC = () => {
                   else if (lower === 'false') value = false;
                   else if (lower === 'null') value = null;
                 }
-  
+
                 if (key.toLowerCase() === 'id' && !isNaN(Number(value))) {
                   value = parseInt(value, 10);
                 }
                 obj[key] = value;
               });
-  
+
               return obj;
             })
             .filter((row) => {
               // Skip rows where any value exactly matches the header name (e.g., Id: 'Id')
               const isHeaderRow = Object.entries(row).some(([key, value]) => value === key);
               if (isHeaderRow) return false;
-  
+
               // Skip rows that are null (e.g., rows with empty data)
               if (!row) return false;
-  
+
               // Skip rows where all values are null/empty
               const allEmpty = Object.values(row).every(
                 val => val === null || val === '' || val === undefined
               );
               if (allEmpty) return false;
-  
+
               // Only keep rows with actual data
               return true;
             });
-  
+
           // Log cleaned data
           console.log("✅ Final Cleaned Data:", cleanedData);
-  
+
           try {
             const response = await axios.post(
               `${apiUrl}/importTechnician`,
@@ -802,7 +587,7 @@ const TechnicianTable: React.FC = () => {
             console.error('❌ Import failed:', error);
             toast.error('We could not find records matching the IDs you provided for updating. To ensure successful updates, please export the current data, compare the IDs in the exported file with the IDs in your import file, and make any necessary corrections');
           }
-  
+
           setLoading(false);
         },
         error: (err: any) => {
@@ -811,28 +596,9 @@ const TechnicianTable: React.FC = () => {
         },
       });
     };
-  
+
     reader.readAsText(file);
   };
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-
-
-
-
-
-
 
 
 
@@ -920,7 +686,19 @@ const TechnicianTable: React.FC = () => {
       {technicians.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+
+
+      <RejectReasonModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        technicianId={selectedTechId}
+        apiUrl={apiUrl} 
+        onSuccess={handleRejectionSuccess}
+      />
+
     </div>
+
+
   );
 };
 
