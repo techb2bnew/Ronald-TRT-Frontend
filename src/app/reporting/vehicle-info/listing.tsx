@@ -15,7 +15,10 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
 import Link from 'next/link';
-
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -59,11 +62,11 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/VehicleInfoSearch?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchVehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 
@@ -71,11 +74,11 @@ const VehicleTable: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
-          ? data.VehicalInfo || []
-          : data.vehicles || [];
+          ? data.data.vehicles || []
+          : data.response.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.totalPages);
+        setTotalPages(data.response.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -308,7 +311,7 @@ const VehicleTable: React.FC = () => {
     const isChecked = selectedIds.includes(job.id);
     return (
       <tr key={job.id}>
-        <td key="checkbox">
+        {/* <td key="checkbox">
           <label className="flex items-center cursor-pointer relative">
             <input
               type="checkbox"
@@ -322,22 +325,26 @@ const VehicleTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td> 
-        <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline'>{job?.vehicalId}</Link></td>
-        <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+        </td>  */}
+        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
+        <td>{job.customer.firstName} {job.customer.lastName}</td>
+        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email}</a></td>
+        <td>{job.vin}</td>
+
+        {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
  
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
-        ))}</td>
-        <td>{job.vin}</td>
+        ))}</td> */}
+        <td>{job.vehicleDescriptor}</td> 
         <td>{job.make} </td>
         <td>{job.model}</td>
         <td>{job.modelYear}</td>
-        <td>{job.color}</td>
+        {/* <td>{job.color}</td> */}
         <td>
-          <TableActions
+          {/* <TableActions
             editRoute={`/jobs/create-job/create?jobId=${job.id}&vehicleInfo`}
             deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
             viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
@@ -345,7 +352,13 @@ const VehicleTable: React.FC = () => {
             userRole='Vehicleinfo'
             itemId={job.id}  // Pass the technician ID
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-          />
+          /> */}
+
+           <Link href={`/reporting/view?customerId=${job.customerId}`} >
+            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+              data-tooltip-content="View" />
+          </Link>
+          <Tooltip id="view" place="top" />
         </td>
       </tr>
     );
@@ -358,13 +371,13 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
  
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              {/* <th className="w-[35px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -382,8 +395,8 @@ const VehicleTable: React.FC = () => {
                     </svg>
                   </span>
                 </label>
-              </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+              </th> */}
+              <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -391,7 +404,21 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+                <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+                Customer Name
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+               <th className="w-[120px]">
+                Customer Email
+              </th>
+              <th className="w-[150px]">
+                VIN
+              </th>
+              {/* <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -401,29 +428,29 @@ const VehicleTable: React.FC = () => {
               </th>
               <th className="w-[150px]">
                 Technicians Name
-              </th>
-              <th className="w-[150px]">
-                VIN
-              </th>
-              <th className="w-[120px]" >
+              </th> */}
+              <th className="w-[120px]">
+                Vehicle Descriptor
+              </th>   
+              <th className="w-[100px]">
                 Make
               </th>
-              <th className="w-[100px]">Model</th>
+              <th className="w-[80px]">Model</th>
               <th className="w-[60px]">Year</th>
-              <th className="w-[50px]">Color</th>
-              <th className="w-[160px]">Action</th>
+              {/* <th className="w-[50px]">Color</th> */}
+              <th className="w-[60px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

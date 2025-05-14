@@ -11,7 +11,7 @@ export default function ViewDetails() {
   const [userType, setUserType] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const fetchCustomerData = async (vehicalId: string) => {
+  const fetchCustomerData = async (customerId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
     try {
@@ -24,15 +24,15 @@ export default function ViewDetails() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleVehicalInfo?vehicalId=${vehicalId}`, {
-        method: 'GET',
+      const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
+        method: 'POST',
         headers,
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setJobsData(data.vehicalInfo);  // Set the  CustomerData data
+        setJobsData(data.customers.customer);  // Set the  CustomerData data
       } else {
         toast.error(data.error || 'Error fetching technician data');
       }
@@ -43,63 +43,63 @@ export default function ViewDetails() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const vehicalId = searchParams.get('vehicalId') || '';
+    const customerId = searchParams.get('customerId') || '';
 
-    if (vehicalId) {
+    if (customerId) {
       setIsEdit(true);  // Set to true if `fetchCustomerData` exists in the URL
-      fetchCustomerData(vehicalId);
+      fetchCustomerData(customerId);
     } else {
       setIsEdit(false);
     }
   }, []);
 
-   const calculateTotalCost = (jobData: any) => {
-    let subtotalcost = 0;
+  //  const calculateTotalCost = (jobData: any) => {
+  //   let subtotalcost = 0;
 
-    // Check if jobDescription exists and is an array
-    if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-        let parsedItem = item;
+  //   // Check if jobDescription exists and is an array
+  //   if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
+  //     subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+  //       let parsedItem = item;
 
-        // Only parse if item is a string
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item); // Parse the stringified JSON
-          } catch (error) {
-            console.error("Error parsing job description:", error);
-            return total; // Skip this item if parsing fails
-          }
-        }
+  //       // Only parse if item is a string
+  //       if (typeof item === 'string') {
+  //         try {
+  //           parsedItem = JSON.parse(item); // Parse the stringified JSON
+  //         } catch (error) {
+  //           console.error("Error parsing job description:", error);
+  //           return total; // Skip this item if parsing fails
+  //         }
+  //       }
 
-        // Check if parsedItem has a cost property and is a number
-        const cost = parseFloat(parsedItem?.cost || '0');
-        return total + (isNaN(cost) ? 0 : cost);
-      }, 0);
-    }
+  //       // Check if parsedItem has a cost property and is a number
+  //       const cost = parseFloat(parsedItem?.cost || '0');
+  //       return total + (isNaN(cost) ? 0 : cost);
+  //     }, 0);
+  //   }
 
-    // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
-    const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
-    const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
+  //   // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
+  //   const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
+  //   const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
 
-    // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
-    const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
-      ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
-      : simpleFlatRate;
+  //   // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
+  //   const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
+  //     ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
+  //     : simpleFlatRate;
 
-    const finalAmountPercentage = isNaN(amountPercentage) || amountPercentage <= 0
-      ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
-      : amountPercentage;
+  //   const finalAmountPercentage = isNaN(amountPercentage) || amountPercentage <= 0
+  //     ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
+  //     : amountPercentage;
 
-    // Calculate the percentage amount
-    const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
-      ? (subtotalcost * finalAmountPercentage) / 100
-      : 0;
+  //   // Calculate the percentage amount
+  //   const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
+  //     ? (subtotalcost * finalAmountPercentage) / 100
+  //     : 0;
 
-    // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
-    const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
+  //   // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
+  //   const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
 
-    return totalCost;
-  };
+  //   return totalCost;
+  // };
 
   React.useEffect(() => {
     const type = localStorage.getItem('types');
@@ -125,109 +125,82 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Id:</strong> {jobData?.id}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.firstName} {jobData?.lastName}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
-                <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
-                  {jobData?.customer?.email}
+                <a className="hover:underline" href={`mailto:${jobData?.email}`}>
+                  {jobData?.email}
                 </a></p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
-                <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
-                  {jobData?.customer?.phoneNumber}
+                <a className="hover:underline" href={`tel:${jobData?.phoneNumber}`}>
+                  {jobData?.phoneNumber}
                 </a>
               </p>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>VIN:</strong>
-                {jobData?.vin?.trim() ? jobData.vin : <span className="text-gray-500">No data available</span>}
-              </div>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Country:</strong> {jobData?.country}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>State:</strong> {jobData?.state}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>City:</strong> {jobData?.city}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Zip Code:</strong> {jobData?.zipCode}</p>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model:</strong>
-                {jobData?.model?.trim() ? jobData.model : <span className="text-gray-500">No data available</span>}
-              </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
-                {jobData?.vehicleDescriptor?.trim() ? jobData.vehicleDescriptor : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Manufacture Name:</strong>
-                {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
-                <span
-                  className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-                >
-                  {jobData.jobStatus ? 'Active' : 'Inactive'}
-                </span>
-              </p>
             </div>
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'><strong className='w-[210px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Email:</strong>
-                <a className="hover:underline" href={`mailto:${jobData.technicians[0]?.email}`}>
-                  {jobData.technicians[0]?.email}
-                </a>
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Ph. Number:</strong>
-                <a className="hover:underline" href={`tel:${jobData.technicians[0]?.phoneNumber}`}>
-                  {jobData.technicians[0]?.phoneNumber} </a></p>
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] inline-block">Job Description: </strong>
-                {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-                  jobData.jobDescription.filter((item: any) => {
-                    const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
-                    return jobItem.jobDescription?.trim(); // only include non-empty descriptions
-                  }).length > 0 ? (
-                    <ul className="list-none">
-                      {jobData.jobDescription.map((item: any, index: any) => {
-                        const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
-                        if (!jobItem.jobDescription?.trim()) return null; // skip empty ones
-                        return (
-                          <li key={index}>
-                            <span className="block"> {jobItem.jobDescription}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <span>No job descriptions available</span>
-                  )
-                ) : (
-                  <span>No job descriptions available</span>
-                )}
-              </div>
+
+              {jobData?.vehicles?.[0] && (
+                <>
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>VIN:</strong>
+                    {jobData.vehicles[0].vin?.trim()
+                      ? jobData.vehicles[0].vin
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Make:</strong>
+                    {jobData.vehicles[0].make?.trim()
+                      ? jobData.vehicles[0].make
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Model:</strong>
+                    {jobData.vehicles[0].model?.trim()
+                      ? jobData.vehicles[0].model
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
+                    {jobData.vehicles[0].vehicleDescriptor?.trim()
+                      ? jobData.vehicles[0].vehicleDescriptor
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Manufacture Name:</strong>
+                    {jobData.vehicles[0].manufacturerName?.trim()
+                      ? jobData.vehicles[0].manufacturerName
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
 
 
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className='w-[210px] inline-block'>Total Cost:</strong>  ${calculateTotalCost(jobData).toFixed(2)}
-              </div>
-              {userType === 'single-technician' && (
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                  <strong className='w-[210px] inline-block'>Labour Cost:</strong>${jobData?.labourCost}
-                </div>
+
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Model Year:</strong>
+                    {jobData.vehicles[0].modelYear?.toString().trim()
+                      ? jobData.vehicles[0].modelYear
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+
+                  <div className='mb-4 border-b border-gray-500 text-sm pb-4'>
+                    <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
+                    {jobData.vehicles[0].vehicleType?.trim()
+                      ? jobData.vehicles[0].vehicleType
+                      : <span className="text-gray-500">No data available</span>}
+                  </div>
+                </>
               )}
 
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Make:</strong>
-                {jobData?.make?.trim() ? jobData.make : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model Year:</strong>
-                {jobData?.modelYear?.toString().trim() ? jobData.modelYear : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
-                {jobData?.vehicleType?.trim() ? jobData.vehicleType : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+              {/* <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Color:</strong>
                 {jobData?.color?.trim() ? jobData.color : <span className="text-gray-500">No data available</span>}
               </div>
@@ -250,7 +223,7 @@ export default function ViewDetails() {
                 ) : (
                   <span className="text-sm text-gray-500">No data available</span>
                 )}
-              </div>
+              </div> */}
 
             </div>
           </div>
