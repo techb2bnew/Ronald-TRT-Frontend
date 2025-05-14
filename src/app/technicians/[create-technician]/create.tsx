@@ -138,8 +138,8 @@ export default function Technicians() {
           s.isoCode.toLowerCase() === data.technician.state.toLowerCase()
         )
       );
-      const matchedRole = roles.find(role => role.id === data.technician.roleId);
-      const roleName = matchedRole?.name || '';
+      // const matchedRole = roles.find(role => role.id === data.technician.roleId);
+      // const roleName = matchedRole?.name || '';
       if (response.ok) {
         setFormData(prev => ({
           ...prev,
@@ -149,7 +149,7 @@ export default function Technicians() {
           taxForms: data.technician.taxForms || [],
           country: technicianCountry?.isoCode || '',
           state: technicianState?.isoCode || '',
-          role: roleName,
+          role: data.technician.Role.name || '',
           types: data.technician.types || '',
         }));
       }
