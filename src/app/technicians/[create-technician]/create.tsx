@@ -375,9 +375,7 @@ export default function Technicians() {
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
     if (!formData.email?.trim()) newErrors.email = 'Email is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required';
-    if (!formData.state?.trim()) newErrors.state = 'State is required';
-    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.country?.trim()) newErrors.country = 'Country is required'; 
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     if (!isEdit) {
@@ -896,7 +894,7 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg> */}
               <FormControl fullWidth size="small">
-                <InputLabel id="state" color="warning">Select state *</InputLabel>
+                <InputLabel id="state" color="warning">Select state</InputLabel>
                 <Select
                   labelId="state"
                   label="select-state"
@@ -920,11 +918,7 @@ export default function Technicians() {
                   )}
                 </Select>
               </FormControl>
-              {errors.state && (
-                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.state}
-                </div>
-              )}
+               
 
               {/* <label htmlFor="" className='text-sm'>State <span className='text-red-500'>*</span></label>
               <select
@@ -947,11 +941,7 @@ export default function Technicians() {
                 <circle cx="12" cy="10" r="3" />
               </svg>
               <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
-              {errors.city && (
-                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.city}
-                </div>
-              )}
+             
             </div>
             <div className='mb-4 relative'>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
