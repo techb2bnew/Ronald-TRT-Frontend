@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import user from "../../../public/user.png";
 import Edit from "../../../public/upload.png";
 import { useTechnician } from "@/app/techheaderprofile/headerprofile";
@@ -10,23 +10,35 @@ import { Country, State } from 'country-state-city';
 import { ICountry, IState } from 'country-state-city';
 import { SelectChangeEvent } from '@mui/material/Select';
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css' ;
+import 'react-phone-number-input/style.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+}
 
 export default function ProfileCard() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [technician, setTechnician] = useState<any>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
     phoneNumber: "",
     address: "",
     city: "",
-    state:'',
+    state: '',
     country: "",
     zipCode: "",
   });
@@ -92,13 +104,19 @@ export default function ProfileCard() {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+     if (errors[name]) {
+    setErrors({
+      ...errors,
+      [name]: "", // Remove error for the specific field
+    });
+  }
   };
-  
 
-const handleSelectChange = (event: SelectChangeEvent) => {
-  const { name, value } = event.target;
-  setFormData((prev) => ({ ...prev, [name]: value }));
-};
+
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
   // ✅ Handle Profile Update
   const handleProfileUpdate = async () => {
     const token = localStorage.getItem("token");
@@ -107,14 +125,18 @@ const handleSelectChange = (event: SelectChangeEvent) => {
       toast.error("Technician ID not found!");
       return;
     }
-    const { firstName, lastName, phoneNumber, address, city, country, zipCode } = formData;
-    if (!firstName || !lastName || !phoneNumber || !address || !city || !country || !zipCode) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!formData.country?.trim()) newErrors.country = 'Country is required';
+    if (!formData.state?.trim()) newErrors.state = 'State is required';
+    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
 
-    if (!parsePhoneNumberFromString(phoneNumber)) {
-      toast.error("Please enter a valid phone number.");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
     // ✅ Create FormData
@@ -152,7 +174,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
-      
+
       if (!response.ok) throw new Error(result.error || "Failed to update profile");
 
       toast.success("Profile updated successfully!");
@@ -298,22 +320,47 @@ const handleSelectChange = (event: SelectChangeEvent) => {
   };
 
 
-  const handlePhoneChange = (value: string | undefined) => {
-    if (!value) return;
-  
-    setFormData((prev) => ({
-      ...prev,
-      phoneNumber: value, // <-- Keep this E.164 formatted string
-    }));
-  };
-  
+ const handlePhoneChange = (value: string | undefined) => {
+     // Clear phone number error if it exists
+     if (errors.phoneNumber) {
+       setErrors(prev => {
+         const newErrors = { ...prev };
+         delete newErrors.phoneNumber;
+         return newErrors;
+       });
+     }
+ 
+     if (!value) {
+       // Handle empty value case
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: ''
+       }));
+       return;
+     }
+ 
+     const parsedNumber = parsePhoneNumberFromString(value);
+     if (parsedNumber) {
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: parsedNumber.number // E.164 format
+       }));
+     } else {
+       // Handle invalid phone number case
+       setFormData(prev => ({
+         ...prev,
+         phoneNumber: value // Fallback to raw input
+       }));
+     }
+   };
+
 
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   return (
     <div className="rounded-lg p-6 mx-auto">
-       <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
+      <div className="flex items-center space-x-4 bg-white shadow-lg p-6 profile__bg">
         <div className="relative h-[88px] w-[88px]">
           {technician && technician.image ? (
             <img
@@ -322,12 +369,6 @@ const handleSelectChange = (event: SelectChangeEvent) => {
               className="rounded-full object-cover h-[85px] w-[85px] border-[2px] border-white"
             />
           ) : (
-            // <Image
-            //   src={user}
-            //   alt="Default profile image"
-            //   layout="fill"
-            //   className="rounded-full"
-            // />
             <p className="font-[600] text-[12px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center">No image uploaded</p>
           )}
 
@@ -350,12 +391,12 @@ const handleSelectChange = (event: SelectChangeEvent) => {
             {technician ? `${technician.firstName} ${technician.lastName}` : "User"}
           </h2>
           <p className="text-gray-700 text-white first-letter:uppercase">
-          {
-    technician?.types === "superadmin" ? "Super Admin" :
-    technician?.types === "single-technician" ? "Single Technician" :
-    technician?.types === "ifs" ? "IFS" :
-    technician?.types
-  }
+            {
+              technician?.types === "superadmin" ? "Super Admin" :
+                technician?.types === "single-technician" ? "Single Technician" :
+                  technician?.types === "ifs" ? "IFS" :
+                    technician?.types
+            }
           </p>
           <p className="text-gray-700 text-white">{technician?.address}</p>
         </div>
@@ -365,64 +406,72 @@ const handleSelectChange = (event: SelectChangeEvent) => {
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <div className="flex justify-between">
           <h3 className="font-semibold text-lg">Personal Information</h3>
-  {!isEditing &&(
-    <button
-            onClick={() => setIsEditing(true)}
-            className=" primary-bg px-4 py-2 rounded-lg"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {!isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className=" primary-bg px-4 py-2 rounded-lg"
             >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              </svg>
 
-          </button>
-  )}
-          
+            </button>
+          )}
+
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4"> 
-            <div className='mb-4 relative'>
-            
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                            <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                            <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-            
-                          <TextField fullWidth size='small' className='form__input' name="firstName" id="outlined-basic" color="warning" label="First Name" variant="outlined" value={formData.firstName} onChange={handleInputChange}   disabled={!isEditing} required />
-             
-             
+        <div className="mt-4 grid grid-cols-3 gap-4">
+          <div className='mb-4 relative'>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+              <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <TextField fullWidth size='small' className='form__input' name="firstName" id="outlined-basic" color="warning" label="First Name" variant="outlined" value={formData.firstName} onChange={handleInputChange} disabled={!isEditing} required />
+            {errors.firstName && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.firstName}
+              </div>
+            )}
           </div>
-           <div className='mb-4 relative'>
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                          <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                          <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        <TextField fullWidth  size='small' name="lastName" id="outlined-basic" color="warning" label="Last Name" variant="outlined" value={formData.lastName} onChange={handleInputChange} disabled={!isEditing} required />
-           
-             
+
+          <div className='mb-4 relative'>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+              <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <TextField fullWidth size='small' name="lastName" id="outlined-basic" color="warning" label="Last Name" variant="outlined" value={formData.lastName} onChange={handleInputChange} disabled={!isEditing} required />
+            {errors.lastName && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.lastName}
+              </div>
+            )}
           </div>
+
           <div className='mb-4'>
-                         <PhoneInput
-                          international
-                          defaultCountry="US"
-                          value={formData.phoneNumber}
-                          onChange={handlePhoneChange}
-                          disabled={!isEditing}
-                          required
-                          className="input text-xs input-bordered w-full p-2 rounded"
-                        />
-
-             
-
+            <PhoneInput
+              international
+              defaultCountry="US"
+              value={formData.phoneNumber}
+              onChange={handlePhoneChange}
+              disabled={!isEditing}
+              required
+              className="input text-xs input-bordered w-full p-2 rounded"
+            />
+            {errors.phoneNumber && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.phoneNumber}
+              </div>
+            )}
           </div>
 
         </div>
@@ -430,121 +479,91 @@ const handleSelectChange = (event: SelectChangeEvent) => {
       <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
         <h3 className="font-semibold text-lg">Address</h3>
         <div className="mt-4 grid grid-cols-4 gap-4">
-        <div className=' relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-           <FormControl fullWidth  size='small'>
-                          <InputLabel id="country" color="warning">Select country *</InputLabel>
-                          <Select
-                            labelId="country"
-                            color="warning"
-                            id="country"
-                            value={formData.country}
-                            label="selectcountry"
-                            name="country"
-                            required
-                            disabled={!isEditing}
-                            onChange={handleSelectChange}
-                          >
-                            {countries.map((country: ICountry) => (
-                              <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-            {/* <label className="text-gray-600">Country *</label>
-            <input
-              type="text"
-              name="country"
-              value={formData.country}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
+          <div className=' relative'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <FormControl fullWidth size='small'>
+              <InputLabel id="country" color="warning">Select country *</InputLabel>
+              <Select
+                labelId="country"
+                color="warning"
+                id="country"
+                value={formData.country}
+                label="selectcountry"
+                name="country"
                 required
-            /> */}
+                disabled={!isEditing}
+                onChange={handleSelectChange}
+              >
+                {countries.map((country: ICountry) => (
+                  <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {errors.country && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.country}
+              </div>
+            )}
           </div>
           <div className=' relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            <FormControl fullWidth  size='small'>
-                            <InputLabel id="state" color="warning"> Select state *</InputLabel>
-                            <Select
-                              labelId="state"
-                              color="warning"
-                              id="select-state"
-                              value={formData.state}
-                              label="selectState"
-                              name="state"
-                              required
-                              disabled={!isEditing}
-                              onChange={handleSelectChange}
-                            >
-                              {states.map((state: IState) => (
-                                <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <FormControl fullWidth size='small'>
+              <InputLabel id="state" color="warning"> Select state *</InputLabel>
+              <Select
+                labelId="state"
+                color="warning"
+                id="select-state"
+                value={formData.state}
+                label="selectState"
+                name="state"
+                required
+                disabled={!isEditing}
+                onChange={handleSelectChange}
+              >
+                {states.map((state: IState) => (
+                  <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            {/* <label className="text-gray-600">State *</label>
-            <input
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            /> */}
-          </div> 
-            <div className='mb-4 relative'>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                          <TextField fullWidth   name="city" id="outlined-basic" color="warning" label="Enter your city" size='small' value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
-            
-                         
-            {/* <label className="text-gray-600">City *</label>
-            <input
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            /> */}
+            {errors.state && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.state}
+              </div>
+            )}
           </div>
-         
           <div className='mb-4 relative'>
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                          <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-          
-                        <TextField fullWidth  name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size='small' value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
-           
-            {/* <label className="text-gray-600">Zip Code *</label>
-            <input
-              type="text"
-              name="zipCode"
-              value={formData.zipCode}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className={`text-sm border rounded p-2 w-full ${!isEditing ? "bg-gray-200 cursor-not-allowed" : ""
-                }`}
-                required
-            /> */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" size='small' value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
+            {errors.city && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.city}
+              </div>
+            )}
+          </div>
+          <div className='mb-4 relative'>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+              <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size='small' value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
+            {errors.zipCode && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.zipCode}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -557,7 +576,7 @@ const handleSelectChange = (event: SelectChangeEvent) => {
           Save Profile
         </button>
       )}
-       
+
     </div>
   );
 }
