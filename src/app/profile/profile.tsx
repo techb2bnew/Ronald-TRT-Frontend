@@ -369,7 +369,9 @@ export default function ProfileCard() {
               className="rounded-full object-cover h-[85px] w-[85px] border-[2px] border-white"
             />
           ) : (
-            <p className="font-[600] text-[12px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center">No image uploaded</p>
+            <p className="font-[600] text-[34px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center uppercase flex items-center justify-center">
+                 {technician?.firstName ? technician?.firstName[0] : 'N/A'}
+            </p>
           )}
 
           <div
