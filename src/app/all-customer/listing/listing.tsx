@@ -179,7 +179,7 @@ export default function ClientListing() {
   //   }
   // };
   // CSV Export Functions
-  const downloadCSV = () => { 
+  const downloadCSV = () => {
     const selectedCustomers = customer.filter(c => selectedIds.includes(c.id));
 
     if (selectedCustomers.length === 0) {
@@ -215,7 +215,7 @@ export default function ClientListing() {
     }));
 
     csvExporter.generateCsv(formattedData);
-    
+
   };
 
   const handleImportCSV = (file: File) => {
@@ -298,7 +298,7 @@ export default function ClientListing() {
 
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-          
+
             // Check if it's an Axios error with a response
             if (
               typeof error === 'object' &&
@@ -313,7 +313,7 @@ export default function ClientListing() {
               toast.error(String(error));
             }
           }
-          
+
           setLoading(false);
 
         },
@@ -354,9 +354,11 @@ export default function ClientListing() {
         <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust?.id}</Link></td>
         <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline capitalize'>{cust.firstName} {cust.lastName}</Link></td>
 
-        <td>{cust.email}</td>
-        <td>{cust.phoneNumber}</td>
-        <td>{cust.address}</td> 
+        <td><a className="hover:underline" href={`mailto:${cust?.email}`}> {cust.email}</a></td>
+        <td>
+          <a className="hover:underline" href={`tel:${cust?.phoneNumber}`}>
+            {cust.phoneNumber}</a></td>
+        <td>{cust.address}</td>
         <td>
           {/* <TableActions 
          editRoute={`/client/create?customerId=${cust.id}`}   
@@ -445,7 +447,7 @@ export default function ClientListing() {
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th> 
+              </th>
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>

@@ -474,7 +474,7 @@ const JobTable: React.FC = () => {
 
 
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
-        <td>{job?.customer?.phoneNumber}</td>
+        <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id} className="capitalize">
             {tech.firstName} {tech.lastName}

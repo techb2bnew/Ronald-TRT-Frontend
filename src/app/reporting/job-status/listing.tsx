@@ -418,7 +418,7 @@ const JobTable: React.FC = () => {
         <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline'>{job?.id}</Link></td>
         <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
 
-        <td>{job?.customer?.phoneNumber}</td>
+        <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td>
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
@@ -426,7 +426,9 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>{job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
+            <a className="hover:underline" href={`tel:${tech?.phoneNumber}`}> 
             {tech.phoneNumber}
+            </a>
           </div>
         ))}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>

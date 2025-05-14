@@ -577,8 +577,8 @@ const TechnicianTable: React.FC = () => {
             <span><Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech?.firstName} {tech?.lastName}</Link> </span>
           </div>
         </td>
-        <td>{tech.email}</td>
-        <td>{tech.phoneNumber}</td>
+        <td><a className="hover:underline" href={`mailto:${tech?.email}`}> {tech.email}</a></td>
+        <td><a className="hover:underline" href={`tel:${tech?.phoneNumber}`}>{tech.phoneNumber}</a></td>
         {/* <td>{tech.payRate}</td> */}
         <td
           onClick={() => {

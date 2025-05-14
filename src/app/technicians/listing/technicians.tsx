@@ -286,7 +286,7 @@ const TechnicianTable: React.FC = () => {
           </a>
         </td>
         <td>
-          <a href={`tel:${tech.phoneNumber}`} style={{ color: '#383d71' }}>
+          <a href={`tel:${tech.phoneNumber}`} style={{ color: '#383d71' }} className='hover:underline'>
             {tech.phoneNumber}
           </a>
         </td>

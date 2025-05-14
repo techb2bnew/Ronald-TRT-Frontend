@@ -460,7 +460,7 @@ function JobTListing({ }: Props) {
           </Link>
         </td>
 
-        <td>{job?.customer?.customer?.phoneNumber}</td>
+        <td><a className="hover:underline" href={`tel:${job?.customer?.customer?.phoneNumber}`}>{job?.customer?.customer?.phoneNumber}</a></td>
 
         <td>
           {job?.customer?.technicians?.map((t: any, i: number) => (

@@ -358,7 +358,7 @@ export default function ClientListing() {
           </a>
         </td>
         <td>
-          <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71' }}>
+          <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71' }} className='hover:underline'>
             {cust.phoneNumber}
           </a>
         </td>

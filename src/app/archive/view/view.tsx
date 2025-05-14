@@ -109,8 +109,8 @@ export default function ViewDetails() {
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</div>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> <a href={`mailto:${technician.email}`} className="hover:underline"> {technician?.email}</a></div>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong><a href={`tel:${technician.phoneNumber}`} className="hover:underline"> {technician?.phoneNumber}</a></div>
-            <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Name:</strong> {technician?.secondaryContactName}</div>
-            <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong> {technician?.secondaryEmail}</div>
+            <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Number:</strong><a href={`tel:${technician.secondaryContactName}`} className="hover:underline"> {technician?.secondaryContactName}</a></div>
+            <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Email:</strong><a href={`mailto:${technician.secondaryEmail}`} className="hover:underline">  {technician?.secondaryEmail}</a></div>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</div> 
             <div><strong className='w-[200px] inline-block'>Status:</strong><span
           className={`badge ${technician.isApproved ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}

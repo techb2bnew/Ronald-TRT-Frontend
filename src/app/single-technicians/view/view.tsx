@@ -289,8 +289,8 @@ export default function ViewDetails() {
           <div className="grid grid-cols-2 gap-6 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</p>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</p>
+              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong>{technician?.id}</p>
+              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong>{technician?.firstName} {technician?.lastName}</p>
               <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong>
                 <a className="hover:underline" href={`mailto:${technician?.email}`}>
 
@@ -404,7 +404,7 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong> {technician?.address}</p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong>{technician?.address}</p>
               <p className='border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Country:</strong>
                 {getCountryName(technician?.country)}
@@ -413,10 +413,10 @@ export default function ViewDetails() {
                 <strong className='w-[200px] inline-block'>State:</strong>
                 {getStateName(technician?.country, technician?.state)}
               </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong> {technician?.businessName} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong>{technician?.city}</p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong>{technician?.zipCode}</p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Business Logo:</strong>
 
