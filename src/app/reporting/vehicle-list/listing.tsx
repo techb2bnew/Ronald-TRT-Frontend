@@ -326,7 +326,7 @@ const VehicleTable: React.FC = () => {
 
         <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
         <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id}>
+          <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td>

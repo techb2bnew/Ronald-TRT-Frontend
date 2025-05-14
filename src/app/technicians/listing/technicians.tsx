@@ -106,60 +106,7 @@ const TechnicianTable: React.FC = () => {
   };
 
 
-  const handleCancelClick = async (techId: number,) => {
-    try {
-      // Step 1: Ask for confirmation before rejecting
-      const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'Do you really want to reject this technician?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: 'gray',
-        confirmButtonText: 'Yes, reject',
-      });
-
-      // Step 2: Proceed only if confirmed
-      if (result.isConfirmed) {
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        };
-
-        // First API call - technicianRejectedAccount
-        await axios.post(
-          `${apiUrl}/technicianRejectedAccount`,
-          {
-            technicianId: techId,
-            isApproved: 'cancel',
-          },
-          config
-        );
-        // Optional: Reload technician list
-        fetchTechnicians(currentPage, searchTerm, pageSize);
-
-        // Step 3: Show success message
-        await Swal.fire({
-          title: 'Rejected!',
-          text: 'Technician has been successfully rejected.',
-          icon: 'success',
-          confirmButtonColor: '#383d71',
-        });
-      }
-
-    } catch (error) {
-      console.error('Error updating approval status:', error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Error updating approval status.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-      });
-    }
-  };
+ 
 
   const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -326,7 +273,7 @@ const TechnicianTable: React.FC = () => {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             )}
-            <Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline'>
+            <Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>
               {tech?.firstName} {tech?.lastName}
             </Link>
 

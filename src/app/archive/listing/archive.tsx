@@ -451,9 +451,9 @@ const ArchivePage = () => {
         return (
           <>
             <td>{item.jobId || item.id}</td>
-            <td>{item?.customer?.firstName} {item?.customer?.lastName}</td>
+            <td className='capitalize'>{item?.customer?.firstName} {item?.customer?.lastName}</td>
             <td>  {item?.technicians?.map((tech: any) => (
-              <div key={tech.id}>
+              <div key={tech.id} className='capitalize'>
                 {tech.firstName} {tech.lastName}
               </div>
             ))}</td>
@@ -476,7 +476,7 @@ const ArchivePage = () => {
         return (
           <>
             <td>{item.technicianId || item.id}</td>
-            <td>{item.firstName} {item.lastName}</td>
+            <td className='capitalize'>{item.firstName} {item.lastName}</td>
             <td>{item.email}</td>
             <td>{item.phoneNumber}</td>
             <td>{item.address ? `${item.address}, ${item.city}, ${item.state}` : 'N/A'}</td>
@@ -487,7 +487,7 @@ const ArchivePage = () => {
         return (
           <>
             <td>{item.customerId || item.id}</td>
-            <td>{item.firstName} {item.lastName}</td>
+            <td className='capitalize'>{item.firstName} {item.lastName}</td>
             <td>{item.email}</td>
             <td>{item.phoneNumber}</td>
             <td>{item.address ? `${item.address}, ${item.city}, ${item.state}` : 'N/A'}</td>

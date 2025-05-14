@@ -17,6 +17,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
+import RejectReasonModal from '@/app/component/rejectReasonModal';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -40,13 +41,16 @@ const TechnicianTable: React.FC = () => {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);  
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
-  const [rejectionError, setRejectionError] = useState("");
+  const [selectedTechId, setSelectedTechId] = useState<string | null>(null); 
 
- const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+  // Fetch technicians on success
+  const handleRejectionSuccess = () => {
+    fetchTechnicians(currentPage, searchTerm, pageSize);
+  };
+
+  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
 
@@ -186,7 +190,7 @@ const TechnicianTable: React.FC = () => {
   };
 
   const handleChangeBothStatuses = async (tech: any) => {
-    try { 
+    try {
       // Determine the new status (toggle between 'accept' and 'reject')
       const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
@@ -570,7 +574,7 @@ const TechnicianTable: React.FC = () => {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             )}
-            <span><Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech?.firstName} {tech?.lastName}</Link> </span>
+            <span><Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech?.firstName} {tech?.lastName}</Link> </span>
           </div>
         </td>
         <td>{tech.email}</td>
@@ -596,8 +600,8 @@ const TechnicianTable: React.FC = () => {
 
         <td
 
->
-   <div className='flex gap-4 items-center'>
+        >
+          <div className='flex gap-4 items-center'>
             {tech.isApproved === 'accept' ? (
               // Step 2: Show "Accepted", clicking sends 'cancel'
               <span
@@ -624,8 +628,7 @@ const TechnicianTable: React.FC = () => {
                   Accept
                 </span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     setSelectedTechId(tech.id);
                     setShowRejectModal(true);
                   }}
@@ -637,7 +640,7 @@ const TechnicianTable: React.FC = () => {
             )}
           </div>
 
-</td>
+        </td>
 
         <td>
           <TableActions
@@ -720,6 +723,14 @@ const TechnicianTable: React.FC = () => {
       {technicians.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+
+        <RejectReasonModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        technicianId={selectedTechId}
+        apiUrl={apiUrl} 
+        onSuccess={handleRejectionSuccess}
+      />
     </div>
   );
 };

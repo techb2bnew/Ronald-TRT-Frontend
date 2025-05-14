@@ -93,15 +93,11 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
              
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Id:</strong> {CustomerData?.id}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Name:</strong> {CustomerData?.firstName} {CustomerData?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4 capitalize'><strong className='w-[200px] inline-block'>Customer Name:</strong> {CustomerData?.firstName} {CustomerData?.lastName}</p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Email:</strong> 
-              <a className="hover:underline" href={`mailto:${CustomerData?.email}`}>
-              {CustomerData?.email}
-              </a></p>
+              <a className="hover:underline" href={`mailto:${CustomerData?.email}`}> {CustomerData?.email}</a></p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Ph. Number:</strong>
-              <a className="hover:underline" href={`tel:${CustomerData?.phoneNumber}`}>
-               {CustomerData?.phoneNumber}
-               </a>
+              <a className="hover:underline" href={`tel:${CustomerData?.phoneNumber}`}> {CustomerData?.phoneNumber}</a>
                </p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Address:</strong> {CustomerData?.address}</p>
               <div className="flex">
@@ -126,13 +122,9 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Role Type:</strong> {CustomerData?.roleType}</p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
-                <strong className='w-[200px] inline-block'>Country:</strong>
-                {getCountryName(CustomerData?.country)}
-              </p>
+                <strong className='w-[200px] inline-block'>Country:</strong> {getCountryName(CustomerData?.country)}</p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
-                <strong className='w-[200px] inline-block'>State:</strong>
-                {getStateName(CustomerData?.country, CustomerData?.state)}
-              </p>  
+                <strong className='w-[200px] inline-block'>State:</strong> {getStateName(CustomerData?.country, CustomerData?.state)}</p>  
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>City:</strong> {CustomerData?.city}</p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p>
             </div>

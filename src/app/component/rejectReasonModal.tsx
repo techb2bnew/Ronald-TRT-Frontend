@@ -1,6 +1,6 @@
 // components/common/RejectReasonModal.tsx
 import React, { useState } from 'react';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 interface RejectReasonModalProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
+    console.log(technicianId,'technicianId')
     if (!technicianId || !reason.trim()) {
       setError('Rejection reason is required.');
       return;
@@ -30,15 +31,16 @@ const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
     setError('');
 
     try {
-      const response = await fetch(`${apiUrl}/rejectTechnician`, {
+      const response = await fetch(`${apiUrl}/technicianRejectedAccount`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({
-          technicianId,
+          technicianId:Number(technicianId),
           reason,
+          isApproved: 'cancel',
         }),
       });
 

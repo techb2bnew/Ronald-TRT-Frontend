@@ -125,7 +125,7 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Id:</strong> {jobData?.id}</p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'><strong className='w-[210px] inline-block'>Customer Name:</strong> {jobData?.customer?.firstName} {jobData?.customer?.lastName}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
                   {jobData?.customer?.email}
@@ -166,7 +166,7 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'><strong className='w-[210px] inline-block'>Technician Name:</strong> {jobData.technicians[0]?.firstName} {jobData.technicians[0]?.lastName}</p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Technician Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData.technicians[0]?.email}`}>
                   {jobData.technicians[0]?.email}
@@ -176,7 +176,7 @@ export default function ViewDetails() {
                 <a className="hover:underline" href={`tel:${jobData.technicians[0]?.phoneNumber}`}>
                   {jobData.technicians[0]?.phoneNumber} </a></p>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] inline-block">Job Description:</strong>
+                <strong className="w-[210px] inline-block">Job Description: </strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
                   jobData.jobDescription.filter((item: any) => {
                     const jobItem = typeof item === 'string' ? JSON.parse(item) : item;
@@ -188,7 +188,7 @@ export default function ViewDetails() {
                         if (!jobItem.jobDescription?.trim()) return null; // skip empty ones
                         return (
                           <li key={index}>
-                            <span className="block">{jobItem.jobDescription}</span>
+                            <span className="block"> {jobItem.jobDescription}</span>
                           </li>
                         );
                       })}

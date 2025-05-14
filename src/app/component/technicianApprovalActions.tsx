@@ -76,7 +76,7 @@ const TechnicianApprovalActions: React.FC<TechnicianApprovalActionsProps> = ({
     };
 
     const handleChangeBothStatuses = async () => {
-        if ((!technician.amountPercentage && !technician.simpleFlatRate) || !technician.payRate || technician.payRate === "") {
+        if (!technician.payRate || technician.payRate === "") {
             await Swal.fire({
                 title: 'Missing Payment Info',
                 text: 'Please enter payrate for this technician.',

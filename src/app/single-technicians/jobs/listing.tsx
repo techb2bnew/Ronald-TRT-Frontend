@@ -470,11 +470,11 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
 
         <td>{job?.customer?.phoneNumber}</td>
         <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id}>
+          <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td>

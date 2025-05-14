@@ -347,7 +347,7 @@ export default function ClientListing() {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             )}
-            <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline'>
+            <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline capitalize'>
               {cust?.firstName} {cust?.lastName}
             </Link>
           </div>

@@ -333,23 +333,6 @@ const CompletedJobs: React.FC = () => {
 
   const renderRow = (completejob: any) => {
 
-    // Calculate subtotal from jobDescription
-    const subtotalCost = completejob.jobDescription.reduce((sum: number, job: any) => {
-      return sum + Number(job.cost || 0);
-    }, 0);
-
-    // Get simpleFlatRate
-    let simpleFlatRate = 0;
-
-    if (completejob.simpleFlatRate !== null && completejob.simpleFlatRate !== '') {
-      simpleFlatRate = Number(completejob.simpleFlatRate);
-    } else if (completejob.technicians?.length > 0) {
-      simpleFlatRate = Number(completejob.technicians[0]?.simpleFlatRate || 0);
-    }
-
-    // Final total cost
-    const totalCost = subtotalCost + simpleFlatRate;
-
     const isChecked = selectedIds.includes(completejob.id);
     const roleType = localStorage.getItem('types') || "";
 
@@ -374,11 +357,11 @@ const CompletedJobs: React.FC = () => {
             </label>
           </td>
           <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob.id}</Link></td>
-          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</Link></td>
+          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline capitalize'>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</Link></td>
 
           {/* <td>{completejob?.customer?.firstName} {completejob?.customer?.lastName}</td> */}
           <td> <Link href={`/technicians/view?technicianId=${completejob.technicians?.map((tech: any) => tech.id).join(',')}`} className='hover:underline'>{completejob?.technicians?.map((tech: any, index: number) => (
-            <div key={`${tech.id}-${index}`}>
+            <div key={`${tech.id}-${index}`} className='capitalize'>
               {tech.firstName} {tech.lastName}
             </div>
           ))}</Link></td>
@@ -390,7 +373,73 @@ const CompletedJobs: React.FC = () => {
           ))}</td> */}
           {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
           {roleType !== 'single-technician' && (
-            <td> ${totalCost}</td>
+
+            <td>
+              {(() => {
+                if (!completejob) return null;
+
+                // Step 1: Calculate subtotal from jobDescription
+                const subtotalcost = completejob.jobDescription.reduce((sum: number, item: any) => {
+                  return sum + Number(item.cost || 0);
+                }, 0);
+
+                // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
+                const technician = completejob.technicians?.[0] || {};
+                const simpleFlatRate = !isNaN(Number(completejob.simpleFlatRate)) && Number(completejob.simpleFlatRate) > 0
+                  ? Number(completejob.simpleFlatRate)
+                  : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+
+                const amountPercentage = !isNaN(Number(completejob.amountPercentage)) && Number(completejob.amountPercentage) > 0
+                  ? Number(completejob.amountPercentage)
+                  : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+
+                // Step 3: Calculate percentage amount
+                const percentageAmount = (amountPercentage * subtotalcost) / 100;
+
+                // Step 4: Check if flat rate or percentage amount is missing and display accordingly
+                if (simpleFlatRate === 0 && amountPercentage === 0) {
+                  // If no valid flat rate or percentage, just show the subtotal
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ${subtotalcost.toFixed(2)}
+                    </div>
+                  );
+                }
+
+                // Step 5: Calculate total = subtotal + flat rate + percentage amount
+                const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
+
+                // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
+                if (simpleFlatRate === 0 && amountPercentage === 0) {
+                  const tooltipId = `tooltip-${completejob.id}`;
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span
+                        data-tooltip-id={tooltipId}
+                        data-tooltip-content="R/I/R/R price is not added for this job."
+                        style={{
+                          height: '12px',
+                          width: '12px',
+                          backgroundColor: 'red',
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                          cursor: 'pointer',
+                        }}
+                      ></span>
+                      <Tooltip id={tooltipId} place="top" />
+                    </div>
+                  );
+                }
+
+                // Step 7: Return total cost
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${totalCost.toFixed(2)}
+                  </div>
+                );
+              })()}
+            </td>
+
           )}
 
           {roleType === 'single-technician' && (

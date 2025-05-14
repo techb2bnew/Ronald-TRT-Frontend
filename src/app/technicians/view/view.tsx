@@ -312,7 +312,7 @@ export default function ViewDetails() {
 
 
             <div>
-              <h2 className='text-lg font-bold'>{technician?.firstName} {technician?.lastName}</h2>
+              <h2 className='text-lg font-bold capitalize'>{technician?.firstName} {technician?.lastName}</h2>
               <p className='flex gap-2 items-center'>
                 <svg width="20" height="24" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="view__detail">
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />

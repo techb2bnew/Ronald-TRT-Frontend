@@ -352,7 +352,7 @@ export default function ClientListing() {
           </label>
         </td>
         <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust?.id}</Link></td>
-        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust.firstName} {cust.lastName}</Link></td>
+        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline capitalize'>{cust.firstName} {cust.lastName}</Link></td>
 
         <td>{cust.email}</td>
         <td>{cust.phoneNumber}</td>

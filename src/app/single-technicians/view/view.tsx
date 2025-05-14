@@ -7,6 +7,9 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import RejectReasonModal from '@/app/component/rejectReasonModal';
+
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function ViewDetails() {
@@ -17,7 +20,12 @@ export default function ViewDetails() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
   const [rejectionError, setRejectionError] = useState("");
+  const handleRejectionSuccess = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const techId = searchParams.get('technicianId') || '';
+    fetchTechnicianData(techId);
 
+  };
   const fetchTechnicianData = async (technicianId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -74,7 +82,7 @@ export default function ViewDetails() {
 
 
 
-    const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
+  const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
 
@@ -136,7 +144,7 @@ export default function ViewDetails() {
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newStatus} them!`,
+        confirmButtonText: `Yes, ${newStatus}`,
       });
 
       if (!result.isConfirmed) return;
@@ -218,19 +226,20 @@ export default function ViewDetails() {
   };
 
   const handleChangeBothStatuses = async (tech: any) => {
-    try { 
+    try {
       // Determine the new status (toggle between 'accept' and 'reject')
       const newApprovalStatus = tech.isApproved === 'accept' ? 'cancel' : 'accept';
       const newAccountStatus = newApprovalStatus === 'accept'; // true for active, false for inactive
+      const statusText = newApprovalStatus.toLowerCase() === 'cancel' ? 'Reject' : newApprovalStatus.charAt(0).toUpperCase() + newApprovalStatus.slice(1);
 
       const result = await Swal.fire({
         title: 'Are you sure?',
-        text: `Do you want to ${newApprovalStatus} this technician?`,
+        text: `Do you want to ${statusText} this technician?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#383d71',
         cancelButtonColor: 'black',
-        confirmButtonText: `Yes, ${newApprovalStatus}`,
+        confirmButtonText: `Yes, ${statusText}`,
       });
 
       if (result.isConfirmed) {
@@ -245,7 +254,6 @@ export default function ViewDetails() {
         const techId = searchParams.get('technicianId') || '';
 
         if (techId) {
-
           fetchTechnicianData(techId);
         }
       }
@@ -291,17 +299,26 @@ export default function ViewDetails() {
                 <a className="hover:underline" href={`tel:${technician?.phoneNumber}`}>
                   {technician?.phoneNumber}</a></p>
               <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Secondary Name:</strong>
-                <span className={!technician?.secondaryContactName ? 'text-gray-400' : ''}>
-                  {technician?.secondaryContactName || 'No data available'}
-                </span>
+                <strong className='w-[200px] inline-block'>Secondary Number:</strong> 
+                {technician?.secondaryContactName ? (
+                  <a className="hover:underline" href={`mailto:${technician.secondaryContactName}`}>
+                    <span>{technician.secondaryContactName}</span>
+                  </a>
+                ) : (
+                  <span className="text-gray-400 text-sm">No data available</span>
+                )} 
               </p>
               <p className='border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Secondary Email:</strong>
-                <span className={!technician?.secondaryEmail ? 'text-gray-400' : ''}>
-                  {technician?.secondaryEmail || 'No data available'}
-                </span>
+                {technician?.secondaryEmail ? (
+                  <a className="hover:underline" href={`mailto:${technician.secondaryEmail}`}>
+                    <span>{technician.secondaryEmail}</span>
+                  </a>
+                ) : (
+                  <span className="text-gray-400 text-sm">No data available</span>
+                )}
               </p>
+
               <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
                 <td
                   onClick={() => {
@@ -320,64 +337,66 @@ export default function ViewDetails() {
                     {technician.accountStatus ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                </p>
+              </p>
               <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
- 
-                  <div className='flex gap-4 items-center'>
-                    {technician.isApproved === 'accept' ? (
-                      // Step 2: Show "Accepted", clicking sends 'cancel'
+
+                <div className='flex gap-4 items-center'>
+                  {technician.isApproved === 'accept' ? (
+                    // Step 2: Show "Accepted", clicking sends 'cancel'
+                    <span
+                      onClick={() => handleChangeBothStatuses(technician)}
+                      className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
+                    >
+                      Accepted
+                    </span>
+                  ) : technician.isApproved === 'cancel' ? (
+                    // Step 3: Show "Rejected", clicking sends 'accept'
+                    <span
+                      onClick={() => handleChangeBothStatuses(technician)}
+                      className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
+                    >
+                      Rejected
+                    </span>
+                  ) : (
+                    // Step 1: First time — show Accept + Reject
+                    <>
                       <span
                         onClick={() => handleChangeBothStatuses(technician)}
-                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
                       >
-                        Accepted
+                        Accept
                       </span>
-                    ) : technician.isApproved === 'cancel' ? (
-                      // Step 3: Show "Rejected", clicking sends 'accept'
-                      <span
-                        onClick={() => handleChangeBothStatuses(technician)}
-                        className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                      <button
+                        onClick={() => {
+                          setSelectedTechId(technician.id);
+                          setShowRejectModal(true);
+                        }}
+                        className="badges text-sm px-3 p-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[100px]"
                       >
-                        Rejected
-                      </span>
-                    ) : (
-                      // Step 1: First time — show Accept + Reject
-                      <>
-                        <span
-                          onClick={() => handleChangeBothStatuses(technician)}
-                          className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
-                        >
-                          Accept
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTechId(technician.id);
-                            setShowRejectModal(true);
-                          }}
-                          className="badges text-sm px-3 p-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
- 
+                        Reject
+                      </button>
+                    </>
+                  )}
+                </div>
+
 
 
               </div>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Profile Image:</strong>
 
-                {technician?.image ? (
-                  <img src={technician.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
+                  {technician?.image ? (
+                    <img
+                      onClick={() => setPreviewImage(technician.image)}
+                      src={technician.image}
+                      alt=""
+                      className="w-[40px] h-[40px] rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-[40px] h-[40px] rounded-full bg-gray-300 text-black flex items-center justify-center font-semibold text-sm">
+                      {technician?.firstName?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                  )}
 
 
               </div>
@@ -397,12 +416,13 @@ export default function ViewDetails() {
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong> {technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Business Logo:</strong>
 
 
                 {technician?.businessLogo ? (
-                  <img src={technician.businessLogo} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+                  <img onClick={() => setPreviewImage(technician.businessLogo)} src={technician.businessLogo} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
@@ -435,7 +455,7 @@ export default function ViewDetails() {
                         ) : (
                           // Image Thumbnail
                           <img
-                            onClick={() => window.open(form, "_blank")}
+                            onClick={() => setPreviewImage(form)}
                             src={form}
                             alt={`Tax Form ${index + 1}`}
                             className="w-[60px] h-[60px] rounded-lg border border-gray-300 shadow-md cursor-pointer hover:scale-105 transition"
@@ -461,6 +481,14 @@ export default function ViewDetails() {
             <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
           </div>
         )}
+
+        <RejectReasonModal
+          isOpen={showRejectModal}
+          onClose={() => setShowRejectModal(false)}
+          technicianId={selectedTechId}
+          apiUrl={apiUrl}
+          onSuccess={handleRejectionSuccess}
+        />
       </div>
     </>
   );

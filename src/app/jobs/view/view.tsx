@@ -233,7 +233,7 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <div className="mb-4 border-b border-gray-500 text-sm pb-4 flex items-start gap-2">
+              <div className="mb-4 border-b border-gray-500 text-sm pb-4 flex items-start">
                 <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
                 <div className="flex flex-wrap gap-3">
                   {jobData.technicians?.map((t: any, index: number) => (
@@ -250,7 +250,7 @@ export default function ViewDetails() {
                           {t.firstName?.trim()?.[0]?.toUpperCase() || "?"}
                         </div>
                       )}
-                      <span>{`${t.firstName} ${t.lastName}`}</span>
+                      <span className='capitalize'>{`${t.firstName} ${t.lastName}`}</span>
                     </div>
                   ))}
                 </div>
@@ -366,7 +366,7 @@ export default function ViewDetails() {
               )}
 
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
-                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData?.labourCost}</div>
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong>{`$${Number(jobData?.labourCost ?? 0).toFixed(2)}`}</div>
 
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
@@ -446,7 +446,7 @@ export default function ViewDetails() {
               )}
               {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (
                 <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                  <strong className='w-[210px] inline-block'>Total Cost: </strong>  ${calculateTotalCost(jobData).toFixed(2)}
+                  <strong className='w-[210px] inline-block'>Total Cost: </strong>${calculateTotalCost(jobData).toFixed(2)}
                 </div>
               )}
               {(userType === 'single-technician' || isSingleTechnicianWorkOrder) && (

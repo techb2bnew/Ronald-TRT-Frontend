@@ -455,7 +455,7 @@ function JobTListing({ }: Props) {
         </td>
 
         <td>
-          <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline'>
+          <Link href={`/jobs/job-group/view?vin=${job.vin}&completedJob`} className='hover:underline capitalize'>
             {job?.customer?.customer?.firstName} {job?.customer?.customer?.lastName}
           </Link>
         </td>
@@ -464,7 +464,7 @@ function JobTListing({ }: Props) {
 
         <td>
           {job?.customer?.technicians?.map((t: any, i: number) => (
-            <div key={`${t.id}-${i}`}>{t.firstName} {t.lastName}</div>
+            <div key={`${t.id}-${i}`} className='capitalize'>{t.firstName} {t.lastName}</div>
           ))}
         </td>
 
