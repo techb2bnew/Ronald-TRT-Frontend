@@ -238,8 +238,6 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-
-
   const renderRow = (tech: any) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
@@ -569,7 +567,6 @@ const TechnicianTable: React.FC = () => {
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
-
 
 
   return (

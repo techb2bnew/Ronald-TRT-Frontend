@@ -43,8 +43,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
         }
   
         const data = await response.json();
-        const currentUser = data.technician;
-        console.log(currentUser,'currentUsercurrentUser');
+        const currentUser = data.technician; 
         
         // 🛑 Check account restrictions
         if (currentUser?.isApproved === 'cancel' || currentUser?.isApproved === 'reject') {

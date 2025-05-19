@@ -20,8 +20,7 @@ const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async () => {
-    console.log(technicianId,'technicianId')
+  const handleSubmit = async () => { 
     if (!technicianId || !reason.trim()) {
       setError('Rejection reason is required.');
       return;
