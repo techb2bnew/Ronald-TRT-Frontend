@@ -10,7 +10,7 @@ import EyeOff from '../../../public/eye-off.svg'
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import toast  from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
 
@@ -19,8 +19,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({ email: '', password: '', form:'' });
-    const [submitting, setSubmitting] = useState<boolean>(false); 
+  const [errors, setErrors] = useState({ email: '', password: '', form: '' });
+  const [submitting, setSubmitting] = useState<boolean>(false);
   // const [rememberMe, setRememberMe] = useState(false);
 
   const validateForm = () => {
@@ -59,31 +59,33 @@ export default function Login() {
 
     try {
       setSubmitting(true); 
+
       const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await response.json();
 
       if (!response.ok) {
-          // Clear previous errors
-          setErrors({ email: '', password: '', form: '' });
-      
-          // Handle specific error cases
-          if (data.error) {
-            if (data.error.includes('email') || data.error.includes('account')) {
-              // Email related errors
-              setErrors(prev => ({ ...prev, email: data.error }));
-            } else if (data.error.includes('password') || data.error.includes('Invalid')) {
-              // Password related errors
-              setErrors(prev => ({ ...prev, password: data.error }));
-            } else {
-              // General errors
-              toast.error(data.error);
-            }
+        // Clear previous errors
+        setErrors({ email: '', password: '', form: '' });
+
+        // Handle specific error cases
+        if (data.error) {
+          if (data.error.includes('email') || data.error.includes('account')) {
+            // Email related errors
+            setErrors(prev => ({ ...prev, email: data.error }));
+          } else if (data.error.includes('password') || data.error.includes('Invalid')) {
+            // Password related errors
+            setErrors(prev => ({ ...prev, password: data.error }));
+          } else {
+            // General errors
+            toast.error(data.error);
           }
-      } else { 
+        }
+      } else {
         toast.success("Login successful!");
         localStorage.setItem('token', data.token);
         localStorage.setItem('userID', data.user.id);
@@ -110,7 +112,7 @@ export default function Login() {
       console.error('Login failed:', error);
       toast.error('Login failed. Please try again.');
     }
-    setSubmitting(false); 
+    setSubmitting(false);
 
   }
 
@@ -128,7 +130,7 @@ export default function Login() {
 
   return (
     <div className="items-center justify-items-center">
-       <section className="min-h-screen w-full">
+      <section className="min-h-screen w-full">
         <div className="bg-white flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">
@@ -146,46 +148,46 @@ export default function Login() {
                   <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                   <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  className="text-xs"  
+                <TextField
+                  fullWidth
+                  size="small"
+                  className="text-xs"
                   id="email"
-                  color="warning" 
-                  label="Email Address" 
-                  value={email} 
-                  variant="outlined" 
+                  color="warning"
+                  label="Email Address"
+                  value={email}
+                  variant="outlined"
                   onChange={(e) => {
                     setEmail(e.target.value.toLowerCase().replace(/\s/g, ""));
                     if (errors.email) {
                       setErrors(prev => ({ ...prev, email: '' }));
                     }
-                  }} 
+                  }}
                 />
-                 {errors.email && (
-                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.email}
-                </div>
-              )}
+                {errors.email && (
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {errors.email}
+                  </div>
+                )}
               </div>
 
               <div className="mt-5 relative">
-                 
-              <TextField 
-                  fullWidth 
-                  size="small" 
-                  type={showPassword ? "text" : "password"}  
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  type={showPassword ? "text" : "password"}
                   id="password"
-                  color="warning" 
-                  label="Password" 
-                  value={password} 
-                  variant="outlined"  
+                  color="warning"
+                  label="Password"
+                  value={password}
+                  variant="outlined"
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) {
                       setErrors(prev => ({ ...prev, password: '' }));
                     }
-                  }} 
+                  }}
                 />
                 <button
                   type="button"
@@ -197,10 +199,10 @@ export default function Login() {
                 </button>
 
                 {errors.password && (
-                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.password}
-                </div>
-              )}
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {errors.password}
+                  </div>
+                )}
               </div>
 
               {/* <div className="flex justify-between items-center mt-4">
@@ -218,42 +220,42 @@ export default function Login() {
                   </label>
                 </div>
                 </div> */}
-                <div className="pt-4 text-right">
+              <div className="pt-4 text-right">
                 <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
-                </div> 
-                <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
+              </div>
+              <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6"
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    ></path>
-                  </svg>
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                'Log In'
-              )}
-            </button> 
-            
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      ></path>
+                    </svg>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  'Log In'
+                )}
+              </button>
+
             </form>
             <div className="text-sm text-center mt-5">
               <p>Don&apos;t have an account?
