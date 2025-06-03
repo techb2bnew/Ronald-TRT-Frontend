@@ -17,7 +17,11 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import Breadcrumb from '@/app/component/breadcrumb';
-
+import Scanner from './scanner'
+// import { CKEditor } from '@ckeditor/ckeditor5-react';
+// import type { Editor } from '@ckeditor/ckeditor5-core';
+// import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// import type { EditorConfig } from '@ckeditor/ckeditor5-core';
 interface JobDescriptionItem {
   jobDescription: string;
   cost: string;
@@ -93,6 +97,13 @@ interface Technicians {
 
 }
 
+interface UserVehicleData {
+  payVehicleType: string;
+  simpleFlatRate: string;
+  amountPercentage: string;
+}
+
+
 export default function Technicians() {
   const [vin, setVin] = useState('');
   const [image, setImage] = useState<string | null>(null);
@@ -118,6 +129,10 @@ export default function Technicians() {
   const searchParams = useSearchParams();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const hasVehicleInfo = searchParams.has('vehicleInfo');
+  const [selectedTechnician, setSelectedTechnician] = useState<Technicians | null>(null);
+  const [userVehicleData, setUserVehicleData] = useState<{ payVehicleType: string; simpleFlatRate: string } | null>(null);
+  const userId = localStorage.getItem('userID');
+
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '', cost: '' },
   ]);
@@ -248,8 +263,15 @@ export default function Technicians() {
             jobData.payVehicleType !== "null" &&
             jobData.payVehicleType !== ""
             ? jobData.payVehicleType
-            : technician.payVehicleType
+            : (technician.payVehicleType !== null &&
+              technician.payVehicleType !== undefined &&
+              technician.payVehicleType !== "null" &&
+              technician.payVehicleType !== ""
+              ? technician.payVehicleType
+              : jobData.vehicleType // fallback to vehicleType here
+            )
         );
+
 
         // Set form data
         setDescriptionCostFields(jobDescriptionsArray);
@@ -409,6 +431,16 @@ export default function Technicians() {
   const fetchVehicleDetails = async (vin: string) => {
     if (!vin) {
       toast.error("Please enter a VIN to fetch vehicle details.");
+      setFormData(prev => ({
+        ...prev,
+        vehicleDescriptor: "",
+        manufacturerName: "",
+        vin: "",
+        make: "",
+        model: "",
+        modelYear: "",
+        vehicleType: "",
+      }));
       return;
     }
 
@@ -478,11 +510,6 @@ export default function Technicians() {
 
   };
 
-
-
-
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
@@ -492,8 +519,7 @@ export default function Technicians() {
     if (!String(formData.assignCustomer).trim()) {
       newErrors.assignCustomer = 'Customer is required';
     }
-
-
+    // if (!formData.payRate.trim()) newErrors.payRate = 'Pay Rate is required';
 
 
 
@@ -540,6 +566,10 @@ export default function Technicians() {
     formDataObj.append('schedule', formData.schedule);
     formDataObj.append('ip', formData.ip);
     formDataObj.append('labourCost', formData.labourCost);
+    formDataObj.append('payVehicleType', formData.payVehicleType);
+    formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
+    formDataObj.append('amountPercentage', formData.amountPercentage);
+    formDataObj.append('payRate', formData.payRate);
     let estimatedByName = '';
     if (technicianData) {
       try {
@@ -584,10 +614,7 @@ export default function Technicians() {
       assignTechnicians.forEach((id) => {
         formDataObj.append('technicianId[]', id); // send technicianId as an array
       });
-      formDataObj.append('payVehicleType', formData.payVehicleType);
-      formDataObj.append('simpleFlatRate', formData.simpleFlatRate);
-      formDataObj.append('amountPercentage', formData.amountPercentage);
-      formDataObj.append('payRate', formData.payRate);
+
 
     }
 
@@ -681,12 +708,36 @@ export default function Technicians() {
 
   const handleChange = (event: any, key: any, target = 'formData') => {
     const value = event.target.value;
+
+    // Regex validation for simpleFlatRate
     if (key === 'simpleFlatRate') {
       const regex = /^\d{0,5}(\.\d{0,2})?$/;
       if (value !== '' && !regex.test(value)) return;
     }
 
-    setFormData((prev) => ({ ...prev, [key]: value }));
+    let shouldUpdate = true;
+
+    // Validation for amountPercentage
+    if (key === 'amountPercentage') {
+      const num = Number(value);
+      if (isNaN(num) || num < 0 || num > 100) {
+        shouldUpdate = false;
+        setErrors((prev) => ({
+          ...prev,
+          amountPercentage: 'Value must be between 0 and 100',
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          amountPercentage: '',
+        }));
+      }
+    }
+
+    // If value is invalid, skip updating
+    if (!shouldUpdate) return;
+
+    // Clear errors for non-empty inputs
     if (errors[key] && String(value).trim()) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -695,25 +746,100 @@ export default function Technicians() {
       });
     }
 
-
+    // Update state based on the target
     if (target === 'vehicleData') {
       setVehicleData((prev: VehicleData) => ({ ...prev, [key]: value }));
     } else {
       setFormData((prev) => ({ ...prev, [key]: value }));
     }
-
   };
-
-
-
-
-
 
 
 
 
   const handleSelectChange = (event: SelectChangeEvent<string>, field: string) => {
     const value = event.target.value;
+    if (field === 'payRate') {
+      // Reset related fields when payRate changes
+      setFormData(prev => ({
+        ...prev,
+        payRate: value,
+        vehicleType: '',
+        payVehicleType: '',      // Also clear payVehicleType
+        amountPercentage: value === 'Simple Percentage' ? prev.amountPercentage : '',
+        simpleFlatRate: value === 'Simple Flat Rate' ? prev.simpleFlatRate : '',
+      }));
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.payRate;
+        delete newErrors.amountPercentage;
+        delete newErrors.simpleFlatRate;
+        delete newErrors.vehicleType;
+        delete newErrors.payVehicleType;
+        return newErrors;
+      });
+
+      return;
+    }
+
+    if (field === 'payVehicleType' && selectedTechnician) {
+      let flatRateObj: Record<string, number | string> = {};
+
+      try {
+        flatRateObj = JSON.parse(selectedTechnician.simpleFlatRate);
+      } catch (error) {
+        console.error("Error parsing simpleFlatRate JSON", error);
+      }
+
+      const newSimpleFlatRate = flatRateObj[value] || '';
+
+      setFormData(prev => ({
+        ...prev,
+        payVehicleType: value,
+        simpleFlatRate: newSimpleFlatRate.toString(),
+      }));
+
+      if (errors.payVehicleType) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.payVehicleType;
+          return newErrors;
+        });
+      }
+
+      return;
+    }
+    if (field === 'payVehicleType' && selectedTechnician) {
+      // Parse simpleFlatRate JSON from selected technician
+      let flatRateObj: Record<string, number | string> = {};
+
+      try {
+        flatRateObj = JSON.parse(selectedTechnician.simpleFlatRate);
+      } catch (error) {
+        console.error("Error parsing simpleFlatRate JSON", error);
+      }
+
+      const newSimpleFlatRate = flatRateObj[value] || ''; // get flat rate for selected vehicle type
+
+      setFormData(prev => ({
+        ...prev,
+        payVehicleType: value,
+        simpleFlatRate: newSimpleFlatRate.toString(),
+      }));
+
+      if (errors.payVehicleType) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.payVehicleType;
+          return newErrors;
+        });
+      }
+
+      return; // done, exit early
+    }
+
+    // For other fields, default behavior
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => {
@@ -723,6 +849,10 @@ export default function Technicians() {
       });
     }
   };
+
+
+
+
   const handleSelectColor = (event: SelectChangeEvent<string>, field: string) => {
     const value = event.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -741,13 +871,60 @@ export default function Technicians() {
       target: { value },
     } = event;
 
-    // Ensure value is always an array of strings
-
     const newTechnicians = typeof value === 'string' ? value.split(',') : value.map(String);
     setFormData(prev => ({
       ...prev,
       assignTechnicians: newTechnicians
     }));
+
+    if (newTechnicians.length === 1) {
+      const tech = technicians.find(t => String(t.id) === newTechnicians[0]) || null;
+      setSelectedTechnician(tech);
+
+      if (tech) {
+        // Update payRate based on selected technician
+        const payRate = tech.payRate || '';  // e.g. "Pay Per Vehicles", "Simple Flat Rate", etc.
+
+        // For payVehicleType and simpleFlatRate, you already have code:
+        let vehicleTypesArray = [];
+        if (tech.payVehicleType) {
+          vehicleTypesArray = tech.payVehicleType.split(',').map((v: string) => v.trim());
+        }
+        const firstVehicleType = vehicleTypesArray[0] || '';
+
+        // Parse simpleFlatRate JSON safely
+        let flatRateObj: Record<string, string> = {};
+        try {
+          flatRateObj = JSON.parse(tech.simpleFlatRate);
+        } catch {
+          flatRateObj = {};
+        }
+        const firstFlatRate = flatRateObj[firstVehicleType] || '';
+
+        // Update formData with payRate, payVehicleType and simpleFlatRate from technician
+        setFormData(prev => ({
+          ...prev,
+          payRate: payRate,
+          payVehicleType: firstVehicleType,
+          simpleFlatRate: firstFlatRate.toString(),
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          payRate: '',
+          payVehicleType: '',
+          simpleFlatRate: '',
+        }));
+      }
+    } else {
+      setSelectedTechnician(null);
+      setFormData(prev => ({
+        ...prev,
+        payRate: '',
+        payVehicleType: '',
+        simpleFlatRate: '',
+      }));
+    }
 
     if (newTechnicians.length > 0 && errors.assignTechnicians) {
       setErrors(prev => {
@@ -757,6 +934,11 @@ export default function Technicians() {
       });
     }
   };
+
+
+
+
+
   function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
     return new Promise((resolve, reject) => {
       const image = new window.Image();
@@ -855,10 +1037,50 @@ export default function Technicians() {
 
 
   // Remove a specific image
-  const handleRemoveFile = (index: any) => {
-    const filteredImages = formData.images.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, images: filteredImages }));
+  const handleRemoveFile = async (index: number) => {
+    try {
+      const imageToRemove = formData.images[index];
+      // Check if imageToRemove is a string (uploaded URL) or File instance
+      if (typeof imageToRemove === 'string' && formData.jobId) {
+        // Call API to delete the image from backend
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const token = localStorage.getItem('token');
+
+        const payload = {
+          jobId: formData.jobId,
+          imagesToDelete: [imageToRemove],
+        };
+
+        const response = await fetch(`${apiUrl}/deleteSelectedJobImages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(data.error || 'Failed to delete image.');
+          return; // stop removal on failure
+        }
+
+        toast.success('Image deleted successfully.');
+      }
+
+      // Remove image locally regardless of file or URL (if API call was not needed or succeeded)
+      setFormData((prev) => {
+        const newImages = prev.images.filter((_, i) => i !== index);
+        return { ...prev, images: newImages };
+      });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast.error('An error occurred while deleting the image.');
+    }
   };
+
 
 
   const handleSelectRole = (event: SelectChangeEvent<string>) => {
@@ -933,7 +1155,116 @@ export default function Technicians() {
     }
   };
 
-  console.log(formData.vin, 'formData.vin')
+
+  const handleScan = (vin: string) => {
+    setFormData((prev) => ({ ...prev, vin }));
+    setTimeout(() => {
+      fetchVehicleDetails(vin);
+    }, 100);
+  };
+
+
+  // Inside your component, after selectedTechnician is set:
+  useEffect(() => {
+    if (userType === 'ifs' && userId) {
+      fetchUserVehicleData(userId);
+    }
+  }, [userType, userId]);
+
+  const fetchUserVehicleData = async (userId: string) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${userId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.technician) {
+        // data.vehicleTypes is expected to have payVehicleType and simpleFlatRate
+        setUserVehicleData({
+          payVehicleType: data.technician.payVehicleType, // e.g. "Van,Truck"
+          simpleFlatRate: data.technician.simpleFlatRate, // e.g. "{\"Van\":900}"
+        });
+      } else {
+        toast.error('Failed to fetch vehicle data.');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error fetching vehicle data.');
+    }
+  };
+
+  // Split vehicle types string into array for options
+  const vehicleTypeOptions = userVehicleData?.payVehicleType
+    ? userVehicleData.payVehicleType.split(',').map(v => v.trim())
+    : [];
+
+  // On vehicle type select, update simpleFlatRate based on JSON
+  const handleVehicleTypeChange = (event: SelectChangeEvent<string>) => {
+    const selectedType = event.target.value;
+    setFormData(prev => ({
+      ...prev,
+      payVehicleType: selectedType,
+      simpleFlatRate: '', // reset before setting
+    }));
+
+    if (userVehicleData?.simpleFlatRate) {
+      try {
+        const flatRateObj = JSON.parse(userVehicleData.simpleFlatRate);
+        const rate = flatRateObj[selectedType] || '';
+        setFormData(prev => ({
+          ...prev,
+          simpleFlatRate: rate.toString(),
+        }));
+      } catch (e) {
+        console.error('Failed to parse simpleFlatRate JSON:', e);
+        setFormData(prev => ({ ...prev, simpleFlatRate: '' }));
+      }
+    }
+  };
+
+
+  // const editorConfiguration: EditorConfig = {
+  //   toolbar: [
+  //     'heading',     // h1, h2, h3 etc.
+  //     '|',
+  //     'bold',
+  //     'italic',
+  //     'bulletedList',  // ul
+  //     'numberedList',  // ol
+  //     'link',
+  //     'undo',
+  //     'redo'
+  //   ],
+  //   heading: {
+  //     options: [
+  //       {
+  //         model: 'paragraph',
+  //         title: 'Paragraph',
+  //         class: 'ck-heading_paragraph',
+  //       },
+  //       {
+  //         model: 'heading1',
+  //         view: 'h1',
+  //         title: 'Heading 1',
+  //         class: 'ck-heading_heading1'
+  //       },
+  //       {
+  //         model: 'heading2',
+  //         view: 'h2',
+  //         title: 'Heading 2',
+  //         class: 'ck-heading_heading2'
+  //       },
+  //       {
+  //         model: 'heading3',
+  //         view: 'h3',
+  //         title: 'Heading 3',
+  //         class: 'ck-heading_heading3'
+  //       }
+  //     ]
+  //   }
+  // };
 
 
   return (
@@ -1036,7 +1367,7 @@ export default function Technicians() {
                   <button type="button" onClick={() => fetchVehicleDetails(formData.vin)} className="primary-bg pl-5 pr-5 p-2 text-sm  w-[200px] rounded">Fetch</button>
                 </div>
 
-                <div className="relative">
+                <div className="relative flex gap-2 items-start">
                   <label data-tooltip-id="VIN"
                     data-tooltip-content="Upload VIN Image"
                     htmlFor="fileInput"
@@ -1048,13 +1379,14 @@ export default function Technicians() {
                       </svg>
                     </div>
                   </label>
-                  <input
+                  <Scanner onScan={handleScan} />
+                  {/* <input
                     id="fileInput"
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
                     className="hidden"
-                  />
+                  /> */}
                   <Tooltip id="VIN" place="top" />
                 </div>
 
@@ -1376,7 +1708,7 @@ export default function Technicians() {
                     handleDescriptionCostChange(index, "jobDescription", e.target.value)
                   }
 
-                  placeholder='Enter Description' className="input text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
+                  placeholder='Enter Description' className="input text-[#3a3a3a] text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
 
               </div>
               <div className="mb-2 flex items-center gap-3 margin_remove">
@@ -1432,7 +1764,7 @@ export default function Technicians() {
             type="button"
             onClick={handleAddMore}
             className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
-          {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType !== 'single-technician' && (
+          {!hasVehicleInfo && userType !== 'single-technician' && (
             <div className="grid grid-cols-3 gap-4">
 
               <div className=' relative'>
@@ -1442,10 +1774,8 @@ export default function Technicians() {
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-
-                {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth size="small" error={!!errors.payRate}>
-                  <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
+                <FormControl fullWidth size="small" >
+                  <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R)</InputLabel>
                   <Select
                     labelId="payRate"
                     color="warning"
@@ -1453,7 +1783,6 @@ export default function Technicians() {
                     value={formData.payRate}
                     label="Select pay rate(R/1/R/R)"
                     name="payRate"
-                    required
                     onChange={(event) => handleSelectChange(event, 'payRate')}
                   >
                     <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
@@ -1462,12 +1791,9 @@ export default function Technicians() {
                     <MenuItem value='Simple Percentage'>Simple Percentage</MenuItem>
 
                   </Select>
-                  {errors.payRate && (
-                    <FormHelperText>{errors.payRate}</FormHelperText>
-                  )}
                 </FormControl>
               </div>
-              {formData.payRate === 'Pay Per Vehicles' && (
+              {(formData.payRate === 'Pay Per Vehicles') && (
                 <div className='mb relative'>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                     <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1476,19 +1802,36 @@ export default function Technicians() {
                   </svg>
                   <FormControl fullWidth size="small" className="mt-4" error={!!errors.payVehicleType}>
                     <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
-                    <Select
-                      labelId="payVehicleType"
-                      color="warning"
-                      id="select-payVehicleType"
-                      value={formData.payVehicleType}
-                      label="payVehicleType"
-                      name="payVehicleType"
-                      onChange={(event) => handleSelectChange(event, 'payVehicleType')}
-                    >
-                      {vehicleTypes.map((type) => (
-                        <MenuItem key={type} value={type}>{type}</MenuItem>
-                      ))}
-                    </Select>
+                    {userType !== 'ifs' && (
+                      <Select
+                        labelId="payVehicleType"
+                        color="warning"
+                        id="select-payVehicleType"
+                        value={formData.payVehicleType}
+                        label="payVehicleType"
+                        name="payVehicleType"
+                        onChange={(event) => handleSelectChange(event, 'payVehicleType')}
+                      >
+                        {vehicleTypes.map((type) => (
+                          <MenuItem key={type} value={type}>{type}</MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                    {userType === 'ifs' && (
+                      <Select
+                        labelId="payVehicleType"
+                        color="warning"
+                        id="select-payVehicleType"
+                        value={formData.payVehicleType}
+                        label="payVehicleType"
+                        name="payVehicleType"
+                        onChange={handleVehicleTypeChange}
+                      >
+                        {vehicleTypeOptions.map(type => (
+                          <MenuItem key={type} value={type}>{type}</MenuItem>
+                        ))}
+                      </Select>
+                    )}
                     {errors.payVehicleType && (
                       <FormHelperText>{errors.payVehicleType}</FormHelperText>
                     )}
@@ -1504,8 +1847,7 @@ export default function Technicians() {
                     <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                     <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
-
-                  <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate} />
+                  <TextField fullWidth type='number' name="amountPercentage" id="outlined-basic" color="warning" label="Simple Percentage" size="small" value={formData.amountPercentage} inputProps={{ min: 0, max: 100 }} onChange={(e) => handleChange(e, 'amountPercentage')} disabled={!!formData.simpleFlatRate && (!isEdit || !formData.amountPercentage)} />
                 </div>
               )}
               {formData.payRate !== 'Simple Percentage' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Simple Flat Rate' || formData.payRate === 'Pay Per Job') && (
@@ -1520,7 +1862,7 @@ export default function Technicians() {
                     inputProps={{
                       step: "0.01",
                       min: 0
-                    }} disabled={!!formData.amountPercentage} />
+                    }} disabled={!!formData.amountPercentage && (!isEdit || !formData.simpleFlatRate)} />
                 </div>
               )}
             </div>
@@ -1576,9 +1918,24 @@ export default function Technicians() {
             {/* Client Name and Business Name */}
             <div className='mb-4'>
               {/* <p className='text-sm mb-2'>Note</p> */}
-              <textarea name="notes" id="" value={formData.notes}
+              <textarea
+                name="notes"
+                id="notes"
+                value={formData.notes}
                 onChange={(e) => handleChange(e, 'notes')}
-                placeholder='Enter Note' className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"></textarea>
+                className="w-full p-3 border border-gray-300 rounded-md resize-y min-h-[100px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              />
+
+              {/* <CKEditor
+                editor={ClassicEditor as unknown as any}
+                config={editorConfiguration}
+                data={formData.notes}
+                onChange={(event, editor) => {
+                  const data = editor.getData();
+                  handleChange({ target: { name: 'notes', value: data } }, 'notes');
+                }}
+              /> */}
+
             </div>
           </div>
 
@@ -1625,3 +1982,4 @@ export default function Technicians() {
     </div>
   );
 }
+

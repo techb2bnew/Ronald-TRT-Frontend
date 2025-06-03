@@ -9,7 +9,7 @@ export default function Profile() {
 const { isCollapsed } = useSidebar();
   
   return (
-    <AuthCheck>
+    // <AuthCheck>
     <div className='container m-auto'>
         {/* <Sidebar /> */}
         <div  className={`right_section ${
@@ -19,6 +19,6 @@ const { isCollapsed } = useSidebar();
        
         </div>
     </div>
-    </AuthCheck>
+    // </AuthCheck>
   );
 }

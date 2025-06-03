@@ -1,13 +1,13 @@
 "use client";
 import Archive from './archive'
 import React, { useState } from 'react'; 
-import AuthCheck from '@/app/component/AuthCheck'; 
+// import AuthCheck from '@/app/component/AuthCheck'; 
 import { useSidebar } from "@/app/component/SidebarContext";
 
 export default function Technicians() { 
   const { isCollapsed } = useSidebar();
   return (
-    <AuthCheck>
+    // <AuthCheck>
     <div className='main-container'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
@@ -15,6 +15,6 @@ export default function Technicians() {
             <Archive />
         </div>
     </div>
-    </AuthCheck>
+    // </AuthCheck>
   );
 }

@@ -496,7 +496,7 @@ const ArchivePage = () => {
               : selectedArchiveType === ARCHIVE_TYPES.TECHNICIAN ||
                 item.type === "Technician" ||
                 item.type === "User"
-                ? `/archive/view?technicianId=${item.id}`
+                ? `/single-technicians/single-archive/view?technicianId=${item.id}`
                 : `/client/view?customerId=${item.id}`
           }
         >

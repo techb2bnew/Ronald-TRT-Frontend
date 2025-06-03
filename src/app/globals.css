@@ -21,6 +21,7 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
   overflow: auto !important;
+  padding-right: 0px !important;
 }
 .primary-text{
   color: var(--primaryColor);
@@ -57,6 +58,10 @@ body {
 }
 .bg-blue h2 {
   color: #fff;
+}
+input.PhoneInputInput {
+    background: transparent;
+        color: #5B5B99
 }
 table.table.w-full.table-fixed thead {
   background: var(--foreground);
@@ -497,7 +502,7 @@ ul.ml-6 li a:before {
   block-size: 0.55rem;
   font-size: 0.55rem;
   inline-size: 0.55rem;
-  left: 30px;
+  left: 27px;
 }
 ul li a.active:before {
   content: '';
@@ -531,7 +536,7 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 .css-1pzfmz2-MuiInputBase-input-MuiOutlinedInput-input, .css-1pemltt-MuiInputBase-input-MuiFilledInput-input, input#outlined-basic, input#confirmPassword, .MuiInputBase-input.MuiFilledInput-input{
   /* padding-left: 35px !important; */
   background-color: #f5f7fa !important;
-
+    padding-right: 26px !important;
 }
 /* .MuiSelect-select {
   padding: 9.5px 35px !important;

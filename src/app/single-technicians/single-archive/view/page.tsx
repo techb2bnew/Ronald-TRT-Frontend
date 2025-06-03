@@ -1,14 +1,14 @@
 "use client";
 import View from './view'
 import React, { useState } from 'react';
-import Sidebar from '../../component/sidebar/page';
+// import Sidebar from '../../component/sidebar/page';
 import AuthCheck from '@/app/component/AuthCheck';
 import { useSidebar } from "@/app/component/SidebarContext";
 export default function ViewTechnicians() { 
     const { isCollapsed } = useSidebar();
   return (
     <>
-    <AuthCheck>
+    {/* <AuthCheck> */}
     <div className='main-container'>
         {/* <Sidebar /> */}
         <div  className={`right_section ${
@@ -17,7 +17,7 @@ export default function ViewTechnicians() {
             <View />
         </div>
     </div>
-    </AuthCheck>
+    {/* </AuthCheck> */}
     </>
 
   );

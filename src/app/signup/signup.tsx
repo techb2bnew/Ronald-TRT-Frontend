@@ -114,9 +114,46 @@ export default function Role() {
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
+    const updatedFormData = {
+      ...formData,
+      [name]: value,
+    };
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (name === 'secondaryContactName') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+    }
+
+    if (name === "secondaryEmail") {
+      const isValidEmail = emailPattern.test(value);
+      setErrors((prev) => ({
+        ...prev,
+        emailError: isValidEmail ? '' : 'Please enter a valid email address',
+      }));
+    }
+
     setFormData({ ...formData, [name]: value });
-    if (name === 'confirmPassword') {
-      validateConfirmPassword(value);
+    let shouldUpdate = true;
+
+    if (shouldUpdate) {
+      setFormData(updatedFormData);
+    }
+    if (name === 'password' || name === 'confirmPassword') {
+      if (
+        updatedFormData.confirmPassword &&
+        updatedFormData.confirmPassword !== updatedFormData.password
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match',
+        }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.confirmPassword;
+          return newErrors;
+        });
+      }
     }
     if (errors[name]) {
       setErrors(prev => {
@@ -441,9 +478,45 @@ export default function Role() {
   }, []);
 
 
+  const getNationalNumber = (digitsOnly: string, fullNumber: string): string => {
+    try {
+      const parsed = parsePhoneNumberFromString(fullNumber);
+      if (parsed) {
+        return digitsOnly.startsWith(parsed.countryCallingCode)
+          ? digitsOnly.slice(parsed.countryCallingCode.length)
+          : digitsOnly;
+      }
+      return digitsOnly;
+    } catch {
+      return digitsOnly;
+    }
+  };
+
   const handlePhoneChange = (value: string | undefined) => {
-    // Clear phone number error if it exists
-    if (errors.phoneNumber) {
+    if (!value) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
+      return;
+    }
+
+    const digitsOnly = value.replace(/\D/g, '');
+    const nationalNumber = getNationalNumber(digitsOnly, value);
+
+    // Stop if national number exceeds 10 digits
+    if (nationalNumber.length > 10) {
+      return;
+    }
+
+    // Set error if not exactly 10 digits
+    if (nationalNumber.length !== 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits'
+      }));
+    } else {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.phoneNumber;
@@ -451,29 +524,13 @@ export default function Role() {
       });
     }
 
-    if (!value) {
-      // Handle empty value case
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: ''
-      }));
-      return;
-    }
-
-    const parsedNumber = parsePhoneNumberFromString(value);
-    if (parsedNumber) {
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: parsedNumber.number // E.164 format
-      }));
-    } else {
-      // Handle invalid phone number case
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: value // Fallback to raw input
-      }));
-    }
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      phoneNumber: value
+    }));
   };
+
 
 
   const countries = Country.getAllCountries();
@@ -520,14 +577,12 @@ export default function Role() {
                         onChange={handleSelectChange}
                       >
                         {roles
-                          .filter((role) => role.name !== "super admin")
+                          .filter((role) => role.name !== "super admin" && role.name !== "technician")  // technician ko hata diya
                           .map((role, index) => (
                             <MenuItem key={index} value={role.name}>
-                              {role.name === "technician"
-                                ? "IFS Technician"
-                                : role.name === "singletechnician"
-                                  ? "Single Technician"
-                                  : role.name}
+                              {role.name === "singletechnician"
+                                ? "Single Technician"
+                                : role.name}
                             </MenuItem>
                           ))}
                       </Select>
@@ -537,6 +592,7 @@ export default function Role() {
                         </div>
                       )}
                     </FormControl>
+
 
                   </div>
                   {/* <div className='mb-4 relative'>
@@ -604,7 +660,19 @@ export default function Role() {
                       defaultCountry="US"
                       value={formData.phoneNumber}
                       onChange={handlePhoneChange}
-                      className={`input text-xs input-bordered w-full p-2 rounded border`}
+                      onKeyDown={(e: any) => {
+                        // Prevent typing if already 10 digits in national number
+                        const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                        const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                        if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onPaste={(e: any) => {
+                        const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                        if (pasted.length > 10) e.preventDefault();
+                      }}
+                      className={`input text-xs input-bordered w-full p-2 rounded`}
                     />
                     {errors.phoneNumber && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -680,7 +748,7 @@ export default function Role() {
                         {states.map((state: IState) => (
                           <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
                         ))}
-                      </Select> 
+                      </Select>
                     </FormControl>
 
 
@@ -694,7 +762,7 @@ export default function Role() {
                     </svg>
                     {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
                     <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
-                    
+
                   </div>
                   <div className='mb-4 relative'>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" className="icon__tech"
@@ -742,7 +810,9 @@ export default function Role() {
                       <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                       <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
                     </svg>
-                    <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
+                    <TextField fullWidth type="number" name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} inputProps={{
+                      maxLength: 10,
+                    }} onChange={handleChange} />
 
 
                   </div>
@@ -752,7 +822,11 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
-
+                    {errors.emailError && (
+                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                        {errors.emailError}
+                      </div>
+                    )}
 
                   </div>
                 </div>
@@ -787,7 +861,7 @@ export default function Role() {
                       label="Confirm password *"
                       size="small"
                       value={formData.confirmPassword}
-                      onChange={handleChange} 
+                      onChange={handleChange}
                     />
                     <button
                       type="button"
@@ -797,7 +871,7 @@ export default function Role() {
                       {showConformPassword ? <Image src={Eye} width='14' height='14' alt="eye" /> : <Image src={EyeOff} width='14' height='14' alt="eye" />
                       }
                     </button>
-                     {errors.confirmPassword && (
+                    {errors.confirmPassword && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                         {errors.confirmPassword}
                       </div>

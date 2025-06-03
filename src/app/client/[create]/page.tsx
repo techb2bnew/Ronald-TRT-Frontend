@@ -6,7 +6,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 export default function TechniciansCreate() { 
       const { isCollapsed } = useSidebar();
   return (
-    <AuthCheck>
+    // <AuthCheck>
     <div className='container m-auto'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
@@ -14,6 +14,6 @@ export default function TechniciansCreate() {
             <CreateAdmin /> 
         </div>
     </div>
-    </AuthCheck>
+    // </AuthCheck>
   );
 }

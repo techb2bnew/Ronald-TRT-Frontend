@@ -131,8 +131,8 @@ export default function ProfileCard() {
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!formData.country?.trim()) newErrors.country = 'Country is required';
-    if (!formData.state?.trim()) newErrors.state = 'State is required';
-    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    // if (!formData.state?.trim()) newErrors.state = 'State is required';
+    // if (!formData.city?.trim()) newErrors.city = 'City is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
 
     if (Object.keys(newErrors).length > 0) {
@@ -318,41 +318,59 @@ export default function ProfileCard() {
       toast.error("Error updating profile!");
     }
   };
+  const getNationalNumber = (digitsOnly: string, fullNumber: string): string => {
+    try {
+      const parsed = parsePhoneNumberFromString(fullNumber);
+      if (parsed) {
+        return digitsOnly.startsWith(parsed.countryCallingCode)
+          ? digitsOnly.slice(parsed.countryCallingCode.length)
+          : digitsOnly;
+      }
+      return digitsOnly;
+    } catch {
+      return digitsOnly;
+    }
+  };
+const handlePhoneChange = (value: string | undefined) => {
+    if (!value) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
+      return;
+    }
 
+    const digitsOnly = value.replace(/\D/g, '');
+    const nationalNumber = getNationalNumber(digitsOnly, value);
 
- const handlePhoneChange = (value: string | undefined) => {
-     // Clear phone number error if it exists
-     if (errors.phoneNumber) {
-       setErrors(prev => {
-         const newErrors = { ...prev };
-         delete newErrors.phoneNumber;
-         return newErrors;
-       });
-     }
+    // Stop if national number exceeds 10 digits
+    if (nationalNumber.length > 10) {
+      return;
+    }
+
+    // Set error if not exactly 10 digits
+    if (nationalNumber.length !== 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits'
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
+    }
+
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      phoneNumber: value
+    }));
+  };
+
  
-     if (!value) {
-       // Handle empty value case
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: ''
-       }));
-       return;
-     }
- 
-     const parsedNumber = parsePhoneNumberFromString(value);
-     if (parsedNumber) {
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: parsedNumber.number // E.164 format
-       }));
-     } else {
-       // Handle invalid phone number case
-       setFormData(prev => ({
-         ...prev,
-         phoneNumber: value // Fallback to raw input
-       }));
-     }
-   };
 
 
   const countries = Country.getAllCountries();
@@ -466,7 +484,18 @@ export default function ProfileCard() {
               value={formData.phoneNumber}
               onChange={handlePhoneChange}
               disabled={!isEditing}
-              required
+              onKeyDown={(e: any) => {
+                  // Prevent typing if already 10 digits in national number
+                  const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                  const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e: any) => {
+                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                  if (pasted.length > 10) e.preventDefault();
+                }}
               className="input text-xs input-bordered w-full p-2 rounded"
             />
             {errors.phoneNumber && (
@@ -482,7 +511,7 @@ export default function ProfileCard() {
         <h3 className="font-semibold text-lg">Address</h3>
         <div className="mt-4 grid grid-cols-4 gap-4">
           <div className=' relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
@@ -495,8 +524,7 @@ export default function ProfileCard() {
                 id="country"
                 value={formData.country}
                 label="selectcountry"
-                name="country"
-                required
+                name="country" 
                 disabled={!isEditing}
                 onChange={handleSelectChange}
               >
@@ -512,21 +540,20 @@ export default function ProfileCard() {
             )}
           </div>
           <div className=' relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
             <FormControl fullWidth size='small'>
-              <InputLabel id="state" color="warning"> Select state *</InputLabel>
+              <InputLabel id="state" color="warning"> Select state</InputLabel>
               <Select
                 labelId="state"
                 color="warning"
                 id="select-state"
                 value={formData.state}
                 label="selectState"
-                name="state"
-                required
+                name="state" 
                 disabled={!isEditing}
                 onChange={handleSelectChange}
               >
@@ -536,31 +563,31 @@ export default function ProfileCard() {
               </Select>
             </FormControl>
 
-            {errors.state && (
+            {/* {errors.state && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.state}
               </div>
-            )}
+            )} */}
           </div>
           <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" size='small' value={formData.city} onChange={handleInputChange} disabled={!isEditing} required />
-            {errors.city && (
+            <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" size='small' value={formData.city} onChange={handleInputChange} disabled={!isEditing}  />
+            {/* {errors.city && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.city}
               </div>
-            )}
+            )} */}
           </div>
           <div className='mb-4 relative'>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+            <svg width="20" height="20" viewBox="0 0 20 20" stroke="#000" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
               <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size='small' value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing} required />
+            <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size='small' value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing}  />
             {errors.zipCode && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.zipCode}

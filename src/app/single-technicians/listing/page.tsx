@@ -10,7 +10,7 @@ export default function Technicians() {
  
   return (
     <>
-    <AuthCheck>
+    {/* <AuthCheck> */}
     <div className='main-container'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
@@ -19,7 +19,7 @@ export default function Technicians() {
             <TechniciansListing />
         </div>
     </div>
-    </AuthCheck>
+    {/* </AuthCheck> */}
     </>
 
   );

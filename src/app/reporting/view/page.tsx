@@ -7,7 +7,7 @@ export default function ViewJob() {
   const { isCollapsed } = useSidebar(); 
   return (
     <>
-    <AuthCheck>
+    {/* <AuthCheck> */}
     <div className='container m-auto'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
@@ -15,7 +15,7 @@ export default function ViewJob() {
             <View />
         </div>
     </div>
-    </AuthCheck>
+    {/* </AuthCheck> */}
     </>
 
   );

@@ -19,7 +19,7 @@ import Eye from "../../../../public/eye.svg";
 import EyeOff from '../../../../public/eye-off.svg';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Swal from "sweetalert2";
-import { FormHelperText } from '@mui/material';
+import { Checkbox, FormControlLabel, FormHelperText, Input, ListItemText } from '@mui/material';
 
 interface TechnicianForm {
   id?: string;
@@ -34,7 +34,7 @@ interface TechnicianForm {
   state: string;
   city: string;
   zipCode: string;
-  secondaryEmail?: string;
+  secondaryEmail: string;
   password: string;
   confirmPassword: string;
   payRate: string;
@@ -42,11 +42,11 @@ interface TechnicianForm {
   image: File | null;
   businessLogo: File | null;
   amountPercentage: string;
-  simpleFlatRate: string;
+  simpleFlatRate: { [vehicleType: string]: string };
   role: string;
   types: string;
   agreeTerms: string;
-  payVehicleType: string;
+  payVehicleType: string[];
 
 }
 export default function Technicians() {
@@ -64,10 +64,12 @@ export default function Technicians() {
   const searchParams = useSearchParams();
   const [roles, setRoles] = useState<any[]>([]);
   const isSingleTechnician = searchParams.has('singletechnician');
+  const isTechnician = searchParams.has('technician');
   const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [userType, setUserType] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<any>(null);
-
+  const [simpleFlatRateAll, setSimpleFlatRateAll] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
     lastName: '',
@@ -83,12 +85,12 @@ export default function Technicians() {
     password: '',
     confirmPassword: '',
     payRate: '',
-    simpleFlatRate: '',
+    simpleFlatRate: {},
     taxForms: [],
     image: null,
     businessLogo: null,
     businessName: '',
-    payVehicleType: '',
+    payVehicleType: [],
     amountPercentage: '',
     role: '',
     types: '',
@@ -138,6 +140,20 @@ export default function Technicians() {
           s.isoCode.toLowerCase() === data.technician.state.toLowerCase()
         )
       );
+
+      const simpleFlatRateParsed =
+        typeof data.technician.simpleFlatRate === 'string'
+          ? JSON.parse(data.technician.simpleFlatRate)
+          : data.technician.simpleFlatRate;
+
+      const payVehicleTypeParsed =
+        typeof data.technician.payVehicleType === 'string' && data.technician.payVehicleType !== ''
+          ? data.technician.payVehicleType.split(',').map((v: string) => v.trim())
+          : Array.isArray(data.technician.payVehicleType)
+            ? data.technician.payVehicleType
+            : [];
+
+
       // const matchedRole = roles.find(role => role.id === data.technician.roleId);
       // const roleName = matchedRole?.name || '';
       if (response.ok) {
@@ -151,6 +167,8 @@ export default function Technicians() {
           state: technicianState?.isoCode || '',
           role: data.technician.Role.name || '',
           types: data.technician.types || '',
+          simpleFlatRate: simpleFlatRateParsed || {},
+          payVehicleType: payVehicleTypeParsed,
         }));
       }
     } catch (error) {
@@ -178,7 +196,20 @@ export default function Technicians() {
   ) => {
     const name = event.target.name;
     const value = event.target.value;
-
+  if (name === "payRate") {
+    // If changing payRate to anything other than 'Pay Per Vehicles',
+    // clear payVehicleType and simpleFlatRate
+    if (value !== 'Pay Per Vehicles') {
+      setFormData(prev => ({
+        ...prev,
+        payRate: value,
+        payVehicleType: [],          // clear vehicle types
+        simpleFlatRate: {},          // clear simple flat rate
+        amountPercentage: value === 'Simple Percentage' ? prev.amountPercentage : '', // reset amountPercentage if needed
+      }));
+      return; // return here to avoid further setFormData calls below
+    }
+  }
     if (name === "role") {
       const selectedRole = roles.find((role) => role.name === value);
       setSelectedRole(selectedRole);
@@ -218,15 +249,59 @@ export default function Technicians() {
   };
 
 
+  const handleMultipleVehicleTypeChange = (event: SelectChangeEvent<string[]>) => {
+    let value = event.target.value;
+    if (typeof value === 'string') {
+      value = value.split(','); // fallback if MUI returns string
+    }
+    setFormData(prev => ({
+      ...prev,
+      payVehicleType: value,  // should be string[]
+    }));
+  };
+
 
 
   const handleChange: React.ChangeEventHandler<
     HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
   > = (e) => {
     const { name, value } = e.target;
+    const updatedFormData = {
+      ...formData,
+      [name]: value,
+    };
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (name === 'secondaryContactName') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+    }
+
+    if (name === "secondaryEmail") {
+      const isValidEmail = emailPattern.test(value);
+      setErrors((prev) => ({
+        ...prev,
+        emailError: isValidEmail ? '' : 'Please enter a valid email address',
+      }));
+    }
 
     let shouldUpdate = true;
 
+    if (name === 'amountPercentage') {
+      const num = Number(value);
+
+      if (isNaN(num) || num < 0 || num > 100) {
+        shouldUpdate = false;
+        setErrors((prev) => ({
+          ...prev,
+          amountPercentage: 'Value must be between 0 and 100',
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          amountPercentage: '',
+        }));
+      }
+    }
     if (name === 'simpleFlatRate') {
       const valid = /^\d{0,5}(\.\d{0,2})?$/.test(value);
       shouldUpdate = valid;
@@ -235,10 +310,28 @@ export default function Technicians() {
     if (shouldUpdate) {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-
-    if (name === 'confirmPassword') {
-      validateConfirmPassword(value);
+    if (shouldUpdate) {
+      setFormData(updatedFormData);
     }
+    if (name === 'password' || name === 'confirmPassword') {
+      if (
+        updatedFormData.confirmPassword &&
+        updatedFormData.confirmPassword !== updatedFormData.password
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match',
+        }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.confirmPassword;
+          return newErrors;
+        });
+      }
+    }
+
+
 
     if (errors[name]) {
       setErrors((prev) => {
@@ -249,20 +342,33 @@ export default function Technicians() {
     }
   };
 
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const confirmPassword = e.target.value;
+    // Update formData confirm password value if you store it
+    setFormData(prev => ({ ...prev, confirmPassword }));
+    validateConfirmPassword(confirmPassword);
+  };
+  useEffect(() => {
+    if (formData.confirmPassword) {
+      validateConfirmPassword(formData.confirmPassword);
+    }
+  }, [formData.password]);
 
   const validateConfirmPassword = (confirmPassword: string) => {
     if (confirmPassword !== formData.password) {
       setErrors(prev => ({
         ...prev,
-        confirmPassword: 'Enter confirm password'
+        confirmPassword: 'Passwords do not match',
       }));
     } else {
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: ''
-      }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.confirmPassword;
+        return newErrors;
+      });
     }
   };
+
 
   function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
     return new Promise((resolve, reject) => {
@@ -362,14 +468,110 @@ export default function Technicians() {
   //   setFormData(prev => ({ ...prev, taxForms: files }));
   // };
 
-  const handleRemoveFile = (index: number) => {
-    const newFiles = formData.taxForms.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, taxForms: newFiles }));
-  };
+ const handleRemoveFile = async (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+      let userId = '';
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      userId = searchParams.get('technicianId') || '';
+    }
+    // const userId = localStorage.getItem('userID');
+
+    let imageToRemoveUrl: string | null = null;
+
+    // Get the image url to delete based on type and index
+    if (imageType === 'taxForm' && formData.taxForms) {
+      const file = formData.taxForms[index];
+      if (typeof file === 'string') {
+        imageToRemoveUrl = file;
+      }
+    } else if (imageType === 'profileImage') {
+      if (typeof formData.image === 'string') {
+        imageToRemoveUrl = formData.image;
+      }
+    } else if (imageType === 'businessLogo') {
+      if (typeof formData.businessLogo === 'string') {
+        imageToRemoveUrl = formData.businessLogo;
+      }
+    }
+
+    if (!imageToRemoveUrl) {
+      // No URL found, just remove locally
+      removeLocalImage(index, imageType);
+      return;
+    }
+
+    // Prepare payload as per your requirement
+    let payload: any = {
+      userId: userId ? parseInt(userId) : undefined,
+    };
+
+    if (imageType === 'taxForm') {
+      payload.taxFormsToDelete = [imageToRemoveUrl];
+      payload.imageToDelete = null;
+    } else {
+      payload.taxFormsToDelete = [];
+      payload.imageToDelete = imageToRemoveUrl;
+    }
+
+    // Call API to delete
+    const response = await fetch(`${apiUrl}/deleteTechnicianImages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast.error(data.error || 'Failed to delete image.');
+      return; // stop removal on failure
+    }
+
+    toast.success('Image deleted successfully.');
+
+    // Remove image locally after successful deletion
+    removeLocalImage(index, imageType);
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    toast.error('An error occurred while deleting the image.');
+  }
+};
+
+const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
+  if (imageType === 'taxForm' && formData.taxForms) {
+    const newTaxForms = formData.taxForms.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, taxForms: newTaxForms }));
+  } else if (imageType === 'profileImage') {
+    setFormData(prev => ({ ...prev, image: null }));
+  } else if (imageType === 'businessLogo') {
+    setFormData(prev => ({ ...prev, businessLogo: null }));
+  }
+};
+
+  useEffect(() => {
+    if (typeof formData.simpleFlatRate === 'string') {
+      try {
+        const parsed = JSON.parse(formData.simpleFlatRate);
+        setFormData(prev => ({
+          ...prev,
+          simpleFlatRate: parsed,
+        }));
+      } catch (e) {
+        console.warn('Failed to parse simpleFlatRate:', e);
+      }
+    }
+  }, [formData.simpleFlatRate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
@@ -381,6 +583,14 @@ export default function Technicians() {
     if (!isEdit) {
       if (!formData.password?.trim()) newErrors.password = 'Password is required';
     }
+    if (isTechnician) {
+      if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
+
+    }
+   if (formData.secondaryEmail && !emailPattern.test(formData.secondaryEmail)) {
+        newErrors.secondaryEmail = 'Please enter a valid email address';
+      }
+
     // if (!formData.simpleFlatRate?.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
     // if (!formData.payVehicleType?.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
     // if (!formData.amountPercentage?.trim()) newErrors.amountPercentage = 'Amount Percentage is required';
@@ -391,10 +601,12 @@ export default function Technicians() {
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors); // Replace all errors with new ones
+      console.log(errors,'sadasd')
       return;
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
     const formDataObj = new FormData();
     Object.keys(formData).forEach(key => {
       if (key === 'confirmPassword') {
@@ -405,7 +617,24 @@ export default function Technicians() {
         formData[key].forEach(file => {
           formDataObj.append('taxForms', file); // Append each file to FormData
         });
-      } else if (key !== 'image') {
+      } else if (key === 'simpleFlatRate' && formData.simpleFlatRate) {
+        const value = formData.simpleFlatRate;
+        const cleanedFlatRate: Record<string, number> = {};
+        // Convert all string values to numbers
+        Object.keys(value).forEach(k => {
+          const num = parseFloat(value[k]);
+          if (!isNaN(num)) {
+            cleanedFlatRate[k] = num;
+          }
+        });
+
+        // Now append as a JSON string
+        formDataObj.append('simpleFlatRate', JSON.stringify(cleanedFlatRate));
+      }
+
+
+
+      else if (key !== 'image') {
         formDataObj.append(key, String(formData[key as keyof TechnicianForm])); // Convert all values to string
       }
     });
@@ -537,10 +766,49 @@ export default function Technicians() {
   const handleRemoveImage = () => {
     setFormData((prev: any) => ({ ...prev, image: null }));
   };
+  const handleRemoveImageLogo = () => {
+    setFormData((prev: any) => ({ ...prev, businessLogo: null }));
+  };
+
+  const getNationalNumber = (digitsOnly: string, fullNumber: string): string => {
+    try {
+      const parsed = parsePhoneNumberFromString(fullNumber);
+      if (parsed) {
+        return digitsOnly.startsWith(parsed.countryCallingCode)
+          ? digitsOnly.slice(parsed.countryCallingCode.length)
+          : digitsOnly;
+      }
+      return digitsOnly;
+    } catch {
+      return digitsOnly;
+    }
+  };
 
   const handlePhoneChange = (value: string | undefined) => {
-    // Clear phone number error if it exists
-    if (errors.phoneNumber) {
+    if (!value) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
+      return;
+    }
+
+    const digitsOnly = value.replace(/\D/g, '');
+    const nationalNumber = getNationalNumber(digitsOnly, value);
+
+    // Stop if national number exceeds 10 digits
+    if (nationalNumber.length > 10) {
+      return;
+    }
+
+    // Set error if not exactly 10 digits
+    if (nationalNumber.length !== 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits'
+      }));
+    } else {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.phoneNumber;
@@ -548,29 +816,13 @@ export default function Technicians() {
       });
     }
 
-    if (!value) {
-      // Handle empty value case
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: ''
-      }));
-      return;
-    }
-
-    const parsedNumber = parsePhoneNumberFromString(value);
-    if (parsedNumber) {
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: parsedNumber.number // E.164 format
-      }));
-    } else {
-      // Handle invalid phone number case
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: value // Fallback to raw input
-      }));
-    }
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      phoneNumber: value
+    }));
   };
+
 
 
   useEffect(() => {
@@ -709,6 +961,17 @@ export default function Technicians() {
     }
   }, [formData.country]);
 
+
+  useEffect(() => {
+    if (isEdit) {
+      setSimpleFlatRateAll(true);
+    }
+  }, [isEdit]);
+
+  const simpleFlatRateValues = formData.simpleFlatRate ? Object.values(formData.simpleFlatRate) : [];
+  const allRatesEqual = simpleFlatRateValues.length > 0 && simpleFlatRateValues.every(val => val === simpleFlatRateValues[0]);
+
+
   return (
     <div className='w-[60%] m-auto mb-5 m-auto'>
       <Breadcrumb
@@ -814,6 +1077,18 @@ export default function Technicians() {
                 defaultCountry="US"
                 value={formData.phoneNumber}
                 onChange={handlePhoneChange}
+                onKeyDown={(e: any) => {
+                  // Prevent typing if already 10 digits in national number
+                  const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                  const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e: any) => {
+                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                  if (pasted.length > 10) e.preventDefault();
+                }}
                 className={`input text-xs input-bordered w-full p-2 rounded`}
               />
               {errors.phoneNumber && (
@@ -1001,7 +1276,9 @@ export default function Technicians() {
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <TextField fullWidth name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} />
+              <TextField fullWidth type='number' name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} inputProps={{
+                maxLength: 10,
+              }} />
 
               {/* <input
                 type="number"
@@ -1017,8 +1294,13 @@ export default function Technicians() {
                 <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
                 <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange} />
-
+              <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange}
+              />
+              {errors.emailError && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.emailError}
+                </div>
+              )}
               {/* <input
                 type="email"
                 name="secondaryEmail" 
@@ -1070,7 +1352,7 @@ export default function Technicians() {
                 label="Confirm password"
                 size="small"
                 value={formData.confirmPassword}
-                onChange={handleChange}
+                onChange={handleConfirmPasswordChange}
 
               />
               <button
@@ -1089,7 +1371,11 @@ export default function Technicians() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className={`grid gap-4 mb-4 ${formData.payRate === 'Simple Flat Rate' || formData.payRate === 'Simple Percentage'
+            ? 'grid-cols-2'
+            : 'grid-cols-3'
+            }`}
+          >
             {!isSingleTechnician && formData.role !== 'singletechnician' && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -1100,7 +1386,7 @@ export default function Technicians() {
                 </svg>
 
                 {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth size="small">
+                <FormControl fullWidth size="small" >
                   <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
                   <Select
                     labelId="payRate"
@@ -1118,8 +1404,14 @@ export default function Technicians() {
 
                   </Select>
                 </FormControl>
+                {errors.payRate && (
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {errors.payRate}
+                  </div>
+                )}
               </div>
             )}
+
             {formData.payRate === 'Pay Per Vehicles' && (
               <div className='mb relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -1133,49 +1425,270 @@ export default function Technicians() {
                     labelId="payVehicleType"
                     color="warning"
                     id="select-vehicleType"
-                    value={formData.payVehicleType}
+                    multiple
+                    value={Array.isArray(formData.payVehicleType) ? formData.payVehicleType : []}
                     label="Select Vehicle Type"
                     name="payVehicleType"
-                    onChange={handleSelectChange}
+                    renderValue={(selected) => {
+                      if (!Array.isArray(selected)) return '';
+                      return selected.join(', ');
+                    }}
+                    onChange={(event) => {
+                      let value = event.target.value;
+                      if (typeof value === 'string') value = value.split(',');
+
+                      // Check if "select-all" clicked
+                      if (value.includes('select-all')) {
+                        if (formData.payVehicleType.length === vehicleTypes.length) {
+                          // Deselect all if all were selected
+                          value = [];
+                        } else {
+                          // Select all vehicle types
+                          value = [...vehicleTypes];
+                        }
+                      }
+
+                      // Always remove 'select-all' from value (don't store it)
+                      value = value.filter(v => v !== 'select-all');
+
+                      // Identify removed vehicle types
+                      const removedTypes = (formData.payVehicleType || []).filter(
+                        type => !value.includes(type)
+                      );
+
+                      // Remove corresponding keys from simpleFlatRate
+                      const updatedSimpleFlatRate = { ...formData.simpleFlatRate };
+                      removedTypes.forEach(type => {
+                        if (updatedSimpleFlatRate.hasOwnProperty(type)) {
+                          delete updatedSimpleFlatRate[type];
+                        }
+                      });
+
+                      setFormData(prev => ({
+                        ...prev,
+                        payVehicleType: value,
+                        simpleFlatRate: updatedSimpleFlatRate,
+                      }));
+                    }}
+
                   >
-                    {vehicleTypes.map((type) => (
-                      <MenuItem key={type} value={type}>{type}</MenuItem>
+                    <MenuItem value="select-all">
+                      <Checkbox
+                        checked={formData.payVehicleType.length === vehicleTypes.length}
+                        indeterminate={
+                          formData.payVehicleType.length > 0 &&
+                          formData.payVehicleType.length < vehicleTypes.length
+                        }
+                      />
+                      <ListItemText primary="Select All" />
+                    </MenuItem>
+
+                    {vehicleTypes.map(type => (
+                      <MenuItem key={type} value={type}>
+                        <Checkbox checked={formData.payVehicleType.indexOf(type) > -1} />
+                        <ListItemText primary={type} />
+                      </MenuItem>
                     ))}
                   </Select>
                   {errors.payVehicleType && (
                     <FormHelperText>{errors.payVehicleType}</FormHelperText>
                   )}
                 </FormControl>
+
               </div>
             )}
 
             {(formData.payRate === 'Simple Percentage') && (
-              <div className=' relative'>
+              <div className='relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                   <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                   <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} onChange={handleChange} />
+                <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} inputProps={{ min: 0, max: 100 }} onChange={handleChange} />
               </div>
             )}
-            {formData.payRate !== 'Simple Percentage' && (formData.payRate === 'Pay Per Vehicles' || formData.payRate === 'Simple Flat Rate') && (
-              <div className=' relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                  <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                  <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                <TextField fullWidth type='number' error={!!errors.simpleFlatRate} helperText={errors.simpleFlatRate || ''} name="simpleFlatRate" id="outlined-basic" color="warning" label="Simple Flat Rate ($)" size="small" value={formData.simpleFlatRate} onChange={handleChange}
-                  inputProps={{
-                    step: "0.01",
-                    min: 0
-                  }} />
-              </div>
-            )}
+            {formData?.payRate === 'Pay Per Vehicles' &&
+              Array.isArray(formData?.payVehicleType) &&
+              formData.payVehicleType.length > 1 &&
+              allRatesEqual && (
+
+                <div className='relative'>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={simpleFlatRateAll}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setSimpleFlatRateAll(checked);
+
+                          setFormData(prev => {
+                            let updatedSimpleFlatRate = { ...prev.simpleFlatRate };
+
+                            if (checked) {
+                              // Use first non-empty price or empty string
+                              const firstValue = Object.values(updatedSimpleFlatRate).find(val => val !== '') || '';
+                              updatedSimpleFlatRate = {};
+                              formData.payVehicleType.forEach(type => {
+                                updatedSimpleFlatRate[type] = firstValue;
+                              });
+                            }
+                            // If unchecked, keep existing prices as is
+
+                            return {
+                              ...prev,
+                              simpleFlatRate: updatedSimpleFlatRate,
+                            };
+                          });
+                        }}
+                        name="simpleFlatRateAll"
+                        color="warning"
+
+                      />
+                    }
+                    label="Assign Price for all vehicles"
+                  />
+
+                </div>
+              )}
+            {(formData.payRate === 'Simple Flat Rate' &&
+              Array.isArray(formData.payVehicleType)) && (
+                <>
+                  {/* Individual inputs hamesha dikhen */}
+                  {(formData.payRate === 'Simple Flat Rate'
+                    ? ['technician'] // fallback vehicle type
+                    : formData.payVehicleType
+                  ).map(type => (
+                    <div className="" key={type}>
+
+                      <div className='relative w-full'>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                          <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                          <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                          <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                        </svg>
+                        <TextField
+                          fullWidth
+                          type='number'
+                          label={`Simple Flat Rate ($) for ${type}`}
+                          size="small"
+                          color="warning"
+                          name="simpleFlatRate"
+                          value={formData.simpleFlatRate?.[type] || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (!/^\d*\.?\d*$/.test(value)) return;
+                            setFormData(prev => ({
+                              ...prev,
+                              simpleFlatRate: {
+                                ...prev.simpleFlatRate,
+                                [type]: value,
+                              },
+                            }));
+                          }}
+                          inputProps={{ step: "0.01", min: 0 }}
+                        />
+                      </div>
+
+
+                    </div>
+                  ))}
+                </>
+              )}
           </div>
+          <div className="grid grid-cols-1 gap-4">
+            {(formData.payRate === 'Simple Flat Rate' ||
+              (formData.payRate === 'Pay Per Vehicles' &&
+                Array.isArray(formData.payVehicleType) &&
+                formData.payVehicleType.length > 0)) && (
+                <>
+                  {/* Individual inputs hamesha dikhen */}
+                  {(formData.payRate === 'Simple Flat Rate'
+                    ? ['technician'] // fallback vehicle type
+                    : formData.payVehicleType
+                  ).map(type => (
+                    <div className="grid grid-cols-3 gap-4" key={type}>
+                      {(formData.payRate === 'Pay Per Vehicles' && (
+
+                        <div className='w-full'>
+                          <Input
+                            type="text"
+                            readOnly
+                            value='Pay Per Vehicles'
+                            style={{
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              padding: "4px 12px",
+                              backgroundColor: "#f9f9f9",
+                              cursor: "default",
+                              width: '100%'
+                            }}
+                          />
+                        </div>
+                      ))}
+
+                      {(formData.payRate === 'Pay Per Vehicles' && (
+                        <div className='w-full'>
+                          <Input
+                            type="text"
+                            readOnly
+                            value={type}
+                            style={{
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              padding: "4px 12px",
+                              backgroundColor: "#f9f9f9",
+                              cursor: "default",
+                              width: '100%'
+                            }}
+                          />
+                        </div>
+                      ))}
+                      {(formData.payRate === 'Pay Per Vehicles' && (
+                        <div className='relative w-full'>
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                            <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
+                            <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
+                          </svg>
+                          <TextField
+                            fullWidth
+                            type='number'
+                            label={`Simple Flat Rate ($) for ${type}`}
+                            size="small"
+                            color="warning"
+                            name="simpleFlatRate"
+                            value={formData.simpleFlatRate?.[type] || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const regex = /^\d{0,5}(?:\.\d{0,2})?$/;
+
+                            if (value === '' || regex.test(value)) {
+                              setFormData(prev => ({
+                                ...prev,
+                                simpleFlatRate: {
+                                  ...prev.simpleFlatRate,
+                                  [type]: value,
+                                },
+                              }));
+                            }
+                            }}
+                            inputProps={{ inputMode: 'decimal', pattern: '\\d{0,5}(\\.\\d{0,2})?' }}
+                            disabled={simpleFlatRateAll}
+                          />
+                        </div>
+                      ))}
+
+                    </div>
+                  ))}
+                </>
+              )}
+          </div>
+
+
 
           <div className="grid grid-cols-3 gap-4 mt-4">
 
@@ -1219,7 +1732,7 @@ export default function Technicians() {
                         </a>
                       ) : null}
 
-                      <button onClick={() => handleRemoveFile(index)} className="absolute right-[-10px] top-[-5px]">
+                      <button type='button' onClick={() => handleRemoveFile(index, 'taxForm')} className="absolute right-[-10px] top-[-5px]">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -1254,7 +1767,7 @@ export default function Technicians() {
                   ) : (
                     <img src={formData.image} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
                   )}
-                  <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '-10px', top: '0' }}>
+                  <button type='button' onClick={() => handleRemoveFile(0, 'profileImage')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '-10px', top: '0' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -1272,7 +1785,7 @@ export default function Technicians() {
                     <p className='text-sm mb-1 mt-1 laptop__font'>Upload Business Logo</p>
                     <span className="text-center m-auto text-xs block laptop__size"> (Only 'jpeg, webp, and png' images will be accepted)</span>
                   </label>
-                  <input type="file" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
+                  <input type="file" accept="image/jpeg, image/png, image/webp" className="input input-bordered w-full opacity-0 absolute inset-0" onChange={handleLogoChange} />
                 </div>
 
                 {formData.businessLogo && (
@@ -1282,7 +1795,7 @@ export default function Technicians() {
                     ) : (
                       <img src={formData.businessLogo} alt="Uploaded image" style={{ width: 50, height: 50, objectFit: 'cover' }} />
                     )}
-                    <button type='button' onClick={handleRemoveImage} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
+                    <button type='button' onClick={() => handleRemoveFile(0, 'businessLogo')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', position: 'absolute', right: '0', top: '0' }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path fillRule="evenodd" clipRule="evenodd" d="M18 6L6 18M6 6L18 18" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>

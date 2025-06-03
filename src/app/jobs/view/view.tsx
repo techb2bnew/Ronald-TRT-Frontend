@@ -91,11 +91,10 @@ export default function ViewDetails() {
       }, 0);
     }
 
-    // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
+    // Extract simpleFlatRate and amountPercentage from jobData or fallback technician
     const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
     const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
 
-    // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
     const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
       ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
       : simpleFlatRate;
@@ -104,16 +103,23 @@ export default function ViewDetails() {
       ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
       : amountPercentage;
 
-    // Calculate the percentage amount
-    const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
+    // Calculate percentage amount if applicable
+    const percentageAmount = (!isNaN(finalAmountPercentage) && finalAmountPercentage > 0)
       ? (subtotalcost * finalAmountPercentage) / 100
       : 0;
 
-    // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
-    const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
+    // Logic: Add either simpleFlatRate or percentageAmount — whichever is greater than zero, but NOT both
+    let totalCost = subtotalcost;
+
+    if (finalSimpleFlatRate > 0) {
+      totalCost += finalSimpleFlatRate;
+    } else if (percentageAmount > 0) {
+      totalCost += percentageAmount;
+    }
 
     return totalCost;
   };
+
 
 
   if (!jobData) {
@@ -151,6 +157,7 @@ export default function ViewDetails() {
         : '/single-technicians/jobs',
     };
   };
+
 
 
   return (
@@ -220,7 +227,11 @@ export default function ViewDetails() {
               </div>
 
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {new Date(jobData.createdAt).toLocaleDateString('en-GB')} </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>End Date:</strong> {new Date(jobData.completedDate).toLocaleDateString('en-GB')} </div>
+              {searchParams.has('completedJob') && jobData.completedDate && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                  <strong className='w-[210px] inline-block'>End Date:</strong> {new Date(jobData.completedDate).toLocaleDateString('en-GB')}
+                </div>
+              )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
@@ -362,11 +373,17 @@ export default function ViewDetails() {
 
                     return null;
                   })()}
+                  <span className='ml-4'>{jobData?.payRate}</span>
                 </div>
               )}
 
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
-                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Labour Cost:</strong>{`$${Number(jobData?.labourCost ?? 0).toFixed(2)}`}</div>
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                  <strong className='w-[210px] inline-block'>Labour Cost:</strong>
+                  {userType === 'single-technician' || isSingleTechnicianWorkOrder
+                    ? `$${Number(jobData?.labourCost ?? 0).toFixed(2)}`
+                    : '$0.00'}
+                </div>
 
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
@@ -389,10 +406,15 @@ export default function ViewDetails() {
                 {jobData?.color?.trim() ? jobData.color : <span className="text-gray-500">No data available</span>}
               </div>
 
-              <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                <strong className="w-[210px] inline-block">Notes:</strong>
-                {jobData?.notes?.trim() ? jobData.notes : <span className="text-gray-500">No notes available</span>}
+              <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex gap-3">
+                <strong className="  inline-block">Notes:</strong>
+                {jobData?.notes?.trim() ? (
+                  <div dangerouslySetInnerHTML={{ __html: jobData.notes }} />
+                ) : (
+                  <span className="text-gray-500">No notes available</span>
+                )}
               </p>
+
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
                 {jobData.images.map((form: any, index: any) => (
                   <img
@@ -411,9 +433,9 @@ export default function ViewDetails() {
 
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] inline-block">Job Description:</strong>
+                <strong className="w-[210px] min-w-[210px] inline-block">Job Description:</strong>
                 {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-                  <ul className="list-none">
+                  <ul className="list-none w-full">
                     {jobData.jobDescription.map((item: string | object, index: number) => {
                       let parsedItem;
 
@@ -426,10 +448,13 @@ export default function ViewDetails() {
                       }
 
                       return (
-                        <li key={index}>
-                          <span className="block">
-                            {parsedItem?.jobDescription || "No description available"}
-                          </span>
+                        <li key={index} className='w-full mb-5'>
+                          <div className='flex gap-5 justify-between'>
+                            <span className="block">
+                              {parsedItem?.jobDescription || "No description available"}
+                            </span>
+                            <b>${parsedItem?.cost || "0.00"}</b>
+                          </div>
                         </li>
                       );
                     })}
@@ -441,7 +466,10 @@ export default function ViewDetails() {
               {jobData?.jobDescription && Array.isArray(jobData.jobDescription) && (
                 <div className="mb-4 border-b border-gray-500 text-sm pb-4">
                   <strong className='w-[210px] inline-block'>Sub Total: </strong>
-                  ${jobData.jobDescription.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0)}
+                  ${(
+                    jobData.jobDescription.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0)
+                  ).toFixed(2)}
+
                 </div>
               )}
               {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (

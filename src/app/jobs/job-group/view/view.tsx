@@ -113,53 +113,58 @@ export default function ViewDetails() {
   //   }
   //   return 0;
   // };
-  const calculateTotalCost = (jobData: any) => {
-    let subtotalcost = 0;
+const calculateTotalCost = (jobData: any) => {
+  if (!jobData) return 0;
 
-    // Check if jobDescription exists and is an array
-    if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-        let parsedItem = item;
-
-        // Only parse if item is a string
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item); // Parse the stringified JSON
-          } catch (error) {
-            console.error("Error parsing job description:", error);
-            return total; // Skip this item if parsing fails
-          }
+  // Subtotal from jobDescription
+  let subtotalcost = 0;
+  if (Array.isArray(jobData.jobDescription)) {
+    subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+      let parsedItem = item;
+      if (typeof item === 'string') {
+        try {
+          parsedItem = JSON.parse(item);
+        } catch {
+          return total;
         }
+      }
+      const cost = parseFloat(parsedItem?.cost || '0');
+      return total + (isNaN(cost) ? 0 : cost);
+    }, 0);
+  }
 
-        // Check if parsedItem has a cost property and is a number
-        const cost = parseFloat(parsedItem?.cost || '0');
-        return total + (isNaN(cost) ? 0 : cost);
-      }, 0);
-    }
+  // Parse values
+  const amountPercentage = parseFloat(jobData.amountPercentage || '0');
+  const simpleFlatRate = parseFloat(jobData.simpleFlatRate || '0');
 
-    // Check if jobData has valid `simpleFlatRate` and `amountPercentage`
-    const simpleFlatRate = parseFloat(jobData?.simpleFlatRate || '0');
-    const amountPercentage = parseFloat(jobData?.amountPercentage || '0');
+  // Technician fallback values
+  let techAmountPercentage = 0;
+  let techSimpleFlatRate = 0;
+  if (jobData?.technicians?.[0]) {
+    techAmountPercentage = parseFloat(jobData.technicians[0].amountPercentage || '0');
+    techSimpleFlatRate = parseFloat(jobData.technicians[0].simpleFlatRate || '0');
+  }
 
-    // If jobData's `simpleFlatRate` or `amountPercentage` are null, fallback to technicians
-    const finalSimpleFlatRate = isNaN(simpleFlatRate) || simpleFlatRate <= 0
-      ? parseFloat(jobData?.technicians?.[0]?.simpleFlatRate || '0')
-      : simpleFlatRate;
+  // Determine which value to use: prefer amountPercentage or fallback technician
+  let perc = amountPercentage > 0 ? amountPercentage : techAmountPercentage;
+  let flat = simpleFlatRate > 0 ? simpleFlatRate : techSimpleFlatRate;
 
-    const finalAmountPercentage = isNaN(amountPercentage) || amountPercentage <= 0
-      ? parseFloat(jobData?.technicians?.[0]?.amountPercentage || '0')
-      : amountPercentage;
+  let total = subtotalcost;
 
-    // Calculate the percentage amount
-    const percentageAmount = !isNaN(finalAmountPercentage) && finalAmountPercentage > 0
-      ? (subtotalcost * finalAmountPercentage) / 100
-      : 0;
+  // Add only one of them
+  if (flat > 0) {
+    total += flat;
+  } else if (perc > 0) {
+    total += (perc * subtotalcost) / 100;
+  }
 
-    // Calculate the totalCost by adding final simpleFlatRate and percentageAmount if available
-    const totalCost = finalSimpleFlatRate + subtotalcost + percentageAmount;
+  return total;
+};
 
-    return totalCost;
-  };
+
+
+
+
   React.useEffect(() => {
     const type = localStorage.getItem('types');
     setUserType(type);
@@ -197,19 +202,22 @@ export default function ViewDetails() {
               }} />
             </div>
             <div className='flex items-center gap-4'>
-              <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-green-600" onClick={() => {
+              <button       className={`text-xs border border-gray-300 p-3 pl-4 pr-4 rounded 
+        ${filterType === 'completed' ? 'bg-green-600 text-white' : 'bg-white hover:text-white hover:bg-green-600'}`} onClick={() => {
                 setFilterType('completed');
                 fetchCustomerData(vin, 'completed');
               }}>
                 Completed Jobs
               </button>
-              <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-yellow-500" onClick={() => {
+              <button className={`text-xs border border-gray-300 p-3 pl-4 pr-4 rounded 
+        ${filterType === 'inProgress' ? 'bg-yellow-500 text-white' : 'bg-white hover:text-white hover:bg-yellow-500'}`} onClick={() => {
                 setFilterType('inProgress');
                 fetchCustomerData(vin, 'inProgress');
               }}>
                 In Progress Jobs
               </button>
-              <button className="text-xs border border-gray-300 p-3 pl-4 pr-4 bg-white rounded hover:text-white hover:bg-[#383d71]" onClick={() => {
+              <button className={`text-xs border border-gray-300 p-3 pl-4 pr-4 rounded 
+        ${filterType === 'missingPayRates' ? 'bg-[#383d71] text-white' : 'bg-white hover:text-white hover:bg-[#383d71]'}`} onClick={() => {
                 setFilterType('missingPayRates');
                 fetchCustomerData(vin, 'missingPayRates');
               }}>

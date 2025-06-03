@@ -330,7 +330,7 @@ export default function ViewDetails() {
                 </svg>
                 {technician?.address}</p>
               <p className='flex gap-2 items-center'>
-                <svg width="20" height="16" viewBox="0 0 20 20" fill="none" className="view__detail" xmlns="http://www.w3.org/2000/svg">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="view__detail" xmlns="http://www.w3.org/2000/svg">
                   <rect x="5" y="2" width="10" height="16" rx="2" stroke="#5B5B99" strokeWidth="1.5" />
                   <rect x="8" y="3.5" width="4" height="1" fill="#5B5B99" />
                   <circle cx="7" cy="7" r="0.8" fill="#5B5B99" />
@@ -366,8 +366,8 @@ export default function ViewDetails() {
                 <strong className='w-[200px] inline-block'>State:</strong>
                 {getStateName(technician?.country, technician?.state)}
               </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p>
-              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
+              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong>{technician?.city}</p>
+              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong>{technician?.zipCode}</p>
 
 
               <p className='border-b border-gray-500 mb-3 pb-2'>
@@ -419,20 +419,39 @@ export default function ViewDetails() {
                 </p>
               )}
               {technician.simpleFlatRate && (
-                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
-                  <strong className='w-[200px] inline-block'>Flat Rate:</strong>
-                  {technician?.simpleFlatRate ? (
-                    `$${technician.simpleFlatRate}`
-                  ) : (
-                    <span className="text-sm text-gray-500">No data available</span>
-                  )}
-                </p>
+              <p className='mb-2 border-b flex border-gray-500 mb-3 pb-2'>
+  <strong className='w-[200px] min-w-[200px] inline-block'>Flat Rate:</strong>
+  {technician?.simpleFlatRate ? (() => {
+    try {
+      // Try parse JSON
+      const rates = JSON.parse(technician.simpleFlatRate);
+
+      if (typeof rates === 'object' && rates !== null) {
+        // If multiple vehicle types, show as comma-separated
+        return Object.entries(rates)
+          .map(([vehicle, rate]) => `${vehicle}: $${rate}`)
+          .join(', ');
+      } else {
+        // If it's a single number or string after parsing
+        return `$${rates}`;
+      }
+    } catch (e) {
+      // If parsing fails, just show the raw value with $ if number
+      const val = technician.simpleFlatRate;
+      if (!isNaN(Number(val))) return `$${val}`;
+      return val; // fallback to raw string
+    }
+  })() : (
+    <span className="text-sm text-gray-500">No data available</span>
+  )}
+</p>
+
 
               )}
 
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
-              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
-                <td
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
+              <div className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
+                <div
                   onClick={() => {
                     if (technician.isApproved === 'accept') {
                       handleAccountStatusChanges(technician.id, !technician.accountStatus);
@@ -448,8 +467,8 @@ export default function ViewDetails() {
                   >
                     {technician.accountStatus ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-              </p>
+                </div>
+              </div>
               <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
 
                 <TechnicianApprovalActions

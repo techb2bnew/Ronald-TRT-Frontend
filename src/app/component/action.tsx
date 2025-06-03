@@ -62,7 +62,7 @@ const TableActions: React.FC<TableActionsProps> = ({
   const handleDelete = async () => {
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "You can undo this action!",
+      text: "You can't undo this action!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -124,7 +124,7 @@ const TableActions: React.FC<TableActionsProps> = ({
       {canDelete && (
         <button className="p-2" onClick={handleDelete} data-tooltip-id="delete"
         data-tooltip-content="Delete">
-          <Image alt="delete" src={Delete} className="w-[14px]" />
+          <Image alt="delete" src={Delete} className="w-[12px]" />
         </button>
       )}
       <Tooltip id="delete" place="top" />

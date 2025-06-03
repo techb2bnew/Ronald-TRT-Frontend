@@ -422,7 +422,7 @@ const TechnicianTable: React.FC = () => {
         City: tech.city,
         State: stateName,
         SimpleFlatRate: tech.simpleFlatRate,
-        AmountPercentage: tech.simpleFlatRate,
+        AmountPercentage: tech.amountPercentage,
         PayVehicleType: tech.payVehicleType,
         PayRate: tech.payRate,
         AccountStatus: tech.accountStatus,
@@ -461,7 +461,7 @@ const TechnicianTable: React.FC = () => {
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate', 'Status',
+        'PayVehicleType', 'PayRate', 
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
 
@@ -482,6 +482,10 @@ const TechnicianTable: React.FC = () => {
               // Create an object for each row
               manualHeaders.forEach((key, idx) => {
                 let value: any = row[idx] ?? null;
+                 if (key === 'IsApproved' && (value === null || value === undefined)) {
+                    // default value if missing
+                    value = false; // ya jo default chahiye wo
+                  }
                 if (typeof value === 'string') {
                   value = value.trim();
                   if (value === '') value = null;

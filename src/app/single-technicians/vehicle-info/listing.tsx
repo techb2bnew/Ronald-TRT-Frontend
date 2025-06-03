@@ -4,29 +4,33 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast from 'react-hot-toast';
+import toast  from 'react-hot-toast'; 
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
-import Link from 'next/link';
-import Image from 'next/image';
-import Eye from '../../../../public/eye.svg';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
-
+import Link from 'next/link';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-interface Jobs {
+
+interface VehcileInfo {
   id: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
+  Role: { name: string };
 }
-const JobTable: React.FC = () => {
+
+const VehicleTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
@@ -40,10 +44,6 @@ const JobTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const handleSearch = (searchTerm: string) => {
-    console.log('Searching for:', searchTerm);
-    // Implement search logic here
-  };
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
 
@@ -54,26 +54,31 @@ const JobTable: React.FC = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const roleType = "single-technician";
+      const roleType = 'single-technician';
+      const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+        ? roleType === 'single-technician'
+          ? `${apiUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : roleType === 'single-technician'
+          ? `${apiUrl}/fetchVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+
+
 
       const response = await fetch(endpoint, { method: 'GET', headers });
-
       const data = await response.json();
       if (response.ok) {
-        const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.ActiveJob || []
-          : data.jobs?.jobs || [];
-        //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
+        const fetchedTechnicians: VehcileInfo[] = query.trim()
+          ? data.data.vehicles || []
+          : data.response.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.jobs?.totalPages || 1);
-
+        setTotalPages(data.response.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -87,6 +92,7 @@ const JobTable: React.FC = () => {
       setLoading(false);
     }
   };
+
 
 
   useEffect(() => {
@@ -110,9 +116,6 @@ const JobTable: React.FC = () => {
     setPageSize(size);
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
-
-
-
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
@@ -141,78 +144,6 @@ const JobTable: React.FC = () => {
   };
 
 
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-
-        if (response.data.status) {
-          // Optimistically update the local state
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === jobId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor: '#383d71',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -228,13 +159,13 @@ const JobTable: React.FC = () => {
       return;
     }
     const csvOptions = {
-      filename: 'Single Technician Work Order',
+      filename: 'Vehicles Info',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Single Technician Work Order Data',
+      title: 'Vehicles Info',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -243,6 +174,9 @@ const JobTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
+      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -263,19 +197,19 @@ const JobTable: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
+        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus ? 'true' : 'false',
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
+        subTotal: subTotal.toFixed(2),
 
       };
     });
     csvExporter.generateCsv(formattedData);
   }
-
-
 
   const handleImportCSV = (file: File) => {
     setLoading(true);
@@ -287,30 +221,17 @@ const JobTable: React.FC = () => {
 
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '')
-        .trimStart();
-
-      let lines = text.split(/\r?\n/);
-
-      // ✅ Remove garbage header line(s) like "Technician Jobs Data,,,,,"
-      while (lines.length && !lines[0].toLowerCase().includes('id')) {
-        lines.shift();
-      }
-
-      text = lines.join('\n');
+        .replace(/^\uFEFF/, '') // Remove BOM
+        .trimStart(); // Remove leading whitespace/newlines
 
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
         'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState',
-        'deletedStatus', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost'
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
+        'jobDescription', 'cost', 'subTotal'
       ];
-
-      const requiredFieldsWithDefaults: Record<string, string> = {
-        model: 'N/A'
-      };
 
       Papa.parse(text, {
         header: false,
@@ -319,62 +240,41 @@ const JobTable: React.FC = () => {
           const rows = result.data as string[][];
 
           const cleanedData = rows
-            .slice(1)
+            .slice(1) // Skip raw header row
             .map((row) => {
               const obj: any = {};
-
               manualHeaders.forEach((key, idx) => {
-                let value: any = row[idx];
-
-                if (typeof value === 'string') {
-                  value = value.trim();
-                  const lower = value.toLowerCase();
-
-                  if (lower === 'null' || lower === '') {
-                    value = requiredFieldsWithDefaults[key] || '';
-                  } else {
-                    value = value;
-                  }
-                }
-
-                // Fix VIN from scientific notation (convert number to full string)
-                if (key === 'vin' && !isNaN(Number(value))) {
-                  value = Number(value).toFixed(0);
-                }
-
-                // ✅ Ensure value is always a string
-                obj[key] = String(value ?? '');
+                let value = row[idx];
+                value = typeof value === 'string' ? value.trim() : value;
+                obj[key] = value;
               });
-
               return obj;
             })
             .filter((row) => {
-              const isHeaderRow = Object.entries(row).every(
-                ([key, val]) =>
-                  typeof val === 'string' && val.trim().toLowerCase() === key.toLowerCase()
-              );
-
-              const hasRealData = Object.values(row).some(
-                (val) => typeof val === 'string' && val.trim() !== ''
-              );
-
-              return !isHeaderRow && hasRealData;
+              // Skip if all values match their keys (header row)
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              // Skip if empty row
+              const hasData = Object.values(row).some((val) => val && val !== '');
+              return !isHeaderRow && hasData;
             });
 
-          console.log("✅ Final Cleaned Data:", cleanedData);
-
           try {
+            // Only filter out the first object if it's a header row
+            const payloadData = cleanedData.filter(row => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              return !isHeaderRow;
+            });
+
             const response = await axios.post(
               `${apiUrl}/importActiveJob`,
-              { data: cleanedData },
+              { data: payloadData },
               { headers }
             );
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-
-            // Check if it's an Axios error with a response
+          
             if (
               typeof error === 'object' &&
               error !== null &&
@@ -388,9 +288,8 @@ const JobTable: React.FC = () => {
               toast.error(String(error));
             }
           }
-
+          
           setLoading(false);
-
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
@@ -402,59 +301,17 @@ const JobTable: React.FC = () => {
     reader.readAsText(file);
   };
 
-
-
-
-  const [permissions, setPermissions] = useState<any[]>([]);
-
-  useEffect(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-
-    if (storedPermissions) {
-      try {
-        const parsedPermissions = JSON.parse(storedPermissions);
-        setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
-        console.log("✅ Loaded Permissions:ssss", parsedPermissions);
-      } catch (error) {
-        console.error("❌ Failed to parse permissions:", error);
-      }
-    } else {
-      console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
-    }
-  }, []);
-
-  // ✅ Function to check permission based on role and action
-  const hasPermission = (action: string) => {
-    if (permissions.length === 0) return true; // If no permissions exist, show all icons
-
-    return permissions.some(
-      (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
-    );
-  };
-  const canCreate = hasPermission("approve");
-
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
+
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
-
-    const SubTotal = job.jobDescription.reduce((sum: number, job: any) => {
-      const parsedJob = (job);
-      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-    }, 0);
-
-    const labourTotal = job.labourCost
-      ? Number(job.labourCost)
-      : job.technicians?.reduce((sum: number, tech: any) => sum + Number(tech.simpleFlatRate || 0), 0) || 0;
-
-    const totalCost = SubTotal + labourTotal;
-
     return (
       <tr key={job.id}>
-        <td key="checkbox">
+        {/* <td key="checkbox">
           <label className="flex items-center cursor-pointer relative">
             <input
               type="checkbox"
@@ -468,88 +325,64 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+        </td>  */}
+        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
+        <td>{job.customer.firstName} {job.customer.lastName}</td>
+        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email}</a></td>
+        <td>{job.vin}</td>
 
-        <td>
-          <a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>
-            {job?.customer?.phoneNumber}</a></td>
+        {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+ 
         <td>  {job?.technicians?.map((tech: any) => (
           <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
-        ))}</td>
-        <td>{job?.technicians?.map((tech: any) => (
-          <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech?.phoneNumber}`}>
-              {tech.phoneNumber}
-            </a>
-          </div>
-        ))}</td>
-        <td>${SubTotal.toFixed(2)}</td>
+        ))}</td> */}
+        <td>{job.vehicleDescriptor}</td> 
+        <td>{job.make} </td>
+        <td>{job.model}</td>
+        <td>{job.modelYear}</td>
+        {/* <td>{job.color}</td> */}
         <td>
-    {`$${(
-  !isNaN(Number(job.labourCost))
-    ? Number(job.labourCost)
-    : !isNaN(Number(job.technicians?.[0]?.simpleFlatRate))
-      ? Number(job.technicians?.[0]?.simpleFlatRate)
-      : 0
-).toFixed(2)}`}
+          {/* <TableActions
+            editRoute={`/jobs/create-job/create?jobId=${job.id}&vehicleInfo`}
+            deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
+            viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
+            idKey="jobid"
+            userRole='Vehicleinfo'
+            itemId={job.id}  // Pass the technician ID
+            onDeleteSuccess={() => handleDeleteSuccess(job.id)}
+          /> */}
 
-        </td>
-        <td>${totalCost.toFixed(2)}</td>
-        <td>
-          {canCreate && (
-
-            <span
-              className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-            >
-              {job.jobStatus ? 'Completed' : 'In Progress'}
-            </span>
-          )}
-
-        </td>
-        <td>
-          {/* <TableActions   
-          editRoute={`/jobs/create-job/create?jobId=${job.id}`}   
-         deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-         viewRoute={`/jobs/view?jobId=${job.id}`}
-           idKey="jobid"
-           userRole='Activejobs'
-          itemId={job.id}  // Pass the technician ID
-          onDeleteSuccess={() => handleDeleteSuccess(job.id)} 
-           /> */}
-
-          <Link href={`/jobs/view?jobId=${job.id}&workorder`}>
-            <Image alt='eye' src={Eye} className='w-[16px]' />
+           <Link href={`/reporting/view?customerId=${job.customerId}`} >
+            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+              data-tooltip-content="View" />
           </Link>
+          <Tooltip id="view" place="top" />
         </td>
       </tr>
-    )
+    );
   };
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Single Technician Work Order', href: '/single-technicians/jobs' }
+          { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Single Technician Work Order" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
-
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
+ 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              {/* <th className="w-[35px]">
                 <label className="flex items-center cursor-pointer relative">
-
                   <input
                     type="checkbox"
                     checked={selectedIds.length === activeJob.length}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
-
                     onChange={() =>
                       setSelectedIds(
                         selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
@@ -562,16 +395,30 @@ const JobTable: React.FC = () => {
                     </svg>
                   </span>
                 </label>
-              </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
+              </th> */}
+              <th className="w-[80px]" onClick={() => handleSort('id')}>
+                Vehicle ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+                <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+                Customer Name
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+               <th className="w-[120px]">
+                Customer Email
+              </th>
+              <th className="w-[150px]">
+                VIN
+              </th>
+              {/* <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -580,29 +427,30 @@ const JobTable: React.FC = () => {
                 )}
               </th>
               <th className="w-[150px]">
-                Customer Number
+                Technicians Name
+              </th> */}
+              <th className="w-[120px]">
+                Vehicle Descriptor
+              </th>   
+              <th className="w-[100px]">
+                Make
               </th>
-              <th className="w-[120px]" >
-                Technician Name
-              </th>
-              <th className="w-[100px]">Tech. Number</th>
-              <th className="w-[100px]">Sub Total</th>
-              <th className="w-[100px]">R/I/R/R</th>
-              <th className="w-[100px]">Total Cost</th>
-              <th className="w-[120px]">Status</th>
-              <th className="w-[160px]">Action</th>
+              <th className="w-[80px]">Model</th>
+              <th className="w-[60px]">Year</th>
+              {/* <th className="w-[50px]">Color</th> */}
+              <th className="w-[60px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
@@ -612,11 +460,11 @@ const JobTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {activeJob.length > 0 && ( 
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );
 };
 
-export default JobTable;
+export default VehicleTable;

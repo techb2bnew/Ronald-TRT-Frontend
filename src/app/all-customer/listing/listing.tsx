@@ -55,6 +55,7 @@ export default function ClientListing() {
       const techId = searchParams.get('technicianId') || '';
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -66,7 +67,7 @@ export default function ClientListing() {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchAllCustomer?page=${page}&userId=${finalUserId}&limit=${limit}`;
+        : `${apiUrl}/fetchAllCustomer?page=${page}&userId=${finalUserId}&limit=${limit}&roleType=${roleType}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {

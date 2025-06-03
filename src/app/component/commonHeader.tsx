@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import plusIcon from '../../../public/plus-circle.png'
 import Image from 'next/image';
 import TextField from '@mui/material/TextField';
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 
 interface CommonHeaderProps {
   heading: string;
@@ -18,13 +18,18 @@ interface CommonHeaderProps {
   onImport?: (file: File) => void;
   onCompletedClick?: () => void;
   onInProgressClick?: () => void;
+  onCompletedJobClick?: () => void;
+  onInProgressJobClick?: () => void;
+  onAllJobsClick?: () => void;     
   additionalComponents?: React.ReactNode;
 }
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick }) => {
+
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
+  const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
 
   useEffect(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -51,6 +56,32 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     );
   };
   const canCreate = hasPermission("create");
+
+  const handleCompletedClick = () => {
+    setActiveFilter("completed");
+    if (onCompletedClick) onCompletedClick();
+  };
+
+  const handleInProgressClick = () => {
+    setActiveFilter("inProgress");
+    if (onInProgressClick) onInProgressClick();
+  };
+
+  const handleFilterChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value as "all" | "completed" | "inProgress";
+    setActiveFilter(value);
+
+    if (value === "completed" && onCompletedJobClick) {
+      onCompletedJobClick();
+    } else if (value === "inProgress" && onInProgressJobClick) {
+      onInProgressJobClick();
+    } else if (value === "all" && onAllJobsClick) {
+      onAllJobsClick();
+    }
+  };
+
+
+
   return (
     <div className="px-1 mb-4">
       <div className="flex items-center justify-between  w-full">
@@ -86,11 +117,31 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <option value="100">100</option>
             </select>
           )}
-
+          {(onCompletedJobClick || onInProgressJobClick) && (
+            <FormControl size="small" variant="outlined" className="w-[180px]">
+              <InputLabel id="job-status-label" color="warning">Job Status</InputLabel>
+              <Select
+                labelId="job-status-label"
+                id="job-status-select"
+                value={activeFilter}
+                onChange={handleFilterChange}
+                label="Job Status"
+                color="warning"
+              >
+                <MenuItem value="all">All Jobs</MenuItem>
+                <MenuItem value="completed">Completed Jobs</MenuItem>
+                <MenuItem value="inProgress">In Progress Jobs</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           {onCompletedClick && (
             <button
-              className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded hover:text-white hover:bg-green-600"
-              onClick={onCompletedClick}
+              className={`text-xs border border-gray-300 p-3 pl-5 pr-5 rounded 
+                ${activeFilter === "completed"
+                  ? "bg-green-600 text-white"
+                  : "bg-white hover:bg-green-600 hover:text-white"
+                }`}
+              onClick={handleCompletedClick}
             >
               Completed Jobs
             </button>
@@ -98,8 +149,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           {onInProgressClick && (
             <button
-              className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded hover:text-white hover:bg-yellow-500"
-              onClick={onInProgressClick}
+              className={`text-xs border border-gray-300 p-3 pl-5 pr-5 rounded 
+                ${activeFilter === "inProgress"
+                  ? "bg-yellow-500 text-white"
+                  : "bg-white hover:bg-yellow-500 hover:text-white"
+                }`}
+              onClick={handleInProgressClick}
             >
               In Progress Jobs
             </button>

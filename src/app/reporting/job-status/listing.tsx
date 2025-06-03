@@ -41,7 +41,8 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
+  const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "inProgress">("all");
+  const [jobs, setJobs] = useState([]);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -384,6 +385,67 @@ const JobTable: React.FC = () => {
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
+const filterJobsByStatus = async (jobStatus: "all" | "completed" | "inProgress") => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    let endpoint = `${apiUrl}/completeInprogressJobFilter?userId=${userId}&roleType=${encodeURIComponent(roleType)}`;
+
+    if (jobStatus === "completed") {
+      endpoint += `&jobStatus=true`;
+    } else if (jobStatus === "inProgress") {
+      endpoint += `&jobStatus=false`;
+    }
+    // If 'all', no jobStatus param, fetch all
+
+    const response = await fetch(endpoint, { method: 'GET', headers });
+    const data = await response.json();
+
+    if (response.ok) {
+      setActiveJob(data.jobs || []);
+      setTotalPages(data.jobs?.totalPages || 1);
+      setSelectedIds([]);
+    } else {
+      console.error("Failed to filter jobs:", data.error);
+      if(data.error === 'Invalid Token'){
+        router.push('/');
+      }
+    }
+  } catch (error) {
+    console.error("Error filtering jobs:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+ const fetchCompletedJobs = () => {
+  setActiveFilter("completed");
+  filterJobsByStatus("completed");
+  setCurrentPage(1);
+};
+
+const fetchInProgressJobs = () => {
+  setActiveFilter("inProgress");
+  filterJobsByStatus("inProgress");
+  setCurrentPage(1);
+};
+
+const fetchAllJobs = () => {
+  setActiveFilter("all");
+  filterJobsByStatus("all");
+  setCurrentPage(1);
+};
+useEffect(() => {
+  if(activeFilter === "all") {
+    fetchJobs(currentPage, searchTerm, pageSize);
+  }
+  // else ignore pagination changes because filter API is used
+}, [currentPage, pageSize, searchTerm]);
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
@@ -590,7 +652,8 @@ const JobTable: React.FC = () => {
           { label: 'All IFS Work Orders', href: '/reporting/job-status' }
         ]}
       />
-      <CommonHeader heading="All IFS Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="All IFS Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedJobClick={() => fetchCompletedJobs()}
+  onInProgressJobClick={() => fetchInProgressJobs()} onAllJobsClick={fetchAllJobs}/>
  
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

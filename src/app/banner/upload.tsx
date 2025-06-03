@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import toast  from 'react-hot-toast'; 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Breadcrumb from '@/app/component/breadcrumb';
 
 interface BannerPayload {
@@ -14,7 +14,7 @@ export default function Technicians() {
   const router = useRouter();
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
 
   const [formData, setFormData] = useState<BannerPayload>({
     bannerImages: [],

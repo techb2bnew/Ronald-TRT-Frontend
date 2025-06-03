@@ -9,6 +9,7 @@ export default function ViewDetails() {
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [recordType, setRecordType] = useState<string | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fetchTechnicianData = async (id: string, type: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   
@@ -106,7 +107,20 @@ export default function ViewDetails() {
 
           <div className='shadow-lg p-5 bg-white rounded'>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</div>
-            <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.firstName} {technician?.lastName}</div>
+            <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.image ? (
+                  <img
+                   onClick={() => setPreviewImage(technician.image)}
+                    src={technician.image}
+                    alt={`${technician.firstName} ${technician.lastName}`}
+                    className="w-8 h-8 rounded-full object-cover mr-3"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#383d71] text-white flex items-center justify-center text-lg font-bold uppercase mr-2">
+                    {technician?.firstName?.[0] || '?'}
+                  </div>
+                )} 
+             
+                {technician?.firstName} {technician?.lastName}</div> 
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong> <a href={`mailto:${technician.email}`} className="hover:underline"> {technician?.email}</a></div>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong><a href={`tel:${technician.phoneNumber}`} className="hover:underline"> {technician?.phoneNumber}</a></div>
             <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Secondary Number:</strong><a href={`tel:${technician.secondaryContactName}`} className="hover:underline"> {technician?.secondaryContactName}</a></div>
@@ -232,6 +246,15 @@ export default function ViewDetails() {
 )}
       </div>
       <ToastContainer />
+
+      {previewImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setPreviewImage(null)} // Close on backdrop click
+          >
+            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+          </div>
+        )}
     </div>
   );
 }

@@ -12,6 +12,9 @@ import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { FormHelperText } from '@mui/material';
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 interface CustomerForm {
   id?: string;  // Optional ID for editing
@@ -69,6 +72,21 @@ export default function Technicians() {
   // Handle form field change
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target as HTMLInputElement | HTMLSelectElement;;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (name === 'phoneNumber') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length > 10) return;
+    }
+
+    if (name === "email") {
+      const isValidEmail = emailPattern.test(value);
+      setErrors((prev) => ({
+        ...prev,
+        email: isValidEmail ? '' : 'Please enter a valid email address',
+      }));
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name]: value
@@ -157,12 +175,17 @@ export default function Technicians() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
-    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.email?.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailPattern.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required'; 
+    if (!formData.country?.trim()) newErrors.country = 'Country is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
 
     if (Object.keys(newErrors).length > 0) {
@@ -341,6 +364,58 @@ export default function Technicians() {
   };
   const countries = Country.getAllCountries();
   const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
+  const getNationalNumber = (digitsOnly: string, fullNumber: string): string => {
+    try {
+      const parsed = parsePhoneNumberFromString(fullNumber);
+      if (parsed) {
+        return digitsOnly.startsWith(parsed.countryCallingCode)
+          ? digitsOnly.slice(parsed.countryCallingCode.length)
+          : digitsOnly;
+      }
+      return digitsOnly;
+    } catch {
+      return digitsOnly;
+    }
+  };
+
+  const handlePhoneChange = (value: string | undefined) => {
+    if (!value) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: ''
+      }));
+      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
+      return;
+    }
+
+    const digitsOnly = value.replace(/\D/g, '');
+    const nationalNumber = getNationalNumber(digitsOnly, value);
+
+    // Stop if national number exceeds 10 digits
+    if (nationalNumber.length > 10) {
+      return;
+    }
+
+    // Set error if not exactly 10 digits
+    if (nationalNumber.length !== 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits'
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
+    }
+
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      phoneNumber: value
+    }));
+  };
 
   return (
     <div className='w-[60%] m-auto mb-5'>
@@ -407,7 +482,29 @@ export default function Technicians() {
                 <circle cx="10" cy="13" r="0.8" fill="#5B5B99" />
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
-              <TextField fullWidth name="phoneNumber" id="outlined-basic" color="warning" label="Phone number" size="small" value={formData.phoneNumber} onChange={handleChange} />
+              <PhoneInput
+                international
+                defaultCountry="US"
+                value={formData.phoneNumber}
+                onChange={handlePhoneChange}
+                onKeyDown={(e: any) => {
+                  // Prevent typing if already 10 digits in national number
+                  const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                  const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e: any) => {
+                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                  if (pasted.length > 10) e.preventDefault();
+                }}
+                className={`input text-xs input-bordered w-full p-2 rounded`}
+              />
+
+              {/* <TextField fullWidth type='number' name="phoneNumber" id="outlined-basic" color="warning" label="Phone number" size="small" value={formData.phoneNumber} onChange={handleChange} inputProps={{
+                maxLength: 10,
+              }}/> */}
               {errors.phoneNumber && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.phoneNumber}
@@ -432,7 +529,7 @@ export default function Technicians() {
 
           {/* Address */}
           <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
@@ -502,16 +599,16 @@ export default function Technicians() {
                   ))}
                 </Select>
               </FormControl>
-            
+
             </div>
             <div className='mb-4 relative'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
               <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
-            
+
 
             </div>
             <div className='mb-4 relative'>

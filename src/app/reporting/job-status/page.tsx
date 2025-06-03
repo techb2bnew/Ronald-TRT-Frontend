@@ -8,7 +8,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 export default function Technicians() { 
   const { isCollapsed } = useSidebar(); 
   return (
-    <AuthCheck>
+    // <AuthCheck>
     <div className='main-container'>
         {/* <Sidebar /> */}
         <div  className={`right_section ${
@@ -17,6 +17,6 @@ export default function Technicians() {
             <Customerlisting />
         </div>
     </div>
-    </AuthCheck>
+    // </AuthCheck>
   );
 }

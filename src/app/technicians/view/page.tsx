@@ -8,7 +8,7 @@ export default function ViewTechnicians() {
     const { isCollapsed } = useSidebar();
   return (
     <>
-    <AuthCheck>
+    {/* <AuthCheck> */}
     <div className='container m-auto'>
         {/* <Sidebar /> */}
         <div  className={`right_section ${
@@ -17,7 +17,7 @@ export default function ViewTechnicians() {
             <View />
         </div>
     </div>
-    </AuthCheck>
+    {/* </AuthCheck> */}
     </>
 
   );

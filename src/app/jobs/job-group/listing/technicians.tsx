@@ -424,15 +424,43 @@ function JobTListing({ }: Props) {
   const renderRow = (job: any) => {
     const roleType = localStorage.getItem('types') || "";
 
-    const subtotalcost = job.customer.jobDescription?.reduce((sum: number, job: any) => {
-      return sum + Number(job.cost || 0);
-    }, 0) || 0;
+ const group = activeJob.totalGroupJob?.find((g: any) => g.vin === job.vin);
 
+if (!group) {
+  return (
+    <tr key={job.vin}>
+      {/* ...other cells */}
+      <td>0.00</td> {/* subtotal */}
+      <td>0.00</td> {/* total cost */}
+    </tr>
+  );
+}
 
-    const simpleFlatRate = Number(job.customer.simpleFlatRate);
-    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-      ? subtotalcost + simpleFlatRate
-      : subtotalcost;
+// 1. Calculate subtotal sum of all jobDescriptions of all jobs in this VIN group
+const subtotal = group.jobs.reduce((sumAcc: number, job: any) => {
+  const jobSubtotal = job.jobDescription?.reduce((costAcc: number, jd: any) => {
+    return costAcc + Number(jd.cost || 0);
+  }, 0) || 0;
+  return sumAcc + jobSubtotal;
+}, 0);
+
+// 2. Calculate total cost as sum of each job's cost + percentage on jobDescription + flatRate
+const totalCost = group.jobs.reduce((acc: number, job: any) => {
+  const jobSubtotal = job.jobDescription?.reduce((costAcc: number, jd: any) => {
+    return costAcc + Number(jd.cost || 0);
+  }, 0) || 0;
+
+  const amountPerc = Number(job.amountPercentage) || 0;
+  const flatRate = Number(job.simpleFlatRate) || 0;
+
+  // Percentage applied on job's subtotal
+  const percAmount = (amountPerc * jobSubtotal) / 100;
+
+  // Job total is jobSubtotal + percentage amount + flat rate
+  const jobTotal = jobSubtotal + percAmount + flatRate;
+
+  return acc + jobTotal;
+}, 0);
 
     const isChecked = selectedIds.includes(job.customer.id);
 
@@ -471,13 +499,14 @@ function JobTListing({ }: Props) {
         <td>{job?.customer.vin}</td>
 
         <td>
-          <span className={`badge ${job.customer.jobStatus
-            ? "bg-[#E6F9DD] text-[#1A932E]"
-            : "bg-[#FFE4E1] text-[#FF0000]"
+          <span className={`badge ${job.groupStatus === "completed"
+            ? "bg-[#E6F9DD] text-[#1A932E]"  // Green for Completed
+            : "bg-[#FFE4E1] text-[#FF0000]"  // Red for In Progress
             } p-2 pl-4 pr-4 rounded shadow`}>
-            {job.customer.jobStatus ? "Completed" : "Inprogress"}
+            {job.groupStatus === "completed" ? "Completed" : "In Progress"}
           </span>
         </td>
+
 
         <td>
           {(() => {
@@ -512,9 +541,9 @@ function JobTListing({ }: Props) {
 
 
 
-        <td>${(job?.customer?.simpleFlatRate && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-
-        {roleType !== 'single-technician' && (
+        {/* <td>${(job?.customer?.simpleFlatRate && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td> */}
+        <td>${subtotal.toFixed(2)}</td>
+        {/* {roleType !== 'single-technician' && (
           <td>
             {(() => {
               const tech = job.customer.technicians?.[0] || {};
@@ -550,28 +579,38 @@ function JobTListing({ }: Props) {
               return `$${labourCost.toFixed(2)}`;
             })()}
           </td>
-        )}
-
-        {roleType !== 'single-technician' && (
+        )} */}
+        <td>${totalCost.toFixed(2)}</td>
+        {/* {roleType !== 'single-technician' && (
           <td>
             {(() => {
               const tech = job.customer.technicians?.[0] || {};
+
               const flat = Number(job.customer.simpleFlatRate) || Number(tech.simpleFlatRate || 0);
               const perc = Number(job.customer.amountPercentage) || Number(tech.amountPercentage || 0);
               const percAmount = (perc * subtotalcost) / 100;
-              const total = subtotalcost + flat + percAmount;
-              if (flat === 0 && perc === 0) return `$${subtotalcost.toFixed(2)}`;
+
+              let total = subtotalcost;
+
+              // Agar flat non-zero hai, flat add karo; warna percAmount add karo
+              if (flat > 0) {
+                total += flat;
+              } else if (perc > 0) {
+                total += percAmount;
+              }
+
               return `$${total.toFixed(2)}`;
+
             })()}
           </td>
-        )}
+        )} */}
 
         {roleType === 'single-technician' && (
           <td>
             {(() => {
               const labour = Number(job.customer.labourCost || 0);
-              const total = subtotalcost + labour;
-              if (subtotalcost === 0) return <span style={{ color: 'red' }}>No R/I/R/R price</span>;
+              const total = subtotal + labour;
+              if (subtotal === 0) return <span style={{ color: 'red' }}>No R/I/R/R price</span>;
               return `$${total.toFixed(2)}`;
             })()}
           </td>
@@ -669,7 +708,7 @@ function JobTListing({ }: Props) {
               </th>
               <th className="w-[100px]">Jobs Progress</th>
               <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[100px]">R/I R/R</th>
+              {/* <th className="w-[100px]">R/I R/R</th> */}
               <th className="w-[100px]">Total Cost</th>
               <th className="w-[100px]">Action</th>
             </tr>

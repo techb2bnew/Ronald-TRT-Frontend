@@ -17,22 +17,79 @@ export default function Header() {
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
-  const logOut = () => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You will be logged out!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#383d71",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, logout",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        localStorage.clear();
-        router.push("/");
-      }
+  // const logOut = () => {
+  //   Swal.fire({
+  //     title: "Are you sure?",
+  //     text: "You will be logged out!",
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     confirmButtonColor: "#383d71",
+  //     cancelButtonColor: "#d33",
+  //     confirmButtonText: "Yes, logout",
+  //   }).then((result) => {
+  //     if (result.isConfirmed) {
+  //       localStorage.clear();
+  //       router.push("/");
+  //     }
+  //   });
+  // };
+ 
+ const logOut = async () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const token = localStorage.getItem("token");
+  const technicianData = localStorage.getItem("technicianData");
+
+  if (!token || !technicianData) {
+    localStorage.clear();
+    router.push("/");
+    return;
+  }
+
+  const parsedTechnician = JSON.parse(technicianData);
+  const email = parsedTechnician.email;
+
+  // Show confirmation and wait for user response
+  const result = await Swal.fire({
+    icon: "warning",
+    title: "Are you sure?",
+    text: "You will be logged out!",
+    showCancelButton: true,
+    confirmButtonColor: "#383d71",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, logout",
+  });
+
+  // If user cancels, do nothing
+  if (!result.isConfirmed) return;
+
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
+    const response = await fetch(`${apiUrl}/logout`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email }),
     });
-  };
+
+    const data = await response.json(); // optional: check `data.success` or `response.ok`
+
+    // Clear localStorage and redirect
+    localStorage.clear();
+    router.push("/");
+  } catch (error) {
+    console.error("Error in logOut:", error);
+    localStorage.clear();
+    router.push("/");
+  }
+};
+
+ 
+
+
+
 
   // 🟡 Detect outside click
   useEffect(() => {
