@@ -364,7 +364,7 @@ export default function Role() {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`${apiUrl}/${'register'}`, {
+      const response = await fetch(`api/signup`, {
         method: 'POST',
         body: formDataObj, // Send the FormData object without setting Content-Type header
         headers,

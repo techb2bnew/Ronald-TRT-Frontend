@@ -17,8 +17,8 @@ export default function ViewDetails() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const isSingleTechnician = searchParams.has('ActiveWorkOrder');
-  const isSingleTechnicianWorkOrder = searchParams.has('workorder');
+  const isSingleTechnician = searchParams!.has('ActiveWorkOrder');
+  const isSingleTechnicianWorkOrder = searchParams!.has('workorder');
 
   const fetchCustomerData = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -33,7 +33,7 @@ export default function ViewDetails() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobId}`, {
+      const response = await fetch(`/api/fetchSingleJobs?jobid=${jobId}`, {
         method: 'POST',
         headers,
       });
@@ -126,9 +126,9 @@ export default function ViewDetails() {
     return <div><Loading /></div>;
   }
   const getBaseBreadcrumb = () => {
-    const isCompletedJob = searchParams.has('completedJob');
-    const isActiveJob = searchParams.has('activeJob');
-    const isJobStatus = searchParams.has('jobStatus');
+    const isCompletedJob = searchParams!.has('completedJob');
+    const isActiveJob = searchParams!.has('activeJob');
+    const isJobStatus = searchParams!.has('jobStatus');
 
     if (isCompletedJob) {
       return { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' };
@@ -139,14 +139,14 @@ export default function ViewDetails() {
     }
 
     if (isJobStatus) {
-      const jobStatus = searchParams.get('jobStatus');
+      const jobStatus = searchParams!.get('jobStatus');
       return {
         label: `${jobStatus?.charAt(0).toUpperCase()}${jobStatus?.slice(1)} All IFS Work Orders`,
         href: `/reporting/job-status`,
       };
     }
 
-    if (pathname.includes('/reporting/job-status')) {
+    if (pathname!.includes('/reporting/job-status')) {
       return { label: 'All IFS Work Orders', href: '/reporting/job-status' };
     }
 
@@ -227,7 +227,7 @@ export default function ViewDetails() {
               </div>
 
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {new Date(jobData.createdAt).toLocaleDateString('en-GB')} </div>
-              {searchParams.has('completedJob') && jobData.completedDate && (
+              {searchParams!.has('completedJob') && jobData.completedDate && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>End Date:</strong> {new Date(jobData.completedDate).toLocaleDateString('en-GB')}
                 </div>

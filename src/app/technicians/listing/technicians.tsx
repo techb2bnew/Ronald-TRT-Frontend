@@ -106,7 +106,7 @@ const TechnicianTable: React.FC = () => {
   };
 
 
- 
+
 
   const fetchTechnicians = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -128,8 +128,9 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchTechnician?page=${page}&limit=${limit}`;
+        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
+        : `/api/technician?page=${page}&limit=${limit}`;
+
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -375,7 +376,7 @@ const TechnicianTable: React.FC = () => {
           <TableActions
             editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
             viewRoute={`/technicians/view?technicianId=${tech.id}`}
-            deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
+            deleteRoute={`/api/deleteTechnician`}  // Pass the correct endpoint
             itemId={tech.id}  // Pass the technician ID
             idKey="technicianId"
             userRole='Technician'
@@ -461,7 +462,7 @@ const TechnicianTable: React.FC = () => {
       const manualHeaders = [
         'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
         'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate', 
+        'PayVehicleType', 'PayRate',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
 
@@ -482,10 +483,10 @@ const TechnicianTable: React.FC = () => {
               // Create an object for each row
               manualHeaders.forEach((key, idx) => {
                 let value: any = row[idx] ?? null;
-                 if (key === 'IsApproved' && (value === null || value === undefined)) {
-                    // default value if missing
-                    value = false; // ya jo default chahiye wo
-                  }
+                if (key === 'IsApproved' && (value === null || value === undefined)) {
+                  // default value if missing
+                  value = false; // ya jo default chahiye wo
+                }
                 if (typeof value === 'string') {
                   value = value.trim();
                   if (value === '') value = null;
@@ -526,7 +527,7 @@ const TechnicianTable: React.FC = () => {
 
           try {
             const response = await axios.post(
-              `${apiUrl}/importTechnician`,
+              `/api/importTechnician`,
               { data: cleanedData },
               { headers }
             );
@@ -640,7 +641,7 @@ const TechnicianTable: React.FC = () => {
         isOpen={showRejectModal}
         onClose={() => setShowRejectModal(false)}
         technicianId={selectedTechId}
-        apiUrl={apiUrl} 
+        apiUrl={apiUrl}
         onSuccess={handleRejectionSuccess}
       />
 

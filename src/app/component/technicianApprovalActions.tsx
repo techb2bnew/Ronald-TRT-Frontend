@@ -22,7 +22,7 @@ const TechnicianApprovalActions: React.FC<TechnicianApprovalActionsProps> = ({
     const handleAccountStatusChange = async (accountStatus: boolean) => {
         try {
             setLoading(true);
-            const response = await fetch(`${apiUrl}/updateTechnicianAccountStatus`, {
+            const response = await fetch(`/api/updateTechnicianAccountStatus`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ const TechnicianApprovalActions: React.FC<TechnicianApprovalActionsProps> = ({
 
     const handleApprovalChange = async (status: string) => {
         try {
-            const res = await fetch(`${apiUrl}/technicianActiveUnactiveAccount`, {
+            const res = await fetch(`/api/technicianActiveUnactiveAccount`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

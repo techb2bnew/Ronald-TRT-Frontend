@@ -68,7 +68,7 @@ export default function Header() {
       Authorization: `Bearer ${token}`,
     };
 
-    const response = await fetch(`${apiUrl}/logout`, {
+    const response = await fetch(`/api/logout`, {
       method: "POST",
       headers,
       body: JSON.stringify({ email }),

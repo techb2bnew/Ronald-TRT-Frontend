@@ -59,8 +59,8 @@ const JobTable: React.FC = () => {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+        ? `/api/singleTechJobs?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `/api/singleTechJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
 
@@ -365,7 +365,7 @@ const JobTable: React.FC = () => {
 
           try {
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importActiveJob`,
               { data: cleanedData },
               { headers }
             );

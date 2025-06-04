@@ -43,96 +43,103 @@ const ArchivePage = () => {
   const [singleTechnicianId, setSingleTechnicianId] = useState<string>('');
 
   // Fetch data based on selected archive type
-  const fetchArchive = async (page = 1, query = '', limit = pageSize) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const roleType = localStorage.getItem('types');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+const fetchArchive = async (page = 1, query = '', limit = pageSize) => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem('token');
+    const roleType = 'single-technician';
+    const userID = localStorage.getItem('userID');
 
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-      let endpoint = '';
-      let params = `page=${page}&limit=${limit}&roleType=single-technician`;
-      let paramsTech = `page=${page}&limit=${limit}&types=single-technician`;
+    // Map displayed archive name to backend `type` param values:
+    const typeParamMap: Record<string, string> = {
+      [ARCHIVE_TYPES.TECHNICIAN]: 'technician',
+      [ARCHIVE_TYPES.CUSTOMER]: 'customer',
+      [ARCHIVE_TYPES.JOB]: 'job',
+      [ARCHIVE_TYPES.SINGLE_TECHNICIAN]: 'technician', // or adjust if needed
+    };
 
-      if (query.trim()) {
-        params += `&searchQuery=${encodeURIComponent(query)}`;
-      }
+    const typeParam = typeParamMap[selectedArchiveType] || 'technician';
 
+    let params = `page=${page}&limit=${limit}&roleType=${encodeURIComponent(roleType || '')}&type=${encodeURIComponent(typeParam)}`;
+    let paramsTech = `page=${page}&limit=${limit}&types=${encodeURIComponent(roleType || '')}&type=${encodeURIComponent(typeParam)}`;
+
+    if (query.trim()) {
+      params += `&searchQuery=${encodeURIComponent(query)}`;
+      paramsTech += `&searchQuery=${encodeURIComponent(query)}`;
+    }
+
+    let endpoint = '';
+
+  
       switch (selectedArchiveType) {
-
         case ARCHIVE_TYPES.TECHNICIAN:
-          endpoint = query.trim()
-            ? `${apiUrl}/searchArchivedTechnician?searchQuery=${encodeURIComponent(query)}&types=single-technician`
-            : `${apiUrl}/fetchArchivedTechnician?${paramsTech}`;
+          endpoint = `/api/archiveIfs?${paramsTech}`;
           break;
         case ARCHIVE_TYPES.CUSTOMER:
-          endpoint = query.trim()
-            ? `${apiUrl}/searchArchivedCustomer?searchQuery=${encodeURIComponent(query)}&roleType=single-technician`
-            : `${apiUrl}/fetchArchivedCustomer?${params}`;
-          break;
         case ARCHIVE_TYPES.JOB:
-          endpoint = query.trim()
-            ? `${apiUrl}/searchfetchArchivedJob?searchQuery=${encodeURIComponent(query)}&roleType=single-technician`
-            : `${apiUrl}/fetchArchivedJob?${params}`;
+          endpoint = `/api/archiveIfs?${params}`;
           break;
         default:
-          // Default to all archives
-          endpoint = query.trim()
-            ? `${apiUrl}/searchArchivedTechnician?searchQuery=${encodeURIComponent(query)}&types=single-technician`
-            : `${apiUrl}/fetchArchivedTechnician?page=${page}&limit=${limit}&types=${roleType}`;
+          endpoint = `/api/archiveIfs?${paramsTech}`;
       }
+     
 
-      const response = await fetch(endpoint, { method: 'GET', headers });
+    const response = await fetch(endpoint, { method: 'GET', headers });
 
-      if (response.status === 400) {
-        localStorage.removeItem('token');
-        router.push('/');
-        return;
-      }
-
-      const data = await response.json();
-
-      if (response.ok) {
-        let fetchedArchive = [];
-
-        if (selectedArchiveType === ARCHIVE_TYPES.TECHNICIAN) {
-          // Handle all archives response
-          const fetchedArchive = data.records?.map((record: any) => ({
-            ...record,
-            type: 'Technician',
-            accountStatus: record.isApproved === 'reject' ? 'Rejected' :
-              record.isApproved === 'pending' ? 'Pending' : 'Approved'
-          })) || [];
-          setArchive(fetchedArchive);
-          setTotalPages(data?.totalPages || 1);
-          setTotalJobs(data?.totalMatching || 0);
-        } else {
-          const fetchedArchive = data.records || [];
-          setArchive(fetchedArchive);
-          setTotalPages(data?.totalPages || 1);
-          setTotalJobs(data?.totalMatching || 0);
-        }
-      } else {
-        if (data.error === 'Invalid Token') {
-          router.push('/');
-        } else {
-          console.error('Error fetching archive:', data.error);
-          toast.error(data.error || 'Failed to fetch archive data');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching archive:', error);
-      toast.error('Failed to fetch archive data');
-    } finally {
-      setLoading(false);
+    if (response.status === 400) {
+      localStorage.removeItem('token');
+      router.push('/');
+      return;
     }
-  };
+
+    const data = await response.json();
+
+    if (response.ok) {
+      let fetchedArchive = [];
+
+      if (selectedArchiveType === ARCHIVE_TYPES.TECHNICIAN) {
+        fetchedArchive = data.records?.map((record: any) => ({
+          ...record,
+          type: 'Technician',
+          accountStatus:
+            record.isApproved === 'reject'
+              ? 'Rejected'
+              : record.isApproved === 'pending'
+              ? 'Pending'
+              : 'Approved',
+        })) || [];
+      } else {
+        fetchedArchive = data.records || [];
+      }
+
+      setArchive(fetchedArchive);
+      setTotalPages(data?.totalPages || 1);
+      setTotalJobs(data?.totalMatching || 0);
+    } else {
+      if (data.error === 'Invalid Token') {
+        router.push('/');
+      } else {
+        console.error('Error fetching archive:', data.error);
+        toast.error(data.error || 'Failed to fetch archive data');
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching archive:', error);
+    toast.error('Failed to fetch archive data');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
 
   const handleRecoverRecord = async (id: number, type: string) => {
     try {
@@ -175,7 +182,7 @@ const ArchivePage = () => {
           return;
       }
 
-      const response = await fetch(`${apiUrl}/recoverRecords`, {
+      const response = await fetch(`/api/recoverRecords`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -217,8 +224,8 @@ const ArchivePage = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  useEffect(() => { 
-      fetchArchive(currentPage, searchTerm, pageSize); 
+  useEffect(() => {
+    fetchArchive(currentPage, searchTerm, pageSize);
     return;
   }, [currentPage, searchTerm, pageSize, selectedArchiveType, singleTechnicianId]);
 

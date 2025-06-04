@@ -275,7 +275,7 @@ const CompletedJobs: React.FC = () => {
             });
 
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importActiveJob`,
               { data: payloadData },
               { headers }
             );
@@ -502,7 +502,7 @@ const CompletedJobs: React.FC = () => {
           <td>
             <TableActions
               editRoute={`/jobs/create-job/create?jobId=${completejob.id}&completeOrder`}
-              deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint 
+              deleteRoute={`/api/deleteJob`}  // Pass the correct endpoint 
               viewRoute={`/jobs/view?jobId=${completejob.id}&completedJob`}
               idKey="jobid"
               userRole='Completedjobs'

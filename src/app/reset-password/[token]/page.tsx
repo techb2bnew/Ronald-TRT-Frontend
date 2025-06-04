@@ -33,10 +33,15 @@ export default function Reset() {
   });
 
   useEffect(() => {
+  if (pathname) {
     const parts = pathname.split('/');
     const tokenFromUrl = parts.pop() || '';
     setToken(tokenFromUrl);
-  }, [pathname]);
+  } else {
+    setToken(''); // Or handle the null case differently
+  }
+}, [pathname]);
+
 
 
 
@@ -88,7 +93,7 @@ export default function Reset() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
     try {
-      const response = await fetch(`${apiUrl}/reset-password`, {
+      const response = await fetch(`/api/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

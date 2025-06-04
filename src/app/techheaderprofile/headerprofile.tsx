@@ -36,10 +36,11 @@ export const TechnicianProvider = ({ children }: { children: ReactNode }) => {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await fetch(`${apiUrl}/fetchTechnicianProfile?technicianId=${technicianId}`, {
-        method: "GET",
-        headers,
-      });
+       const response = await fetch(`/api/fetchTechnicianProfile`, {
+      method: "POST", // Change to POST
+      headers,
+      body: JSON.stringify({ technicianId }), // Send technicianId in the body
+    });
 
       if (response.ok) {
         const data = await response.json();

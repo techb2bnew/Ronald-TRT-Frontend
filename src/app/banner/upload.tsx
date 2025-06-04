@@ -32,7 +32,7 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/bannerImages`, {
+      const response = await fetch(`/api/fetchBanner`, {
         method: 'GET',
         headers,
       });
@@ -212,7 +212,7 @@ export default function Technicians() {
           setFormData(prev => ({ ...prev, bannerImages: newBannerImages }));
         }
       } else {
-        const response = await fetch(`${apiUrl}/bannerImages?bannerId=${encodeURIComponent(bannerId)}&imageUrl=${encodeURIComponent(imageUrl)}`, {
+        const response = await fetch(`/api/removeBannerImage?bannerId=${encodeURIComponent(bannerId)}&imageUrl=${encodeURIComponent(imageUrl)}`, {
           method: 'DELETE',
           headers: {
             "Authorization": `Bearer ${token}`,

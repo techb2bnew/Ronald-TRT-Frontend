@@ -74,17 +74,17 @@ function JobTListing({ }: Props) {
       let endpoint = '';
 
       if (filterType) {
-        endpoint = `${apiUrl}/fetchGroupJob?filterType=${filterType}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
+        endpoint = `/api/groupJob?filterType=${filterType}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
       } else if (query.trim()) {
         endpoint =
           roleType === 'superadmin'
-            ? `${apiUrl}/searchGroupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`
-            : `${apiUrl}/searchGroupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
+            ? `/api/groupJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`
+            : `/api/groupJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&userId=${userId}`;
       } else {
         endpoint =
           roleType === 'superadmin'
-            ? `${apiUrl}/fetchGroupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`
-            : `${apiUrl}/fetchGroupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`;
+            ? `/api/groupJob?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`
+            : `/api/groupJob?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&userId=${userId}`;
       }
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -306,7 +306,7 @@ function JobTListing({ }: Props) {
             });
 
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importActiveJob`,
               { data: payloadData },
               { headers }
             );
@@ -391,7 +391,7 @@ function JobTListing({ }: Props) {
         };
 
         await axios.post(
-          `${apiUrl}/deleteGroupJobs`,
+          `/api/deleteGroupJobs`,
           {
             vin: vin,
             deletedStatus: false,

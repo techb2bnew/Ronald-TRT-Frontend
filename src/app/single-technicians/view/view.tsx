@@ -39,9 +39,10 @@ export default function ViewDetails() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
+      const response = await fetch(`/api/viewTechnician`, {
         method: 'POST',
         headers,
+        body: JSON.stringify({ technicianId }),
       });
 
       const data = await response.json();
@@ -98,7 +99,7 @@ export default function ViewDetails() {
       const searchParams = new URLSearchParams(window.location.search);
       const techId = searchParams.get('technicianId') || '';
       const response = await axios.post(
-        `${apiUrl}/updateTechnicianAccountStatus`,
+        `/api/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
           accountStatus: accountStatus,
@@ -158,7 +159,7 @@ export default function ViewDetails() {
       };
 
       const response = await axios.post(
-        `${apiUrl}/updateTechnicianAccountStatus`,
+        `/api/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
           accountStatus: accountStatus,
@@ -206,7 +207,7 @@ export default function ViewDetails() {
       };
 
       await axios.post(
-        `${apiUrl}/technicianActiveUnactiveAccount`,
+        `/api/technicianActiveUnactiveAccount`,
         {
           technicianId: techId,
           isApproved: isApproved,

@@ -62,11 +62,11 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'single-technician'
-          ? `${apiUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `/api/singleTechVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `/api/singleTechVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'single-technician'
-          ? `${apiUrl}/fetchVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/singleTechVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/singleTechVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 

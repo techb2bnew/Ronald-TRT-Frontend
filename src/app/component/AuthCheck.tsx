@@ -17,9 +17,9 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(true);
   
       const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userID");
+      const technicianId = localStorage.getItem("userID");
   
-      if (!token || !userId) {
+      if (!token || !technicianId) {
         localStorage.clear();
         router.push("/");
         return;
@@ -30,12 +30,16 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         };
-  
-        const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${userId}`, {
-          method: 'POST',
-          headers,
-        });
-  
+        
+        // const response = await fetch(`/api/viewTechnician?technicianId=${userId}`, {
+        //   method: 'POST',
+        //   headers,
+        // });
+        const response = await fetch(`/api/viewTechnician`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ technicianId }),
+            });
         if (response.status === 400 || response.status === 401) {
           localStorage.clear();
           router.push("/");

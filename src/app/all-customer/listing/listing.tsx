@@ -66,8 +66,8 @@ export default function ClientListing() {
       const finalUserId = techId || userId;
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchCustomers?searchQuery=${encodeURIComponent(query)}`
-        : `${apiUrl}/fetchAllCustomer?page=${page}&userId=${finalUserId}&limit=${limit}&roleType=${roleType}`;
+        ? `/api/allIFSCustomer?searchQuery=${encodeURIComponent(query)}&roleType=${roleType}&userId=${finalUserId}`
+        : `/api/allIFSCustomer?page=${page}&userId=${finalUserId}&limit=${limit}&roleType=${roleType}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {

@@ -63,8 +63,8 @@ export default function Technicians() {
   const [showConformPassword, setShowConformPassword] = useState(false);
   const searchParams = useSearchParams();
   const [roles, setRoles] = useState<any[]>([]);
-  const isSingleTechnician = searchParams.has('singletechnician');
-  const isTechnician = searchParams.has('technician');
+  const isSingleTechnician = searchParams?.has('singletechnician') ?? false;
+  const isTechnician = searchParams?.has('technician') ?? false;
   const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [userType, setUserType] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<any>(null);
@@ -111,9 +111,10 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
+      const response = await fetch(`/api/viewTechnician`, {
         method: 'POST',
         headers,
+        body: JSON.stringify({ technicianId }),
       });
 
       if (response.status == 400) {
@@ -219,7 +220,7 @@ export default function Technicians() {
         types: selectedRole?.type || "",
       }));
 
-      const newQuery = new URLSearchParams(Array.from(searchParams.entries()));
+      const newQuery = new URLSearchParams(Array.from(searchParams!.entries()));
 
       // Remove ?singletechnician if "technician" is selected
       if (value === 'technician') {
@@ -668,7 +669,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
     formDataObj.append("createdBy", "admin");
     try {
       setSubmitting(true);
-      const response = await fetch(`${apiUrl}/${isEdit ? 'updateTechnician' : 'register'}`, {
+      const response = await fetch(`${isEdit ? '/api/signup' : '/api/signup'}`, {
         method: 'POST',
         body: formDataObj, // Send the FormData object without setting Content-Type header
         headers,
@@ -716,7 +717,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
         } else {
           toast.success('Technician added successfully');
         }
-        if (searchParams.has('singletechnician')) {
+        if (searchParams!.has('singletechnician')) {
           router.push('/single-technicians/listing');
         } else {
           router.push('/technicians/listing');
@@ -890,7 +891,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/getRoles`, {
+      const response = await fetch(`/api/getRoles`, {
         method: 'GET',
         headers,
       });
@@ -911,7 +912,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
 
         setRoles(filteredRoles);
 
-        if (searchParams.has('singletechnician')) {
+        if (searchParams!.has('singletechnician')) {
           const singleTechnicianRole = filteredRoles.find(
             (role: any) => role.name === 'singletechnician'
           );
@@ -923,7 +924,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
             }));
           }
         } else {
-          if (searchParams.has('technician')) {
+          if (searchParams!.has('technician')) {
             const ifstechnician = filteredRoles.find(
               (role: any) => role.name === 'technician'
             );

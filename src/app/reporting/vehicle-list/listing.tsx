@@ -58,11 +58,11 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `/api/vehicalList?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `/api/vehicalList?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();

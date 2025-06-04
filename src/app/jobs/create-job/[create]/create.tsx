@@ -128,7 +128,8 @@ export default function Technicians() {
   const [userType, setUserType] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const hasVehicleInfo = searchParams.has('vehicleInfo');
+  const hasVehicleInfo = searchParams?.has('vehicleInfo') ?? false;
+
   const [selectedTechnician, setSelectedTechnician] = useState<Technicians | null>(null);
   const [userVehicleData, setUserVehicleData] = useState<{ payVehicleType: string; simpleFlatRate: string } | null>(null);
   const userId = localStorage.getItem('userID');
@@ -182,7 +183,7 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleJobs?jobid=${jobid}`, {
+      const response = await fetch(`/api/fetchSingleJobs?jobid=${jobid}`, {
         method: 'POST',
         headers,
       });
@@ -321,50 +322,54 @@ export default function Technicians() {
 
   // Fetch Customers api
   const fetchData = async (
-    endpoint: string,
-    setState: React.Dispatch<React.SetStateAction<any[]>>,
-    params: Record<string, string> = {},
-    append: boolean = false
-  ) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userID');
-      const roleType = localStorage.getItem('types');
+  apiPath: string,
+  setState: React.Dispatch<React.SetStateAction<any[]>>,
+  params: Record<string, string> = {},
+  append: boolean = false
+) => {
+  try {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userID');
+    const roleType = localStorage.getItem('types');
 
-      if (endpoint === 'fetchCustomer' && (!userId || !roleType)) {
-        console.error("User ID not found in localStorage!");
-        return;
-      }
-
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const queryParams = new URLSearchParams(params).toString();
-      const url = `${apiUrl}/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
-
-      const response = await fetch(url, { method: 'GET', headers });
-      if (response.status == 400) {
-        localStorage.removeItem('token');
-        router.push('/');
-      }
-
-      const data = await response.json();
-      const customers = data.customers?.customers || [];
-      const technicians = data.technician?.technicians || [];
-
-      setState(prev => {
-        if (endpoint === 'fetchCustomer' && append) {
-          return [...prev, ...customers];
-        } else {
-          return endpoint === 'fetchTechnicianJob' ? technicians : customers;
-        }
-      });
-
-    } catch (error) {
-      console.error(`Error fetching ${endpoint}:`, error);
+    if (apiPath === '/api/fetchJobCustomerTechnician' && (!userId || !roleType)) {
+      console.error("User ID or role type missing in localStorage!");
+      return;
     }
-  };
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const queryParams = new URLSearchParams(params).toString();
+    const url = `${apiPath}${queryParams ? `?${queryParams}` : ''}`;
+
+    const response = await fetch(url, { method: 'GET', headers });
+    if (response.status === 400) {
+      localStorage.removeItem('token');
+      router.push('/');
+      return;
+    }
+
+    const data = await response.json();
+
+    const customers = data.customers?.customers || [];
+    const technicians = data.technician?.technicians || [];
+
+    // Use the `endpoint` param from query string to decide
+    const endpoint = params.endpoint;
+
+    setState(prev => {
+      if (endpoint === 'fetchCustomer' && append) {
+        return [...prev, ...customers];
+      } else {
+        return endpoint === 'fetchTechnicianJob' ? technicians : customers;
+      }
+    });
+  } catch (error) {
+    console.error(`Error fetching data from ${apiPath}:`, error);
+  }
+};
+
 
   const handleScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
@@ -374,25 +379,30 @@ export default function Technicians() {
   };
 
 
-  useEffect(() => {
-    const roleType = localStorage.getItem('types');
-    const types = localStorage.getItem('types');
+useEffect(() => {
+  const roleType = localStorage.getItem('types');
+  const userId = localStorage.getItem('userID');
 
-    if (types) {
-      fetchData('fetchTechnicianJob', setTechnicians, { types }); // Pass roleType to fetchTechnician
-    } else {
-      console.error("Role type is missing for fetching technicians!");
-    }
-    const userId = localStorage.getItem('userID');
-    if (userId) {
-      fetchData(
-        'fetchCustomer',
-        setCustomer,
-        { userId, page: page.toString(), limit: '10' },
-        page > 1 // ✅ append only if page > 1
-      );
-    }
-  }, [page]);
+  if (roleType) {
+    fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
+      endpoint: 'fetchTechnicianJob',
+      types: roleType,
+    });
+  } else {
+    console.error("Role type is missing for fetching technicians!");
+  }
+
+  if (userId) {
+    fetchData('/api/fetchJobCustomerTechnician', setCustomer, {
+      endpoint: 'fetchCustomer',
+      userId,
+      page: page.toString(),
+      limit: '10'
+    }, page > 1);
+  }
+}, [page]);
+
+
 
 
 
@@ -631,7 +641,7 @@ export default function Technicians() {
     }
     try {
       setSubmitting(true);
-      const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
+      const endpoint = isEdit ? `/api/jobCreateUpdate` : `/api/jobCreateUpdate`;
       const method = isEdit ? "POST" : "POST"; // POST method, you can change to PUT for update if needed
 
       const response = await fetch(endpoint, {
@@ -645,11 +655,11 @@ export default function Technicians() {
       const result = await response.json();
       if (response.ok) {
         toast.success('Job created successfully.');
-        if (searchParams.has('completeOrder')) {
+        if (searchParams!.has('completeOrder')) {
           router.push('/jobs/complete-job/listing');
-        } else if (searchParams.has('vehicleInfo')) {
+        } else if (searchParams!.has('vehicleInfo')) {
           router.push('/reporting/vehicle-info')
-        } else if (searchParams.has('groupjob')) {
+        } else if (searchParams!.has('groupjob')) {
           router.push('/jobs/job-group/listing')
         } else {
           router.push('/jobs/active-job');

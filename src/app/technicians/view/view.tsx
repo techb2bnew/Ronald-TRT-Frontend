@@ -37,9 +37,10 @@ export default function ViewDetails() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleTechnician?technicianId=${technicianId}`, {
+      const response = await fetch(`/api/viewTechnician`, {
         method: 'POST',
         headers,
+        body: JSON.stringify({ technicianId }),
       });
 
       const data = await response.json();

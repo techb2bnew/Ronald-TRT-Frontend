@@ -37,7 +37,7 @@ export default function ViewDetails() {
       }
 
       const response = await fetch(
-        `${apiUrl}/fetchGroupJobByVin?roleType=${roleType}&vin=${vin}&filterType=${filterType}&userId=${userId}`,
+        `/api/viewGroupJobByVin?roleType=${roleType}&vin=${vin}&filterType=${filterType}&userId=${userId}`,
         {
           method: "GET",
           headers,
@@ -72,7 +72,7 @@ export default function ViewDetails() {
       const searchParams = new URLSearchParams(window.location.search);
       const vin = searchParams.get("vin") || "";
       const response = await fetch(
-        `${apiUrl}/searchGroupJobByVin?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType || "")}&vin=${encodeURIComponent(vin || '')}`,
+        `/api/searchGroupJobByVin?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType || "")}&vin=${encodeURIComponent(vin || '')}`,
         {
           method: "GET",
           headers,

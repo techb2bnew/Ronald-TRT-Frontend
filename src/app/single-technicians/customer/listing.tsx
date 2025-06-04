@@ -63,8 +63,8 @@ export default function ClientListing() {
       const finalUserId = techId || userId;
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchIndividualTechnicianCustomers?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&userId=${finalUserId}`
-        : `${apiUrl}/fetchIndividualTechnicianCustomers?page=${page}&userId=${finalUserId}&limit=${limit}`;
+        ? `/api/fetchIndividualTechnicianCustomers?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&userId=${finalUserId}`
+        : `/api/fetchIndividualTechnicianCustomers?page=${page}&userId=${finalUserId}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -184,6 +184,7 @@ export default function ClientListing() {
       return;
     }
     const csvOptions = {
+      filename: 'All Customer',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
@@ -285,7 +286,7 @@ export default function ClientListing() {
 
           try {
             const response = await axios.post(
-              `${apiUrl}/importCustomer`,
+              `/api/importCustomer`,
               { data: cleanedData },
               { headers }
             );

@@ -66,11 +66,11 @@ const JobTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `${apiUrl}/searchJobStatus?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchJobStatus?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `/api/allIfsWorkOrder?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `/api/allIfsWorkOrder?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchJobStatus?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchJobStatus?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/allIfsWorkOrder?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/allIfsWorkOrder?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
 
@@ -345,7 +345,7 @@ const JobTable: React.FC = () => {
             });
 
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importActiveJob`,
               { data: payloadData },
               { headers }
             );

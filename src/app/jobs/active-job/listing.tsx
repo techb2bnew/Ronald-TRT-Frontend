@@ -79,11 +79,11 @@ const JobTable: React.FC = () => {
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `${apiUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
-          : `${apiUrl}/searchTechnicianActiveJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+          : `/api/jobListing?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
         : roleType === 'superadmin'
-          ? `${apiUrl}/fetchAllJobs?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchAllJobs?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/jobListing?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/jobListing?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -177,7 +177,7 @@ const JobTable: React.FC = () => {
           }
         };
 
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
+        const response = await axios.post(`/api/updateJobStatus`, {
           jobId,
           jobStatus: !currentApprovalStatus
         }, config);
@@ -260,17 +260,17 @@ const JobTable: React.FC = () => {
         return sum + Number(item.cost || 0);
       }, 0);
       const technician = jobData.technicians?.[0] || {};
-              const simpleFlatRate = !isNaN(Number(jobData.simpleFlatRate)) && Number(jobData.simpleFlatRate) > 0
-                ? Number(jobData.simpleFlatRate)
-                : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+      const simpleFlatRate = !isNaN(Number(jobData.simpleFlatRate)) && Number(jobData.simpleFlatRate) > 0
+        ? Number(jobData.simpleFlatRate)
+        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
 
-              const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
-                ? Number(jobData.amountPercentage)
-                : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+      const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
+        ? Number(jobData.amountPercentage)
+        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
 
-              // Step 3: Calculate percentage amount
-              const percentageAmount = (amountPercentage * subTotal) / 100;
-              const totalCost = subTotal + simpleFlatRate + percentageAmount;
+      // Step 3: Calculate percentage amount
+      const percentageAmount = (amountPercentage * subTotal) / 100;
+      const totalCost = subTotal + simpleFlatRate + percentageAmount;
 
       return {
         id: jobData.id,
@@ -290,7 +290,7 @@ const JobTable: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
-        estimatedBy:jobData.estimatedBy,
+        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
         jobStatus: jobData.jobStatus,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
@@ -395,7 +395,7 @@ const JobTable: React.FC = () => {
             });
 
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importActiveJob`,
               { data: payloadData },
               { headers }
             );
@@ -403,7 +403,7 @@ const JobTable: React.FC = () => {
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-          
+
             if (
               typeof error === 'object' &&
               error !== null &&
@@ -417,7 +417,7 @@ const JobTable: React.FC = () => {
               toast.error(String(error));
             }
           }
-          
+
           setLoading(false);
         },
         error: (err: any) => {
@@ -482,8 +482,8 @@ const JobTable: React.FC = () => {
         ))}</td>
         <td>{job?.technicians?.map((tech: any) => (
           <div key={tech.id}>
-              <a className="hover:underline" href={`tel:${tech.technicians}`}> 
-            {tech.phoneNumber}
+            <a className="hover:underline" href={`tel:${tech.technicians}`}>
+              {tech.phoneNumber}
             </a>
           </div>
         ))}</td>
@@ -491,53 +491,53 @@ const JobTable: React.FC = () => {
         {roleType !== 'single-technician' && (
           <td>
             {(() => {
-                    if (!job) return null;
+              if (!job) return null;
 
-                    // Parse jobDescription items and calculate total cost
-                    let totalCost = 0;
+              // Parse jobDescription items and calculate total cost
+              let totalCost = 0;
 
-                    if (job?.jobDescription && Array.isArray(job.jobDescription)) {
-                      totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-                        return sum + Number(item?.cost || 0); // Accumulate the cost
-                      }, 0);
-                    }
+              if (job?.jobDescription && Array.isArray(job.jobDescription)) {
+                totalCost = job.jobDescription.reduce((sum: number, item: any) => {
+                  return sum + Number(item?.cost || 0); // Accumulate the cost
+                }, 0);
+              }
 
-                    const simpleFlatRate = Number(job.simpleFlatRate);
-                    const amountPercentage = Number(job.amountPercentage);
+              const simpleFlatRate = Number(job.simpleFlatRate);
+              const amountPercentage = Number(job.amountPercentage);
 
-                    // If both are invalid in the first job data, fallback to jobnician data
-                    const fallbackSimpleFlatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0);
-                    const fallbackAmountPercentage = Number(job?.technicians?.[0]?.amountPercentage || 0);
+              // If both are invalid in the first job data, fallback to jobnician data
+              const fallbackSimpleFlatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0);
+              const fallbackAmountPercentage = Number(job?.technicians?.[0]?.amountPercentage || 0);
 
-                    // Check if both simpleFlatRate and amountPercentage are invalid
-                    if (
-                      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-                      (isNaN(amountPercentage) || amountPercentage === 0)
-                    ) {
-                      // Fallback to technician data if primary values are invalid
-                      if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            ${fallbackSimpleFlatRate.toFixed(2)}
-                          </div>
-                        );
-                      }
+              // Check if both simpleFlatRate and amountPercentage are invalid
+              if (
+                (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
+                (isNaN(amountPercentage) || amountPercentage === 0)
+              ) {
+                // Fallback to technician data if primary values are invalid
+                if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ${fallbackSimpleFlatRate.toFixed(2)}
+                    </div>
+                  );
+                }
 
-                      // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
-                      if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
-                        const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
-                          </div>
-                        );
-                      }
+                // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
+                if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
+                  const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
+                    </div>
+                  );
+                }
 
-                      // Show red dot with tooltip if both fallback values are invalid
-                      const tooltipId = `tooltip-${job.id}`;
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                          {/* <span
+                // Show red dot with tooltip if both fallback values are invalid
+                const tooltipId = `tooltip-${job.id}`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                    {/* <span
                             data-tooltip-id={tooltipId}
                             data-tooltip-content="R/I/R/R price is not added for this job."
                             style={{
@@ -550,60 +550,60 @@ const JobTable: React.FC = () => {
                             }}
                           ></span>
                           <Tooltip id={tooltipId} place="top" /> */}
-                          Per Job
-                        </div>
-                      );
-                    }
+                    Per Job
+                  </div>
+                );
+              }
 
-                    // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
-                    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          ${simpleFlatRate.toFixed(2)}
-                        </div>
-                      );
-                    }
+              // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
+              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${simpleFlatRate.toFixed(2)}
+                  </div>
+                );
+              }
 
-                    // Show percentage-based calculation
-                    if (!isNaN(amountPercentage) && amountPercentage > 0) {
-                      const percentageAmount = (totalCost * amountPercentage) / 100;
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                        </div>
-                      );
-                    }
+              // Show percentage-based calculation
+              if (!isNaN(amountPercentage) && amountPercentage > 0) {
+                const percentageAmount = (totalCost * amountPercentage) / 100;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${percentageAmount.toFixed(2)} ({amountPercentage}%)
+                  </div>
+                );
+              }
 
-                    return null;
-                  })()}
+              return null;
+            })()}
           </td>
         )}
 
-{roleType === 'single-technician' && (
-  <td>
-    {(() => {
-      // Get the first technician's simpleFlatRate if available
-      const technician = job.technicians?.[0] || {};
-      const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate)) 
-        ? Number(technician.simpleFlatRate) 
-        : 0;
+        {roleType === 'single-technician' && (
+          <td>
+            {(() => {
+              // Get the first technician's simpleFlatRate if available
+              const technician = job.technicians?.[0] || {};
+              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
+                ? Number(technician.simpleFlatRate)
+                : 0;
 
-      // Use labourCost if available, otherwise use technician's flat rate
-      const labourCost = Number(job?.labourCost || technicianFlatRate);
+              // Use labourCost if available, otherwise use technician's flat rate
+              const labourCost = Number(job?.labourCost || technicianFlatRate);
 
-      if (labourCost === 0) {
-        const tooltipId = `tooltip-${job.id}-labour`;
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
-            Per job
-          </div>
-        );
-      }
+              if (labourCost === 0) {
+                const tooltipId = `tooltip-${job.id}-labour`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                    Per job
+                  </div>
+                );
+              }
 
-      return `$${labourCost.toFixed(2)}`;
-    })()}
-  </td>
-)}
+              return `$${labourCost.toFixed(2)}`;
+            })()}
+          </td>
+        )}
 
         {roleType !== 'single-technician' && (
 
@@ -676,40 +676,40 @@ const JobTable: React.FC = () => {
         )}
 
         {roleType === 'single-technician' && (
-         <td>
-         {(() => {
-           if (!job) return null;
-       
-           const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-             return sum + Number(item.cost || 0);
-           }, 0);
-       
-           // Get the first technician's simpleFlatRate if available
-           const technician = job.technicians?.[0] || {};
-           const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate)) 
-             ? Number(technician.simpleFlatRate) 
-             : 0;
-       
-           // Use labourCost if available, otherwise use technician's flat rate
-           const labourCost = Number(job.labourCost || technicianFlatRate);
-       
-           const totalCost = subtotalcost + labourCost;
-       
-           if (subtotalcost === 0) {
-             return (
-               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color:'red' }}>
-                 Per Job
-               </div>
-             );
-           }
-       
-           return (
-             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-               ${totalCost.toFixed(2)}
-             </div>
-           );
-         })()}
-       </td>
+          <td>
+            {(() => {
+              if (!job) return null;
+
+              const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
+                return sum + Number(item.cost || 0);
+              }, 0);
+
+              // Get the first technician's simpleFlatRate if available
+              const technician = job.technicians?.[0] || {};
+              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
+                ? Number(technician.simpleFlatRate)
+                : 0;
+
+              // Use labourCost if available, otherwise use technician's flat rate
+              const labourCost = Number(job.labourCost || technicianFlatRate);
+
+              const totalCost = subtotalcost + labourCost;
+
+              if (subtotalcost === 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                    Per Job
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${totalCost.toFixed(2)}
+                </div>
+              );
+            })()}
+          </td>
 
         )}
 
@@ -735,7 +735,7 @@ const JobTable: React.FC = () => {
         <td>
           <TableActions
             editRoute={`/jobs/create-job/create?jobId=${job.id}`}
-            deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
+            deleteRoute={`/api/deleteJob`}  // Pass the correct endpoint
             viewRoute={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`}
             idKey="jobid"
             userRole='Activejobs'

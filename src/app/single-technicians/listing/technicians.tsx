@@ -65,7 +65,7 @@ const TechnicianTable: React.FC = () => {
       };
 
       const response = await axios.post(
-        `${apiUrl}/updateTechnicianAccountStatus`,
+        `/api/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
           accountStatus: accountStatus,
@@ -120,7 +120,7 @@ const TechnicianTable: React.FC = () => {
       };
 
       const response = await axios.post(
-        `${apiUrl}/updateTechnicianAccountStatus`,
+        `/api/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
           accountStatus: accountStatus,
@@ -162,7 +162,7 @@ const TechnicianTable: React.FC = () => {
       };
 
       await axios.post(
-        `${apiUrl}/technicianActiveUnactiveAccount`,
+        `/api/technicianActiveUnactiveAccount`,
         {
           technicianId: techId,
           isApproved: isApproved,
@@ -253,8 +253,8 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(query)}&types=single-technician`
-        : `${apiUrl}/fetchIndividualTechnician?page=${page}&limit=${limit}`;
+        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&types=single-technician`
+        : `/api/fetchIndividualTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -484,7 +484,7 @@ const TechnicianTable: React.FC = () => {
 
           try {
             const response = await axios.post(
-              `${apiUrl}/importTechnician`,
+              `/api/importTechnician`,
               { data: cleanedData },
               { headers }
             );
@@ -646,7 +646,7 @@ const TechnicianTable: React.FC = () => {
           <TableActions
             editRoute={`/technicians/create-technician?technicianId=${tech.id}&singletechnician`}
             viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
-            deleteRoute={`${apiUrl}/deleteTechnician`}  // Pass the correct endpoint
+            deleteRoute={`/api/deleteTechnician`}   // Pass the correct endpoint
             itemId={tech.id}  // Pass the technician ID
             idKey="technicianId"
             userRole='Technician'

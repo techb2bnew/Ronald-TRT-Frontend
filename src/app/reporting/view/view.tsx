@@ -24,7 +24,7 @@ export default function ViewDetails() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
+      const response = await fetch(`/api/reportingView?customerId=${customerId}`, {
         method: 'POST',
         headers,
       });

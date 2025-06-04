@@ -62,8 +62,8 @@ export default function ClientListing() {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `${apiUrl}/fetchCustomer?userId=${userId}&page=${page}&limit=${limit}`;
+        ? `/api/customer?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : `/api/customer?userId=${userId}&page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -366,7 +366,7 @@ export default function ClientListing() {
         <td>
           <TableActions
             editRoute={`/client/create?customerId=${cust.id}`}
-            deleteRoute={`${apiUrl}/deleteCustomer`}
+            deleteRoute={`/api/deleteCustomer`}
             viewRoute={`/client/view?customerId=${cust.id}`}
             idKey="customerId"
             userRole="Customer"

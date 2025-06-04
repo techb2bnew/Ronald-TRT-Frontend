@@ -59,13 +59,11 @@ export default function ProfileCard() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(
-        `${apiUrl}/fetchTechnicianProfile?technicianId=${technicianId}`,
-        {
-          method: "GET",
-          headers,
-        }
-      );
+    const response = await fetch(`/api/fetchTechnicianProfile`, {
+      method: "POST", // Change to POST
+      headers,
+      body: JSON.stringify({ technicianId }), // Send technicianId in the body
+    });
 
       const data = await response.json();
       if (response.ok) {
@@ -161,7 +159,7 @@ export default function ProfileCard() {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/updateTechnicianProfile`, {
+      const response = await fetch(`/api/updateTechnicianProfile`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

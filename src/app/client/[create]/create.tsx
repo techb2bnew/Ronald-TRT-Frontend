@@ -113,9 +113,13 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/fetchSingleCustomer?customerId=${customerId}`, {
+       const response = await fetch('/api/fetchSingleCustomer', {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ customerId }),
       });
       const data = await response.json();
 
@@ -227,7 +231,7 @@ export default function Technicians() {
         formPayload.append("image", formData.image);
       }
 
-      const response = await fetch(`${apiUrl}/${isEdit ? 'updateCustomer' : 'createCustomer'}`, {
+      const response = await fetch(`${isEdit ? '/api/customerCreate' : '/api/customerCreate'}`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
