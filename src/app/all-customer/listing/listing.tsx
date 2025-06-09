@@ -37,8 +37,8 @@ export default function ClientListing() {
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
+  const [selectedIds, setSelectedIds] = useState<string[]>([]); 
+const [selectedColumn, setSelectedColumn] = useState<string[]>(['checkbox', 'id', 'name', 'email', 'phoneNumber', 'address', 'action']);
 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
@@ -333,49 +333,48 @@ export default function ClientListing() {
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
+
+  const handleColumnSelect = (columns: string[]) => {
+  setSelectedColumn(columns); // Just update the selected columns
+};
+
+
+
+
   const renderRow = (cust: any) => {
     const isChecked = selectedIds.includes(cust.id);
     return (
       <tr key={cust.id}>
-        <td key="checkbox">
-          <label className="flex items-center cursor-pointer relative">
-            <input
-              type="checkbox"
-              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
-              checked={isChecked}
-              onChange={() => handleCheckboxChange(cust.id)}
-            />
-            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-              </svg>
-            </span>
-          </label>
-        </td>
-        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline'>{cust?.id}</Link></td>
-        <td> <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`} className='hover:underline capitalize'>{cust.firstName} {cust.lastName}</Link></td>
-
-        <td><a className="hover:underline" href={`mailto:${cust?.email}`}> {cust.email}</a></td>
-        <td>
-          <a className="hover:underline" href={`tel:${cust?.phoneNumber}`}>
-            {cust.phoneNumber}</a></td>
-        <td>{cust.address}</td>
-        <td>
-          {/* <TableActions 
-         editRoute={`/client/create?customerId=${cust.id}`}   
-         deleteRoute={`${apiUrl}/deleteCustomer`} 
-         viewRoute={`/client/view?customerId=${cust.id}`}
-         idKey="customerId"
-          itemId={cust.id}   
-          onDeleteSuccess={() => handleDeleteSuccess(cust.id)} /> */}
-
-          <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>
-            <Image alt='eye' src={Eye} className='w-[16px]' />
+        {selectedColumn.includes('checkbox') &&
+          <td key="checkbox">
+            <label className="flex items-center cursor-pointer relative">
+              <input
+                type="checkbox"
+                className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+                checked={isChecked}
+                onChange={() => handleCheckboxChange(cust.id)}
+              />
+              <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                </svg>
+              </span>
+            </label>
+          </td>}
+        {selectedColumn.includes('id') && <td>{cust?.id}</td>}
+        {selectedColumn.includes('name') && <td>{cust.firstName} {cust.lastName}</td>}
+        {selectedColumn.includes('email') && <td><a className="hover:underline" href={`mailto:${cust?.email}`}>{cust.email}</a></td>}
+        {selectedColumn.includes('phoneNumber') && <td><a className="hover:underline" href={`tel:${cust?.phoneNumber}`}>{cust.phoneNumber}</a></td>}
+        {selectedColumn.includes('address') && <td>{cust.address}</td>}
+        {selectedColumn.includes('action') && <td>
+          <Link href={`/all-customer/view?customerId=${cust.id}&allTrtCustomer`}>
+            <Image alt="eye" src={Eye} className="w-[16px]" />
           </Link>
-        </td>
+        </td>}
       </tr>
     );
   };
+
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -384,74 +383,47 @@ export default function ClientListing() {
           { label: 'All Customer', href: '/all-customer/listing' }
         ]}
       />
-      <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
+      <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onColumnSelect={setSelectedColumn} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-x-auto rounded-md">
+         {selectedColumn.length === 0 ? (
+        <div className="text-center p-10 bg-gray-100 rounded-md">
+          <p>Please select columns to display from the dropdown above</p>
+        </div>
+      ) : (
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
-                <label className="flex items-center cursor-pointer relative">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === customer.length}
-                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
-                    onChange={() =>
-                      setSelectedIds(
-                        selectedIds.length === customer.length ? [] : customer.map((cust) => cust.id)
-                      )
-                    }
-                  />
-                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </span>
-                </label>
-              </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]" onClick={() => handleSort('name')}>
-                Name
-                {sortBy === 'name' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[200px]" onClick={() => handleSort('email')}>
-                Email
-                {sortBy === 'email' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>
-                Phone Number
-                {sortBy === 'phoneNumber' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]" onClick={() => handleSort('address')}>
-                Address
-                {sortBy === 'address' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[160px]">Action</th>
+              {selectedColumn.includes('checkbox') && (
+                <th className="w-[35px]">
+                  <label className="flex items-center cursor-pointer relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === customer.length}
+                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                      onChange={() =>
+                        setSelectedIds(
+                          selectedIds.length === customer.length ? [] : customer.map((cust) => cust.id)
+                        )
+                      }
+                    />
+                    <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                      </svg>
+                    </span>
+                  </label>
+                </th>
+              )}
+              {selectedColumn.includes('id') && <th className="w-[50px]" onClick={() => handleSort('id')}>ID</th>}
+              {selectedColumn.includes('name') && <th className="w-[150px]" onClick={() => handleSort('name')}>Name</th>}
+              {selectedColumn.includes('email') && <th className="w-[200px]" onClick={() => handleSort('email')}>Email</th>}
+              {selectedColumn.includes('phoneNumber') && <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>Phone Number</th>}
+              {selectedColumn.includes('address') && <th className="w-[150px]" onClick={() => handleSort('address')}>Address</th>}
+              {selectedColumn.includes('action') && <th className="w-[160px]">Action</th>}
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
@@ -470,6 +442,7 @@ export default function ClientListing() {
             )}
           </tbody>
         </table>
+      )}
       </div>
       {customer.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />

@@ -100,9 +100,9 @@ const Sidebar = () => {
         localStorage.setItem('isUser6Open', JSON.stringify(false));
         setIsUser5Open(false);
         localStorage.setItem('isUser5Open', JSON.stringify(false));
-        if(userType == 'superadmin' ){ 
+        if (userType == 'superadmin') {
           router.push('/technicians/listing');
-        } else{
+        } else {
           router.push('/client/listing');
 
         }
@@ -203,7 +203,9 @@ const Sidebar = () => {
   };
 
   React.useEffect(() => {
-    setActiveLink(pathname);
+    if (pathname) {
+      setActiveLink(pathname);
+    }
     const type = localStorage.getItem('types');
     setUserType(type);
   }, [pathname]);
@@ -749,7 +751,7 @@ const Sidebar = () => {
             </li>
           )}
           {userType === 'superadmin' && (
-          <hr />
+            <hr />
           )}
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group mt-3'>
@@ -787,12 +789,12 @@ const Sidebar = () => {
                       <span>All Work Orders</span>
                     </Link>
                   </li>
-                    <li>
-                  <Link href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span>Vehicles Info</span>
-                  </Link>
-                </li>
-                    <li> 
+                  <li>
+                    <Link href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                      <span>Vehicles Info</span>
+                    </Link>
+                  </li>
+                  <li>
                     <Link href="/single-technicians/single-archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/single-archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                       <span>Archives</span>
                     </Link>
