@@ -18,14 +18,12 @@ interface CommonHeaderProps {
   onInProgressClick?: () => void;
   onCompletedJobClick?: () => void;
   onInProgressJobClick?: () => void;
-  onAllJobsClick?: () => void;
-  onColumnSelect?: (column: string[]) => void;
-  additionalComponents?: React.ReactNode;
+  onAllJobsClick?: () => void;  
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
@@ -81,13 +79,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
- const handleColumnChange = (event: SelectChangeEvent<string[]>) => {
-  const value = event.target.value as string[];
-  const filteredColumns = value.filter(col => col !== 'select'); 
-  setSelectedColumn(filteredColumns);  // Update selected columns state
-  if (onColumnSelect) onColumnSelect(filteredColumns);  // Pass the updated columns to parent if needed
-};
-
+ 
 
 
 
@@ -112,43 +104,9 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
             </div>
           )}
-          {additionalComponents && (
-            <div className="flex items-center gap-4">
-              {additionalComponents}
-            </div>
-          )}
+         
 
-          {onColumnSelect && (
-            <FormControl size="small" variant="outlined" className="w-[180px]">
-              <InputLabel id="column-select-label">Select Column</InputLabel>
-              <Select
-                labelId="column-select-label"
-                id="column-select"
-                value={selectedColumn.length === 0 ? ['select'] : selectedColumn}
-                onChange={handleColumnChange}
-                label="Select Column"
-                color="warning"
-                renderValue={(selected) => {
-                  if (selected.length === 0 || selected.includes('select')) {
-                    return 'Select Columns';
-                  }
-                  return selected.join(', ');
-                }}
-                multiple
-              >
-                <MenuItem value="select">Select Columns</MenuItem>
-                <MenuItem value="checkbox">Checkbox</MenuItem>
-                <MenuItem value="id">ID</MenuItem>
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="email">Email</MenuItem>
-                <MenuItem value="phoneNumber">Phone Number</MenuItem>
-                <MenuItem value="address">Address</MenuItem>
-                <MenuItem value="action">Action</MenuItem>
-              </Select>
-
-            </FormControl>
-          )}
-
+           
           {onPageSizeChange && (
 
             <select name="" id="" className='w-[180px] p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>

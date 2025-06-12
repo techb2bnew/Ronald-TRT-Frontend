@@ -277,6 +277,7 @@ const fetchRoleData = async (roleId: string) => {
                 color="warning"
                 onChange={(e) => setRoleType(e.target.value)}
               >
+                <MenuItem value="manager">Manager</MenuItem>
                 <MenuItem value="enterprise">Enterprise</MenuItem>
                 <MenuItem value="workshop">Workshop</MenuItem>
                 <MenuItem value="ifs">IFS</MenuItem> 

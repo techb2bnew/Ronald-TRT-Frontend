@@ -592,7 +592,7 @@ const Sidebar = () => {
                 {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
                     <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>All IFS Customers</span>
+                      <span>Genrate Custom Reports</span>
                     </Link>
                   </li>
                 )}
@@ -693,9 +693,9 @@ const Sidebar = () => {
             <span>Invoice</span>
           </Link>
         </li>  */}
-          {/* {userType !== 'single-technician' && (
-          <li className='p-1'>
-            <Link href="/role/listing" className={`flex items-center p-2 space-x-2  hover:bg-white rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#fff900]' : ''}`}>
+          {userType !== 'single-technician' && (
+          <li className='p-1 pl-4'>
+            <Link href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
 
               <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
@@ -709,7 +709,7 @@ const Sidebar = () => {
               <span>Roles & Permissions</span>
             </Link>
           </li>
-        )} */}
+        )}
           <li className='p-1 pl-4'>
             <Link href="/archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
               <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
