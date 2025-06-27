@@ -16,13 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       searchQuery: rawSearchQuery,
       page: rawPage = '1',
       limit: rawLimit = '10',
-      types: rawTypes,
+      roleType: rawTypes,
     } = req.query;
 
     const searchQuery = toSingleString(rawSearchQuery);
     const page = toSingleString(rawPage);
     const limit = toSingleString(rawLimit);
-    const types = toSingleString(rawTypes);
+    const roleType = toSingleString(rawTypes);
 
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiBaseUrl) {
@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let backendUrl = '';
     if (searchQuery && searchQuery.trim() !== '') {
       // Search technicians endpoint
-      backendUrl = `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}&types=${encodeURIComponent(types)}`;
+      backendUrl = `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType)}`;
     } else {
       // Pagination fetch endpoint
       backendUrl = `${apiBaseUrl}/fetchIndividualTechnician?page=${page}&limit=${limit}`;

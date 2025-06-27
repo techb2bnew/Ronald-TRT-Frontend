@@ -360,18 +360,6 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
 
               <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Country:</strong>
-                {getCountryName(technician?.country)}
-              </p>
-              <p className='border-b border-gray-500 mb-3 pb-2 flex'>
-                <strong className='w-[200px] inline-block'>State:</strong>
-                {getStateName(technician?.country, technician?.state)}
-              </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong>{technician?.city}</p>
-              <p className='border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong>{technician?.zipCode}</p>
-
-
-              <p className='border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Secondary Phone:</strong>
                 {technician?.secondaryContactName ? (
                   <a href={`tel:${technician?.secondaryContactName}`} className='hover:underline'>
@@ -379,7 +367,7 @@ export default function ViewDetails() {
                     {technician.secondaryContactName}
                   </a>
                 ) : (
-                  <span className="text-sm text-gray-500">No data available</span>
+                  <span className="text-sm text-black-500">N/A</span>
                 )}
               </p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
@@ -390,22 +378,16 @@ export default function ViewDetails() {
                     {technician.secondaryEmail}
                   </a>
                 ) : (
-                  <span className="text-sm text-gray-500">No data available</span>
+                  <span className="text-sm text-black-500">N/A</span>
                 )}
               </p>
-
-
-            </div>
-
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
               {technician.payRate && (
                 <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
                   <strong className='w-[200px] inline-block'>Pay Rate:</strong>
                   {technician?.payRate ? (
                     technician.payRate
                   ) : (
-                    <span className="text-sm text-gray-500">No data available</span>
+                    <span className="text-sm text-black-500">N/A</span>
                   )}
                 </p>
               )}
@@ -413,42 +395,45 @@ export default function ViewDetails() {
                 <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
                   <strong className='w-[200px] inline-block'>Amount Percentage:</strong>
                   {technician?.amountPercentage ? (
-                    `$${technician.amountPercentage}`
+                    `${technician.amountPercentage}%`
                   ) : (
-                    <span className="text-sm text-gray-500">No data available</span>
+                    <span className="text-sm text-black-500">N/A</span>
                   )}
                 </p>
               )}
-              {technician.simpleFlatRate && (
-              <p className='mb-2 border-b flex border-gray-500 mb-3 pb-2'>
-  <strong className='w-[200px] min-w-[200px] inline-block'>Flat Rate:</strong>
-  {technician?.simpleFlatRate ? (() => {
-    try {
-      // Try parse JSON
-      const rates = JSON.parse(technician.simpleFlatRate);
+              {technician.simpleFlatRate && technician.simpleFlatRate !== "null" && technician.simpleFlatRate !== null && technician.simpleFlatRate !== "" && technician.simpleFlatRate !== "{}" && (<p className='mb-2 border-b flex border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] min-w-[200px] inline-block'>Flat Rate:</strong>
+                {technician?.simpleFlatRate ? (() => {
+                  try {
+                    // Try parse JSON
+                    const rates = JSON.parse(technician.simpleFlatRate);
 
-      if (typeof rates === 'object' && rates !== null) {
-        // If multiple vehicle types, show as comma-separated
-        return Object.entries(rates)
-          .map(([vehicle, rate]) => `${vehicle}: $${rate}`)
-          .join(', ');
-      } else {
-        // If it's a single number or string after parsing
-        return `$${rates}`;
-      }
-    } catch (e) {
-      // If parsing fails, just show the raw value with $ if number
-      const val = technician.simpleFlatRate;
-      if (!isNaN(Number(val))) return `$${val}`;
-      return val; // fallback to raw string
-    }
-  })() : (
-    <span className="text-sm text-gray-500">No data available</span>
-  )}
-</p>
-
-
+                    if (typeof rates === 'object' && rates !== null) {
+                      // If multiple vehicle types, show as comma-separated
+                      return Object.entries(rates)
+                        .map(([vehicle, rate]) => `${vehicle}: $${rate}`)
+                        .join(', ');
+                    } else {
+                      // If it's a single number or string after parsing
+                      return `$${rates}`;
+                    }
+                  } catch (e) {
+                    // If parsing fails, just show the raw value with $ if number
+                    const val = technician.simpleFlatRate;
+                    if (!isNaN(Number(val))) return `$${val}`;
+                    return val; // fallback to raw string
+                  }
+                })() : (
+                  <span className="text-sm text-black-500">N/A</span>
+                )}
+              </p>
               )}
+
+            </div>
+
+            {/* Right Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+
 
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
               <div className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
@@ -470,20 +455,7 @@ export default function ViewDetails() {
                   </span>
                 </div>
               </div>
-              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
 
-                <TechnicianApprovalActions
-                  technician={technician}
-                  apiUrl={apiUrl}
-                  fetchTechnicians={() => fetchTechnicianData(technician.id)}
-                  token={localStorage.getItem('token')}
-                  onRejectClick={(id) => {
-                    setSelectedTechId(id.toString());
-                    setShowRejectModal(true);
-                  }}
-                />
-
-              </div>
               <div className='flex items-center'>
                 <strong className='w-[200px] inline-block'>Tax Form:</strong>
 
@@ -518,7 +490,7 @@ export default function ViewDetails() {
                     })}
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500">No data available</span>
+                  <span className="text-sm text-black-500">N/A</span>
                 )}
               </div>
 

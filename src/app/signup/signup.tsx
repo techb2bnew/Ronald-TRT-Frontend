@@ -21,6 +21,10 @@ import Eye from "../../../public/eye.svg";
 import EyeOff from '../../../public/eye-off.svg'
 import Swal from "sweetalert2";
 import { FormHelperText } from '@mui/material';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { SingleValue, ActionMeta } from 'react-select';
+
 interface registerForm {
   id?: string;
   firstName: string;
@@ -30,10 +34,10 @@ interface registerForm {
   secondaryContactName: string;
   email: string;
   address: string;
-  country: string;
-  state: string;
-  city: string;
-  zipCode: string;
+  // country: string;
+  // state: string;
+  // city: string;
+  // zipCode: string;
   secondaryEmail?: string;
   password: string;
   confirmPassword: string;
@@ -46,6 +50,27 @@ interface registerForm {
   types: string;
   agreeTerms: string;
 }
+
+interface PlaceType {
+  place_id: string;
+  description: string;
+  // Add other properties you might need from Google Places
+}
+
+interface AddressValue {
+  label: string;
+  value: PlaceType;
+}
+
+type GooglePlacesOption = {
+  label: string;
+  value: {
+    place_id: string;
+    description: string;
+  };
+};
+
+type NullableGooglePlacesOption = SingleValue<GooglePlacesOption>;
 export default function Role() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
@@ -58,6 +83,7 @@ export default function Role() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
 
   const [formData, setFormData] = useState<registerForm>({
     firstName: '',
@@ -66,10 +92,10 @@ export default function Role() {
     phoneNumber: '',
     email: '',
     address: '',
-    country: '',
-    state: '',
-    city: '',
-    zipCode: '',
+    // country: '',
+    // state: '',
+    // city: '',
+    // zipCode: '',
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
@@ -84,6 +110,57 @@ export default function Role() {
     agreeTerms: 'true',
   });
 
+
+  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+    if (!selectedAddress) return;
+
+    setAddressValue(selectedAddress);
+
+    try {
+      const results = await geocodeByAddress(selectedAddress.label);
+      const addressComponents = results[0].address_components;
+
+      let street = '', city = '', state = '', country = '', zip = '';
+
+      addressComponents.forEach(component => {
+        if (component.types.includes('street_number') || component.types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          zip = component.long_name;
+        }
+      });
+
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+      // Update form data with the full address
+      setFormData(prev => ({
+        ...prev,
+        address: fullAddress,  // Store combined address here
+      }));
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.address;
+        delete newErrors.city;
+        delete newErrors.state;
+        delete newErrors.zipCode;
+        return newErrors;
+      });
+
+    } catch (error) {
+      console.error('Error fetching address details:', error);
+      toast.error('Failed to process address details');
+    }
+  };
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     const name = event.target.name; // The name of the select element if you set it
@@ -318,9 +395,9 @@ export default function Role() {
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
     if (!formData.email?.trim()) newErrors.email = 'Email is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required';
+    // if (!formData.country?.trim()) newErrors.country = 'Country is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    // if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     if (!formData.password?.trim()) newErrors.password = 'Password is required';
 
     if (formData.password && formData.confirmPassword !== formData.password) {
@@ -533,8 +610,8 @@ export default function Role() {
 
 
 
-  const countries = Country.getAllCountries();
-  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
+  // const countries = Country.getAllCountries();
+  // const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
 
   return (
@@ -577,7 +654,7 @@ export default function Role() {
                         onChange={handleSelectChange}
                       >
                         {roles
-                          .filter((role) => role.name !== "super admin" && role.name !== "technician")  // technician ko hata diya
+                          .filter((role) => role.name !== "super admin" && role.name !== "technician" && role.name !== "manager")  // technician ko hata diya
                           .map((role, index) => (
                             <MenuItem key={index} value={role.name}>
                               {role.name === "singletechnician"
@@ -696,14 +773,9 @@ export default function Role() {
                 </div>
                 {/* Address and Email */}
 
-                <div className="grid grid-cols-4 gap-4">
-                  {/* Client Name and Business Name */}
+                {/* <div className="grid grid-cols-4 gap-4"> 
                   <div className='mb-4 relative'>
-                    {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg> */}
+                  
                     <FormControl fullWidth size="small">
                       <InputLabel id="country" color="warning">Select country *</InputLabel>
                       <Select
@@ -729,11 +801,7 @@ export default function Role() {
 
                   </div>
                   <div className='mb-4 relative'>
-                    {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg> */}
+                    
                     <FormControl fullWidth size="small">
                       <InputLabel id="state" color="warning">Select state</InputLabel>
                       <Select
@@ -760,8 +828,7 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    {/* <p className='text-sm mb-2'>City <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
+                     <TextField fullWidth name="city" id="outlined-basic" color="warning" label="City" size="small" value={formData.city} onChange={handleChange} />
 
                   </div>
                   <div className='mb-4 relative'>
@@ -770,16 +837,57 @@ export default function Role() {
                       <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    {/* <p className='text-sm mb-2'>Zip Code <span className='text-[red]'>*</span></p> */}
-                    <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Zip code *" size="small" value={formData.zipCode} onChange={handleChange} />
+                     <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Zip code *" size="small" value={formData.zipCode} onChange={handleChange} />
                     {errors.zipCode && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                         {errors.zipCode}
                       </div>
                     )}
                   </div>
+                </div> */}
+                <div className='mb-4 relative z-10'>
+                  <GooglePlacesAutocomplete
+                    apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+                    selectProps={{
+                      placeholder: 'Search for an address...',
+                      value: address,
+                      onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
+                        if (newValue) {
+                          handleAddressSelect(newValue);
+                        }
+                      },
+                      styles: {
+                        input: (provided) => ({
+                          ...provided,
+                          borderRadius: '4px',
+                          width: '100%'
+                        }),
+                        control: (provided) => ({
+                          ...provided,
+                          borderColor: errors.address ? 'red' : '#ccc', // Red border if error exists
+                          '&:hover': {
+                            borderColor: errors.address ? 'orange' : 'orange',
+                          },
+                          '&:focus': {
+                            borderColor: errors.address ? 'orange' : 'orange',
+                          },
+                        }),
+                      }
+                    }}
+                    autocompletionRequest={{
+                      componentRestrictions: {
+                        country: 'us' // Restrict to US addresses only
+                      }
+                    }}
+                  />
+                  {errors.address && (
+                    <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                      {errors.address}
+                    </div>
+                  )}
                 </div>
-                <div className='mb-4 relative'>
+
+                {/* <div className='mb-4 relative'>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" className="icon__tech"
                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
@@ -792,7 +900,7 @@ export default function Role() {
                     </div>
                   )}
 
-                </div>
+                </div> */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className='mb-4 relative'>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="icon__tech" xmlns="http://www.w3.org/2000/svg">

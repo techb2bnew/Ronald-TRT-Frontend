@@ -101,7 +101,7 @@ const Sidebar = () => {
         setIsUser5Open(false);
         localStorage.setItem('isUser5Open', JSON.stringify(false));
         if (userType == 'superadmin') {
-          router.push('/technicians/listing');
+          router.push('/client/listing');
         } else {
           router.push('/client/listing');
 
@@ -299,7 +299,7 @@ const Sidebar = () => {
                     <path fillRule="evenodd" clipRule="evenodd" d="M2.7174 9.9425C2.93185 9.62917 3.35971 9.54902 3.67304 9.76348C5.64286 11.1117 7.86417 11.9243 10.1262 12.1776C10.5036 12.2198 10.7752 12.56 10.733 12.9373C10.6907 13.3147 10.3506 13.5863 9.97323 13.544C7.48697 13.2657 5.0516 12.3733 2.89642 10.8982C2.58309 10.6837 2.50294 10.2558 2.7174 9.9425Z" fill="currentColor" />
                   </svg>
                 </div>
-                {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin') && (
+                {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin' || userType == 'manager') && (
                   <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>
 
                     {userType === 'single-technician' ? 'Users' : 'IFS'}
@@ -316,35 +316,30 @@ const Sidebar = () => {
             {isUsersOpen && (
               <ul className={`ml-6 space-y-1 transition-all duration-300
             ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
-                {userType == 'single-technician' && (
-                  <li className='mt-1 pl-1'>
-                    <Link href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-                      Customers
-                    </Link>
-                  </li>
-                )}
-
-
-                {userType == 'ifs' && (
-                  <li className='mt-3 pl-1'>
-                    <Link href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-                      Customers
-                    </Link>
-                  </li>
-                )}
-                {userType !== 'single-technician' && userType !== 'ifs' && (
-                  <li className='pl-1'>
-
+                  
                     {isUsersOpen && (
                       <ul className="">
+
+                        <li >
+                          <Link href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
+                            Customers
+                          </Link>
+                        </li>
+                        <li >
+                          <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                            Jobs
+                          </Link>
+                        </li>
+                        {userType !== 'single-technician' && userType !== 'ifs' && (
                         <li >
                           <Link
                             href="/technicians/listing"
-                            className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' || activeLink === '/technicians/create-technician' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
+                            className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                           >
                             Technicians
                           </Link>
                         </li>
+                    )}
 
                         {/* <li  >
                         <Link href="/admin/listing"  className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/admin/listing' || activeLink === '/admin/create' ? 'active text-[#fff900]' : ''}`}  >
@@ -352,35 +347,30 @@ const Sidebar = () => {
                         </Link>
                       </li>  */}
 
-                        <li >
-                          <Link href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-                            Customers
-                          </Link>
-                        </li>
-                      </ul>
-                    )}
-                  </li>
+
+                      </ul> 
                 )}
 
-                <li  >
+                {/* <li  >
                   <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                     <span>Create Work Order</span>
                   </Link>
-                </li>
-                <li >
-                  <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span>Active Work Order</span>
+                </li> */}
+                <li  >
+                  <Link href="/vehicle/vehicle" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/vehicle' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                   Vehicle / Work Orders 
                   </Link>
                 </li>
+
                 <li >
-                  <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
-                    <span>Completed Work Order</span>
+                  <Link href="/vehicle/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+                     Completed Work Order 
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li >
                     <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
-                      <span>Group Work Orders</span>
+                       Group Work Orders 
                     </Link>
                   </li>
                 )}
@@ -580,7 +570,7 @@ const Sidebar = () => {
 
                   <li >
                     <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>All IFS Work Orders</span>
+                      <span>All Work Orders</span>
                     </Link>
                   </li>
                 )}
@@ -589,13 +579,13 @@ const Sidebar = () => {
                     <span>Vehicles List</span>
                   </Link>
                 </li>
-                {userType !== 'single-technician' && userType !== 'ifs' && (
+                {/* {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
                     <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Genrate Custom Reports</span>
                     </Link>
                   </li>
-                )}
+                )} */}
               </ul>
             )}
           </li>
@@ -693,24 +683,35 @@ const Sidebar = () => {
             <span>Invoice</span>
           </Link>
         </li>  */}
-          {userType !== 'single-technician' && (
-          <li className='p-1 pl-4'>
-            <Link href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+          {/* {userType !== 'single-technician' && (
+            <li className='p-1 pl-4'>
+              <Link href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
 
-              <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
-                <path d="M6.25486 8.57029C5.92053 8.57029 5.64963 8.29919 5.64963 7.96505V6.14935C5.64963 4.3695 7.0977 2.92143 8.87755 2.92143C10.154 2.92143 11.3131 3.6756 11.8302 4.84313C11.9756 5.17175 12.3129 5.34985 12.6484 5.2746C12.8723 5.22534 13.0549 5.07679 13.1499 4.86795C13.2438 4.66069 13.2356 4.42782 13.1268 4.22923C12.2753 2.67595 10.647 1.71096 8.87755 1.71096C6.20777 1.71096 4.03567 3.88287 4.03567 6.55284V7.96506C4.03567 8.29919 3.76477 8.57029 3.43043 8.57029C3.09609 8.57029 2.8252 8.29919 2.8252 7.96506V6.55284C2.8252 3.21538 5.54028 0.500488 8.87755 0.500488C11.0893 0.500488 13.1242 1.70623 14.1883 3.64763C14.4819 4.18351 14.5051 4.81042 14.2522 5.36798C13.9984 5.92711 13.5092 6.3239 12.9105 6.45669C12.0186 6.65253 11.0991 6.18166 10.7234 5.3333C10.4001 4.60355 9.67546 4.1319 8.87754 4.1319C7.76519 4.1319 6.86009 5.03699 6.86009 6.14935V7.96505C6.86009 8.29919 6.5892 8.57029 6.25486 8.57029Z" fill="currentColor" />
-                <path d="M9.079 15.6209C7.69141 15.6209 6.5625 14.492 6.5625 13.1046C6.5625 11.7168 7.6914 10.5879 9.079 10.5879C10.4666 10.5879 11.5955 11.7168 11.5955 13.1046C11.5955 14.492 10.4666 15.6209 9.079 15.6209ZM9.079 11.7984C8.3589 11.7984 7.77297 12.3843 7.77297 13.1046C7.77297 13.8245 8.3589 14.4104 9.079 14.4104C9.79909 14.4104 10.385 13.8245 10.385 13.1046C10.385 12.3843 9.79909 11.7984 9.079 11.7984Z" fill="currentColor" />
-                <path d="M9.07887 19.0611C8.74453 19.0611 8.47363 18.79 8.47363 18.4558V15.0155C8.47363 14.6814 8.74453 14.4103 9.07887 14.4103C9.4132 14.4103 9.6841 14.6814 9.6841 15.0155V18.4558C9.6841 18.79 9.4132 19.0611 9.07887 19.0611Z" fill="currentColor" />
-                <path d="M17.5536 23.4995C14.55 23.4995 12.1064 21.0561 12.1064 18.0523C12.1064 15.0486 14.55 12.6052 17.5536 12.6052C20.5571 12.6052 23.0007 15.0486 23.0007 18.0523C23.0007 21.0561 20.5571 23.4995 17.5536 23.4995ZM17.5536 13.8157C15.2175 13.8157 13.3169 15.7161 13.3169 18.0523C13.3169 20.3886 15.2175 22.289 17.5536 22.289C19.8896 22.289 21.7902 20.3886 21.7902 18.0523C21.7902 15.7161 19.8896 13.8157 17.5536 13.8157Z" fill="currentColor" />
-                <path d="M16.8477 20.2715C16.6928 20.2715 16.538 20.2124 16.4198 20.0942L14.6041 18.2789C14.3677 18.0425 14.3677 17.6595 14.6041 17.4231C14.8401 17.1866 15.2235 17.1866 15.4599 17.4231L16.8477 18.8104L19.6477 16.0104C19.8841 15.774 20.2671 15.774 20.5035 16.0104C20.74 16.2469 20.74 16.6299 20.5035 16.8663L17.2756 20.0942C17.1574 20.2124 17.0026 20.2715 16.8477 20.2715Z" fill="currentColor" />
-              </svg>
+                <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
+                  <path d="M6.25486 8.57029C5.92053 8.57029 5.64963 8.29919 5.64963 7.96505V6.14935C5.64963 4.3695 7.0977 2.92143 8.87755 2.92143C10.154 2.92143 11.3131 3.6756 11.8302 4.84313C11.9756 5.17175 12.3129 5.34985 12.6484 5.2746C12.8723 5.22534 13.0549 5.07679 13.1499 4.86795C13.2438 4.66069 13.2356 4.42782 13.1268 4.22923C12.2753 2.67595 10.647 1.71096 8.87755 1.71096C6.20777 1.71096 4.03567 3.88287 4.03567 6.55284V7.96506C4.03567 8.29919 3.76477 8.57029 3.43043 8.57029C3.09609 8.57029 2.8252 8.29919 2.8252 7.96506V6.55284C2.8252 3.21538 5.54028 0.500488 8.87755 0.500488C11.0893 0.500488 13.1242 1.70623 14.1883 3.64763C14.4819 4.18351 14.5051 4.81042 14.2522 5.36798C13.9984 5.92711 13.5092 6.3239 12.9105 6.45669C12.0186 6.65253 11.0991 6.18166 10.7234 5.3333C10.4001 4.60355 9.67546 4.1319 8.87754 4.1319C7.76519 4.1319 6.86009 5.03699 6.86009 6.14935V7.96505C6.86009 8.29919 6.5892 8.57029 6.25486 8.57029Z" fill="currentColor" />
+                  <path d="M9.079 15.6209C7.69141 15.6209 6.5625 14.492 6.5625 13.1046C6.5625 11.7168 7.6914 10.5879 9.079 10.5879C10.4666 10.5879 11.5955 11.7168 11.5955 13.1046C11.5955 14.492 10.4666 15.6209 9.079 15.6209ZM9.079 11.7984C8.3589 11.7984 7.77297 12.3843 7.77297 13.1046C7.77297 13.8245 8.3589 14.4104 9.079 14.4104C9.79909 14.4104 10.385 13.8245 10.385 13.1046C10.385 12.3843 9.79909 11.7984 9.079 11.7984Z" fill="currentColor" />
+                  <path d="M9.07887 19.0611C8.74453 19.0611 8.47363 18.79 8.47363 18.4558V15.0155C8.47363 14.6814 8.74453 14.4103 9.07887 14.4103C9.4132 14.4103 9.6841 14.6814 9.6841 15.0155V18.4558C9.6841 18.79 9.4132 19.0611 9.07887 19.0611Z" fill="currentColor" />
+                  <path d="M17.5536 23.4995C14.55 23.4995 12.1064 21.0561 12.1064 18.0523C12.1064 15.0486 14.55 12.6052 17.5536 12.6052C20.5571 12.6052 23.0007 15.0486 23.0007 18.0523C23.0007 21.0561 20.5571 23.4995 17.5536 23.4995ZM17.5536 13.8157C15.2175 13.8157 13.3169 15.7161 13.3169 18.0523C13.3169 20.3886 15.2175 22.289 17.5536 22.289C19.8896 22.289 21.7902 20.3886 21.7902 18.0523C21.7902 15.7161 19.8896 13.8157 17.5536 13.8157Z" fill="currentColor" />
+                  <path d="M16.8477 20.2715C16.6928 20.2715 16.538 20.2124 16.4198 20.0942L14.6041 18.2789C14.3677 18.0425 14.3677 17.6595 14.6041 17.4231C14.8401 17.1866 15.2235 17.1866 15.4599 17.4231L16.8477 18.8104L19.6477 16.0104C19.8841 15.774 20.2671 15.774 20.5035 16.0104C20.74 16.2469 20.74 16.6299 20.5035 16.8663L17.2756 20.0942C17.1574 20.2124 17.0026 20.2715 16.8477 20.2715Z" fill="currentColor" />
+                </svg>
 
-              <span>Roles & Permissions</span>
-            </Link>
-          </li>
-        )}
-          <li className='p-1 pl-4'>
+                <span>Roles & Permissions</span>
+              </Link>
+            </li>
+          )} */}
+          {userType === 'superadmin' && (
+            <li className='p-1 pl-4'>
+
+              <Link href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+                <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
+                  <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Staff Management </span>
+                </div>
+              </Link>
+            </li>
+          )}
+          {/* <li className='p-1 pl-4'>
             <Link href="/archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
               <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
                 <svg
@@ -734,8 +735,8 @@ const Sidebar = () => {
                 <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Archives</span>
               </div>
             </Link>
-          </li>
-          {userType !== 'ifs' && (
+          </li> */}
+          {/* {userType !== 'ifs' && (
 
             <li className='p-1 pl-4 mb-2'>
               <Link href="/banner" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/banner' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
@@ -749,9 +750,9 @@ const Sidebar = () => {
                 </div>
               </Link>
             </li>
-          )}
-          {userType === 'superadmin' && (
-            <hr />
+          )} */}
+          {userType === 'superadmin' || userType === 'manager' && (
+            <hr className='mt-3' />
           )}
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group mt-3'>
@@ -794,11 +795,11 @@ const Sidebar = () => {
                       <span>Vehicles Info</span>
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link href="/single-technicians/single-archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/single-archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                       <span>Archives</span>
                     </Link>
-                  </li>
+                  </li> */}
 
                 </ul>
               )}

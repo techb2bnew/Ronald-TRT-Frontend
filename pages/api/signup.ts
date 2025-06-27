@@ -43,6 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const [key, fileOrFiles] of Object.entries(files)) {
       const fileArr = toFileArray(fileOrFiles as File | File[]);
+
       for (const file of fileArr) {
         formData.append(key, fs.createReadStream(file.filepath), file.originalFilename || 'unknown-file');
       }
@@ -69,8 +70,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json(response.data);
   } catch (error: any) {
+    // Catch and forward the exact error message from the API response
+    if (error.response?.data?.error) {
+      return res.status(400).json({ message: error.response.data.error }); // Forward exact error message
+    }
+
+    // For other types of errors
     console.error('Error forwarding technician request:', error.response?.data || error.message || error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 

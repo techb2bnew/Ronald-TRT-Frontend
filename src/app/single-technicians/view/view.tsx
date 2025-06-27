@@ -306,7 +306,7 @@ export default function ViewDetails() {
                     <span>{technician.secondaryContactName}</span>
                   </a>
                 ) : (
-                  <span className="text-gray-400 text-sm">No data available</span>
+                  <span className="text-gray-400 text-sm">N/A</span>
                 )} 
               </p>
               <p className='border-b border-gray-500 mb-3 pb-2'>
@@ -316,7 +316,7 @@ export default function ViewDetails() {
                     <span>{technician.secondaryEmail}</span>
                   </a>
                 ) : (
-                  <span className="text-gray-400 text-sm">No data available</span>
+                  <span className="text-gray-400 text-sm">N/A</span>
                 )}
               </p>
 
@@ -406,15 +406,6 @@ export default function ViewDetails() {
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong>{technician?.address}</p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Country:</strong>
-                {getCountryName(technician?.country)}
-              </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>State:</strong>
-                {getStateName(technician?.country, technician?.state)}
-              </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong>{technician?.city}</p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong>{technician?.zipCode}</p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>

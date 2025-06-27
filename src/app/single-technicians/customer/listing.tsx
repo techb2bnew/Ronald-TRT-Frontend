@@ -200,15 +200,10 @@ export default function ClientListing() {
 
     const formattedData = selectedCustomers.map((customerData) => ({
       Id: customerData.id,
-      Name: `${customerData.firstName} ${customerData.lastName}`,
+      Name: `${customerData.fullName}`,
       Email: customerData.email,
       Phone: customerData.phoneNumber,
       Address: customerData.address,
-      Country: customerData.country,
-      City: customerData.city,
-      State: customerData.state,
-      ZipCode: customerData.zipCode,
-      DeletedStatus: customerData.deletedStatus,
     }));
 
     csvExporter.generateCsv(formattedData);
@@ -237,8 +232,7 @@ export default function ClientListing() {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'zipCode', 'DeletedStatus'
+        'Id', 'Name', 'Email', 'Phone', 'Address'
       ];
 
       Papa.parse(text, {
@@ -351,7 +345,7 @@ export default function ClientListing() {
           </label>
         </td>
         <td>{cust.id}</td>
-        <td><Link className="hover:underline" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>{cust.firstName} {cust.lastName}</Link></td>
+        <td><Link className="hover:underline" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>{cust.fullName}  </Link></td>
         <td> <a className="hover:underline" href={`mailto:${cust.email}`}>{cust.email}</a></td>
         <td><a className="hover:underline" href={`tel:${cust.phoneNumber}`}>{cust.phoneNumber}</a></td>
         <td>{cust.address}</td>

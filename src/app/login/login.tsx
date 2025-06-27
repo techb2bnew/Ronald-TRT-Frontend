@@ -60,7 +60,7 @@ export default function Login() {
     try {
       setSubmitting(true); 
 
-      const response = await fetch(`api/login`, {
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -104,7 +104,7 @@ export default function Login() {
         if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
           router.push('/client/listing');
         } else {
-          router.push('/technicians/listing');
+          router.push('/vehicle/vehicle');
         }
         // Handle success (e.g., clearing form, redirecting)
       }

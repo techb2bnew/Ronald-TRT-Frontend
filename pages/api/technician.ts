@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     page = '1',
     limit = '10',
     searchQuery = '',
-    types = '', // if you use this param as in your frontend
+    roleType = '', // if you use this param as in your frontend
   } = req.query;
 
   try {
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Compose backend endpoint URL based on presence of searchQuery
     let backendUrl = '';
     if (typeof searchQuery === 'string' && searchQuery.trim() !== '') {
-      backendUrl = `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}&types=${encodeURIComponent(types as string)}`;
+      backendUrl = `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType as string)}`;
     } else {
       backendUrl = `${apiBaseUrl}/fetchTechnician?page=${encodeURIComponent(page as string)}&limit=${encodeURIComponent(limit as string)}`;
     }

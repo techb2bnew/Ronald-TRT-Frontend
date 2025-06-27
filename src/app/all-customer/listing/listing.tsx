@@ -26,8 +26,7 @@ interface Customer {
   deletedStatus?: boolean;
 }
 export default function ClientListing() {
-  const [reoprts, setReports] = useState<any[]>([]);
-  console.log("reoprtsreoprtsreoprts>>", reoprts);
+  const [reoprts, setReports] = useState<any[]>([]); 
 
   const [sortBy, setSortBy] = useState<string>("id"); // Default sorting column is 'id'
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Sorting direction state
@@ -41,7 +40,7 @@ export default function ClientListing() {
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedColumn, setSelectedColumn] = useState<string[]>([
-    "Assign Customer",
+    "Customer Name",
   ]);
 
   const handleDeleteSuccess = (deletedId: string) => {
@@ -86,8 +85,6 @@ export default function ClientListing() {
           ? data.jobs || []
           : data.jobs || [];
         //  const filteredCustomers = fetchedCustomers.filter(reoprts => !reoprts.deletedStatus);
-        console.log("fetchedCustomers", data.jobs);
-
         setReports(fetchedReports);
         setTotalPages(data.customers?.totalPages || 1);
       } else {
@@ -208,28 +205,120 @@ export default function ClientListing() {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedCustomers.map((jobData) => ({
-      "Job Id": jobData.id,
-      "Job Name": `${jobData.jobName}`,
-      Vin: jobData.vin,
-      Color: jobData.color,
-      Make: jobData.make,
-      Model: jobData.model,
-      "Job Status": jobData.jobStatus,
-      "Vehicle Type": jobData.vehicleType,
-      Technicians: jobData.technicians
-        .map((tech: any) => `${tech.firstName} ${tech.lastName}`)
-        .join(", "),
-      "vehicle id": jobData.customer?.vehicles
-        .map((tech: any) => `${tech.id}`)
-        .join(", "),
-      "Job Description": jobData.jobDescription
-        .map((jobDescription: any) => `${jobDescription.jobDescription}`)
-        .join(", "),
-      PayRate: jobData.payRate,
-      "Assign Customer": `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-      "Created By": jobData?.createdBy,
-    }));
+    // const formattedData = selectedCustomers.map((jobData) => ({
+    //   "Customer Name": `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+    //   "Customer Id": jobData?.customer?.id,
+    //   "Technicians Name": jobData?.technicians
+    //     .map((tech: any) => `${tech?.firstName} ${tech?.lastName}`)
+    //     .join(", "),
+    //   "Technicians Id": jobData?.technicians
+    //     .map((tech: any) => `${tech?.id} `)
+    //     .join(", "),
+    //   "Job Id": jobData?.id,
+    //   "Job Name": `${jobData?.jobName}`,
+    //   "Job Status": jobData?.jobStatus,
+    //   "Job Description": jobData?.jobDescription
+    //     .map((jobDescription: any) => `${jobDescription?.jobDescription}`)
+    //     .join(", "),
+    //   "vehicle id": jobData?.customer?.vehicles
+    //     .map((tech: any) => `${tech?.id}`)
+    //     .join(", "),
+    //   "Vehicle Type": jobData?.vehicleType,
+    //   Vin: jobData?.vin,
+    //   Make: jobData?.make,
+    //   Model: jobData?.model,
+    //   Color: jobData?.color,
+    //   PayRate: jobData?.payRate,
+    //   "Created By": jobData?.createdBy,
+    // }));
+
+    // csvExporter.generateCsv(formattedData);
+    const formattedData = selectedCustomers.map((jobData) => {
+      const totalCost = jobData?.jobDescription?.reduce(
+        (sum: number, item: { cost: string }) =>
+          sum + (parseFloat(item.cost) || 0),
+        0
+      );
+      const row: any = {};
+
+      if (selectedColumn.includes("Customer Name")) {
+        row[
+          "Customer Name"
+        ] = `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`;
+      }
+
+      if (selectedColumn.includes("Customer Id")) {
+        row["Customer Id"] = jobData?.customer?.id;
+      }
+
+      if (selectedColumn.includes("Techician Name")) {
+        row["Technicians Name"] = jobData?.technicians
+          .map((tech: any) => `${tech?.firstName} ${tech?.lastName}`)
+          .join(", ");
+      }
+
+      if (selectedColumn.includes("Techician Id")) {
+        row["Technicians Id"] = jobData?.technicians
+          .map((tech: any) => `${tech?.id}`)
+          .join(", ");
+      }
+
+      if (selectedColumn.includes("Job Id")) {
+        row["Job Id"] = jobData?.id;
+      }
+
+      if (selectedColumn.includes("Job Name")) {
+        row["Job Name"] = jobData?.jobName;
+      }
+
+      if (selectedColumn.includes("Job Status")) {
+        row["Job Status"] = jobData?.jobStatus ? "Completed" : "Inprogress";
+      }
+
+      if (selectedColumn.includes("Job Description")) {
+        row["Job Description"] = jobData?.jobDescription
+          .map((jobDescription: any) => `${jobDescription?.jobDescription}`)
+          .join(", ");
+      }
+      if (selectedColumn.includes("Job Description")) {
+        row["Sub Total"] = totalCost;
+      }
+      if (selectedColumn.includes("Vehicle Id")) {
+        row["Vehicle Id"] = jobData?.customer?.vehicles
+          .map((v: any) => `${v?.id}`)
+          .join(", ");
+      }
+
+      if (selectedColumn.includes("Vehicle Type")) {
+        row["Vehicle Type"] = jobData?.vehicleType;
+      }
+
+      if (selectedColumn.includes("Vin")) {
+        row["Vin"] = jobData?.vin;
+      }
+
+      if (selectedColumn.includes("Make")) {
+        row["Make"] = jobData?.make;
+      }
+
+      if (selectedColumn.includes("Model")) {
+        row["Model"] = jobData?.model;
+      }
+
+      if (selectedColumn.includes("Color")) {
+        row["Color"] = jobData?.color;
+      }
+
+      if (selectedColumn.includes("Payrate")) {
+        row["PayRate"] = jobData?.payRate;
+      }
+
+      if (selectedColumn.includes("Created By")) {
+        row["Created By"] = jobData?.createdBy;
+      }
+
+      return row;
+    });
 
     csvExporter.generateCsv(formattedData);
   };
@@ -405,7 +494,7 @@ export default function ClientListing() {
             </span>
           </label>
         </td>
-        {selectedColumn.includes("Assign Customer") && (
+        {selectedColumn.includes("Customer Name") && (
           <td>
             {cust.customer.firstName} {cust.customer.lastName}
           </td>
@@ -453,6 +542,87 @@ export default function ClientListing() {
               .join(", ")}
           </td>
         )}
+        {selectedColumn.includes("Job Description") && (
+          <td>
+            {(() => {
+              const totalCost = cust?.jobDescription?.reduce(
+                (sum: number, item: { cost: string }) => {
+                  const cost = parseFloat(item.cost) || 0; // convert to number, fallback to 0
+                  return sum + cost;
+                },
+                0
+              );
+              return totalCost;
+            })()}
+          </td>
+        )}
+
+        {selectedColumn.includes("Job Description") && (
+          <td>
+            {(() => {
+              if (!cust) return null;
+
+              // Step 1: Calculate subtotal from jobDescription
+              const subtotalcost = cust.jobDescription.reduce(
+                (sum: number, item: any) => {
+                  return sum + Number(item.cost || 0);
+                },
+                0
+              );
+
+              // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
+              const technician = cust.technicians?.[0] || {};
+              const simpleFlatRate =
+                !isNaN(Number(cust.simpleFlatRate)) &&
+                Number(cust.simpleFlatRate) > 0
+                  ? Number(cust.simpleFlatRate)
+                  : !isNaN(Number(technician.simpleFlatRate))
+                  ? Number(technician.simpleFlatRate)
+                  : 0;
+              const amountPercentage =
+                !isNaN(Number(cust.amountPercentage)) &&
+                Number(cust.amountPercentage) > 0
+                  ? Number(cust.amountPercentage)
+                  : !isNaN(Number(technician.amountPercentage))
+                  ? Number(technician.amountPercentage)
+                  : 0;
+
+              // Step 3: Calculate percentage amount
+              const percentageAmount = (amountPercentage * subtotalcost) / 100;
+
+              // Step 4: Check if flat rate or percentage amount is missing and display accordingly
+              if (simpleFlatRate === 0 && amountPercentage === 0) {
+                // If no valid flat rate or percentage, just show the subtotal
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    ${subtotalcost.toFixed(2)}
+                  </div>
+                );
+              }
+
+              // Step 5: Calculate total = subtotal + flat rate + percentage amount
+              const totalCost =
+                subtotalcost + simpleFlatRate + percentageAmount;
+
+              // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
+
+              // Step 7: Return total cost
+              return (
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "5px" }}
+                >
+                  ${totalCost.toFixed(2)}
+                </div>
+              );
+            })()}
+          </td>
+        )}
 
         {selectedColumn.includes("Vehicle Id") && (
           <td>
@@ -471,11 +641,11 @@ export default function ClientListing() {
         {selectedColumn.includes("Color") && <td>{cust.color}</td>}
         {selectedColumn.includes("Payrate") && <td>{cust.payRate}</td>}
         {selectedColumn.includes("Created By") && <td>{cust.createdBy}</td>}
-        <td>
-          <Link href={`/all-reoprts/view?customerId=${cust.id}&allTrtCustomer`}>
+        {/* <td> */}
+        {/* <Link href={`/all-reoprts/view?customerId=${cust.id}&allTrtCustomer`}>
             <Image alt="eye" src={Eye} className="w-[16px]" />
-          </Link>
-        </td>
+          </Link> */}
+        {/* </td> */}
       </tr>
     );
   };
@@ -491,7 +661,8 @@ export default function ClientListing() {
       />
       <CommonHeader
         heading="All Customer"
-        onPageSizeChange={handlePageSizeChange} 
+        onPageSizeChange={handlePageSizeChange}
+        // onColumnSelect={setSelectedColumn}
         onSearch={(term) => setSearchTerm(term)}
         onExport={downloadCSV}
         // onImport={handleImportCSV}
@@ -548,7 +719,7 @@ export default function ClientListing() {
 
       <div className="flex gap-40 mb-10">
         {[
-          ["Assign Customer", "Customer Id", "Techician Name", "Techician Id"],
+          ["Customer Name", "Customer Id", "Techician Name", "Techician Id"],
           ["Job Id", "Job Name", "Job Status", "Job Description"],
           ["Vehicle Id", "Vehicle Type", "Vin", "Model"],
           ["Make", "Color", "Payrate", "Created By"],
@@ -560,7 +731,7 @@ export default function ClientListing() {
                   <input
                     type="checkbox"
                     checked={selectedColumn.includes(col)}
-                    disabled={col === "Assign Customer"}
+                    disabled={col === "Customer Name"}
                     onChange={() => handleColumnChange(col)}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
                   />
@@ -598,7 +769,7 @@ export default function ClientListing() {
             <thead>
               <tr>
                 {/* {selectedColumn.includes("Checkbox") && ( */}
-                <th className="w-[35px]">
+                <th className="w-[50px]">
                   <label className="flex items-center cursor-pointer relative">
                     <input
                       type="checkbox"
@@ -633,13 +804,13 @@ export default function ClientListing() {
                 {/* )} */}
                 <th
                   className="w-[150px]"
-                  onClick={() => handleSort("Assign Customer")}
+                  onClick={() => handleSort("Customer Name")}
                 >
-                  Assign Customer
+                  Customer Name
                 </th>
                 {selectedColumn.includes("Customer Id") && (
                   <th
-                    className="w-[50px]"
+                    className="w-[120px]"
                     onClick={() => handleSort("Customer Id")}
                   >
                     Customer Id
@@ -662,7 +833,7 @@ export default function ClientListing() {
                   </th>
                 )}
                 {selectedColumn.includes("Job Id") && (
-                  <th className="w-[50px]" onClick={() => handleSort("job id")}>
+                  <th className="w-[100px]" onClick={() => handleSort("job id")}>
                     Job Id
                   </th>
                 )}
@@ -688,6 +859,22 @@ export default function ClientListing() {
                     onClick={() => handleSort("Job Description")}
                   >
                     Job Description
+                  </th>
+                )}
+                {selectedColumn.includes("Job Description") && (
+                  <th
+                    className="w-[150px]"
+                    onClick={() => handleSort("Job Description")}
+                  >
+                    Sub Total
+                  </th>
+                )}
+                {selectedColumn.includes("Job Description") && (
+                  <th
+                    className="w-[150px]"
+                    onClick={() => handleSort("Job Description")}
+                  >
+                    Total
                   </th>
                 )}
                 {selectedColumn.includes("Vehicle Id") && (
@@ -747,7 +934,7 @@ export default function ClientListing() {
 
                 {/* // )} */}
 
-                <th className="w-[160px]">Action</th>
+                {/* <th className="w-[160px]">Action</th> */}
               </tr>
             </thead>
 

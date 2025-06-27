@@ -150,156 +150,7 @@ const VehicleTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  // CSV Export Functions
-  const downloadCSV = () => {
-    const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
-
-    if (selectedJobs.length === 0) {
-      toast.error("Please select at least job group to export.");
-      return;
-    }
-    const csvOptions = {
-      filename: 'Vehicles Info',
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalSeparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Vehicles Info',
-      useTextFile: false,
-      useBom: true,
-      useKeysAsHeaders: true, // Use object keys as headers
-    };
-
-    const csvExporter = new ExportToCsv(csvOptions);
-
-    const formattedData = selectedJobs.map((jobData) => {
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
-      return {
-        id: jobData.id,
-        vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        assignCustomer: jobData.assignCustomer,
-        bodyClass: jobData.bodyClass,
-        color: jobData.color,
-        make: jobData.make,
-        model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
-        vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
-        'modelYear': jobData.modelYear,
-        'vehicleDescriptor': jobData.vehicleDescriptor,
-        'manufacturerName': jobData.manufacturerName,
-        'plantCompanyName': jobData.plantCompanyName,
-        'plantCountry': jobData.plantCountry,
-        'plantState': jobData.plantState,
-        deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
-        notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-
-      };
-    });
-    csvExporter.generateCsv(formattedData);
-  }
-
-  const handleImportCSV = (file: File) => {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // Remove BOM
-        .trimStart(); // Remove leading whitespace/newlines
-
-      const manualHeaders = [
-        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
-      ];
-
-      Papa.parse(text, {
-        header: false,
-        skipEmptyLines: true,
-        complete: async (result) => {
-          const rows = result.data as string[][];
-
-          const cleanedData = rows
-            .slice(1) // Skip raw header row
-            .map((row) => {
-              const obj: any = {};
-              manualHeaders.forEach((key, idx) => {
-                let value = row[idx];
-                value = typeof value === 'string' ? value.trim() : value;
-                obj[key] = value;
-              });
-              return obj;
-            })
-            .filter((row) => {
-              // Skip if all values match their keys (header row)
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
-              const hasData = Object.values(row).some((val) => val && val !== '');
-              return !isHeaderRow && hasData;
-            });
-
-          try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
-            });
-
-            const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
-              { data: payloadData },
-              { headers }
-            );
-            toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error: unknown) {
-            console.error('❌ Import failed:', error);
-          
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error(String(error));
-            }
-          }
-          
-          setLoading(false);
-        },
-        error: (err: any) => {
-          console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
-        },
-      });
-    };
-
-    reader.readAsText(file);
-  };
+ 
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
@@ -327,8 +178,8 @@ const VehicleTable: React.FC = () => {
           </label>
         </td>  */}
         <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
-        <td>{job.customer.firstName} {job.customer.lastName}</td>
-        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email}</a></td>
+        <td>{job.customer.fullName}</td>
+        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>
 
         {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
@@ -354,7 +205,7 @@ const VehicleTable: React.FC = () => {
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
           /> */}
 
-           <Link href={`/reporting/view?customerId=${job.customerId}`} >
+           <Link href={`/reporting/view?vehicleId=${job.id}`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>

@@ -128,7 +128,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
+        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : `/api/technician?page=${page}&limit=${limit}`;
 
 
@@ -311,7 +311,7 @@ const TechnicianTable: React.FC = () => {
         </td>
 
 
-        <td className='font-sm'>
+        {/* <td className='font-sm'>
           <Link
             href={tech.accountStatus === true && tech.isApproved === 'accept' ? '/jobs/create-job/create' : '#'}
             className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === 'accept'
@@ -369,12 +369,12 @@ const TechnicianTable: React.FC = () => {
             }}
           />
 
-        </td>
+        </td> */}
 
 
         <td>
           <TableActions
-            editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
+            editRoute={`/technicians/create-technician?technicianId=${tech.id}&technician`}
             viewRoute={`/technicians/view?technicianId=${tech.id}`}
             deleteRoute={`/api/deleteTechnician`}  // Pass the correct endpoint
             itemId={tech.id}  // Pass the technician ID
@@ -419,9 +419,6 @@ const TechnicianTable: React.FC = () => {
         Email: tech.email,
         Phone: tech.phoneNumber,
         Address: tech.address,
-        Country: countryName,
-        City: tech.city,
-        State: stateName,
         SimpleFlatRate: tech.simpleFlatRate,
         AmountPercentage: tech.amountPercentage,
         PayVehicleType: tech.payVehicleType,
@@ -460,8 +457,8 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
+        'Id', 'Name', 'Email', 'Phone', 'Address',
+        'SimpleFlatRate', 'AmountPercentage',
         'PayVehicleType', 'PayRate',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
@@ -583,7 +580,7 @@ const TechnicianTable: React.FC = () => {
       />
       <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?technician" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Create Work Order', 'Approval Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -612,12 +609,12 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status'];
+          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status'];
 
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 7 ? 'w-[200px]' : ''} ${index === 5 ? 'w-[130px]' : ''}${index === 8 ? 'w-[100px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[60px]' : ''}`}
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
             >
               {header}

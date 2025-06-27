@@ -58,21 +58,21 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `/api/vehicalList?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicalList?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
-          ? data.VehicalInfo || []
-          : data.vehicles || [];
+          ? data.data.vehicles || []
+          : data.response.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.totalPages);
+        setTotalPages(data.response.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -149,17 +149,17 @@ const VehicleTable: React.FC = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
-      toast.error("Please select at least job group to export.");
+      toast.error("Please select at least one work order to export.");
       return;
     }
     const csvOptions = {
-      filename: 'Vehicle List',
+      filename: 'Vehicle / Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicle List',
+      title: 'Vehicle / Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -167,43 +167,62 @@ const VehicleTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
+
     const formattedData = selectedJobs.map((jobData) => {
+      const firstTech = jobData.assignedTechnicians?.[0] || {};
+      const vt = firstTech.VehicleTechnician || {};
+
       const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
         return sum + Number(item.cost || 0);
       }, 0);
+      const technician = jobData.technicians?.[0] || {};
+      const simpleFlatRate = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate) > 0
+        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)
+        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+
+      const amountPercentage = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage) > 0
+        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)
+        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+
+      // Step 3: Calculate percentage amount
+      const percentageAmount = (amountPercentage * subTotal) / 100;
+      const totalCost = subTotal + simpleFlatRate + percentageAmount;
+
       return {
         id: jobData.id,
         vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        assignCustomer: jobData.assignCustomer,
+        customer: `${jobData?.customer?.fullName}`,
+        assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
         amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
         'plantCompanyName': jobData.plantCompanyName,
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
-        deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
+        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        payRate: vt.payRate || '',
+        simpleFlatRate: vt.simpleFlatRate || '',
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
         subTotal: subTotal.toFixed(2),
+        totalCost: totalCost.toFixed(2),
 
       };
     });
     csvExporter.generateCsv(formattedData);
   }
+
+
+
+
 
   const handleImportCSV = (file: File) => {
     setLoading(true);
@@ -220,11 +239,11 @@ const VehicleTable: React.FC = () => {
 
       const manualHeaders = [
         'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
+        'make', 'model', 'amountPercentage', 'vehicleType',
+        'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState',
+        'notes', 'technicians', 'assignTechnicians',
+        'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
       ];
 
       Papa.parse(text, {
@@ -245,22 +264,77 @@ const VehicleTable: React.FC = () => {
               return obj;
             })
             .filter((row) => {
-              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
 
           try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
-            });
+            const payloadData = cleanedData.map(row => {
+              // Process technicians data
+              const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+              const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
+              const payRates = row.payRate ? row.payRate.split(',').map((rate: any) => rate.trim()) : [];
+              const amountPercentages = row.amountPercentage ? row.amountPercentage.split(',').map((perc: any) => perc.trim()) : [];
+
+              // Process simpleFlatRate - ensure it's never null
+              let simpleFlatRates = {};
+              if (row.simpleFlatRate) {
+                try {
+                  // Try parsing as JSON first
+                  const parsed = JSON.parse(row.simpleFlatRate);
+                  if (parsed && typeof parsed === 'object') {
+                    simpleFlatRates = parsed;
+                  } else if (!isNaN(Number(row.simpleFlatRate))) {
+                    // Handle case where it's just a number
+                    simpleFlatRates = { default: Number(row.simpleFlatRate) };
+                  }
+                } catch (e) {
+                  // If parsing fails, try to extract numeric value
+                  const numericValue = Number(String(row.simpleFlatRate).replace(/[^0-9.]/g, ''));
+                  if (!isNaN(numericValue)) {
+                    simpleFlatRates = { default: numericValue };
+                  }
+                }
+              }
+
+              const technicians = technicianNames.map((name: any, index: any) => {
+                // Create technician object with proper fallbacks
+                return {
+                  id: technicianIds[index] || null,
+                  name: name,
+                  payRate: payRates[index] || null,
+                  amountPercentage: amountPercentages[index] || null,
+                  simpleFlatRate: simpleFlatRates || {}   // Both fields for compatibility
+                };
+              });
+
+              // Process jobDescription and cost
+              const jobDescriptions = row.jobDescription
+                ? row.jobDescription.split(',').map((desc: any, idx: any) => ({
+                  jobDescription: desc.trim(),
+                  cost: row.cost?.split(',')[idx]?.trim() || '0'
+                }))
+                : [];
+
+              return {
+                ...row,
+                technicians: technicians,
+                jobDescription: jobDescriptions,
+                // Clean up unused fields
+                assignTechnicians: undefined,
+                payRate: undefined,
+                amountPercentage: undefined,
+                simpleFlatRate: undefined,
+                cost: undefined
+              };
+            }).filter(row =>
+              // Remove any rows that might still be headers
+              !manualHeaders.some(header => row[header] === header)
+            );
 
             const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
+              `/api/importVehicle`,
               { data: payloadData },
               { headers }
             );
@@ -268,30 +342,23 @@ const VehicleTable: React.FC = () => {
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
+            if (axios.isAxiosError(error)) {
+              toast.error(error.response?.data?.error || error.message);
             } else if (error instanceof Error) {
               toast.error(error.message);
             } else {
-              toast.error(String(error));
+              toast.error('An unknown error occurred');
             }
           }
-
           setLoading(false);
         },
         error: (err: any) => {
           console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
+          toast.error('Error parsing CSV file');
+          setLoading(false);
         },
       });
     };
-
     reader.readAsText(file);
   };
 
@@ -301,6 +368,7 @@ const VehicleTable: React.FC = () => {
     );
   };
 
+ 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
 
@@ -322,18 +390,18 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{job?.id}</td>
+        <td>{job?.jobId}</td>
 
-        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
-        <td>  {job?.technicians?.map((tech: any) => (
+        <td>{job?.customer?.fullName}  </td>
+        <td>  {job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td>
+        <td>{job.vin} </td>
         <td>{job.make} </td>
         <td>{job.model}</td>
-        <td>{job.modelYear}</td>
-        <td>{job.color}</td>
+        <td>{job.modelYear}</td> 
         <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
         <td>
           {job.completedDate
@@ -342,9 +410,9 @@ const VehicleTable: React.FC = () => {
         </td>
 
         <td> <span
-          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+          className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
         >
-          {job.jobStatus ? 'Completed' : 'In Progress'}
+          {job.vehicleStatus ? 'Completed' : 'In Progress'}
         </span></td>
 
       </tr>
@@ -384,7 +452,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+              <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -402,13 +470,14 @@ const VehicleTable: React.FC = () => {
               </th>
               <th className="w-[160px]">Assigned Technician</th>
 
-
               <th className="w-[120px]" >
+                VIN
+              </th>
+              <th className="w-[60px]" >
                 Make
               </th>
-              <th className="w-[100px]">Model</th>
-              <th className="w-[60px]">Year</th>
-              <th className="w-[50px]">Color</th>
+              <th className="w-[60px]">Model</th>
+              <th className="w-[60px]">Year</th> 
               <th className="w-[100px]">Start Date</th>
               <th className="w-[100px]">Completion Date</th>
               <th className="w-[100px]">Status</th>

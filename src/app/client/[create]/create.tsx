@@ -15,42 +15,56 @@ import { FormHelperText } from '@mui/material';
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { SingleValue, ActionMeta } from 'react-select';
 
 interface CustomerForm {
   id?: string;  // Optional ID for editing
-  firstName: string;
-  lastName: string;
+  fullName: string;
   phoneNumber: string;
   email: string;
   address: string;
-  country: string;
-  state: string;
-  city: string;
-  zipCode: string;
   userId: string;
   roleType: string;
-  image: File | null;
 }
+
+interface PlaceType {
+  place_id: string;
+  description: string;
+  // Add other properties you might need from Google Places
+}
+
+interface AddressValue {
+  label: string;
+  value: PlaceType;
+}
+
+type GooglePlacesOption = {
+  label: string;
+  value: {
+    place_id: string;
+    description: string;
+  };
+};
+
+type NullableGooglePlacesOption = SingleValue<GooglePlacesOption>;
 
 export default function Technicians() {
   const [formData, setFormData] = useState<CustomerForm>({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     phoneNumber: '',
     email: '',
     address: '',
-    country: '',
-    state: '',
-    city: '',
-    zipCode: '',
     userId: '',
-    roleType: '',
-    image: null,
+    roleType: ''
   });
   const [submitting, setSubmitting] = useState<boolean>(false);  // ✅ Track form submission state
   const router = useRouter();
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
+
   const handleSelectChange = (
     event: SelectChangeEvent<string>,
     child: React.ReactNode // You might not actually need to use this parameter in your function
@@ -69,6 +83,62 @@ export default function Technicians() {
       });
     }
   };
+
+  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+    if (!selectedAddress) return;
+
+    // Immediately update both states
+    setAddressValue(selectedAddress);
+    setFormData(prev => ({
+      ...prev,
+      address: selectedAddress.label, // Use the raw label as fallback
+    }));
+
+    try {
+      const results = await geocodeByAddress(selectedAddress.label);
+      const addressComponents = results[0].address_components;
+
+      let street = '', city = '', state = '', country = '', zip = '';
+
+      addressComponents.forEach(component => {
+        if (component.types.includes('street_number') || component.types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          zip = component.long_name;
+        }
+      });
+
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+
+      // Update formData with the parsed address
+      setFormData(prev => ({
+        ...prev,
+        address: fullAddress,
+      }));
+
+
+
+    } catch (error) {
+      console.error('Error fetching address details:', error);
+      toast.error('Failed to process address details');
+      // Fallback to the raw selected address if geocoding fails
+      setFormData(prev => ({
+        ...prev,
+        address: selectedAddress.label,
+      }));
+    }
+  };
+
   // Handle form field change
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target as HTMLInputElement | HTMLSelectElement;;
@@ -80,11 +150,25 @@ export default function Technicians() {
     }
 
     if (name === "email") {
-      const isValidEmail = emailPattern.test(value);
-      setErrors((prev) => ({
-        ...prev,
-        email: isValidEmail ? '' : 'Please enter a valid email address',
+      // Only validate if email is not empty
+      if (value && !emailPattern.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          email: 'Please enter a valid email address',
+        }));
+      } else {
+        // Clear error if email is valid or empty
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.email;
+          return newErrors;
+        });
+      }
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value
       }));
+      return;
     }
 
     setFormData((prevData) => ({
@@ -113,7 +197,7 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-       const response = await fetch('/api/fetchSingleCustomer', {
+      const response = await fetch('/api/fetchSingleCustomer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,32 +207,34 @@ export default function Technicians() {
       });
       const data = await response.json();
 
+
+      // Construct the full address for display
+
       if (data.customers && data.customers.customer) {
         const customerData = data.customers.customer;
 
-        const customerCountry = countries.find(c =>
-          c.isoCode.toLowerCase() === customerData.country.toLowerCase() ||
-          c.name.toLowerCase() === customerData.country.toLowerCase()
-        );
+        if (customerData.address) {
+          const addressValue = {
+            label: customerData.address,
+            value: {
+              place_id: `existing-${customerData.id}`,
+              description: customerData.address
+            }
+          };
+          setAddressValue(addressValue);
+        }
 
-        const countryStates = customerCountry
-          ? State.getStatesOfCountry(customerCountry.isoCode)
-          : [];
-
-        const customerState = countryStates.find(s =>
-          customerData.state &&
-          (s.isoCode.toLowerCase() === customerData.state.toLowerCase() ||
-            s.name.toLowerCase() === customerData.state.toLowerCase())
-        );
 
         if (response.ok) {
-          setFormData(prev => ({
-            ...prev,
-            ...customerData,
-            id: customerData.id,
-            country: customerCountry?.isoCode || '',
-            state: customerState?.isoCode || '',
-          }));
+          setFormData({
+            fullName: customerData.fullName || '',
+            phoneNumber: customerData.phoneNumber || '',
+            email: customerData.email || '',
+            address: customerData.address || '',
+            userId: customerData.userId || '',
+            roleType: customerData.roleType || '',
+            id: customerData.id
+          });
         } else {
           toast.error(data.error || 'Error fetching technician data');
         }
@@ -178,19 +264,20 @@ export default function Technicians() {
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const finalAddress = formData.address || (address?.label || '');
     const newErrors: { [key: string]: string } = {};
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
-    if (!formData.email?.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!emailPattern.test(formData.email)) {
+
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (formData.email && !emailPattern.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    if (formData.phoneNumber) {
+      const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+      if (digitsOnly.length !== 11) {
+        newErrors.phoneNumber = 'Phone number must be 10 digits';
+      }
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -210,71 +297,51 @@ export default function Technicians() {
     try {
       setSubmitting(true);
 
-      const formPayload = new FormData();
-      formPayload.append("firstName", formData.firstName);
-      formPayload.append("lastName", formData.lastName);
-      formPayload.append("phoneNumber", formData.phoneNumber);
-      formPayload.append("email", formData.email);
-      formPayload.append("address", formData.address);
-      formPayload.append("country", formData.country);
-      formPayload.append("state", formData.state);
-      formPayload.append("city", formData.city);
-      formPayload.append("zipCode", formData.zipCode);
-      formPayload.append("userId", userId || '');
-      formPayload.append("roleType", roleType || '');
-
-      if (isEdit && formData.id) {
-        formPayload.append("customerId", formData.id);
-      }
-
-      if (formData.image) {
-        formPayload.append("image", formData.image);
-      }
+      const requestBody = {
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        address: finalAddress,
+        userId: userId || '',
+        roleType: roleType || '',
+        ...(isEdit && formData.id && { customerId: formData.id }),
+      };
 
       const response = await fetch(`${isEdit ? '/api/customerCreate' : '/api/customerCreate'}`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: formPayload,
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message);
         setFormData({
-          firstName: '',
-          lastName: '',
+          fullName: '',
           phoneNumber: '',
           email: '',
           address: '',
-          country: '',
-          state: '',
-          city: '',
-          zipCode: '',
           userId: '',
-          roleType: '',
-          image: null
+          roleType: ''
         });
 
         router.push('/client/listing');
       } else {
         const apiErrors: { [key: string]: string } = {};
 
-        // Handle different error response formats
         if (data.error) {
-          // Check if the error message indicates email or phone number issues
           if (data.error.toLowerCase().includes('email')) {
             apiErrors.email = data.error;
           } else if (data.error.toLowerCase().includes('phone')) {
             apiErrors.phoneNumber = data.error;
           } else {
-            // For other general errors
             toast.error(data.error);
           }
         }
 
-        // Also check if there are field-specific errors in data.errors
         if (data.errors && typeof data.errors === 'object') {
           Object.entries(data.errors).forEach(([key, value]) => {
             if (key === 'phoneNumber' || key === 'email') {
@@ -283,11 +350,9 @@ export default function Technicians() {
           });
         }
 
-        // Update the errors state if we found field-specific errors
         if (Object.keys(apiErrors).length > 0) {
           setErrors(prev => ({ ...prev, ...apiErrors }));
         } else if (data.error && Object.keys(apiErrors).length === 0) {
-          // Show general error toast if no field-specific errors were found
           toast.error(data.error);
         }
       }
@@ -297,6 +362,7 @@ export default function Technicians() {
       setSubmitting(false);
     }
   };
+
 
   function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number) {
     return new Promise((resolve, reject) => {
@@ -347,27 +413,25 @@ export default function Technicians() {
       image.onerror = () => reject(new Error('Image loading error'));
     });
   }
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; // Sirf ek file lene ke liye
-    if (!file) return;
+  // const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0]; // Sirf ek file lene ke liye
+  //   if (!file) return;
 
-    const maxWidth = 800; // Maximum image width
-    const maxHeight = 600; // Maximum image height
-    const quality = 0.7; // Compression quality
+  //   const maxWidth = 800; // Maximum image width
+  //   const maxHeight = 600; // Maximum image height
+  //   const quality = 0.7; // Compression quality
 
-    try {
-      const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
-      setFormData((prev: any) => ({ ...prev, image: compressedFile }));
-    } catch (error) {
-      console.error('Compression error:', error);
-      toast.error('Failed to compress image.');
-    }
-  };
+  //   try {
+  //     const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
+  //     setFormData((prev: any) => ({ ...prev, image: compressedFile }));
+  //   } catch (error) {
+  //     console.error('Compression error:', error);
+  //     toast.error('Failed to compress image.');
+  //   }
+  // };
   const handleRemoveImage = () => {
     setFormData((prev: any) => ({ ...prev, image: null }));
   };
-  const countries = Country.getAllCountries();
-  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
   const getNationalNumber = (digitsOnly: string, fullNumber: string): string => {
     try {
       const parsed = parsePhoneNumberFromString(fullNumber);
@@ -388,7 +452,6 @@ export default function Technicians() {
         ...prev,
         phoneNumber: ''
       }));
-      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
       return;
     }
 
@@ -396,23 +459,23 @@ export default function Technicians() {
     const nationalNumber = getNationalNumber(digitsOnly, value);
 
     // Stop if national number exceeds 10 digits
-    if (nationalNumber.length > 10) {
-      return;
-    }
+    // if (nationalNumber.length > 10) {
+    //   return;
+    // }
 
     // Set error if not exactly 10 digits
-    if (nationalNumber.length !== 10) {
-      setErrors(prev => ({
-        ...prev,
-        phoneNumber: 'Phone number must be exactly 10 digits'
-      }));
-    } else {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.phoneNumber;
-        return newErrors;
-      });
-    }
+    // if (nationalNumber.length !== 10) {
+    //   setErrors(prev => ({
+    //     ...prev,
+    //     phoneNumber: 'Phone number must be exactly 10 digits'
+    //   }));
+    // } else {
+    //   setErrors(prev => {
+    //     const newErrors = { ...prev };
+    //     delete newErrors.phoneNumber;
+    //     return newErrors;
+    //   });
+    // }
 
     // Update form data
     setFormData(prev => ({
@@ -446,14 +509,27 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
-              {errors.firstName && (
+              <TextField fullWidth name="fullName" id="outlined-basic" color="warning" label="Full name" size="small" value={formData.fullName} onChange={handleChange} />
+              {errors.fullName && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.firstName}
+                  {errors.fullName}
                 </div>
               )}
             </div>
             <div className='mb-4 relative'>
+              <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
+                <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" value={formData.email} onChange={handleChange} />
+              {errors.email && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.email}
+                </div>
+              )}
+
+            </div>
+            {/* <div className='mb-4 relative'>
 
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
@@ -466,7 +542,7 @@ export default function Technicians() {
                 </div>
               )}
 
-            </div>
+            </div> */}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Client Phone and Email */}
@@ -516,23 +592,50 @@ export default function Technicians() {
               )}
 
             </div>
+
+            {/* Address */}
             <div className='mb-4 relative'>
-              <svg width="16" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                <rect x="2" y="4" width="12" height="8" rx="1.5" stroke="#5B5B99" strokeWidth="1.2" />
-                <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" value={formData.email} onChange={handleChange} />
-              {errors.email && (
+              <GooglePlacesAutocomplete
+                apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+                selectProps={{
+                  placeholder: 'Search for an address...',
+                  value: address,
+                  onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
+                    if (newValue) {
+                      handleAddressSelect(newValue);
+                    }
+                  },
+                  styles: {
+                    input: (provided) => ({
+                      ...provided,
+                      borderRadius: '4px',
+                      width: '100%'
+                    }),
+                    control: (provided) => ({
+                      ...provided,
+                      borderColor: errors.address ? 'ccc' : '#ccc', // Red border if error exists
+                      '&:hover': {
+                        borderColor: errors.address ? 'orange' : 'orange',
+                      },
+                      '&:focus': {
+                        borderColor: errors.address ? 'orange' : 'orange',
+                      },
+                    }),
+                  }
+                }}
+                autocompletionRequest={{
+                  componentRestrictions: {
+                    country: 'us' // Restrict to US addresses only
+                  }
+                }}
+              />
+              {errors.address && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.email}
+                  {errors.address}
                 </div>
               )}
-
             </div>
-          </div>
-
-          {/* Address */}
-          <div className='mb-4 relative'>
+            {/* <div className='mb-4 relative'>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
@@ -545,16 +648,13 @@ export default function Technicians() {
               </div>
             )}
 
+          </div> */}
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            {/* Country, State, City, Zip Code */}
+
+          {/* <div className="grid grid-cols-4 gap-4"> 
             <div className='mb-4 relative'>
-              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg> */}
+              
 
               <FormControl fullWidth size="small">
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
@@ -581,11 +681,7 @@ export default function Technicians() {
 
             </div>
             <div className='mb-4 relative'>
-              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg> */}
+             
               <FormControl fullWidth size="small">
                 <InputLabel id="demo-simple-select-label" color="warning">Select state *</InputLabel>
                 <Select
@@ -628,8 +724,8 @@ export default function Technicians() {
               )}
 
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+          </div> */}
+          {/* <div className="grid grid-cols-2 gap-4">
 
             <div className='mb-0'>
               <div className="form-control w-full p-3 mt-1 rounded relative" style={{ border: '2px dashed #ccc' }}>
@@ -658,7 +754,7 @@ export default function Technicians() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
           {/* Submit Button */}
           <div className="text-left mt-5">
             <button

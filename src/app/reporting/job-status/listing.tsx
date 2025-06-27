@@ -4,29 +4,30 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
-import Eye from '../../../../public/eye.svg'
-import Image from 'next/image';
-import Link from 'next/link';
-import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 import Papa from 'papaparse';
-
+import Link from 'next/link';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
-interface Jobs {
+
+interface VehcileInfo {
   id: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
+  Role: { name: string };
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
@@ -41,8 +42,7 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "inProgress">("all");
-  const [jobs, setJobs] = useState([]);
+
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -54,57 +54,6 @@ const JobTable: React.FC = () => {
     // ✅ Remove the deleted technician from the table
     setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
   };
-  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const roleType = localStorage.getItem('types') || "";
-      const userId = localStorage.getItem('userID');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-
-      const endpoint = query.trim()
-        ? roleType === 'superadmin'
-          ? `/api/allIfsWorkOrder?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/allIfsWorkOrder?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'superadmin'
-          ? `/api/allIfsWorkOrder?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/allIfsWorkOrder?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-
-      const response = await fetch(endpoint, { method: 'GET', headers });
-
-      const data = await response.json();
-      if (response.ok) {
-        const fetchedTechnicians: Jobs[] = query.trim()
-          ? data.JobStatus || []
-          : data.JobStatus || [];
-        //  const filteredTechnicians = fetchedTechnicians.filter(technician => !technician.deletedStatus);
-
-        setActiveJob(fetchedTechnicians);
-        setTotalPages(data.jobs?.totalPages || 1);
-
-      } else {
-        if (data.error === 'Invalid Token') {
-          router.push('/');
-        } else {
-          console.error('Error fetching job data:', data.error);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching job data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm, pageSize);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
 
 
   const handlePageSizeChange = (size: number) => {
@@ -122,6 +71,66 @@ const JobTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
+  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || "";
+      const userId = localStorage.getItem('userID');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // Build the endpoint with the current page and page size
+      const endpoint = query.trim()
+        ? roleType === 'superadmin'
+          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        : roleType === 'superadmin'
+          ? `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+
+
+      console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
+
+      const response = await fetch(endpoint, { method: 'GET', headers });
+      const data = await response.json();
+
+      console.log('API response data:', data);  // Debugging API response
+
+      if (response.ok) {
+        const fetchedTechnicians: VehcileInfo[] = query.trim()
+          ? data.data.vehicles || []
+          : data.response.vehicles || [];
+        setActiveJob(fetchedTechnicians);
+        setTotalPages(data.response?.totalPages || 1);
+        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+
+      } else {
+        if (data.error === 'Invalid Token') {
+          router.push('/');
+        } else {
+          console.error('Error fetching job data:', data.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, searchTerm, pageSize]);
+
+
+
+
 
 
   // Function to handle sorting logic
@@ -131,9 +140,9 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'customerName') {
-        const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
-        const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
+      if (column === 'fullName') {
+        const nameA = `${a?.customer?.fullName}`;
+        const nameB = `${b?.customer?.fullName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
       if (column === 'technicianName') {
@@ -150,101 +159,28 @@ const JobTable: React.FC = () => {
     setActiveJob(sortedJobs);
   };
 
-
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-
-        if (response.data.status) {
-          // Optimistically update the local state
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === jobId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor: '#383d71',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
+ 
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
     setCurrentPage(data.selected + 1);
   };
 
-  // CSV Export Functions
   const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
-    if (selectedJobs.length === 0) {
-          toast.error("Please select at least job group to export.");
-          return;
-        }
 
+    if (selectedJobs.length === 0) {
+      toast.error("Please select at least one work order to export.");
+      return;
+    }
     const csvOptions = {
-      filename: 'Job Status',
+      filename: 'Vehicle / Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Job Status',
+      title: 'Vehicle / Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -252,23 +188,38 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
+
     const formattedData = selectedJobs.map((jobData) => {
+      const firstTech = jobData.assignedTechnicians?.[0] || {};
+      const vt = firstTech.VehicleTechnician || {};
+
       const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
         return sum + Number(item.cost || 0);
       }, 0);
+      const technician = jobData.technicians?.[0] || {};
+      const simpleFlatRate = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate) > 0
+        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)
+        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
+
+      const amountPercentage = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage) > 0
+        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)
+        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+
+      // Step 3: Calculate percentage amount
+      const percentageAmount = (amountPercentage * subTotal) / 100;
+      const totalCost = subTotal + simpleFlatRate + percentageAmount;
+
       return {
         id: jobData.id,
         vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        assignCustomer: jobData.assignCustomer,
+        customer: `${jobData?.customer?.fullName}`,
+        assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
         amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
@@ -276,371 +227,516 @@ const JobTable: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
+        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
+        payRate: vt.payRate || '',
+        simpleFlatRate: vt.simpleFlatRate || '',
         cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
         subTotal: subTotal.toFixed(2),
+        totalCost: totalCost.toFixed(2),
 
       };
     });
     csvExporter.generateCsv(formattedData);
   }
 
-  const handleImportCSV = (file: File) => {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const reader = new FileReader();
 
-    reader.onload = async (e) => {
-      let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // Remove BOM
-        .trimStart(); // Remove leading whitespace/newlines
 
-      const manualHeaders = [
-        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
-      ];
 
-      Papa.parse(text, {
-        header: false,
-        skipEmptyLines: true,
-        complete: async (result) => {
-          const rows = result.data as string[][];
+  const [permissions, setPermissions] = useState<any[]>([]);
 
-          const cleanedData = rows
-            .slice(1) // Skip raw header row
-            .map((row) => {
-              const obj: any = {};
-              manualHeaders.forEach((key, idx) => {
-                let value = row[idx];
-                value = typeof value === 'string' ? value.trim() : value;
-                obj[key] = value;
-              });
-              return obj;
-            })
-            .filter((row) => {
-              // Skip if all values match their keys (header row)
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
-              const hasData = Object.values(row).some((val) => val && val !== '');
-              return !isHeaderRow && hasData;
-            });
+  useEffect(() => {
+    const storedPermissions = localStorage.getItem("permissions");
 
-          try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
-            });
+    if (storedPermissions) {
+      try {
+        const parsedPermissions = JSON.parse(storedPermissions);
+        setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+        console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+      } catch (error) {
+        console.error("❌ Failed to parse permissions:", error);
+      }
+    } else {
+      console.log("⚠️ No permissions found in localStorage. Showing all icons.");
+    }
+  }, []);
 
-            const response = await axios.post(
-              `/api/importActiveJob`,
-              { data: payloadData },
-              { headers }
-            );
-            toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error: unknown) {
-            console.error('❌ Import failed:', error);
-          
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error(String(error));
-            }
-          }
-          
-          setLoading(false);
-        },
-        error: (err: any) => {
-          console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
-        },
-      });
-    };
+  // ✅ Function to check permission based on role and action
+  const hasPermission = (action: string) => {
+    if (permissions.length === 0) return true; // If no permissions exist, show all icons
 
-    reader.readAsText(file);
+    return permissions.some(
+      (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
+    );
   };
+  const canCreate = hasPermission("approve");
+
+
+const handleImportCSV = (file: File) => {
+  setLoading(true);
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    let text = (e.target?.result as string)
+      .replace(/^\uFEFF/, '') // Remove BOM
+      .trimStart(); // Remove leading whitespace/newlines
+
+    const manualHeaders = [
+      'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
+      'make', 'model', 'amountPercentage', 'vehicleType',
+      'modelYear', 'vehicleDescriptor', 'manufacturerName',
+      'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+      'notes', 'technicians', 'assignTechnicians',
+      'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
+    ];
+
+    Papa.parse(text, {
+      header: false,
+      skipEmptyLines: true,
+      complete: async (result) => {
+        const rows = result.data as string[][];
+
+        const cleanedData = rows
+          .slice(1) // Skip raw header row
+          .map((row) => {
+            const obj: any = {};
+            manualHeaders.forEach((key, idx) => {
+              let value = row[idx];
+              value = typeof value === 'string' ? value.trim() : value;
+              obj[key] = value;
+            });
+            return obj;
+          })
+          .filter((row) => {
+            const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+            const hasData = Object.values(row).some((val) => val && val !== '');
+            return !isHeaderRow && hasData;
+          });
+
+        try {
+          const payloadData = cleanedData.map(row => {
+            // Process technicians data
+            const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+            const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
+            const payRates = row.payRate ? row.payRate.split(',').map((rate: any) => rate.trim()) : [];
+            const amountPercentages = row.amountPercentage ? row.amountPercentage.split(',').map((perc: any) => perc.trim()) : [];
+            
+            // Process simpleFlatRate - ensure it's never null
+            let simpleFlatRates = {};
+            if (row.simpleFlatRate) {
+              try {
+                // Try parsing as JSON first
+                const parsed = JSON.parse(row.simpleFlatRate);
+                if (parsed && typeof parsed === 'object') {
+                  simpleFlatRates = parsed;
+                } else if (!isNaN(Number(row.simpleFlatRate))) {
+                  // Handle case where it's just a number
+                  simpleFlatRates = { default: Number(row.simpleFlatRate) };
+                }
+              } catch (e) {
+                // If parsing fails, try to extract numeric value
+                const numericValue = Number(String(row.simpleFlatRate).replace(/[^0-9.]/g, ''));
+                if (!isNaN(numericValue)) {
+                  simpleFlatRates = { default: numericValue };
+                }
+              }
+            }
+
+            const technicians = technicianNames.map((name: any, index: any) => {
+              // Create technician object with proper fallbacks
+              return {
+                id: technicianIds[index] || null,
+                name: name,
+                payRate: payRates[index] || null,
+                amountPercentage: amountPercentages[index] || null, 
+                simpleFlatRate: simpleFlatRates || {}   // Both fields for compatibility
+              };
+            });
+
+            // Process jobDescription and cost
+            const jobDescriptions = row.jobDescription 
+              ? row.jobDescription.split(',').map((desc: any, idx: any) => ({
+                  jobDescription: desc.trim(),
+                  cost: row.cost?.split(',')[idx]?.trim() || '0'
+                }))
+              : [];
+
+            return {
+              ...row,
+              technicians: technicians,
+              jobDescription: jobDescriptions,
+              // Clean up unused fields
+              assignTechnicians: undefined,
+              payRate: undefined,
+              amountPercentage: undefined,
+              simpleFlatRate: undefined,
+              cost: undefined
+            };
+          }).filter(row => 
+            // Remove any rows that might still be headers
+            !manualHeaders.some(header => row[header] === header)
+          );
+
+          const response = await axios.post(
+            `/api/importVehicle`,
+            { data: payloadData },
+            { headers }
+          );
+          toast.success('CSV Import Successful!');
+          fetchJobs(currentPage, searchTerm, pageSize);
+        } catch (error: unknown) {
+          console.error('❌ Import failed:', error);
+          if (axios.isAxiosError(error)) {
+            toast.error(error.response?.data?.error || error.message);
+          } else if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error('An unknown error occurred');
+          }
+        }
+        setLoading(false);
+      },
+      error: (err: any) => {
+        console.error('❌ CSV Parse error:', err);
+        toast.error('Error parsing CSV file');
+        setLoading(false);
+      },
+    });
+  };
+  reader.readAsText(file);
+};
+
+
+
+ const calculateTechnicianTotalCost = (jobData: any) => {
+  if (!jobData) return 0;
+
+  // Calculate subtotal from jobDescription
+  let subtotalcost = 0;
+  if (Array.isArray(jobData.jobDescription)) {
+    subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+      let parsedItem = item;
+      if (typeof item === 'string') {
+        try {
+          parsedItem = JSON.parse(item);
+        } catch {
+          return total;
+        }
+      }
+      const cost = parseFloat(parsedItem?.cost || '0');
+      return total + (isNaN(cost) ? 0 : cost);
+    }, 0);
+  }
+
+  // If no technicians, return just the subtotal
+  if (!Array.isArray(jobData.assignedTechnicians)) {
+    return subtotalcost;
+  }
+
+  let technicianTotal = subtotalcost;
+
+  // Process each technician
+  jobData.assignedTechnicians.forEach((tech: any) => {
+    const techDetails = tech.VehicleTechnician;
+    if (!techDetails) return;
+
+    // Parse simpleFlatRate
+    let simpleFlatRate = 0;
+    try {
+      if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
+        const parsedRate = JSON.parse(techDetails.simpleFlatRate);
+        
+        if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
+          // For Pay Per Vehicles, get the rate for the specific vehicle type
+          simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
+        } else if (typeof parsedRate === 'object') {
+          // For other payment methods, try to get a technician rate
+          const technicianRate = parsedRate['technician'];
+          simpleFlatRate = parseFloat(technicianRate) || 0;
+        } else if (typeof parsedRate === 'number') {
+          simpleFlatRate = parsedRate;
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing simpleFlatRate:', error);
+      simpleFlatRate = 0;
+    }
+
+    // Parse amountPercentage safely
+    const amountPercentage = parseFloat(
+      techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
+    );
+
+    // Add costs based on payment method
+    if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
+      technicianTotal += simpleFlatRate;
+    } 
+    else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
+      technicianTotal += simpleFlatRate;
+    }
+    else if (amountPercentage > 0) {
+      technicianTotal += (amountPercentage * subtotalcost) / 100;
+    }
+  });
+
+  return technicianTotal;
+};
+
+
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
-const filterJobsByStatus = async (jobStatus: "all" | "completed" | "inProgress") => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem('token');
-    const roleType = localStorage.getItem('types') || "";
-    const userId = localStorage.getItem('userID');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    let endpoint = `${apiUrl}/completeInprogressJobFilter?userId=${userId}&roleType=${encodeURIComponent(roleType)}`;
-
-    if (jobStatus === "completed") {
-      endpoint += `&jobStatus=true`;
-    } else if (jobStatus === "inProgress") {
-      endpoint += `&jobStatus=false`;
-    }
-    // If 'all', no jobStatus param, fetch all
-
-    const response = await fetch(endpoint, { method: 'GET', headers });
-    const data = await response.json();
-
-    if (response.ok) {
-      setActiveJob(data.jobs || []);
-      setTotalPages(data.jobs?.totalPages || 1);
-      setSelectedIds([]);
-    } else {
-      console.error("Failed to filter jobs:", data.error);
-      if(data.error === 'Invalid Token'){
-        router.push('/');
-      }
-    }
-  } catch (error) {
-    console.error("Error filtering jobs:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
- const fetchCompletedJobs = () => {
-  setActiveFilter("completed");
-  filterJobsByStatus("completed");
-  setCurrentPage(1);
-};
-
-const fetchInProgressJobs = () => {
-  setActiveFilter("inProgress");
-  filterJobsByStatus("inProgress");
-  setCurrentPage(1);
-};
-
-const fetchAllJobs = () => {
-  setActiveFilter("all");
-  filterJobsByStatus("all");
-  setCurrentPage(1);
-};
-useEffect(() => {
-  if(activeFilter === "all") {
-    fetchJobs(currentPage, searchTerm, pageSize);
-  }
-  // else ignore pagination changes because filter API is used
-}, [currentPage, pageSize, searchTerm]);
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
+    const roleType = localStorage.getItem('types') || "";
 
-    const subtotalcost = job.jobDescription.reduce((sum: number, job: any) => {
-      const parsedJob = (job);
+    const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
+      const parsedJob = job;
       return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
     }, 0);
-    const simpleFlatRate = Number(job.simpleFlatRate);
+    const simpleFlatRate = Number(job?.simpleFlatRate);
     const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
       ? subtotalcost + simpleFlatRate
       : subtotalcost;
-
     return (
       <tr key={job.id}>
         <td key="checkbox">
-        <label className="flex items-center cursor-pointer relative">
-
-          <input
-            type="checkbox"
-            className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
-            checked={isChecked}
-            onChange={() => handleCheckboxChange(job.id)}
-          />
-               <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </span>
-                </label>
+          <label className="flex items-center cursor-pointer relative">
+            <input
+              type="checkbox"
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+              checked={isChecked}
+              onChange={() => handleCheckboxChange(job.id)}
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+              </svg>
+            </span>
+          </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline'>{job?.id}</Link></td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
 
-        <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td>
-        <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id} className='capitalize'>
-            {tech.firstName} {tech.lastName}
+
+        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
+        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
+        <td>  {job?.assignedTechnicians?.map((tech: any) => (
+          <div key={tech.id} className="capitalize">
+            {tech.firstName} {tech.lastName},
           </div>
         ))}</td>
-        <td>{job?.technicians?.map((tech: any) => (
+        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech?.phoneNumber}`}> 
-            {tech.phoneNumber}
+            <a className="hover:underline" href={`tel:${tech.technicians}`}>
+              {tech.phoneNumber}
             </a>
           </div>
-        ))}</td>
+        ))}</td> */}
+        <td>{job?.vin}</td>
+        <td>{job?.make}</td>
+        <td>{job?.model}</td>
+        <td>{job?.modelYear}</td>
         <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-
-        <td>
+        {roleType !== 'single-technician' && (
+          <td>
             {(() => {
               if (!job) return null;
 
-              const totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-                return sum + Number(item.cost || 0);
+              // Calculate subtotal from jobDescription items
+              const subtotal = (job?.jobDescription || []).reduce((sum: number, item: any) => {
+                return sum + Number(item?.cost || 0);
               }, 0);
 
-              const jobFlatRate = Number(job.simpleFlatRate);
-              const techFlatRate = Number(job.technicians[0]?.simpleFlatRate);
-              const simpleFlatRate = !isNaN(jobFlatRate) && jobFlatRate > 0 ? jobFlatRate : (!isNaN(techFlatRate) && techFlatRate > 0 ? techFlatRate : 0);
+              // Calculate total simpleFlatRate from all technicians
+              let totalSimpleFlatRate = 0;
+              let totalAmountPercentage = 0;
 
-              // Use job's amountPercentage or fallback to technician's amountPercentage
-              const jobPercentage = Number(job.amountPercentage);
-              const techPercentage = Number(job.technicians[0]?.amountPercentage);
-              const amountPercentage = !isNaN(jobPercentage) && jobPercentage > 0 ? jobPercentage : (!isNaN(techPercentage) && techPercentage > 0 ? techPercentage : 0);
+              (job?.assignedTechnicians || []).forEach((tech: any) => {
+                try {
+                  // Parse simpleFlatRate (handling both JSON string and direct values)
+                  const flatRateData = tech?.VehicleTechnician?.simpleFlatRate || tech?.simpleFlatRate;
+                  if (flatRateData) {
+                    if (typeof flatRateData === 'string') {
+                      try {
+                        const parsed = JSON.parse(flatRateData);
+                        if (typeof parsed === 'object' && parsed !== null) {
+                          // Sum all values in the simpleFlatRate object
+                          Object.values(parsed).forEach((value: any) => {
+                            const numericValue = Number(String(value).replace(/[^0-9.]/g, ''));
+                            if (!isNaN(numericValue)) {
+                              totalSimpleFlatRate += numericValue;
+                            }
+                          });
+                        } else if (!isNaN(Number(flatRateData))) {
+                          totalSimpleFlatRate += Number(flatRateData);
+                        }
+                      } catch {
+                        // If JSON parsing fails, try to extract numeric value
+                        const numericValue = Number(String(flatRateData).replace(/[^0-9.]/g, ''));
+                        if (!isNaN(numericValue)) {
+                          totalSimpleFlatRate += numericValue;
+                        }
+                      }
+                    } else if (typeof flatRateData === 'number') {
+                      totalSimpleFlatRate += flatRateData;
+                    }
+                  }
 
-              // Neither is valid — show red dot with tooltip
-              if (
-                (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-                (isNaN(amountPercentage) || amountPercentage === 0)
-              ) {
-                const tooltipId = `tooltip-${job.id}`;
+                  // Handle amountPercentage (take the first valid percentage found)
+                  const percentage = tech?.VehicleTechnician?.amountPercentage || tech?.amountPercentage;
+                  if (percentage && !totalAmountPercentage) {
+                    const numericPercentage = Number(String(percentage).replace(/[^0-9.]/g, ''));
+                    if (!isNaN(numericPercentage)) {
+                      totalAmountPercentage = numericPercentage;
+                    }
+                  }
+                } catch (e) {
+                  console.error('Error processing technician rates:', e);
+                }
+              });
+
+              // Calculate final amount to display
+              if (totalSimpleFlatRate > 0 && totalAmountPercentage > 0) {
+                const percentageAmount = (subtotal * totalAmountPercentage) / 100;
+                const total = totalSimpleFlatRate + percentageAmount;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${total.toFixed(2)}  
+                  </div>
+                );
+              }
+              else if (totalSimpleFlatRate > 0) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${totalSimpleFlatRate.toFixed(2)}  
+                  </div>
+                );
+              }
+              else if (totalAmountPercentage > 0) {
+                const percentageAmount = (subtotal * totalAmountPercentage) / 100;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ${percentageAmount.toFixed(2)} ({totalAmountPercentage}%)
+                  </div>
+                );
+              }
+              else {
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    {/* <span
-                      data-tooltip-id={tooltipId}
-                      data-tooltip-content="R/I/R/R price is not added for this job."
-                      style={{
-                        height: '12px',
-                        width: '12px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                      }}
-                    ></span>
-                    <Tooltip id={tooltipId} place="top" /> */}
+                    ${subtotal.toFixed(2)}  
+                  </div>
+                );
+              }
+            })()}
+          </td>
+        )}
+
+        {roleType === 'single-technician' && (
+          <td>
+            {(() => {
+              // Get the first technician's simpleFlatRate if available
+              const technician = job.technicians?.[0] || {};
+              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
+                ? Number(technician.simpleFlatRate)
+                : 0;
+
+              // Use labourCost if available, otherwise use technician's flat rate
+              const labourCost = Number(job?.labourCost || technicianFlatRate);
+
+              if (labourCost === 0) {
+                const tooltipId = `tooltip-${job.id}-labour`;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
                     Per job
                   </div>
                 );
               }
 
-              // Show simpleFlatRate if valid
-              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
+              return `$${labourCost.toFixed(2)}`;
+            })()}
+          </td>
+        )}
+
+        {roleType !== 'single-technician' && (
+
+          <td>
+             ${calculateTechnicianTotalCost(job).toFixed(2)}
+          </td>
+
+        )}
+
+        {roleType === 'single-technician' && (
+          <td>
+            {(() => {
+              if (!job) return null;
+
+              const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
+                const parsedJob = job;
+                return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
+              }, 0);
+
+
+              // Get the first technician's simpleFlatRate if available
+              const technician = job.technicians?.[0] || {};
+              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
+                ? Number(technician.simpleFlatRate)
+                : 0;
+
+              // Use labourCost if available, otherwise use technician's flat rate
+              const labourCost = Number(job.labourCost || technicianFlatRate);
+
+              const totalCost = subtotalcost + labourCost;
+
+              if (subtotalcost === 0) {
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    ${simpleFlatRate.toFixed(2)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
+                    Per Job
                   </div>
                 );
               }
 
-              // Show percentage-based calculation
-              if (!isNaN(amountPercentage) && amountPercentage > 0) {
-                const percentageAmount = (totalCost * amountPercentage) / 100;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                  </div>
-                );
-              }
-
-              return null;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ${totalCost.toFixed(2)}
+                </div>
+              );
             })()}
           </td>
 
-        <td>
-                   {(() => {
-                     if (!job) return null;
-       
-                     // Step 1: Calculate subtotal from jobDescription
-                     const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-                       return sum + Number(item.cost || 0);
-                     }, 0);
-       
-                     // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
-                     const technician = job.technicians?.[0] || {};
-                     const simpleFlatRate = !isNaN(Number(job.simpleFlatRate)) && Number(job.simpleFlatRate) > 0
-                       ? Number(job.simpleFlatRate)
-                       : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
-       
-                     const amountPercentage = !isNaN(Number(job.amountPercentage)) && Number(job.amountPercentage) > 0
-                       ? Number(job.amountPercentage)
-                       : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
-       
-                     // Step 3: Calculate percentage amount
-                     const percentageAmount = (amountPercentage * subtotalcost) / 100;
-       
-                     // Step 4: Check if flat rate or percentage amount is missing and display accordingly
-                     if (simpleFlatRate === 0 && amountPercentage === 0) {
-                       // If no valid flat rate or percentage, just show the subtotal
-                       return (
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                           ${subtotalcost.toFixed(2)}
-                         </div>
-                       );
-                     }
-       
-                     // Step 5: Calculate total = subtotal + flat rate + percentage amount
-                     const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
-       
-                     // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
-                     if (simpleFlatRate === 0 && amountPercentage === 0) {
-                       const tooltipId = `tooltip-${job.id}`;
-                       return (
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                           <span
-                             data-tooltip-id={tooltipId}
-                             data-tooltip-content="R/I/R/R price is not added for this job."
-                             style={{
-                               height: '12px',
-                               width: '12px',
-                               backgroundColor: 'red',
-                               borderRadius: '50%',
-                               display: 'inline-block',
-                               cursor: 'pointer',
-                             }}
-                           ></span>
-                           <Tooltip id={tooltipId} place="top" />
-                         </div>
-                       );
-                     }
-       
-                     // Step 7: Return total cost
-                     return (
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                         ${totalCost.toFixed(2)}
-                       </div>
-                     );
-                   })()}
-                 </td>
-        <td style={{ cursor: 'pointer' }}>
-          <span
-            className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-          >
-            {job.jobStatus ? 'Completed' : 'In Progress'}
-          </span>
-        </td>
-        <td className='text-left'>
+        )}
 
-          <Link href={`/jobs/view?jobId=${job.id}&jobStatus`} >
+
+        <td>
+          {canCreate && (
+
+            <span  style={{ cursor: 'pointer' }}
+              className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            >
+              {job.vehicleStatus ? 'Completed' : 'In Progress'}
+            </span>
+          )}
+
+        </td> 
+          
+          <td className='text-left'>
+
+          <Link href={`/reporting/view?vehicleId=${job.id}&jobStatus`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>
           <Tooltip id="view" place="top" />
-        </td>
+        </td> 
       </tr>
     )
   };
@@ -649,76 +745,79 @@ useEffect(() => {
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'All IFS Work Orders', href: '/reporting/job-status' }
+          { label: 'All Work Order List', href: '/vehicle/vehicle' }
         ]}
       />
-      <CommonHeader heading="All IFS Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} onImport={handleImportCSV} buttonLabel="" buttonLink="" onCompletedJobClick={() => fetchCompletedJobs()}
-  onInProgressJobClick={() => fetchInProgressJobs()} onAllJobsClick={fetchAllJobs}/>
- 
+
+      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-            <th className="w-[35px]">
-        <label className="flex items-center cursor-pointer relative">
+              <th className="w-[35px]">
+                <label className="flex items-center cursor-pointer relative">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === activeJob.length}
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
-                <input
-                  type="checkbox"
-                  checked={selectedIds.length === activeJob.length}
-                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
-                  onChange={() =>
-                    setSelectedIds(
-                      selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
-                    )
-                  }
-                />
+                    onChange={() =>
+                      setSelectedIds(
+                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                      )
+                    }
+                  />
                   <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
                     </svg>
                   </span>
-                </label> 
+                </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
+              <th className="w-[100px]" onClick={() => handleSort('id')}>
+                Job ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+              <th className="w-[120px]" onClick={() => handleSort('fullName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
+                {sortBy === 'fullName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[150px]">
+              {/* <th className="w-[120px]">
                 Customer Number
+              </th> */}
+              <th className="w-[150px]" >
+                Assigned Technician
               </th>
-              <th className="w-[120px]" >
-                Technician Name
-              </th>
-              <th className="w-[100px]">Tech. Number</th>
+              <th className="w-[140px]">VIN</th>
+              <th className="w-[80px]">Make</th>
+              <th className="w-[80px]">Model</th>
+              <th className="w-[80px]">Year</th>
               <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[120px]">R/I R/R </th>
-              <th className="w-[120px]">Total Cost</th>
+              <th className="w-[80px]">R/I R/R</th>
+              <th className="w-[80px]">Total Cost</th>
               <th className="w-[120px]">Status</th>
-              <th className="w-[160px]">Action</th>
+              <th className="w-[100px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={13} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={13} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
@@ -728,8 +827,8 @@ useEffect(() => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && ( 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {activeJob.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

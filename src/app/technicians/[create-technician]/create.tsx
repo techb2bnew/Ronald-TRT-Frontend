@@ -20,6 +20,9 @@ import EyeOff from '../../../../public/eye-off.svg';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Swal from "sweetalert2";
 import { Checkbox, FormControlLabel, FormHelperText, Input, ListItemText } from '@mui/material';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { SingleValue, ActionMeta } from 'react-select';
 
 interface TechnicianForm {
   id?: string;
@@ -30,10 +33,6 @@ interface TechnicianForm {
   secondaryContactName: string;
   email: string;
   address: string;
-  country: string;
-  state: string;
-  city: string;
-  zipCode: string;
   secondaryEmail: string;
   password: string;
   confirmPassword: string;
@@ -49,6 +48,28 @@ interface TechnicianForm {
   payVehicleType: string[];
 
 }
+
+interface PlaceType {
+  place_id: string;
+  description: string;
+  // Add other properties you might need from Google Places
+}
+
+interface AddressValue {
+  label: string;
+  value: PlaceType;
+}
+
+type GooglePlacesOption = {
+  label: string;
+  value: {
+    place_id: string;
+    description: string;
+  };
+};
+
+type NullableGooglePlacesOption = SingleValue<GooglePlacesOption>;
+
 export default function Technicians() {
   const router = useRouter();
   const pathname = usePathname();
@@ -65,21 +86,19 @@ export default function Technicians() {
   const [roles, setRoles] = useState<any[]>([]);
   const isSingleTechnician = searchParams?.has('singletechnician') ?? false;
   const isTechnician = searchParams?.has('technician') ?? false;
+  const isManager = searchParams?.has('manager') ?? false;
   const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [userType, setUserType] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<any>(null);
   const [simpleFlatRateAll, setSimpleFlatRateAll] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
     lastName: '',
     phoneNumber: '',
     email: '',
     address: '',
-    country: '',
-    state: '',
-    city: '',
-    zipCode: '',
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
@@ -96,6 +115,58 @@ export default function Technicians() {
     types: '',
     agreeTerms: 'true',
   });
+
+  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+    if (!selectedAddress) return;
+
+    setAddressValue(selectedAddress);
+
+    try {
+      const results = await geocodeByAddress(selectedAddress.label);
+      const addressComponents = results[0].address_components;
+
+      let street = '', city = '', state = '', country = '', zip = '';
+
+      addressComponents.forEach(component => {
+        if (component.types.includes('street_number') || component.types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          zip = component.long_name;
+        }
+      });
+
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+      // Update form data with the full address
+      setFormData(prev => ({
+        ...prev,
+        address: fullAddress,  // Store combined address here
+      }));
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.address;
+        delete newErrors.city;
+        delete newErrors.state;
+        delete newErrors.zipCode;
+        return newErrors;
+      });
+
+    } catch (error) {
+      console.error('Error fetching address details:', error);
+      toast.error('Failed to process address details');
+    }
+  };
+
 
 
   const fetchTechnicianData = async (technicianId: string) => {
@@ -125,23 +196,16 @@ export default function Technicians() {
 
       const data = await response.json();
 
-      // First find the country
-      const technicianCountry = countries.find(c =>
-        c.name === data.technician.country ||
-        c.isoCode === data.technician.country
-      );
+      // Process the address
+      let addressParts = [];
+      if (data.technician.address) {
+        // Split the address string and filter out empty parts
+        addressParts = data.technician.address.split(',').map((part: any) => part.trim()).filter((part: any) => part !== '');
+      }
 
-      // Get states for this country
-      const countryStates = technicianCountry ? State.getStatesOfCountry(technicianCountry.isoCode) : [];
-
-      // Find matching state
-      const technicianState = countryStates.find(s =>
-        data.technician.state && (
-          s.name.toLowerCase() === data.technician.state.toLowerCase() ||
-          s.isoCode.toLowerCase() === data.technician.state.toLowerCase()
-        )
-      );
-
+      // Construct the full address for display
+      const fullAddress = addressParts.join(', ');
+ 
       const simpleFlatRateParsed =
         typeof data.technician.simpleFlatRate === 'string'
           ? JSON.parse(data.technician.simpleFlatRate)
@@ -157,15 +221,26 @@ export default function Technicians() {
 
       // const matchedRole = roles.find(role => role.id === data.technician.roleId);
       // const roleName = matchedRole?.name || '';
+
       if (response.ok) {
+
+        if (fullAddress) {
+          const addressValue: AddressValue = {
+            label: fullAddress,
+            value: {
+              place_id: `existing-address-${Date.now()}`,
+              description: fullAddress
+            }
+          };
+          setAddressValue(addressValue);
+        }
         setFormData(prev => ({
           ...prev,
           ...data.technician,
           id: technicianId,
           password: '',
-          taxForms: data.technician.taxForms || [],
-          country: technicianCountry?.isoCode || '',
-          state: technicianState?.isoCode || '',
+          taxForms: data.technician.taxForms || [], 
+          address: fullAddress,
           role: data.technician.Role.name || '',
           types: data.technician.types || '',
           simpleFlatRate: simpleFlatRateParsed || {},
@@ -197,20 +272,26 @@ export default function Technicians() {
   ) => {
     const name = event.target.name;
     const value = event.target.value;
-  if (name === "payRate") {
-    // If changing payRate to anything other than 'Pay Per Vehicles',
-    // clear payVehicleType and simpleFlatRate
-    if (value !== 'Pay Per Vehicles') {
-      setFormData(prev => ({
-        ...prev,
-        payRate: value,
-        payVehicleType: [],          // clear vehicle types
-        simpleFlatRate: {},          // clear simple flat rate
-        amountPercentage: value === 'Simple Percentage' ? prev.amountPercentage : '', // reset amountPercentage if needed
-      }));
-      return; // return here to avoid further setFormData calls below
+    if (name === "payRate") {
+      // If changing payRate to anything other than 'Pay Per Vehicles',
+      // clear payVehicleType and simpleFlatRate
+      if (value !== 'Pay Per Vehicles') {
+        setFormData(prev => ({
+          ...prev,
+          payRate: value,
+          payVehicleType: [],          // clear vehicle types
+          simpleFlatRate: {},          // clear simple flat rate
+          amountPercentage: value === 'Simple Percentage' ? prev.amountPercentage : '', // reset amountPercentage if needed
+        }));
+        return; // return here to avoid further setFormData calls below
+      } else{
+         setFormData(prev => ({
+      ...prev,
+      payRate: value,
+      amountPercentage: ''
+    }))
+      }
     }
-  }
     if (name === "role") {
       const selectedRole = roles.find((role) => role.name === value);
       setSelectedRole(selectedRole);
@@ -225,11 +306,29 @@ export default function Technicians() {
       // Remove ?singletechnician if "technician" is selected
       if (value === 'technician') {
         newQuery.delete('singletechnician');
+        newQuery.delete('manager');
+
+      }
+      if (value === 'singletechnician') {
+        newQuery.delete('technician');
+        newQuery.delete('manager');
+
+      }
+      if (value === 'manager') {
+        newQuery.delete('technician');
+        newQuery.delete('singletechnician');
+
       }
 
       // Add ?singletechnician if "singletechnician" is selected
       if (value === 'singletechnician') {
         newQuery.set('singletechnician', 'true'); // or use empty string if preferred
+      }
+      if (value === 'technician') {
+        newQuery.set('technician', 'true'); // or use empty string if preferred
+      }
+      if (value === 'manager') {
+        newQuery.set('manager', 'true'); // or use empty string if preferred
       }
 
       router.replace(`${pathname}?${newQuery.toString()}`);
@@ -469,91 +568,91 @@ export default function Technicians() {
   //   setFormData(prev => ({ ...prev, taxForms: files }));
   // };
 
- const handleRemoveFile = async (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const token = localStorage.getItem('token');
+  const handleRemoveFile = async (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const token = localStorage.getItem('token');
       let userId = '';
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      userId = searchParams.get('technicianId') || '';
-    }
-    // const userId = localStorage.getItem('userID');
-
-    let imageToRemoveUrl: string | null = null;
-
-    // Get the image url to delete based on type and index
-    if (imageType === 'taxForm' && formData.taxForms) {
-      const file = formData.taxForms[index];
-      if (typeof file === 'string') {
-        imageToRemoveUrl = file;
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        userId = searchParams.get('technicianId') || '';
       }
-    } else if (imageType === 'profileImage') {
-      if (typeof formData.image === 'string') {
-        imageToRemoveUrl = formData.image;
-      }
-    } else if (imageType === 'businessLogo') {
-      if (typeof formData.businessLogo === 'string') {
-        imageToRemoveUrl = formData.businessLogo;
-      }
-    }
+      // const userId = localStorage.getItem('userID');
 
-    if (!imageToRemoveUrl) {
-      // No URL found, just remove locally
+      let imageToRemoveUrl: string | null = null;
+
+      // Get the image url to delete based on type and index
+      if (imageType === 'taxForm' && formData.taxForms) {
+        const file = formData.taxForms[index];
+        if (typeof file === 'string') {
+          imageToRemoveUrl = file;
+        }
+      } else if (imageType === 'profileImage') {
+        if (typeof formData.image === 'string') {
+          imageToRemoveUrl = formData.image;
+        }
+      } else if (imageType === 'businessLogo') {
+        if (typeof formData.businessLogo === 'string') {
+          imageToRemoveUrl = formData.businessLogo;
+        }
+      }
+
+      if (!imageToRemoveUrl) {
+        // No URL found, just remove locally
+        removeLocalImage(index, imageType);
+        return;
+      }
+
+      // Prepare payload as per your requirement
+      let payload: any = {
+        userId: userId ? parseInt(userId) : undefined,
+      };
+
+      if (imageType === 'taxForm') {
+        payload.taxFormsToDelete = [imageToRemoveUrl];
+        payload.imageToDelete = null;
+      } else {
+        payload.taxFormsToDelete = [];
+        payload.imageToDelete = imageToRemoveUrl;
+      }
+
+      // Call API to delete
+      const response = await fetch(`${apiUrl}/deleteTechnicianImages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to delete image.');
+        return; // stop removal on failure
+      }
+
+      toast.success('Image deleted successfully.');
+
+      // Remove image locally after successful deletion
       removeLocalImage(index, imageType);
-      return;
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast.error('An error occurred while deleting the image.');
     }
+  };
 
-    // Prepare payload as per your requirement
-    let payload: any = {
-      userId: userId ? parseInt(userId) : undefined,
-    };
-
-    if (imageType === 'taxForm') {
-      payload.taxFormsToDelete = [imageToRemoveUrl];
-      payload.imageToDelete = null;
-    } else {
-      payload.taxFormsToDelete = [];
-      payload.imageToDelete = imageToRemoveUrl;
+  const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
+    if (imageType === 'taxForm' && formData.taxForms) {
+      const newTaxForms = formData.taxForms.filter((_, i) => i !== index);
+      setFormData(prev => ({ ...prev, taxForms: newTaxForms }));
+    } else if (imageType === 'profileImage') {
+      setFormData(prev => ({ ...prev, image: null }));
+    } else if (imageType === 'businessLogo') {
+      setFormData(prev => ({ ...prev, businessLogo: null }));
     }
-
-    // Call API to delete
-    const response = await fetch(`${apiUrl}/deleteTechnicianImages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      toast.error(data.error || 'Failed to delete image.');
-      return; // stop removal on failure
-    }
-
-    toast.success('Image deleted successfully.');
-
-    // Remove image locally after successful deletion
-    removeLocalImage(index, imageType);
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    toast.error('An error occurred while deleting the image.');
-  }
-};
-
-const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' | 'businessLogo') => {
-  if (imageType === 'taxForm' && formData.taxForms) {
-    const newTaxForms = formData.taxForms.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, taxForms: newTaxForms }));
-  } else if (imageType === 'profileImage') {
-    setFormData(prev => ({ ...prev, image: null }));
-  } else if (imageType === 'businessLogo') {
-    setFormData(prev => ({ ...prev, businessLogo: null }));
-  }
-};
+  };
 
   useEffect(() => {
     if (typeof formData.simpleFlatRate === 'string') {
@@ -577,20 +676,17 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
-    if (!formData.email?.trim()) newErrors.email = 'Email is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required';
-    if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    if (!formData.email?.trim()) newErrors.email = 'Email is required'; 
+    if (!formData.address?.trim()) newErrors.address = 'Address is required'; 
     if (!isEdit) {
       if (!formData.password?.trim()) newErrors.password = 'Password is required';
     }
     if (isTechnician) {
       if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
-
     }
-   if (formData.secondaryEmail && !emailPattern.test(formData.secondaryEmail)) {
-        newErrors.secondaryEmail = 'Please enter a valid email address';
-      }
+    if (formData.secondaryEmail && !emailPattern.test(formData.secondaryEmail)) {
+      newErrors.secondaryEmail = 'Please enter a valid email address';
+    }
 
     // if (!formData.simpleFlatRate?.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
     // if (!formData.payVehicleType?.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
@@ -602,7 +698,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors); // Replace all errors with new ones
-      console.log(errors,'sadasd')
+      console.log(errors, 'sadasd')
       return;
     }
 
@@ -681,14 +777,14 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
         const apiErrors: { [key: string]: string } = {};
 
         // Handle different error response formats
-        if (data.error) {
+        if (data.message) {
           // Check if the error message indicates email or phone number issues
-          if (data.error.toLowerCase().includes('email')) {
-            apiErrors.email = data.error;
-          } else if (data.error.toLowerCase().includes('phone')) {
-            apiErrors.phoneNumber = data.error;
+          if (data.message.toLowerCase().includes('email')) {
+            apiErrors.email = data.message;
+          } else if (data.message.toLowerCase().includes('phone')) {
+            apiErrors.phoneNumber = data.message;
           } else if (data.error.toLowerCase().includes('password')) {
-            apiErrors.password = data.error;
+            apiErrors.password = data.message;
           } else {
             // For other general errors
             // toast.error(data.error);
@@ -696,8 +792,8 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
         }
 
         // Also check if there are field-specific errors in data.errors
-        if (data.errors && typeof data.errors === 'object') {
-          Object.entries(data.errors).forEach(([key, value]) => {
+        if (data.message && typeof data.message === 'object') {
+          Object.entries(data.message).forEach(([key, value]) => {
             if (key === 'phoneNumber' || key === 'email' || key === 'password') {
               apiErrors[key] = String(value);
             }
@@ -719,6 +815,8 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
         }
         if (searchParams!.has('singletechnician')) {
           router.push('/single-technicians/listing');
+        } else if (searchParams!.has('manager')) {
+          router.push('/manager/listing');
         } else {
           router.push('/technicians/listing');
         }
@@ -871,13 +969,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
     });
   };
 
-
-
-  const countries = Country.getAllCountries();
-  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
-
-
-
+ 
   const fetchRoles = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -923,18 +1015,27 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
               types: singleTechnicianRole.type || '',
             }));
           }
-        } else {
-          if (searchParams!.has('technician')) {
-            const ifstechnician = filteredRoles.find(
-              (role: any) => role.name === 'technician'
-            );
-            if (ifstechnician) {
-              setFormData((prev) => ({
-                ...prev,
-                role: ifstechnician.name,
-                types: ifstechnician.type || '',
-              }));
-            }
+        } else if (searchParams!.has('technician')) {
+          const ifstechnician = filteredRoles.find(
+            (role: any) => role.name === 'technician'
+          );
+          if (ifstechnician) {
+            setFormData((prev) => ({
+              ...prev,
+              role: ifstechnician.name,
+              types: ifstechnician.type || '',
+            }));
+          }
+        } else if (searchParams!.has('manager')) {  // Added condition for 'manager'
+          const managerRole = filteredRoles.find(
+            (role: any) => role.name === 'manager'
+          );
+          if (managerRole) {
+            setFormData((prev) => ({
+              ...prev,
+              role: managerRole.name,
+              types: managerRole.type || '',
+            }));
           }
         }
       } else {
@@ -950,18 +1051,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
     fetchRoles();
   }, []);
 
-
-  useEffect(() => {
-    // Update states when country changes
-    const newStates = formData.country ? State.getStatesOfCountry(formData.country) : [];
-    setStates(newStates);
-
-    // Reset state if it's not valid for the new country
-    if (formData.state && !newStates.some(s => s.isoCode === formData.state)) {
-      setFormData(prev => ({ ...prev, state: '' }));
-    }
-  }, [formData.country]);
-
+ 
 
   useEffect(() => {
     if (isEdit) {
@@ -975,28 +1065,40 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
 
   return (
     <div className='w-[60%] m-auto mb-5 m-auto'>
-      <Breadcrumb
-        items={[
-          {
-            label: isSingleTechnician ? 'Single Technician' : 'IFS Technicians',
-            href: isSingleTechnician
-              ? '/single-technicians/listing'
-              : '/technicians/listing',
-          },
-          isEdit
-            ? { label: 'Edit Technician' }
-            : { label: 'Create Technician', href: '/technicians/create-technician' },
-        ]}
-      />
+    <Breadcrumb
+      items={[
+        {
+          label: isSingleTechnician ? 'Single Technician' : 'IFS Technicians',
+          href: isSingleTechnician ? '/single-technicians/listing' : '/technicians/listing',
+        },
+        isEdit
+          ? { label: isTechnician ? 'Edit Technician' : isManager ? 'Edit Manager' : 'Edit Job' }
+          : {
+              label: isTechnician ? 'Create Technician' : isManager ? 'Create Manager' : 'Create Single Technician',
+              href: '/technicians/create-technician',
+            },
+      ]}
+    />
 
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
-      <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create New Technician'}</h1>
+    <h1 className="text-lg leading-6 font-bold text-gray-900">
+      {isEdit
+        ? isTechnician
+          ? 'Edit Technician'
+          : isManager
+          ? 'Edit Manager'
+          : 'Edit Single Technician'
+        : isTechnician
+        ? 'Create Technician'
+        : isManager
+        ? 'Create Manager'
+        : 'Create Single Technician'}
+    </h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
-        <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Copy Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div>
+        {/* <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Copy Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div> */}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4" style={{display:'none'}}>
 
             <div className='mb-4 relative'>
               <FormControl fullWidth size="small">
@@ -1009,6 +1111,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
                   label="Select role name"
                   name="role"
                   onChange={handleSelectChange}
+                  disabled
                 >
                   <MenuItem value="" disabled>
                     Select role
@@ -1018,10 +1121,12 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
                     .map((role, index) => (
                       <MenuItem key={index} value={role.name}>
                         {role.name === "technician"
-                          ? "IFS Technician"
+                          ? "Technician"
                           : role.name === "singletechnician"
                             ? "Single Technician"
-                            : role.name}
+                            : role.name === "manager"
+                              ? "Manager"
+                              : role.name}
                       </MenuItem>
                     ))}
                 </Select>
@@ -1118,14 +1223,9 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            {/* Client Name and Business Name */}
+          {/* <div className="grid grid-cols-4 gap-4"> 
             <div className='mb-4 relative'>
-              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg> */}
+               
               <FormControl fullWidth size="small">
                 <InputLabel id="country" color="warning">Select country *</InputLabel>
                 <Select
@@ -1151,24 +1251,10 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
                   {errors.country}
                 </div>
               )}
-              {/* <select
-                name="country"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                value={formData.country}
-                onChange={handleChange}
-              >
-                <option value="">Select country</option>
-                {countries.map((country: ICountry) => (
-                  <option key={country.isoCode} value={country.isoCode}>{country.name}</option>
-                ))}
-              </select> */}
+              
             </div>
             <div className='mb-4 relative'>
-              {/* <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" className="icon__tech"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg> */}
+             
               <FormControl fullWidth size="small">
                 <InputLabel id="state" color="warning">Select state</InputLabel>
                 <Select
@@ -1196,19 +1282,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
               </FormControl>
 
 
-              {/* <label htmlFor="" className='text-sm'>State <span className='text-red-500'>*</span></label>
-              <select
-                name="state"
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-                value={formData.state}
-                onChange={handleChange}
-                disabled={!formData.country}
-              >
-                <option value="">Select state</option>
-                {states.map((state: IState) => (
-                  <option key={state.isoCode} value={state.isoCode}>{state.name}</option>
-                ))}
-              </select> */}
+              
             </div>
             <div className='mb-4 relative'>
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" style={{ width: '14px' }} fill="none" stroke="currentColor" className="icon__tech"
@@ -1232,33 +1306,65 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
           {/* Address and Email */}
-          <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" style={{ width: '14px' }} stroke="currentColor" className="icon__tech"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
 
-
-
-            {/* <p className='text-sm mb-2'>Address <span className='text-red-500'>*</span></p> */}
-            <TextField fullWidth name="address" id="outlined-basic" color="warning" label="Address" size="small" value={formData.address} onChange={handleChange} />
+          <div className='mb-4 relative z-10'>
+            <GooglePlacesAutocomplete
+              apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+              selectProps={{
+                placeholder: 'Search for an address...',
+                value: address,
+                onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
+                  if (newValue) {
+                    handleAddressSelect(newValue);
+                  }
+                },
+                styles: {
+                  input: (provided) => ({
+                    ...provided,
+                    borderRadius: '4px',
+                    width: '100%'
+                  }),
+                  control: (provided) => ({
+                    ...provided,
+                    borderColor: errors.address ? 'red' : '#ccc', // Red border if error exists
+                    '&:hover': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                    '&:focus': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                  }),
+                }
+              }}
+               autocompletionRequest={{
+                  componentRestrictions: {
+                    country: 'us' // Restrict to US addresses only
+                  }
+                }}
+            />
             {errors.address && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.address}
               </div>
             )}
-            {/* <input
-              type="text"
-               name="address"
-              placeholder="Enter your address"
-              value={formData.address}
-              onChange={handleChange}
-              className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-            /> */}
           </div>
+
+          {/* <div className='mb-4 relative'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" style={{ width: '14px' }} stroke="currentColor" className="icon__tech"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg> 
+             <TextField fullWidth name="address" id="outlined-basic" color="warning" label="Address" size="small" value={formData.address} onChange={handleChange} />
+            {errors.address && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.address}
+              </div>
+            )}
+           
+          </div> */}
           <div className="grid grid-cols-2 gap-4">
             <div className='mb-4 relative'>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="icon__tech" xmlns="http://www.w3.org/2000/svg">
@@ -1377,7 +1483,7 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
             : 'grid-cols-3'
             }`}
           >
-            {!isSingleTechnician && formData.role !== 'singletechnician' && (
+            {formData.role === 'ifs' || isTechnician && (
               <div className=' relative'>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                   <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -1667,18 +1773,18 @@ const removeLocalImage = (index: number, imageType: 'taxForm' | 'profileImage' |
                               const value = e.target.value;
                               const regex = /^\d{0,5}(?:\.\d{0,2})?$/;
 
-                            if (value === '' || regex.test(value)) {
-                              setFormData(prev => ({
-                                ...prev,
-                                simpleFlatRate: {
-                                  ...prev.simpleFlatRate,
-                                  [type]: value,
-                                },
-                              }));
-                            }
+                              if (value === '' || regex.test(value)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  simpleFlatRate: {
+                                    ...prev.simpleFlatRate,
+                                    [type]: value,
+                                  },
+                                }));
+                              }
                             }}
                             inputProps={{ inputMode: 'decimal', pattern: '\\d{0,5}(\\.\\d{0,2})?' }}
-                            disabled={simpleFlatRateAll}
+                            disabled={simpleFlatRateAll && !isEdit}
                           />
                         </div>
                       ))}

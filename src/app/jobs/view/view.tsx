@@ -135,7 +135,7 @@ export default function ViewDetails() {
     }
 
     if (isActiveJob) {
-      return { label: 'Active Work Orders', href: '/jobs/active-job' };
+      return { label: 'Job Detail', href: '/jobs/active-job' };
     }
 
     if (isJobStatus) {
@@ -147,11 +147,11 @@ export default function ViewDetails() {
     }
 
     if (pathname!.includes('/reporting/job-status')) {
-      return { label: 'All IFS Work Orders', href: '/reporting/job-status' };
+      return { label: 'All Work Orders', href: '/reporting/job-status' };
     }
 
     return {
-      label: isSingleTechnician ? 'Active Work Order' : 'Single Technician Work Order',
+      label: isSingleTechnician ? 'Job Detail' : 'Single Technician Work Order',
       href: isSingleTechnician
         ? '/jobs/active-job'
         : '/single-technicians/jobs',
@@ -174,56 +174,27 @@ export default function ViewDetails() {
       <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
 
         <div className="bg-blue rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Work Order Detail</h2>
+          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Job Detail</h2>
           <div className="grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Name:</strong> {jobData?.jobName}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Customer Name:</strong>
                 <div className="flex gap-3 items-center capitalize">
-                  {jobData.customer.image ? (
-                    <img
-                      onClick={() => setPreviewImage(jobData.customer.image)}
-                      src={jobData.customer.image}
-                      alt={jobData.customer.name}
-                      className="w-8 h-8 rounded-full object-cover cursor-pointer"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
-                      {jobData.customer.firstName?.[0]?.toUpperCase() || "?"}
-                    </div>
-                  )}
-                  {jobData?.customer?.firstName} {jobData?.customer?.lastName}
+                
+                  {jobData?.customer?.fullName}
                 </div>
               </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
                 <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
-                  {jobData?.customer?.email}
+                  {jobData?.customer?.email || 'N/A'}
                 </a>
               </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
                 <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
-                  {jobData?.customer?.phoneNumber}
+                  {jobData?.customer?.phoneNumber || 'N/A'}
                 </a>
-              </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>VIN:</strong>
-                {jobData?.vin?.trim() ? jobData.vin : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model:</strong>
-                {jobData?.model?.trim() ? jobData.model : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
-                {jobData?.vehicleDescriptor?.trim() ? jobData.vehicleDescriptor : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Manufacture Name:</strong>
-                {jobData?.manufacturerName?.trim() ? jobData.manufacturerName : <span className="text-gray-500">No data available</span>}
               </div>
 
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {new Date(jobData.createdAt).toLocaleDateString('en-GB')} </div>
@@ -244,138 +215,112 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <div className="mb-4 border-b border-gray-500 text-sm pb-4 flex items-start">
-                <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
-                <div className="flex flex-wrap gap-3">
-                  {jobData.technicians?.map((t: any, index: number) => (
-                    <div key={index} className="flex items-center gap-2">
-                      {t.image ? (
+              {jobData.technicians?.map((tech: any, index: number) => (
+                <div key={index} className="mb-6 border-b border-gray-400 pb-4">
+
+                  {/* Technician Image and Name */}
+                  <div className="mb-2 flex items-start text-sm">
+                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
+                    <div className="flex items-center gap-2">
+                      {tech.image ? (
                         <img
-                          onClick={() => setPreviewImage(t.image)}
-                          src={t.image}
-                          alt={`${t.firstName} ${t.lastName}`}
+                          onClick={() => setPreviewImage(tech.image)}
+                          src={tech.image}
+                          alt={`${tech.firstName} ${tech.lastName}`}
                           className="w-8 h-8 rounded-full object-cover cursor-pointer"
                         />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
-                          {t.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                          {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
                         </div>
                       )}
-                      <span className='capitalize'>{`${t.firstName} ${t.lastName}`}</span>
+                      <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
+                  {/* Email */}
+                  <div className="mb-2 flex text-sm">
+                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                    <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
+                  </div>
 
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
-                <a className="hover:underline" href={`mailto:${jobData.technicians?.map((t: any) => t.email)}`}>
-                  {jobData.technicians?.map((t: any) => t.email).join(', ')}
-                </a>
-              </div>
+                  {/* Phone Number */}
+                  <div className="mb-2 flex text-sm">
+                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                    <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
+                  </div>
 
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
-                <a className="hover:underline" href={`tel:${jobData.technicians?.map((t: any) => t.phoneNumber)}`}>
-                  {jobData.technicians?.map((t: any) => t.phoneNumber || 'N/A').join(', ')}
-                </a>
-              </div>
+                  {/* Pay Details */}
+                  {tech.UserJob && (
+                    <>
+                      {tech.UserJob.payRate && (
+                        <div className="mb-2 flex text-sm">
+                          <strong className="w-[210px] min-w-[210px] inline-block">Pay Rate:</strong>
+                          {tech.UserJob.payRate}
+                        </div>
+                      )}
 
+                      {tech.UserJob.payVehicleType && (
+                        <div className="mb-2 flex text-sm">
+                          <strong className="w-[210px] min-w-[210px] inline-block">Vehicle Type:</strong>
+                          {tech.UserJob.payVehicleType}
+                        </div>
+                      )}
 
-              {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex capitalize">
-                  <strong className="w-[210px] min-w-[210px] inline-block capitalize">R/I/R/R:</strong>
+                      {/* Simple Flat Rate */}
+                      {tech.UserJob.simpleFlatRate && tech.UserJob.simpleFlatRate !== "{}" && (
+                        <div className="mb-2 flex text-sm">
+                          <strong className="w-[210px] min-w-[210px] inline-block">Simple Flat Rate:</strong>
+                          <div className='w-[200px]'>
+                            {
+                              (() => {
+                                const flatRateData = tech.UserJob.simpleFlatRate;
+                                if (flatRateData && flatRateData.startsWith('{')) {
+                                  try {
+                                    const parsed = JSON.parse(flatRateData);
+                                    return Object.entries(parsed).map(([vehicleType, rate]) => {
+                                      let rateValue: number = 0;
 
-                  {(() => {
-                    if (!jobData) return null;
+                                      if (typeof rate === 'string') {
+                                        const parsedRate = parseFloat(rate);
+                                        rateValue = isNaN(parsedRate) ? 0 : parsedRate;
+                                      } else if (typeof rate === 'number') {
+                                        rateValue = rate;
+                                      }
 
-                    // Parse jobDescription items and calculate total cost
-                    let totalCost = 0;
+                                      return (
+                                        <div key={vehicleType}>
+                                         <div className='grid grid-cols-2'><span> {vehicleType}:</span> <span> ${rateValue.toFixed(2)}</span> </div>
+                                        </div>
+                                      );
+                                    });
+                                  } catch (error) {
+                                    console.error('Error parsing flat rate data:', error);
+                                    return '$0.00';
+                                  }
+                                } else {
+                                  return flatRateData;
+                                }
+                              })()
+                            }
 
-                    if (jobData?.jobDescription && Array.isArray(jobData.jobDescription)) {
-                      totalCost = jobData.jobDescription.reduce((sum: number, item: any) => {
-                        return sum + Number(item?.cost || 0); // Accumulate the cost
-                      }, 0);
-                    }
-
-                    const simpleFlatRate = Number(jobData.simpleFlatRate);
-                    const amountPercentage = Number(jobData.amountPercentage);
-
-                    // If both are invalid in the first job data, fallback to technician data
-                    const fallbackSimpleFlatRate = Number(jobData?.technicians?.[0]?.simpleFlatRate || 0);
-                    const fallbackAmountPercentage = Number(jobData?.technicians?.[0]?.amountPercentage || 0);
-
-                    // Check if both simpleFlatRate and amountPercentage are invalid
-                    if (
-                      (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-                      (isNaN(amountPercentage) || amountPercentage === 0)
-                    ) {
-                      // Fallback to technician data if primary values are invalid
-                      if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            ${fallbackSimpleFlatRate.toFixed(2)}
                           </div>
-                        );
-                      }
-
-                      // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
-                      if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
-                        const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
-                          </div>
-                        );
-                      }
-
-                      // Show red dot with tooltip if both fallback values are invalid
-                      const tooltipId = `tooltip-${jobData.id}`;
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                          {/* <span
-                            data-tooltip-id={tooltipId}
-                            data-tooltip-content="R/I/R/R price is not added for this job."
-                            style={{
-                              height: '12px',
-                              width: '12px',
-                              backgroundColor: 'red',
-                              borderRadius: '50%',
-                              display: 'inline-block',
-                              cursor: 'pointer',
-                            }}
-                          ></span>
-                          <Tooltip id={tooltipId} place="top" /> */}
-                          Per Job
                         </div>
-                      );
-                    }
+                      )}
 
-                    // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
-                    if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          ${simpleFlatRate.toFixed(2)}
+                      {/* Amount Percentage */}
+                      {tech.UserJob.amountPercentage && (
+                        <div className="mb-2 flex text-sm">
+                          <strong className="w-[210px] min-w-[210px] inline-block">Amount Percentage:</strong>
+                          {tech.UserJob.amountPercentage}%
                         </div>
-                      );
-                    }
-
-                    // Show percentage-based calculation
-                    if (!isNaN(amountPercentage) && amountPercentage > 0) {
-                      const percentageAmount = (totalCost * amountPercentage) / 100;
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                        </div>
-                      );
-                    }
-
-                    return null;
-                  })()}
-                  <span className='ml-4'>{jobData?.payRate}</span>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
+              ))}
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
 
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
@@ -386,107 +331,10 @@ export default function ViewDetails() {
                 </div>
 
               )}
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Make:</strong>
-                {jobData?.make?.trim() ? jobData.make : <span className="text-gray-500">No data available</span>}
-              </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model Year:</strong>
-                {jobData?.modelYear?.toString().trim() ? jobData.modelYear : <span className="text-gray-500">No data available</span>}
-              </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
-                {jobData?.vehicleType?.trim() ? jobData.vehicleType : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Color:</strong>
-                {jobData?.color?.trim() ? jobData.color : <span className="text-gray-500">No data available</span>}
-              </div>
-
-              <p className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex gap-3">
-                <strong className="  inline-block">Notes:</strong>
-                {jobData?.notes?.trim() ? (
-                  <div dangerouslySetInnerHTML={{ __html: jobData.notes }} />
-                ) : (
-                  <span className="text-gray-500">No notes available</span>
-                )}
-              </p>
-
-              <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
-                {jobData.images.map((form: any, index: any) => (
-                  <img
-                    key={index}
-                    onClick={() => setPreviewImage(form)}
-                    src={form}
-                    alt={`Technician Tax Form ${index + 1}`}
-                    className="w-[50px] h-[50px] rounded-full bg-orange-500 p-1 shadow-lg cursor-pointer mr-2"
-                  />
-                ))}
-              </div>
             </div>
 
-          </div>
-          <div className="grid grid-cols-1 gap-3 p-6 pt-0 mb-4">
-
-            <div className='shadow-lg p-5 bg-white rounded'>
-              <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex">
-                <strong className="w-[210px] min-w-[210px] inline-block">Job Description:</strong>
-                {jobData?.jobDescription && Array.isArray(jobData.jobDescription) ? (
-                  <ul className="list-none w-full">
-                    {jobData.jobDescription.map((item: string | object, index: number) => {
-                      let parsedItem;
-
-                      // Check if the item is a stringified JSON and try to parse it
-                      try {
-                        parsedItem = typeof item === 'string' ? JSON.parse(item) : item;
-                      } catch (error) {
-                        console.error("Error parsing job description:", error);
-                        parsedItem = {}; // Fallback in case of an error
-                      }
-
-                      return (
-                        <li key={index} className='w-full mb-5'>
-                          <div className='flex gap-5 justify-between'>
-                            <span className="block">
-                              {parsedItem?.jobDescription || "No description available"}
-                            </span>
-                            <b>${parsedItem?.cost || "0.00"}</b>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  'No job descriptions available'
-                )}
-              </div>
-              {jobData?.jobDescription && Array.isArray(jobData.jobDescription) && (
-                <div className="mb-4 border-b border-gray-500 text-sm pb-4">
-                  <strong className='w-[210px] inline-block'>Sub Total: </strong>
-                  ${(
-                    jobData.jobDescription.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0)
-                  ).toFixed(2)}
-
-                </div>
-              )}
-              {userType !== 'single-technician' && !isSingleTechnicianWorkOrder && (
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                  <strong className='w-[210px] inline-block'>Total Cost: </strong>${calculateTotalCost(jobData).toFixed(2)}
-                </div>
-              )}
-              {(userType === 'single-technician' || isSingleTechnicianWorkOrder) && (
-                <div className="mb-4 border-b border-gray-500 text-sm mb-3 pb-4">
-                  <strong className='w-[210px] inline-block'>Total Cost: </strong>
-                  ${(
-                    (jobData?.jobDescription?.reduce((total: any, item: any) => total + parseFloat(item.cost || '0'), 0) || 0)
-                    + parseFloat(jobData?.labourCost || '0')
-                  ).toFixed(2)}
-                </div>
-              )}
-            </div>
           </div>
         </div>
         <ToastContainer />

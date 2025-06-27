@@ -1,23 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable, { File } from 'formidable';
 import fs from 'fs';
-import axios from 'axios';
 import FormData from 'form-data';
+import axios from 'axios';
 
-// Disable Next.js body parser for multipart forms
 export const config = {
   api: { bodyParser: false },
 };
 
-// Convert file or array of files to array
 function toFileArray(fileOrFiles: File | File[] | undefined): File[] {
   if (!fileOrFiles) return [];
   return Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
 }
 
-// Parse multipart form data with formidable
-function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
-  const form = formidable({ multiples: true, keepExtensions: true });
+async function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
+  const form = formidable({ 
+    multiples: true,
+    keepExtensions: true,
+    allowEmptyFiles: false,
+    filename: (name, ext, part) => {
+      return `${Date.now()}-${part.originalFilename}`;
+    }
+  });
+
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) reject(err);
@@ -33,55 +38,91 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { fields, files } = await parseForm(req);
+    
+    // Log received data for debugging 
 
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiBaseUrl) {
-      return res.status(500).json({ error: 'Backend API URL not configured' });
+      throw new Error('Backend API URL not configured');
     }
 
-    const token = req.headers.authorization || '';
+    const token = req.headers.authorization;
+    if (!token) {
+      throw new Error('Authorization token missing');
+    }
 
-    // Prepare the formData
+    const vehicleId = fields.vehicleId?.[0];
+    console.log(vehicleId, 'vehicleId');
+    
+    const endpoint = vehicleId ? 'updateVehicleInfo' : 'addVehicleInfo';
+    const fileFieldName = vehicleId ? 'updateImages' : 'images';
+
     const formData = new FormData();
-
-    // Append fields to formData
+    
+    // Append fields
     for (const key in fields) {
-      const val = fields[key];
-      if (Array.isArray(val)) {
-        val.forEach((v) => formData.append(key, v));
-      } else if (val !== undefined && val !== null) {
-        formData.append(key, String(val));
+      const values = Array.isArray(fields[key]) ? fields[key] : [fields[key]];
+      for (const value of values) {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
       }
     }
 
-    // Append files to formData
+    // Append files
     for (const key in files) {
       const fileArr = toFileArray(files[key] as File | File[]);
       for (const file of fileArr) {
-        formData.append(key, fs.createReadStream(file.filepath), {
-          filename: file.originalFilename || 'file',
-          contentType: file.mimetype || undefined,
-        });
+        if (!fs.existsSync(file.filepath)) {
+          throw new Error(`File not found: ${file.filepath}`);
+        }
+        formData.append(
+          fileFieldName,
+          fs.createReadStream(file.filepath),
+          {
+            filename: file.originalFilename || 'file',
+            contentType: file.mimetype || 'application/octet-stream',
+          }
+        );
       }
     }
 
-    // Send the data to the backend API using axios
-    const response = await axios.post(`${apiBaseUrl}/addVehicleInfo`, formData, {
-      headers: {
-        Authorization: token,
-        ...formData.getHeaders(),
-      },
-      maxBodyLength: Infinity, // Allow large files
-      maxContentLength: Infinity,
+    // Temporary file cleanup
+    const tempFiles = Object.values(files).flatMap(toFileArray);
+    
+    try {
+      const response = await axios.post(`${apiBaseUrl}/${endpoint}`, formData, {
+        headers: {
+          Authorization: token,
+          ...formData.getHeaders(),
+        },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
+
+      return res.status(response.status).json(response.data);
+    } finally {
+      // Clean up temporary files
+      tempFiles.forEach(file => {
+        try {
+          fs.unlinkSync(file.filepath);
+        } catch (cleanupError) {
+          console.error('Error cleaning up temp file:', cleanupError);
+        }
+      });
+    }
+    
+  } catch (error: any) {
+    console.error('API Error:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
     });
 
-    // Return the response from the backend API
-    return res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error('Error in addVehicleInfo API:', error.response?.data || error.message || error);
-    return res.status(error.response?.status || 500).json({
-      error: error.response?.data?.error || 'Internal server error',
-      details: error.response?.data || error.message,
+    const statusCode = error.response?.status || 500;
+    return res.status(statusCode).json({ 
+      error: error.message || 'Internal server error',
+      details: error.response?.data || error.stack 
     });
   }
 }

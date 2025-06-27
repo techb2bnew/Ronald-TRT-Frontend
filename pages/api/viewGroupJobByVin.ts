@@ -1,4 +1,3 @@
-// pages/api/viewGroupJobByVin.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 function toSingleString(value: string | string[] | undefined): string {
@@ -15,17 +14,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const {
       roleType: rawRoleType,
       vin: rawVin,
+      customerId: rawCustomerId,
+      jobId: rawJobId,
       filterType: rawFilterType,
       userId: rawUserId,
     } = req.query;
 
     const roleType = toSingleString(rawRoleType);
     const vin = toSingleString(rawVin);
+    const customerId = toSingleString(rawCustomerId);
+    const jobId = toSingleString(rawJobId);
     const filterType = toSingleString(rawFilterType);
     const userId = toSingleString(rawUserId);
 
-    if (!roleType || !vin) {
-      return res.status(400).json({ error: 'roleType and vin parameters are required' });
+    if (!roleType || (!vin && !customerId && !jobId)) {
+      return res.status(400).json({ error: 'roleType, vin, customerId, or jobId parameters are required' });
     }
 
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -33,7 +36,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Backend API URL not configured' });
     }
 
-    let backendUrl = `${apiBaseUrl}/fetchGroupJobByVin?roleType=${encodeURIComponent(roleType)}&vin=${encodeURIComponent(vin)}`;
+    let backendUrl = `${apiBaseUrl}/fetchGroupJobByVin?roleType=${encodeURIComponent(roleType)}`;
+
+    // Append vin, customerId, or jobId depending on what is available
+    if (vin) {
+      backendUrl += `&vin=${encodeURIComponent(vin)}`;
+    }
+    if (customerId) {
+      backendUrl += `&customerId=${encodeURIComponent(customerId)}`;
+    }
+    if (jobId) {
+      backendUrl += `&jobId=${encodeURIComponent(jobId)}`;
+    }
 
     if (filterType) {
       backendUrl += `&filterType=${encodeURIComponent(filterType)}`;

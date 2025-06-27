@@ -6,13 +6,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { jobid, deletedStatus } = req.body; // Expecting jobid, userRole, deletedStatus from the request body
+    const { jobId, deletedStatus } = req.body; // Expecting jobId, userRole, deletedStatus from the request body
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
  
-    console.log("jobid:", jobid);
+    console.log("jobId:", jobId);
 
-    if (!token || !jobid ) {
-      return res.status(400).json({ message: 'Missing token, jobid, or userRole' });
+    if (!token || !jobId ) {
+      return res.status(400).json({ message: 'Missing token, jobId, or userRole' });
     }
 
     // Implement your deletion logic here (e.g., delete the job from the database)
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`, // Pass the token in the Authorization header
       },
-      body: JSON.stringify({ jobid, deletedStatus }), // Pass jobid, userRole, and deletedStatus to backend
+      body: JSON.stringify({ jobId, deletedStatus }), // Pass jobId, userRole, and deletedStatus to backend
     });
 
     const contentType = response.headers.get('content-type') || '';

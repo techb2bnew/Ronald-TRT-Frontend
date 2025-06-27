@@ -120,7 +120,12 @@ tr:nth-child(even) {background: #383d7114;}
 .margin_remove .MuiFormControl-root {
   margin: 0 !important;
 }
-
+.css-1rndhd7-control{
+  box-shadow: none !important;
+}
+.css-1dimb5e-singleValue {
+    font-size: 12px;
+}
 /* Loader css */
 /* Preloader Styling */
 #preloader {
@@ -551,8 +556,18 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 }
 .input.text-xs.input-bordered.w-full.p-2.rounded.PhoneInput {
   background-color: #f5f7fa !important;
+  padding: 11px;
 
 }
+.MuiListItemText-root.MuiListItemText-dense {
+    position: absolute;
+    padding-left: 2rem;
+    z-index: 9999;
+}
+.css-1jqq78o-placeholder 
+ {
+    font-size: 12px;
+ }
 .search__input input#outlined-basic {
   background-color: #ffffff !important;
 }

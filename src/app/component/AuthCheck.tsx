@@ -75,7 +75,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           localStorage.clear();
           router.push("/");
           return;
-        }   if (!currentUser?.deletedStatus) {
+        }   if (currentUser?.deletedStatus) {
           await Swal.fire({
             icon: 'warning',
             title: 'Account Deleted',

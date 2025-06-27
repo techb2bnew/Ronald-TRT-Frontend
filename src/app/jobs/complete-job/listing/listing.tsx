@@ -58,7 +58,7 @@ const CompletedJobs: React.FC = () => {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const endpoint = query.trim()
-        ? roleType === 'superadmin'
+        ? roleType === 'superadmin' || roleType === 'manager'
           ? `${apiUrl}/searchTechnicianCompleteJob?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/searchTechnicianCompleteJob?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'

@@ -253,7 +253,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&types=single-technician`
+        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&roleType=single-technician`
         : `/api/fetchIndividualTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -392,9 +392,6 @@ const TechnicianTable: React.FC = () => {
       Email: tech.email,
       Phone: tech.phoneNumber,
       Address: tech.address,
-      Country: tech.country,
-      City: tech.city,
-      State: tech.state,
       SimpleFlatRate: tech.simpleFlatRate,
       AmountPercentage: tech.simpleFlatRate,
       PayVehicleType: tech.payVehicleType,
@@ -433,8 +430,7 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
+        'Id', 'Name', 'Email', 'Phone', 'Address', 'SimpleFlatRate', 'AmountPercentage',
         'PayVehicleType', 'PayRate', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
