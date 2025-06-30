@@ -590,7 +590,7 @@ const fetchJobData = async (jobid: string) => {
             </div>
           </div>
 
-          {userType !== 'single-technician' && userType !== 'ifs' && (
+          {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start gap-3 relative mt-3'>
               <FormControl fullWidth size="small">
                 <FormLabel color="warning" className='mb-4'>Assign Technician(s) to this vehicle*</FormLabel>
@@ -644,10 +644,11 @@ const fetchJobData = async (jobid: string) => {
             </div>
           )}
 
-          {selectedTechnicians.length > 0 && (
+          {selectedTechnicians.length > 0 && userType !== 'single-technician' && (
             <h2 className='text-lg font-bold mb-3 text-[#000]'>Pay Rates</h2>
           )}
-
+          {userType !== 'single-technician' && (
+            <div>
           {selectedTechnicians.map((tech, techIndex) => (
             <Accordion key={tech.id} className="mb-4">
               <AccordionSummary
@@ -872,6 +873,8 @@ const fetchJobData = async (jobid: string) => {
               </AccordionDetails>
             </Accordion>
           ))}
+          </div>
+          )}
 
           <div className="flex gap-4 justify-end mt-4 mb-4">
             <button

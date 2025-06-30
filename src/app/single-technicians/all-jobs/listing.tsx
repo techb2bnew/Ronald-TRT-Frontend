@@ -79,11 +79,11 @@ const JobTable: React.FC = () => {
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
-        ? roleType === 'superadmin' || roleType === 'manager'
-          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+        ? roleType === 'single-technician' || roleType === 'manager'
+          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}`
           : `/api/jobListing?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
-        : roleType === 'superadmin'
-          ? `/api/jobListing?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+        : roleType === 'superadmin' || roleType === 'manager'
+          ? `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}`
           : `/api/jobListing?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
@@ -546,8 +546,8 @@ const JobTable: React.FC = () => {
         <td>{job.vehicleCount} Work Order</td>
         <td>
           {canCreate && (
-
-            <span onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
+// onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
+            <span 
               className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {job.jobStatus ? 'Completed' : 'In Progress'}

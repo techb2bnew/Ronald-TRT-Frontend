@@ -61,18 +61,18 @@ const VehicleTable: React.FC = () => {
           ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.response.vehicles || [];
+          : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -486,13 +486,13 @@ const VehicleTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

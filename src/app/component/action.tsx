@@ -41,7 +41,7 @@ const TableActions: React.FC<TableActionsProps> = ({
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.log("⚠️ No permissions found in localStorage. Showing all icons.");
+      console.log("No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 

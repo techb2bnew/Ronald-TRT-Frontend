@@ -26,7 +26,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
 
   // ✅ Check exact match or start with "/reset-password/"
   const hideSidebarRoutes = ["/", "/login", "/signup", "/forgot"];

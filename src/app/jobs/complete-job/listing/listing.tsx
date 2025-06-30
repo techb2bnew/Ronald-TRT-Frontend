@@ -447,11 +447,12 @@ const CompletedJobs: React.FC = () => {
               {(() => {
                 if (!completejob) return null;
 
-                const subtotalcost = completejob.jobDescription.reduce((sum: number, item: any) => {
+                // If jobDescription exists, calculate the subtotal cost
+                const subtotalcost = completejob.jobDescription?.reduce((sum: number, item: any) => {
                   return sum + Number(item.cost || 0);
-                }, 0);
+                }, 0) || 0; // Default to 0 if jobDescription is not present
 
-                const labourCost = Number(completejob.labourCost || 0); // <-- Fix here
+                const labourCost = Number(completejob.labourCost || 0); // Labour cost, defaults to 0 if not available
 
                 const totalCost = subtotalcost + labourCost;
 
@@ -476,6 +477,7 @@ const CompletedJobs: React.FC = () => {
                   );
                 }
 
+                // If jobDescription exists, show total cost of job + labour cost
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     ${totalCost.toFixed(2)}
@@ -483,8 +485,8 @@ const CompletedJobs: React.FC = () => {
                 );
               })()}
             </td>
-
           )}
+
           <td>{completejob.vin}</td>
           <td>{completejob.make}</td>
           <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>

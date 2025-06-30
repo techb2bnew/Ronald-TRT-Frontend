@@ -3,6 +3,12 @@ import Link from 'next/link';
 import React, { useEffect, useState } from "react";
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
+
+
 
 interface CommonHeaderProps {
   heading: string;
@@ -21,13 +27,19 @@ interface CommonHeaderProps {
   onAllJobsClick?: () => void;
   onColumnSelect?: (column: string[]) => void;
   additionalComponents?: React.ReactNode;
+  showDatePicker?: boolean;
+  onDateChange?: (newValue: [any, any]) => void;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+
+
   const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
   const [selectedColumn, setSelectedColumn] = useState<string[]>([]); // Default is an array
 
@@ -44,7 +56,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.log("⚠️ No permissions found in localStorage. Showing all icons.");
+      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 
@@ -81,12 +93,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
- const handleColumnChange = (event: SelectChangeEvent<string[]>) => {
-  const value = event.target.value as string[];
-  const filteredColumns = value.filter(col => col !== 'select'); 
-  setSelectedColumn(filteredColumns);  // Update selected columns state
-  if (onColumnSelect) onColumnSelect(filteredColumns);  // Pass the updated columns to parent if needed
-};
+  const handleColumnChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value as string[];
+    const filteredColumns = value.filter(col => col !== 'select');
+    setSelectedColumn(filteredColumns);  // Update selected columns state
+    if (onColumnSelect) onColumnSelect(filteredColumns);  // Pass the updated columns to parent if needed
+  };
 
 
 
@@ -118,36 +130,47 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </div>
           )}
 
-          {onColumnSelect && (
-            <FormControl size="small" variant="outlined" className="w-[180px]">
-              <InputLabel id="column-select-label">Select Column</InputLabel>
-              <Select
-                labelId="column-select-label"
-                id="column-select"
-                value={selectedColumn.length === 0 ? ['select'] : selectedColumn}
-                onChange={handleColumnChange}
-                label="Select Column"
-                color="warning"
-                renderValue={(selected) => {
-                  if (selected.length === 0 || selected.includes('select')) {
-                    return 'Select Columns';
-                  }
-                  return selected.join(', ');
-                }}
-                multiple
-              >
-                <MenuItem value="select">Select Columns</MenuItem>
-                <MenuItem value="checkbox">Checkbox</MenuItem>
-                <MenuItem value="id">ID</MenuItem>
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="email">Email</MenuItem>
-                <MenuItem value="phoneNumber">Phone Number</MenuItem>
-                <MenuItem value="address">Address</MenuItem>
-                <MenuItem value="action">Action</MenuItem>
-              </Select>
+          {showDatePicker && (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <div className="flex gap-4">
+                <DatePicker
+                  label="Start Date"
+                  value={startDate}
+                  onChange={(newValue) => {
+                    setStartDate(newValue);
+                    onDateChange?.([newValue, endDate]);
+                  }}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      color: 'warning',
 
-            </FormControl>
+                    },
+                  }}
+                />
+                <DatePicker
+                  label="End Date"
+                  value={endDate}
+                  onChange={(newValue) => {
+                    setEndDate(newValue);
+                    onDateChange?.([startDate, newValue]);
+                  }}
+                  minDate={startDate || undefined}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      color: 'warning',
+                    },
+                  }}
+                />
+              </div>
+            </LocalizationProvider>
           )}
+
+
+
 
           {onPageSizeChange && (
 
@@ -259,7 +282,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           </Link>
       </div> */}
 
-    </div>
+    </div >
   );
 };
 

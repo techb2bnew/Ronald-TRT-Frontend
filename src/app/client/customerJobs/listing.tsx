@@ -76,17 +76,18 @@ const JobTable: React.FC = () => {
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || "";
       const userId = localStorage.getItem('userID');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
          ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/CustomerVehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&customerId=${customerId}`
+          : `${apiUrl}/CustomerVehicleInfoSearch?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&customerId=${customerId}`
         : roleType === 'superadmin'
           ? `/api/customerJobListing?page=${page}&limit=${limit}&customerId=${customerId}`
-          : `/api/customerJobListing?page=${page}&limit=${limit}`;
+          : `/api/customerJobListing?page=${page}&limit=${limit}&customerId=${customerId}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -247,7 +248,7 @@ const JobTable: React.FC = () => {
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.log("⚠️ No permissions found in localStorage. Showing all icons.");
+      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 

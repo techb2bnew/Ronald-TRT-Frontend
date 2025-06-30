@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -18,7 +18,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+import 'react-tooltip/dist/react-tooltip.css'; 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -65,8 +65,8 @@ const VehicleTable: React.FC = () => {
           ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 
@@ -75,10 +75,10 @@ const VehicleTable: React.FC = () => {
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.response.vehicles || [];
+          : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -150,7 +150,7 @@ const VehicleTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
- 
+
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
@@ -189,7 +189,7 @@ const VehicleTable: React.FC = () => {
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td> */}
-        <td>{job.vehicleDescriptor}</td> 
+        <td>{job.vehicleDescriptor}</td>
         <td>{job.make} </td>
         <td>{job.model}</td>
         <td>{job.modelYear}</td>
@@ -205,7 +205,7 @@ const VehicleTable: React.FC = () => {
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
           /> */}
 
-           <Link href={`/reporting/view?vehicleId=${job.id}`} >
+          <Link href={`/reporting/view?vehicleId=${job.id}`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>
@@ -222,8 +222,11 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
- 
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={(date) => {
+          console.log("Selected Date Range:", date); 
+        }} />
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -255,7 +258,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-                <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -263,7 +266,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-               <th className="w-[120px]">
+              <th className="w-[120px]">
                 Customer Email
               </th>
               <th className="w-[150px]">
@@ -282,7 +285,7 @@ const VehicleTable: React.FC = () => {
               </th> */}
               <th className="w-[120px]">
                 Vehicle Descriptor
-              </th>   
+              </th>
               <th className="w-[100px]">
                 Make
               </th>
@@ -311,8 +314,8 @@ const VehicleTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && ( 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {activeJob.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

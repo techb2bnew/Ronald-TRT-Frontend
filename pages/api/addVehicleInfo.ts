@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(vehicleId, 'vehicleId');
     
     const endpoint = vehicleId ? 'updateVehicleInfo' : 'addVehicleInfo';
-    const fileFieldName = vehicleId ? 'updateImages' : 'images';
+    const fileFieldName = vehicleId ? 'images' : 'images';
 
     const formData = new FormData();
     

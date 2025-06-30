@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import toast from 'react-hot-toast';
 import 'react-toastify/dist/ReactToastify.css';
 import TextField from '@mui/material/TextField';
+import Swal from 'sweetalert2';
 
 export default function Login() {
   const router = useRouter();
@@ -86,7 +87,6 @@ export default function Login() {
           }
         }
       } else {
-        toast.success("Login successful!");
         localStorage.setItem('token', data.token);
         localStorage.setItem('userID', data.user.id);
         localStorage.setItem('types', data.user.types);
@@ -101,12 +101,24 @@ export default function Login() {
         //   localStorage.removeItem('rememberedEmail');
         //   localStorage.removeItem('rememberedPassword');
         // }
-        if (data.user.types === 'single-technician' || data.user.types === 'ifs') {
-          router.push('/client/listing');
+            if (data.user.types === 'ifs') {
+        // If the role is 'ifs', show SweetAlert instead of redirecting
+        if (data.user.types === 'ifs') {
+          Swal.fire({
+            icon: 'info',
+            title: 'Access Restricted',
+            text: 'Your account is under the "IFS" role, and you do not have access to admin.',
+            confirmButtonText: 'OK',
+          }).then(() => {
+            // You can handle any additional logic here if needed
+          });
+        }
+      } else if (data.user.types === 'single-technician') {
+        // If role is not 'ifs', redirect accordingly
+        router.push('/client/listing');
         } else {
           router.push('/vehicle/vehicle');
-        }
-        // Handle success (e.g., clearing form, redirecting)
+        }  
       }
     } catch (error) {
       console.error('Login failed:', error);

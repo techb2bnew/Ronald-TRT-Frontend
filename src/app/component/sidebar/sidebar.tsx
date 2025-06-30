@@ -751,7 +751,7 @@ const Sidebar = () => {
               </Link>
             </li>
           )} */}
-          {userType === 'superadmin' || userType === 'manager' && (
+          {userType !== 'single-technician' && (
             <hr className='mt-3' />
           )}
           {userType !== 'single-technician' && userType !== 'ifs' && (
@@ -793,6 +793,11 @@ const Sidebar = () => {
                   <li>
                     <Link href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Vehicles Info</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                      <span>All Jobs</span>
                     </Link>
                   </li>
                   {/* <li>

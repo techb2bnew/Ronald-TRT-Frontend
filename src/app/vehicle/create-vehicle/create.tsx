@@ -309,28 +309,28 @@ export default function Technicians() {
         console.error('Failed to parse technician data:', err);
       }
     }
-    if (roleType !== 'single-technician') { 
-    jobForms.forEach((form, formIndex) => {
-      if (Array.isArray(form.technicianDetails)) {
-        form.technicianDetails.forEach((techDetail, techIndex) => {
-          formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
-          formDataObj.append(`technicians[${techIndex}][firstName]`, techDetail.firstName);
-          formDataObj.append(`technicians[${techIndex}][lastName]`, techDetail.lastName);
-          formDataObj.append(`technicians[${techIndex}][payRate]`, techDetail.payRate || '');
-          formDataObj.append(`technicians[${techIndex}][payVehicleType]`, techDetail.payVehicleType || '');
-          formDataObj.append(`technicians[${techIndex}][simpleFlatRate]`, techDetail.simpleFlatRate || '{}');
-          formDataObj.append(`technicians[${techIndex}][amountPercentage]`, techDetail.amountPercentage || '');
-        });
-      }
+    if (roleType !== 'single-technician') {
+      jobForms.forEach((form, formIndex) => {
+        if (Array.isArray(form.technicianDetails)) {
+          form.technicianDetails.forEach((techDetail, techIndex) => {
+            formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
+            formDataObj.append(`technicians[${techIndex}][firstName]`, techDetail.firstName);
+            formDataObj.append(`technicians[${techIndex}][lastName]`, techDetail.lastName);
+            formDataObj.append(`technicians[${techIndex}][payRate]`, techDetail.payRate || '');
+            formDataObj.append(`technicians[${techIndex}][payVehicleType]`, techDetail.payVehicleType || '');
+            formDataObj.append(`technicians[${techIndex}][simpleFlatRate]`, techDetail.simpleFlatRate || '{}');
+            formDataObj.append(`technicians[${techIndex}][amountPercentage]`, techDetail.amountPercentage || '');
+          });
+        }
 
-      // Also append the userId array separately if needed by backend
-      if (Array.isArray(form.assignTechnicians)) {
-        form.assignTechnicians.forEach((techId, tIndex) => {
-          formDataObj.append(`userId[${tIndex}]`, techId);
-        });
-      }
-    });
-  }
+        // Also append the userId array separately if needed by backend
+        if (Array.isArray(form.assignTechnicians)) {
+          form.assignTechnicians.forEach((techId, tIndex) => {
+            formDataObj.append(`userId[${tIndex}]`, techId);
+          });
+        }
+      });
+    }
 
     // Append job descriptions (if any)
     const jobDescriptionsArray = descriptionCostFields.map((item) => ({
@@ -352,9 +352,11 @@ export default function Technicians() {
 
     // Append images (if any) - use jobForms[0] instead of formData
     if (Array.isArray(jobForms[0].images)) {
-      jobForms[0].images.forEach((file, fileIndex) => {
+      jobForms[0].images.forEach((file) => {
         if (file instanceof File) {
-          formDataObj.append(`images`, file);
+          formDataObj.append('images[]', file);
+        } else {
+          formDataObj.append('images[]', file);  // In case images are URLs, include them as well
         }
       });
     }
@@ -1068,7 +1070,7 @@ export default function Technicians() {
     }
 
     // Check total images won't exceed 5
-    const currentImageCount = jobForms[index]?.images?.length || 0; // Ensure images is an array for the specific form
+    const currentImageCount = jobForms[index]?.images?.length || 0;
     const newImageCount = validImageFiles.length;
 
     if (currentImageCount + newImageCount > 5) {
@@ -1085,9 +1087,8 @@ export default function Technicians() {
       compressImage(file, maxWidth, maxHeight, quality)
     );
 
-    // Type the result of Promise.all as File[]
     Promise.all(compressions)
-      .then((compressedFiles) => {  // This is now properly inferred as File[]
+      .then((compressedFiles) => {
         setJobForms(prev => {
           const updatedForms = [...prev];
           updatedForms[index] = {
@@ -1105,6 +1106,7 @@ export default function Technicians() {
         toast.error('Failed to compress images.');
       });
   };
+
 
   // Compress function ensures it returns a File object
   function compressImage(file: any, maxWidth: number, maxHeight: number, quality: number): Promise<File> {
@@ -2140,10 +2142,12 @@ export default function Technicians() {
 
           ))}
           <div className="flex gap-4 justify-end mt-4 mb-4">
+            {!isEdit && (
             <button type='button' onClick={() => handleAddVehicle(false)} className="primary-bg pl-5 pr-5 p-2 rounded">
               Add More Vehicle
             </button>
-            <button
+            )}
+          <button
               type="button"
               onClick={() => handleAddVehicle(true)}
               className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
@@ -2174,7 +2178,7 @@ export default function Technicians() {
                   <span>Submitting...</span>
                 </>
               ) : (
-                'Add & Submit'
+                isEdit ? 'Update & Submit' : 'Add & Submit'
               )}
             </button>
           </div>

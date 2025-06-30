@@ -314,7 +314,7 @@ export default function ViewDetails() {
                             <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData.labourCost}</p>
 
                           )}
-                          {jobData.labourCost !== null && ( 
+                          {jobData.labourCost !== null || roleType !== 'single-technician' && ( 
                             <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData.labourCost}</p>
                           )}
                           {roleType !== 'single-technician' && (
