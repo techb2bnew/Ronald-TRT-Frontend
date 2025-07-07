@@ -85,8 +85,8 @@ const JobTable: React.FC = () => {
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'single-technician'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'single-technician'
           ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
@@ -168,7 +168,7 @@ const JobTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  const downloadCSV = () => {
+ const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
@@ -190,31 +190,16 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-
     const formattedData = selectedJobs.map((jobData) => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
-      const vt = firstTech.VehicleTechnician || {};
+      const vt = firstTech.VehicleTechnician || {}; 
 
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
-      const technician = jobData.technicians?.[0] || {};
-      const simpleFlatRate = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate) > 0
-        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.simpleFlatRate)
-        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
-
-      const amountPercentage = !isNaN(Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)) && Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage) > 0
-        ? Number(jobData?.assignedTechnicians?.[0].VehicleTechnician.amountPercentage)
-        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
-
-      // Step 3: Calculate percentage amount
-      const percentageAmount = (amountPercentage * subTotal) / 100;
-      const totalCost = subTotal + simpleFlatRate + percentageAmount;
-
+   
       return {
         id: jobData.id,
         vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
+        jobName: jobData.jobName,
         assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
@@ -231,15 +216,14 @@ const JobTable: React.FC = () => {
         notes: jobData.notes,
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-        totalCost: totalCost.toFixed(2),
-
+        jobDescription: jobData.jobDescription.join(''),
+        labourCost: jobData.labourCost,  
       };
     });
     csvExporter.generateCsv(formattedData);
-  }
+  };
+
+
 
 const handleImportCSV = (file: File) => {
   setLoading(true);
@@ -255,12 +239,12 @@ const handleImportCSV = (file: File) => {
       .trimStart(); // Remove leading whitespace/newlines
 
     const manualHeaders = [
-      'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
+      'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
       'make', 'model', 'vehicleType',
       'modelYear', 'vehicleDescriptor', 'manufacturerName',
       'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
       'notes', 'technicians', 'assignTechnicians',
-      'jobDescription', 'cost', 'subTotal', 'totalCost'
+      'jobDescription', 'labourCost'
     ];
 
     Papa.parse(text, {
@@ -288,65 +272,55 @@ const handleImportCSV = (file: File) => {
 
         try {
           const payloadData = cleanedData.map(row => {
-            // Process technicians data
+            // Extract technician names and IDs
             const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
             const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
-            
-            // Process simpleFlatRate - ensure it's never null
-            let simpleFlatRates = {};
-            if (row.simpleFlatRate) {
-              try {
-                // Try parsing as JSON first
-                const parsed = JSON.parse(row.simpleFlatRate);
-                if (parsed && typeof parsed === 'object') {
-                  simpleFlatRates = parsed;
-                } else if (!isNaN(Number(row.simpleFlatRate))) {
-                  // Handle case where it's just a number
-                  simpleFlatRates = { default: Number(row.simpleFlatRate) };
-                }
-              } catch (e) {
-                // If parsing fails, try to extract numeric value
-                const numericValue = Number(String(row.simpleFlatRate).replace(/[^0-9.]/g, ''));
-                if (!isNaN(numericValue)) {
-                  simpleFlatRates = { default: numericValue };
-                }
-              }
-            }
 
-            const technicians = technicianNames.map((name: any, index: any) => {
-              // Create technician object with proper fallbacks
+            // Extract rate strings using regex for accurate FlatRate and Rate capture
+            const rateChunks = row.technicianRates
+              ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
+              : [];
+
+            const technicians = technicianNames.map((name: any, index: number) => {
+              let techFlatRate = '';
+              let rRate = '';
+
+              if (rateChunks && rateChunks[index]) {
+                const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
+                techFlatRate = match?.[1]?.trim() || '';
+                rRate = match?.[2]?.trim() || '';
+              }
+
               return {
                 id: technicianIds[index] || null,
-                name: name,
+                name,
+                techFlatRate,
+                rRate,
               };
             });
 
-            // Process jobDescription and cost
-            const jobDescriptions = row.jobDescription 
-              ? row.jobDescription.split(',').map((desc: any, idx: any) => ({
-                  jobDescription: desc.trim(),
-                  cost: row.cost?.split(',')[idx]?.trim() || '0'
-                }))
-              : [];
+            // Handle jobDescription array
+            const jobDescriptions = row.jobDescription
+                ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
+                : [];
 
             return {
               ...row,
-              technicians: technicians,
+              technicians,
               jobDescription: jobDescriptions,
-              // Clean up unused fields
-              assignTechnicians: undefined,
-              cost: undefined
+              assignTechnicians: undefined, // cleanup unused field
             };
-          }).filter(row => 
-            // Remove any rows that might still be headers
+          }).filter(row =>
             !manualHeaders.some(header => row[header] === header)
           );
 
+          // Send payload to backend
           const response = await axios.post(
             `/api/importVehicle`,
             { data: payloadData },
             { headers }
           );
+
           toast.success('CSV Import Successful!');
           fetchJobs(currentPage, searchTerm, pageSize);
         } catch (error: unknown) {
@@ -368,6 +342,7 @@ const handleImportCSV = (file: File) => {
       },
     });
   };
+
   reader.readAsText(file);
 };
 
@@ -416,79 +391,7 @@ const handleImportCSV = (file: File) => {
     );
   };
 
-  const calculateTechnicianTotalCost = (jobData: any) => {
-    if (!jobData) return 0;
-
-    // Calculate subtotal from jobDescription
-    let subtotalcost = 0;
-    if (Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-        let parsedItem = item;
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item);
-          } catch {
-            return total;
-          }
-        }
-        const cost = parseFloat(parsedItem?.cost || '0');
-        return total + (isNaN(cost) ? 0 : cost);
-      }, 0);
-    }
-
-    // If no technicians, return just the subtotal
-    if (!Array.isArray(jobData.assignedTechnicians)) {
-      return subtotalcost;
-    }
-
-    let technicianTotal = subtotalcost;
-
-    // Process each technician
-    jobData.assignedTechnicians.forEach((tech: any) => {
-      const techDetails = tech.VehicleTechnician;
-      if (!techDetails) return;
-
-      // Parse simpleFlatRate
-      let simpleFlatRate = 0;
-      try {
-        if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
-          const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-
-          if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
-            // For Pay Per Vehicles, get the rate for the specific vehicle type
-            simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
-          } else if (typeof parsedRate === 'object') {
-            // For other payment methods, try to get a technician rate
-            const technicianRate = parsedRate['technician'];
-            simpleFlatRate = parseFloat(technicianRate) || 0;
-          } else if (typeof parsedRate === 'number') {
-            simpleFlatRate = parsedRate;
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing simpleFlatRate:', error);
-        simpleFlatRate = 0;
-      }
-
-      // Parse amountPercentage safely
-      const amountPercentage = parseFloat(
-        techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
-      );
-
-      // Add costs based on payment method
-      if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (amountPercentage > 0) {
-        technicianTotal += (amountPercentage * subtotalcost) / 100;
-      }
-    });
-
-    return technicianTotal;
-  };
+ 
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
@@ -520,6 +423,7 @@ const handleImportCSV = (file: File) => {
           </label>
         </td>
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
+        <td>{job?.jobName}</td>
 
 
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
@@ -540,73 +444,7 @@ const handleImportCSV = (file: File) => {
         <td>{job?.make}</td>
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
-        <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-         {roleType !== 'single-technician' && (
-          <td>
-            {(() => {
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job?.labourCost || technicianFlatRate);
-
-              if (labourCost === 0) {
-                const tooltipId = `tooltip-${job.id}-labour`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per job
-                  </div>
-                );
-              }
-
-              return `$${labourCost.toFixed(2)}`;
-            })()}
-          </td>
-        )}
- 
-        {roleType !== 'single-technician' && (
-          <td>
-            {(() => {
-              if (!job) return null;
-
-              const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
-                const parsedJob = job;
-                return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-              }, 0);
-
-
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job.labourCost || technicianFlatRate);
-
-              const totalCost = subtotalcost + labourCost;
-
-              if (subtotalcost === 0) {
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per Job
-                  </div>
-                );
-              }
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              );
-            })()}
-          </td>
-
-        )}
-
+         <td>${job.labourCost || ''}</td>
 
         <td>
           {canCreate && (
@@ -674,6 +512,8 @@ const handleImportCSV = (file: File) => {
                   </span>
                 )}
               </th>
+              <th className="w-[140px]">Job Title</th>
+
               <th className="w-[120px]" onClick={() => handleSort('fullName')}>
                 Customer Name
                 {sortBy === 'fullName' && (
@@ -691,10 +531,8 @@ const handleImportCSV = (file: File) => {
               <th className="w-[140px]">VIN</th>
               <th className="w-[80px]">Make</th>
               <th className="w-[80px]">Model</th>
-              <th className="w-[80px]">Year</th>
-              <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[80px]">R/I R/R</th>
-              <th className="w-[80px]">Total Cost</th>
+              <th className="w-[80px]">Year</th> 
+              <th className="w-[120px]">Labour Cost</th> 
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>
@@ -702,13 +540,13 @@ const handleImportCSV = (file: File) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={13} className="text-center py-10">
+                <td colSpan={12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={13} className="text-center py-10">
+                <td colSpan={12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

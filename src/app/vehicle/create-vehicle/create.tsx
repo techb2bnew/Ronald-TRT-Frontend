@@ -19,13 +19,18 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Scanner from '../../jobs/create-job/[create]/scanner'
 import VehicleTable from '../../jobs/create-job/[create]/vehicleTable';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+
 // import { CKEditor } from '@ckeditor/ckeditor5-react';
 // import type { Editor } from '@ckeditor/ckeditor5-core';
 // import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 // import type { EditorConfig } from '@ckeditor/ckeditor5-core';
 interface JobDescriptionItem {
   jobDescription: string;
-  cost: string;
 }
 interface JobPayload {
   id?: string;
@@ -51,9 +56,10 @@ interface JobPayload {
   plantState: string;
   bodyClass: string;
   schedule: string;
-  payRate: string;
-  amountPercentage: string;
-  simpleFlatRate: string;
+  techFlatRate: string;
+  rRate: string;
+  startDate: string;
+  endDate: string;
   ip: string;
   jobId?: string;
   images: File[];
@@ -67,10 +73,20 @@ type VehicleDetailsMap = {
 interface DescriptionCostField {
   id: string;
   jobDescription: string;
-  cost: string;
 }
 interface VehicleData {
   [key: string]: any; // Allows dynamic properties
+}
+interface Technician {
+  id: string;
+  firstName: string;
+  lastName: string;
+  techFlatRate?: string;
+  UserJob?: {
+    rRate?: string;
+    techFlatRate?: string;
+  };
+  // other fields...
 }
 // Define the actual map based on your fields
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
@@ -91,18 +107,12 @@ interface Technicians {
   firstName: string;
   lastName: string;
   email: string;
-  simpleFlatRate: string;
-  payRate: string;
-  amountPercentage: string;
-  payVehicleType: string;
+  techFlatRate: string;
+  rRate: string;
 
 }
 
-interface UserVehicleData {
-  payVehicleType: string;
-  simpleFlatRate: string;
-  amountPercentage: string;
-}
+
 interface Jobs {
   id: string;
   name: string;
@@ -139,7 +149,7 @@ export default function Technicians() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const hasVehicleInfo = searchParams?.has('vehicleInfo') ?? false;
   const [selectedTechnician, setSelectedTechnician] = useState<Technicians | null>(null);
-  const [userVehicleData, setUserVehicleData] = useState<{ payVehicleType: string; simpleFlatRate: string } | null>(null);
+  const [userVehicleData, setUserVehicleData] = useState<{ rRate: string; techFlatRate: string } | null>(null);
   const userId = localStorage.getItem('userID');
   const [vehiclesData, setVehiclesData] = useState<any[]>([]);
   const [activeTechnicianId, setActiveTechnicianId] = useState<string | null>(null);
@@ -153,12 +163,21 @@ export default function Technicians() {
   const [jobIds, setJobIds] = useState<string | number | null>(null);
   const [jobId, setJobId] = useState<string | number | null>(null);
   const [selectedJobName, setSelectedJobName] = useState<string>("");
+  const [confirmChange, setConfirmChange] = useState<{ [techId: string]: boolean }>({});
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [technicianPayRates, setTechnicianPayRates] = useState<{
+    [techId: string]: { rRate?: string; techFlatRate?: string };
+  }>({});
+  const [buttonVisible, setButtonVisible] = useState<{ [techId: string]: boolean }>({});
+
   // Function to toggle visibility
   const [CustomerData, setCustomerData] = useState<any>(null);
   const toggleVisibility = () => setIsVisible(prevState => !prevState);
 
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
-    { id: crypto.randomUUID(), jobDescription: '', cost: '' },
+    { id: crypto.randomUUID(), jobDescription: '' },
   ]);
   const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
   const [formData, setFormData] = useState<JobPayload>({
@@ -185,9 +204,10 @@ export default function Technicians() {
     plantState: '',
     bodyClass: '',
     schedule: '',
-    payRate: '',
-    simpleFlatRate: '',
-    amountPercentage: '',
+    techFlatRate: '',
+    rRate: '',
+    startDate: '',
+    endDate: '',
     ip: '',
     jobId: '',
     images: [],
@@ -218,9 +238,10 @@ export default function Technicians() {
       plantState: '',
       bodyClass: '',
       schedule: '',
-      payRate: '',
-      amountPercentage: '',
-      simpleFlatRate: '',
+      techFlatRate: '',
+      rRate: '',
+      startDate: '',
+      endDate: '',
       ip: '',
       jobId: '',
       vehicleId: '',
@@ -294,6 +315,10 @@ export default function Technicians() {
     formDataObj.append('roleType', roleType || '');
     formDataObj.append('labourCost', jobForms[0].labourCost || '');
     formDataObj.append('estimatedBy', estimatedByName);
+    if (startDate) formDataObj.append('startDate', startDate.toISOString());
+    if (endDate) formDataObj.append('endDate', endDate.toISOString());
+
+
     // After appending userId
     // In your handleAddVehicle function:
     // In your form submission handler:
@@ -314,33 +339,35 @@ export default function Technicians() {
         if (Array.isArray(form.technicianDetails)) {
           form.technicianDetails.forEach((techDetail, techIndex) => {
             formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
-            formDataObj.append(`technicians[${techIndex}][firstName]`, techDetail.firstName);
-            formDataObj.append(`technicians[${techIndex}][lastName]`, techDetail.lastName);
-            formDataObj.append(`technicians[${techIndex}][payRate]`, techDetail.payRate || '');
-            formDataObj.append(`technicians[${techIndex}][payVehicleType]`, techDetail.payVehicleType || '');
-            formDataObj.append(`technicians[${techIndex}][simpleFlatRate]`, techDetail.simpleFlatRate || '{}');
-            formDataObj.append(`technicians[${techIndex}][amountPercentage]`, techDetail.amountPercentage || '');
-          });
-        }
+            formDataObj.append(`technicians[${techIndex}][techType]`, techDetail.techType || '');
 
-        // Also append the userId array separately if needed by backend
-        if (Array.isArray(form.assignTechnicians)) {
-          form.assignTechnicians.forEach((techId, tIndex) => {
-            formDataObj.append(`userId[${tIndex}]`, techId);
+            // Get rates from technicianPayRates first, then fall back to techDetail
+            const rates = technicianPayRates[techDetail.id] || {};
+            const rRateValue = rates.rRate || techDetail.rRate || '';
+            const techFlatRateValue = rates.techFlatRate || techDetail.techFlatRate || '';
+
+            // Append both rates (if available)
+            if (techFlatRateValue && techFlatRateValue !== '{}' && techFlatRateValue !== '') {
+              formDataObj.append(`technicians[${techIndex}][techFlatRate]`, techFlatRateValue);
+            }
+
+            if (rRateValue && rRateValue !== '{}' && rRateValue !== '') {
+              formDataObj.append(`technicians[${techIndex}][rRate]`, rRateValue);
+            }
           });
         }
       });
     }
 
     // Append job descriptions (if any)
-    const jobDescriptionsArray = descriptionCostFields.map((item) => ({
-      description: item.jobDescription,
-      cost: item.cost,
-    }));
+    const jobDescriptionsArray = descriptionCostFields
+      .filter(item => item.jobDescription.trim() !== '') // Filter out empty job descriptions
+      .map((item) => ({
+        description: item.jobDescription,
+      }));
 
-    jobDescriptionsArray.forEach((desc, descriptionIndex) => {
-      formDataObj.append('jobDescription', desc.description);
-      formDataObj.append('cost', desc.cost);
+    jobDescriptionsArray.forEach((desc) => {
+      formDataObj.append('jobDescription[]', desc.description);
     });
 
     // Append technicians if available - use jobForms[0] instead of formData
@@ -409,17 +436,18 @@ export default function Technicians() {
           plantCompanyName: '', // Reset plant company name
           plantState: '', // Reset plant state
           bodyClass: '', // Reset body class
-          schedule: '', // Reset schedule
-          payRate: jobForms[0].payRate, // Keep payRate
-          amountPercentage: jobForms[0].amountPercentage, // Keep amountPercentage
-          simpleFlatRate: jobForms[0].simpleFlatRate, // Keep simpleFlatRate
+          schedule: '', // Reset schedule 
+          techFlatRate: '', // Keep techFlatRate
+          rRate: '',
+          startDate: '',
+          endDate: '',
           ip: '', // Reset IP
-          jobId: jobForms[0].jobId,
+          jobId: '',
           images: [], // Reset images
           role: '', // Reset role
         }]);
         setDescriptionCostFields([
-          { id: crypto.randomUUID(), jobDescription: '', cost: '' }
+          { id: crypto.randomUUID(), jobDescription: '' }
         ]);
 
       }
@@ -445,6 +473,7 @@ export default function Technicians() {
   const handleDeleteForm = (index: number) => {
     setJobForms((prev) => prev.filter((_, i) => i !== index)); // Remove the form at the given index
   };
+
 
   const fetchJobData = async (vehicleId: string) => {
     try {
@@ -473,28 +502,36 @@ export default function Technicians() {
           }
           return value;
         };
+        setStartDate(dayjs(new Date(vehicleData.startDate)));
+        setEndDate(dayjs(new Date(vehicleData.endDate)));
 
+        // Process job descriptions
         const jobDescriptionsArray = vehicleData.jobDescription?.map((job: any) => ({
           id: crypto.randomUUID(),
-          jobDescription: getValidValue(job.jobDescription),
-          cost: getValidValue(job.cost)
+          jobDescription: getValidValue(job),
         })) || [];
 
+        // Process technician details with proper rates
         const technicianDetails = vehicleData.assignedTechnicians?.map((tech: any) => ({
           id: tech.id,
           firstName: tech.firstName,
           lastName: tech.lastName,
-          email: tech.email,
-          phoneNumber: tech.phoneNumber,
-          payRate: tech.VehicleTechnician?.payRate || '',
-          payVehicleType: tech.VehicleTechnician?.payVehicleType || '',
-          simpleFlatRate: tech.VehicleTechnician?.simpleFlatRate || '{}',
-          amountPercentage: tech.VehicleTechnician?.amountPercentage || '',
+          techType: tech.techType,
+          techFlatRate: tech.VehicleTechnician?.techFlatRate || '',
+          rRate: tech.VehicleTechnician?.rRate || '',
         })) || [];
 
+        // Set technicianPayRates
+        const initialPayRates: { [key: string]: { rRate?: string; techFlatRate?: string; } } = {};
+        technicianDetails.forEach((tech: any) => {
+          initialPayRates[tech.id] = {
+            rRate: tech.rRate,
+            techFlatRate: tech.techFlatRate
+          };
+        });
 
+        setTechnicianPayRates(initialPayRates);
 
-        // Create complete formData object with all required JobPayload properties
         const formData: JobPayload = {
           jobName: getValidValue(vehicleData.jobName),
           jobId: getValidValue(vehicleData.jobId),
@@ -513,7 +550,7 @@ export default function Technicians() {
           color: getValidValue(vehicleData.color),
           assignTechnicians: technicianDetails.map((tech: any) => String(tech.id)),
           technicianDetails: technicianDetails,
-          technicianId: technicianDetails.map((tech: any) => String(tech.id)), // Same as assignTechnicians
+          technicianId: technicianDetails.map((tech: any) => String(tech.id)),
           assignCustomer: getValidValue(vehicleData.customerId),
           createdBy: getValidValue(vehicleData.createdBy) || 'admin',
           plantCountry: getValidValue(vehicleData.plantCountry),
@@ -521,24 +558,30 @@ export default function Technicians() {
           plantState: getValidValue(vehicleData.plantState),
           bodyClass: getValidValue(vehicleData.bodyClass),
           schedule: vehicleData.schedule ? 'true' : 'false',
-          payRate: technicianDetails[0]?.payRate || '', // Take first technician's payRate or empty
-          amountPercentage: technicianDetails[0]?.amountPercentage || '',
-          simpleFlatRate: technicianDetails[0]?.simpleFlatRate || '{}',
-          ip: '', // Will be set separately 
+          rRate: technicianDetails.map((tech: any) => (tech.rRate)),
+          techFlatRate: technicianDetails.map((tech: any) => (tech.techFlatRate)),
+          techType: technicianDetails.map((tech: any) => (tech.techType)),
+          startDate: startDate?.format('YYYY-MM-DD') || '',
+          endDate: endDate?.format('YYYY-MM-DD') || '',
+          ip: '',
           images: vehicleData.images || [],
           role: getValidValue(vehicleData.role) || '',
         };
 
+        const jobId = formData.jobId;
+        if (jobId) {
+          localStorage.setItem('jobId', jobId);  // Save jobId to localStorage
+        }
+
         setJobForms([formData]);
         setDescriptionCostFields(jobDescriptionsArray.length > 0
           ? jobDescriptionsArray
-          : [{ id: crypto.randomUUID(), jobDescription: '', cost: '' }]
+          : [{ id: crypto.randomUUID(), jobDescription: '' }]
         );
-
+        setTechnicians(vehicleData.assignedTechnicians || []);
         if (vehicleData.jobName) {
           setSelectedJobName(vehicleData.jobName);
         }
-
       } else {
         toast.error(data.error || 'Error fetching vehicle data');
       }
@@ -547,6 +590,7 @@ export default function Technicians() {
       toast.error('An error occurred while fetching vehicle data');
     }
   };
+
 
 
 
@@ -606,6 +650,35 @@ export default function Technicians() {
     }
   };
 
+  const fetchTechniciansOnClick = () => {
+    const roleType = localStorage.getItem('types') || ''; // Get roleType from localStorage
+    if (roleType) {
+      // Call fetchData for technicians on button click
+      fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
+        endpoint: 'fetchTechnicianJob',
+        types: roleType,
+      });
+    } else {
+      console.error("Role type is missing for fetching technicians!");
+    }
+  };
+
+  useEffect(() => {
+    const roleType = localStorage.getItem('types') || ''; // Provide an empty string if null
+    const userId = localStorage.getItem('userID');
+
+    if (userId && roleType) {
+      fetchData('/api/fetchJobCustomerTechnician', setCustomer, {
+        endpoint: 'fetchCustomer',
+        userId,
+        page: page.toString(),
+        limit: '10',
+        roleType: roleType, // Pass roleType (which is now guaranteed to be a string)
+      }, page > 1); // Append data if page > 1
+    } else {
+      console.error("Role type or User ID is missing for fetching customers!");
+    }
+  }, [page]);
 
   const handleScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
@@ -615,28 +688,7 @@ export default function Technicians() {
   };
 
 
-  useEffect(() => {
-    const roleType = localStorage.getItem('types');
-    const userId = localStorage.getItem('userID');
 
-    if (roleType) {
-      fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
-        endpoint: 'fetchTechnicianJob',
-        types: roleType,
-      });
-    } else {
-      console.error("Role type is missing for fetching technicians!");
-    }
-
-    if (userId) {
-      fetchData('/api/fetchJobCustomerTechnician', setCustomer, {
-        endpoint: 'fetchCustomer',
-        userId,
-        page: page.toString(),
-        limit: '10'
-      }, page > 1);
-    }
-  }, [page]);
 
 
 
@@ -674,6 +726,19 @@ export default function Technicians() {
     }
   }, []);
 
+  // Add this to your component to initialize pay rates
+  useEffect(() => {
+    if (technicians.length > 0) {
+      const initialPayRates: { [key: string]: { rRate?: string; techFlatRate?: string } } = {};
+      technicians.forEach(tech => {
+        const payRateKey = tech.UserJob?.rRate !== undefined ? 'rRate' : 'techFlatRate';
+        initialPayRates[tech.id] = {
+          [payRateKey]: tech.UserJob?.[payRateKey] || tech.techFlatRate || ''
+        };
+      });
+      setTechnicianPayRates(initialPayRates);
+    }
+  }, [technicians]);
 
   // Assuming vehicleDetailsMap and JobPayload are aligned correctly
 
@@ -692,7 +757,7 @@ export default function Technicians() {
 
     // Check for customerId and jobName
     if (!customerId || !jobName) {
-      toast.error("Customer and Job Name are required.");
+      toast.error("Customer and Job Title are required.");
       return;
     }
 
@@ -770,43 +835,135 @@ export default function Technicians() {
     }
   };
 
+  const handlePayRateInput = (
+    techId: string,
+    value: string,
+    rateType: 'rRate' | 'techFlatRate'
+  ) => {
+    // Remove leading/trailing spaces from value
+    const newValue = value.trim() === "" ? "" : value;
 
+    // Log the update
+    console.log('Updating technician pay rate:', techId, rateType, newValue);
+
+    // Update technicianPayRates state directly to reflect changes
+    setTechnicianPayRates((prevRates) => ({
+      ...prevRates,
+      [techId]: {
+        ...prevRates[techId],
+        [rateType]: newValue,  // Ensure the field is updated with the new value
+      }
+    }));
+
+    // Optionally update the formData to reflect changes (if needed)
+    setJobForms((prevForms) => {
+      const updatedForms = [...prevForms];
+      updatedForms[0] = {
+        ...updatedForms[0],
+        technicianDetails: updatedForms[0].technicianDetails?.map((tech: any) => {
+          if (tech.id === techId) {
+            return {
+              ...tech,
+              [rateType]: newValue, // Update the rate value in technician details
+            };
+          }
+          return tech;
+        }),
+      };
+      return updatedForms;
+    });
+  };
+
+
+
+
+
+  const handlePayRateCheckbox = (techId: string) => {
+    // Get the current value from state
+    const currentValue = technicianPayRates[techId];
+    const currentPayRate = currentValue?.rRate || currentValue?.techFlatRate || '';
+
+    // Get the original value from the technician data (from your loop)
+    const technician = technicians.find(t => String(t.id) === techId);
+    const originalRRate = technician?.UserJob?.rRate;
+    const originalFlatRate = technician?.UserJob?.techFlatRate;
+    const originalPayRate = originalRRate ?? originalFlatRate ?? '';
+
+    if (!currentPayRate.trim()) {
+      toast.error("Please enter a pay rate before confirming.");
+      return;
+    }
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "Do you want to change this technician's amount?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#383d71',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, change it!',
+      cancelButtonText: 'No',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        toast.success("Pay rate confirmed");
+        setButtonVisible(prev => ({ ...prev, [techId]: false }));
+        // 🔁 Call backend or update state if needed
+      } else {
+        // If "No", reset to the original pay rate from UserJob
+        setTechnicianPayRates((prev) => {
+          const technicianData = prev[techId] || {};
+
+          // Determine which rate type to reset based on what exists in UserJob
+          const hasOriginalRRate = originalRRate !== undefined && originalRRate !== null;
+          const resetToRRate = hasOriginalRRate;
+
+          return {
+            ...prev,
+            [techId]: {
+              ...technicianData,
+              rRate: resetToRRate ? originalPayRate : technicianData.rRate,
+              techFlatRate: !resetToRRate ? originalPayRate : technicianData.techFlatRate
+            },
+          };
+        });
+        setButtonVisible(prev => ({ ...prev, [techId]: false }));
+        toast("No changes made");
+      }
+    });
+  };
 
 
 
   const handleDescriptionCostChange = (index: number, field: keyof JobDescriptionItem, value: string) => {
-    if (field === 'cost') {
-      // Regex to allow up to 2 decimal places
-      const regex = /^\d+(\.\d{0,2})?$/;
-      if (!regex.test(value)) return; // Reject invalid input
-    }
+    // Update the descriptionCostFields state (map through the fields and modify the relevant one)
     setDescriptionCostFields((prevFields) =>
       prevFields.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
 
-    // ✅ Sync changes with formData
+    // Ensure jobDescription is always an array and sync the changes to formData
     setFormData((prev) => ({
       ...prev,
       jobDescription: descriptionCostFields.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
-      ),
+      ).filter(item => item.jobDescription.trim() !== '') // Remove empty descriptions
     }));
 
+    // Handle errors if jobDescription fields are empty
     if (errors.jobDescription) {
       const allFieldsFilled = descriptionCostFields.every(
-        field => field.jobDescription.trim() && field.cost.trim()
+        field => field.jobDescription.trim()
       );
 
       if (allFieldsFilled) {
         setErrors(prev => {
           const newErrors = { ...prev };
-          delete newErrors.jobDescription;
+          delete newErrors.jobDescription; // Clear error if all descriptions are filled
           return newErrors;
         });
       }
     }
-
   };
+
 
 
 
@@ -819,31 +976,13 @@ export default function Technicians() {
   ) => {
     const value = event.target.value;
 
-    // Regex validation for simpleFlatRate
-    if (key === 'simpleFlatRate') {
+    // Regex validation for techFlatRate
+    if (key === 'techFlatRate') {
       const regex = /^\d{0,5}(\.\d{0,2})?$/;
       if (value !== '' && !regex.test(value)) return;
     }
 
     let shouldUpdate = true;
-
-    // Validation for amountPercentage
-    if (key === 'amountPercentage') {
-      const num = Number(value);
-      if (isNaN(num) || num < 0 || num > 100) {
-        shouldUpdate = false;
-        setErrors((prev) => ({
-          ...prev,
-          amountPercentage: 'Value must be between 0 and 100',
-        }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          amountPercentage: '',
-        }));
-      }
-    }
-
     // If value is invalid, skip updating
     if (!shouldUpdate) return;
 
@@ -941,10 +1080,8 @@ export default function Technicians() {
                 lastName: tech.lastName,
                 email: tech.email,
                 phoneNumber: tech.phoneNumber,
-                payRate: tech.UserJob?.payRate || '', // Default to empty string if not available
-                payVehicleType: tech.UserJob?.payVehicleType || '', // Default to empty string if not available
-                simpleFlatRate: tech.UserJob?.simpleFlatRate || '{}', // Default to empty object if not available
-                amountPercentage: tech.UserJob?.amountPercentage || '', // Default to empty string if not available
+                techFlatRate: tech.UserJob?.techFlatRate || '{}', // Default to empty object if not available 
+                rRate: tech.UserJob?.rRate || '{}', // Default to empty object if not available 
               })),
             };
             return updatedForms;
@@ -1024,20 +1161,40 @@ export default function Technicians() {
         if (detailIndex !== -1) {
           currentTechDetails.splice(detailIndex, 1);
         }
+
+        // Remove from technicianPayRates
+        setTechnicianPayRates(prev => {
+          const newRates = { ...prev };
+          delete newRates[techId];
+          return newRates;
+        });
       } else {
-        // Add new technician with complete details, including amountPercentage, simpleFlatRate, payRate
+        // Add new technician with complete details
         currentAssignTechs.push(techId);
+
+        // Get the correct rate based on technician type
+        const rateType = tech.techType === 'FlatRate' ? 'techFlatRate' : 'rRate';
+        const rateValue = tech[rateType] || '';
+
         currentTechDetails.push({
           id: tech.id,
           firstName: tech.firstName,
           lastName: tech.lastName,
           email: tech.email || '',
           phoneNumber: tech.phoneNumber || '',
-          payRate: tech.payRate || form.payRate || '',
-          payVehicleType: tech.payVehicleType || form.payVehicleType || '',
-          simpleFlatRate: tech.simpleFlatRate || form.simpleFlatRate || '{}',
-          amountPercentage: tech.amountPercentage || form.amountPercentage || ''
+          techType: tech.techType,
+          techFlatRate: tech.techType === 'FlatRate' ? rateValue : '',
+          rRate: tech.techType !== 'FlatRate' ? rateValue : '',
         });
+
+        // Update technicianPayRates
+        setTechnicianPayRates(prev => ({
+          ...prev,
+          [tech.id]: {
+            rRate: tech.techType !== 'FlatRate' ? rateValue : '',
+            techFlatRate: tech.techType === 'FlatRate' ? rateValue : ''
+          }
+        }));
       }
 
       // Update the form with both arrays
@@ -1050,8 +1207,6 @@ export default function Technicians() {
       return updatedForms;
     });
   };
-
-
 
 
 
@@ -1212,8 +1367,18 @@ export default function Technicians() {
 
 
   const handleAddMore = () => {
-    setDescriptionCostFields([...descriptionCostFields, { id: crypto.randomUUID(), jobDescription: '', cost: '' }]);
+    // Check if there are any non-empty job descriptions
+    const hasNonEmptyDescription = descriptionCostFields.some(field => field.jobDescription.trim() !== '');
+
+    if (hasNonEmptyDescription) {
+      // If there are non-empty descriptions, add a new field
+      setDescriptionCostFields([...descriptionCostFields, { id: crypto.randomUUID(), jobDescription: '' }]);
+    } else {
+      // Show a message or prevent adding more fields if all descriptions are empty
+      toast.error("Please enter a description before adding more.");
+    }
   };
+
 
   // Delete the Correct Field by ID
   const handleDeleteField = (id: string) => {
@@ -1248,11 +1413,8 @@ export default function Technicians() {
       });
       const data = await res.json();
       if (res.ok && data.technician) {
-        // data.vehicleTypes is expected to have payVehicleType and simpleFlatRate
-        setUserVehicleData({
-          payVehicleType: data.technician.payVehicleType, // e.g. "Van,Truck"
-          simpleFlatRate: data.technician.simpleFlatRate, // e.g. "{\"Van\":900}"
-        });
+        // data.vehicleTypes is expected to have payVehicleType and techFlatRate
+
       } else {
         toast.error('Failed to fetch vehicle data.');
       }
@@ -1354,7 +1516,10 @@ export default function Technicians() {
     }
   };
 
-
+  const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
+    // Do something with the selected dates
+    console.log('Start:', newValue[0]?.toISOString(), 'End:', newValue[1]?.toISOString());
+  };
 
   return (
     <div className='w-[60%] m-auto mb-5'>
@@ -1376,11 +1541,6 @@ export default function Technicians() {
               <div className="grid grid-cols-2 gap-4 mb-2">
 
                 <div className='mb-2 flex items-start gap-3 relative' >
-                  {/* <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                    <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                    <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg> */}
-                  {/* <p className='text-sm mb-2'>Assign Customer <span className='text-[red]'>*</span></p> */}
                   <FormControl fullWidth size="small">
                     <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
                     <Select
@@ -1414,27 +1574,17 @@ export default function Technicians() {
                       </div>
                     )}
                   </FormControl>
-                  {/* <Link href='/client/create' data-tooltip-id="create-customer"
-                    data-tooltip-content="Create Customer" className='primary-bg text-sm p-2 rounded'>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
-                      <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
-                    </svg>
-
-                  </Link>
-                  <Tooltip id="create-customer" place="top" /> */}
-
                 </div>
                 <div className='relative w-[100%]'>
 
 
                   <TextField
-                    key={jobNames.length}  // Add key to force re-render when jobNames changes
+                    key={jobNames.length}
                     fullWidth
                     name="jobName"
                     id="outlined-basic"
                     color="warning"
-                    label="Select Job Name *"
+                    label="Select Job Title *"
                     size="small"
                     value={selectedJobName || jobForms[0]?.jobName || ''}
                     onChange={async (e) => {
@@ -1493,7 +1643,10 @@ export default function Technicians() {
                 <h2 className="text-md font-bold">Add Vehicle Details</h2>
                 {/* Toggle Switch */}
                 <label htmlFor="toggle" className="flex items-center cursor-pointer">
-                  <span className='mr-2 text-sm'>Enter Manually</span>
+                  <span className="mr-2 text-sm">
+                    {isVisible ? 'View Detail' : 'Enter Manually'}
+                  </span>
+
                   <div className={`relative ${isVisible ? 'bg-[#383d71]' : 'bg-gray-200'} w-12 h-6 rounded-full transition-colors`}>
                     <input
                       id="toggle"
@@ -1783,62 +1936,15 @@ export default function Technicians() {
 
               <h2 className='text-md font-bold'>Work Description</h2>
               {descriptionCostFields.map((field, index) => (
-                <div key={field.id} id={field.id} className="grid grid-cols-2 gap-4">
+                <div key={field.id} id={field.id} className="grid grid-cols-1 gap-4">
                   <div className='mb-2'>
-                    <textarea name="jobDescription" rows={1} id="" value={field.jobDescription}
+                    <textarea name="jobDescription" rows={3} id="" value={field.jobDescription}
                       onChange={(e) =>
                         handleDescriptionCostChange(index, "jobDescription", e.target.value)
                       }
 
                       placeholder='Enter Description' className="input text-[#3a3a3a] text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
 
-                  </div>
-                  <div className="mb-2 flex items-center gap-3 margin_remove">
-                    <FormControl fullWidth sx={{ m: 1 }} size="small" color="warning">
-                      <InputLabel htmlFor={`cost-${index}`}>Cost</InputLabel>
-                      <OutlinedInput
-                        id={`cost-${index}`}
-                        value={field.cost}
-                        onChange={(e) => {
-                          const value = e.target.value;
-
-                          // Allow empty string for deletion
-                          if (value === "") {
-                            handleDescriptionCostChange(index, "cost", value);
-                            return;
-                          }
-
-                          // Allow only numbers and decimal
-                          if (!/^\d*\.?\d*$/.test(value)) return;
-
-                          // Split integer and decimal parts
-                          const [intPart, decPart] = value.split(".");
-
-                          // Enforce the limit: 5 digits max before decimal and 2 digits max after decimal
-                          if (intPart.length <= 5 && (!decPart || decPart.length <= 2)) {
-                            handleDescriptionCostChange(index, "cost", value);
-                          }
-                        }}
-                        startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                        label="Amount"
-                        type="text"
-                        inputProps={{
-                          inputMode: "decimal", // shows numeric keyboard on mobile
-                        }}
-
-                      />
-                    </FormControl>
-
-
-                    {descriptionCostFields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteField(field.id)}
-                        className="border border-red-500 text-sm p-2 rounded"
-                      >
-                        <Image alt='delete' src={Delete} className='w-[14px]' />
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -1847,6 +1953,41 @@ export default function Technicians() {
                 onClick={handleAddMore}
                 className="primary-bg pl-5 pr-5 text-sm p-2 rounded mb-4">Add More + </button>
 
+
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <div className="grid grid-cols-2 gap-4">
+                  <DateTimePicker
+                    label="Start Date"
+                    value={startDate}
+                    onChange={(newValue) => {
+                      setStartDate(newValue);
+                    }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        color: 'warning',
+
+                      },
+                    }}
+                  />
+                  <DateTimePicker
+                    label="End Date"
+                    value={endDate}
+                    onChange={(newValue) => {
+                      setEndDate(newValue);
+                    }}
+                    minDate={startDate || undefined}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        color: 'warning',
+                      },
+                    }}
+                  />
+                </div>
+              </LocalizationProvider>
 
               <div className='mb-4 mt-4'>
                 {/* <p className='text-sm mb-2'>Tax Forms <span className='text-red-500'>*</span></p> */}
@@ -1924,208 +2065,94 @@ export default function Technicians() {
                 </button>
               </div>
 
-              {userType !== 'single-technician' && userType !== 'ifs' && (
-                <div className='mb-4 flex items-start gap-3 relative mt-3'>
-                  {/* <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                    <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                    <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg> */}
-                  {/* <p className='text-sm mb-2'>Assign Technician <span className='text-[red]'>*</span></p> */}
-                  <FormControl fullWidth size="small">
-                    <FormLabel color="warning" className="mb-1">Assign Technicians(s) to this vehicle*</FormLabel>
-                    <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
-                      <List dense>
-                        {technicians.length > 0 ? (
-                          technicians.map((tech) => {
+              {userType !== 'single-technician' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={fetchTechniciansOnClick}
+                    className="primary-bg pl-5 pr-5 p-2 rounded block text-sm  ml-auto gap-2 min-w-[100px]"
+                  >
+                    Add More Technician?
+                  </button>
+
+
+                  <div className='mb-4 flex items-start gap-3 relative mt-3'>
+                    <FormControl fullWidth size="small">
+                      <FormLabel color="warning" className="mb-1">Assign Technicians(s) to this vehicle*</FormLabel>
+                      <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
+                        <List dense>
+                          {technicians.map((tech) => {
                             const value = String(tech.id);
                             const isChecked = jobForms[index]?.assignTechnicians?.includes(value) || false;
+                            const techDetails = jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === value) || tech;
+
+                            // Determine which rate type to use based on technician type
+                            const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
+                            const rateValue = technicianPayRates[tech.id]?.[rateType] ||
+                              techDetails[rateType] || '';
 
                             return (
-                              <ListItem
-                                key={value}
-                                component="div"
-                                onClick={() => handleTechnicianChange(value, index)}
-                              >
-                                <Checkbox
-                                  edge="start"
-                                  color="warning"
-                                  checked={jobForms[index]?.assignTechnicians?.includes(String(tech.id)) || false}
-                                  onChange={() => handleTechnicianChange(String(tech.id), index)}
-                                  tabIndex={-1}
-                                  disableRipple
-                                />
-                                <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                              <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3 w-full">
+                                  <Checkbox
+                                    edge="start"
+                                    color="warning"
+                                    checked={isChecked}
+                                    onChange={() => handleTechnicianChange(String(tech.id), index)}
+                                    tabIndex={-1}
+                                    disableRipple
+                                  />
+                                  <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
+                                </div>
+                                {tech.techType === 'technician' ? (
+                                  <TextField
+                                    size="small"
+                                    type="number"
+                                    name="techFlatRate"
+                                    label="Flat Rate"
+                                    color="warning"
+                                    value={rateValue}
+                                    onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'techFlatRate')}
+                                    onClick={() => setActiveInput(tech.id)}
+                                    style={{ maxWidth: '200px' }}
+                                  />
+                                ) : (
+                                  <TextField
+                                    size="small"
+                                    type="number"
+                                    label="R Rate"
+                                    name="rRate"
+                                    color="warning"
+                                    value={rateValue}
+                                    onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'rRate')}
+                                    onClick={() => setActiveInput(tech.id)}
+                                    style={{ maxWidth: '200px' }}
+                                  />
+                                )}
+                                {activeInput === tech.id && buttonVisible[tech.id] !== false && (
+                                  <div
+                                    onClick={() => handlePayRateCheckbox(tech.id)}
+                                    className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
+                                  >
+                                    Save
+                                  </div>
+                                )}
                               </ListItem>
                             );
-                          })
-                        ) : (
-                          <ListItem>
-                            <ListItemText primary="No technicians available" />
-                          </ListItem>
-                        )}
-                      </List>
-                    </Paper>
-                  </FormControl>
-
-
-
-
-                  {/* <Link href='/technicians/create-technician' data-tooltip-id="create-technician"
-                    data-tooltip-content="Create Technician" className='primary-bg text-sm p-2 rounded'>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2" />
-                      <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2" />
-                    </svg>
-
-                  </Link>
-                  <Tooltip id="create-technician" place="top" /> */}
-                </div>
+                          })}
+                        </List>
+                      </Paper>
+                    </FormControl>
+                  </div>
+                </>
               )}
 
 
 
 
-              {Array.isArray(form.assignTechnicians) && form.assignTechnicians.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-
-                  {form.assignTechnicians.map((techId: string, techIndex: number) => {
-                    const tech = technicians.find((t) => String(t.id) === techId);
-                    if (!tech) return null;
-
-                    const techDetails = form.technicianDetails?.find((td: any) => String(td.id) === techId) || tech;
-
-                    // Parse the flat rates with proper typing
-                    let flatRates: Record<string, number> = {};
-                    try {
-                      flatRates = typeof techDetails.simpleFlatRate === 'string'
-                        ? JSON.parse(techDetails.simpleFlatRate)
-                        : techDetails.simpleFlatRate || {};
-                    } catch (e) {
-                      flatRates = {};
-                    }
-
-                    const vehicleTypes = Object.keys(flatRates).filter(Boolean); // Extract valid vehicle types
-
-                    return (
-
-                      <div key={tech.id} className="technician-details">
-
-                        {techDetails.payRate === 'Pay Per Vehicles' && (
-                          <div className="">
-                            {/* Vehicle Type Selector (only for Pay Per Vehicles) */}
-
-                            <div className="mb relative">
-                              <h4 className='font-bold text-sm mb-3 mt-2 capitalize'>{`${tech.firstName} ${tech.lastName}`}</h4>
-                              <FormControl fullWidth size="small" color="warning" className="mt-4">
-                                <InputLabel id={`payVehicleType-${techIndex}`} color="warning">Vehicle Type</InputLabel>
-                                <Select
-                                  labelId={`payVehicleType-${techIndex}`}
-                                  value={techDetails.payVehicleType || ''}
-                                  label="Vehicle Type"
-                                  onChange={(e) => {
-                                    const selectedType = e.target.value as string;
-
-                                    // Update the job form state with the selected vehicle type and corresponding rate
-                                    setJobForms(prev => {
-                                      const updatedForms = [...prev];
-                                      const updatedTechDetails = [...(updatedForms[index].technicianDetails || [])];
-
-                                      let currentTechDetails = updatedTechDetails.find(td => String(td.id) === techId);
-                                      if (!currentTechDetails) {
-                                        currentTechDetails = { ...tech, id: techId };
-                                        updatedTechDetails.push(currentTechDetails);
-                                      }
-
-                                      // Update the payVehicleType and flatRate for the selected vehicle type
-                                      updatedTechDetails[updatedTechDetails.indexOf(currentTechDetails)] = {
-                                        ...currentTechDetails,
-                                        payVehicleType: selectedType,
-                                        simpleFlatRate: JSON.stringify({
-                                          [selectedType]: flatRates[selectedType] || 0 // Store the specific rate for selected vehicle type
-                                        })
-                                      };
-
-                                      updatedForms[index].technicianDetails = updatedTechDetails;
-                                      return updatedForms;
-                                    });
-                                  }}
-                                >
-                                  <MenuItem value="" disabled>Select a vehicle type</MenuItem>
-                                  {vehicleTypes.map((type) => (
-                                    <MenuItem key={type} value={type}>
-                                      {type} (${flatRates[type] || 0})
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                            </div>
 
 
-                            {/* Flat Rate Input */}
-                            <div className="relative" style={{ display: 'none' }}>
-                              <TextField
-                                fullWidth
-                                type="number"
-                                label='Simple flat rate'
-                                size="small"
-                                color="warning"
-                                value={techDetails.payRate === 'Pay Per Vehicles' && techDetails.payVehicleType
-                                  ? flatRates[techDetails.payVehicleType] || ''
-                                  : techDetails.simpleFlatRate || ''
-                                }
-                                onChange={(e) => {
-                                  const value = parseFloat(e.target.value);
-
-                                  // If Pay Per Vehicles is selected, update the rate for the specific vehicle type
-                                  if (techDetails.payRate === 'Pay Per Vehicles' && techDetails.payVehicleType) {
-                                    const updatedFlatRates: Record<string, number> = {
-                                      ...flatRates,
-                                      [techDetails.payVehicleType as string]: value
-                                    };
-
-                                    setJobForms(prev => {
-                                      const updatedForms = [...prev];
-                                      const updatedTechDetails = [...(updatedForms[index].technicianDetails || [])];
-
-                                      let currentTechDetails = updatedTechDetails.find(td => String(td.id) === techId);
-                                      if (!currentTechDetails) {
-                                        currentTechDetails = { ...tech, id: techId };
-                                        updatedTechDetails.push(currentTechDetails);
-                                      }
-
-                                      updatedTechDetails[updatedTechDetails.indexOf(currentTechDetails)] = {
-                                        ...currentTechDetails,
-                                        simpleFlatRate: JSON.stringify(updatedFlatRates) // Store flat rates as JSON
-                                      };
-
-                                      updatedForms[index].technicianDetails = updatedTechDetails;
-                                      return updatedForms;
-                                    });
-                                  } else {
-                                    // For other pay rates, update directly
-                                    handleChange({
-                                      target: {
-                                        name: 'simpleFlatRate',
-                                        value: value.toString()
-                                      }
-                                    }, 'simpleFlatRate', index, 'formData', techIndex);
-                                  }
-                                }}
-                                inputProps={{ step: "0.01", min: 0 }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-
-
-
-              {!hasVehicleInfo && isEdit && userType !== 'ifs' && userType === 'single-technician' && (
+              {!hasVehicleInfo && userType !== 'ifs' && userType === 'single-technician' && (
                 <div className="grid grid-cols-1 gap-4 mb-4 margin_remove relative">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                     <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
@@ -2143,11 +2170,11 @@ export default function Technicians() {
           ))}
           <div className="flex gap-4 justify-end mt-4 mb-4">
             {!isEdit && (
-            <button type='button' onClick={() => handleAddVehicle(false)} className="primary-bg pl-5 pr-5 p-2 rounded">
-              Add More Vehicle
-            </button>
+              <button type='button' onClick={() => handleAddVehicle(false)} className="primary-bg pl-5 pr-5 p-2 rounded">
+                Add More Vehicle
+              </button>
             )}
-          <button
+            <button
               type="button"
               onClick={() => handleAddVehicle(true)}
               className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"

@@ -345,11 +345,10 @@ export default function ClientListing() {
           </label>
         </td>
         <td>{cust.id}</td>
-        <td><Link className="hover:underline" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>{cust.fullName}  </Link></td>
-        <td> <a className="hover:underline" href={`mailto:${cust.email}`}>{cust.email}</a></td>
-        <td><a className="hover:underline" href={`tel:${cust.phoneNumber}`}>{cust.phoneNumber}</a></td>
-        <td>{cust.address}</td>
-        <td>{cust.country}</td>
+        <td><Link className="hover:underline" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>{cust.fullName || 'N/A'}  </Link></td>
+        <td> <a className="hover:underline" href={`mailto:${cust.email}`}>{cust.email || 'N/A'}</a></td>
+        <td><a className="hover:underline" href={`tel:${cust.phoneNumber}`}>{cust.phoneNumber || 'N/A'}</a></td>
+        <td>{cust.address || 'N/A'}</td> 
         <td>
           {/* <TableActions 
          editRoute={`/client/create?customerId=${cust.id}`}   
@@ -395,7 +394,7 @@ export default function ClientListing() {
                   </span>
                 </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
+              <th onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
@@ -403,7 +402,7 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('name')}>
+              <th   onClick={() => handleSort('name')}>
                 Name
                 {sortBy === 'name' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
@@ -411,7 +410,7 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[200px]" onClick={() => handleSort('email')}>
+              <th  onClick={() => handleSort('email')}>
                 Email
                 {sortBy === 'email' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
@@ -419,7 +418,7 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>
+              <th  onClick={() => handleSort('phoneNumber')}>
                 Phone Number
                 {sortBy === 'phoneNumber' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
@@ -427,23 +426,15 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('address')}>
+              <th  onClick={() => handleSort('address')}>
                 Address
                 {sortBy === 'address' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
-              <th className="w-[100px]" onClick={() => handleSort('country')}>
-                Country
-                {sortBy === 'country' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[160px]">Action</th>
+              </th> 
+              <th  >Action</th>
             </tr>
           </thead>
           <tbody>

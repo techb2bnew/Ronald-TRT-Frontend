@@ -142,11 +142,17 @@ const ManagerTable: React.FC = () => {
       if (response.ok) {
         // Handle technicians array for both APIs correctly 
 
-        const fetchedTechnicians: Technicians[] = query.trim()
-          ? data.technicians || []
-          : data.data?.managers || [];  
+          const fetchedTechnicians: Technicians[] = query.trim()
+        ? data.technicians || []
+        : data.data?.managers || [];
+
+      // Add job count for each manager
+      const techniciansWithJobCount = fetchedTechnicians.map((tech: any) => ({
+        ...tech,
+        jobCount: tech.managedJobs ? tech.managedJobs.length : 0, // Count jobs for each manager
+      })); 
         
-        setTechnicians(fetchedTechnicians);
+        setTechnicians(techniciansWithJobCount);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
         console.error('Error fetching technicians:',);
@@ -289,6 +295,7 @@ const ManagerTable: React.FC = () => {
             {tech.phoneNumber}
           </a>
         </td>
+          <td>{tech.jobCount} Jobs</td>
 
         {/* <td>{tech.payRate}</td> */}
 
@@ -417,12 +424,7 @@ const ManagerTable: React.FC = () => {
         Id: tech.id,
         Name: `${tech.firstName} ${tech.lastName}`,
         Email: tech.email,
-        Phone: tech.phoneNumber,
         Address: tech.address,
-        SimpleFlatRate: tech.simpleFlatRate,
-        AmountPercentage: tech.amountPercentage,
-        PayVehicleType: tech.payVehicleType,
-        PayRate: tech.payRate,
       };
     });
 
@@ -454,9 +456,7 @@ const ManagerTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address',
-        'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate'
+        'Id', 'Name', 'Email', 'Address'
       ];
 
       Papa.parse(text, {
@@ -576,7 +576,7 @@ const ManagerTable: React.FC = () => {
       />
       <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/technicians/create-technician?manager" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}

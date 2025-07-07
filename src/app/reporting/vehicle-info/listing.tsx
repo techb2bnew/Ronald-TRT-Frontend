@@ -62,8 +62,8 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
           ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
@@ -177,7 +177,7 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>  */}
-        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
+        <td>  {job?.id} </td>
         <td>{job.customer.fullName}</td>
         <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>
@@ -222,10 +222,7 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={(date) => {
-          console.log("Selected Date Range:", date); 
-        }} />
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

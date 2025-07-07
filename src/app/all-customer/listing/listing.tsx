@@ -842,7 +842,7 @@ export default function ClientListing() {
                     className="w-[150px]"
                     onClick={() => handleSort("Job Name")}
                   >
-                    Job Name
+                    Job Title
                   </th>
                 )}
                 {selectedColumn.includes("Job Status") && (

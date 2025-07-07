@@ -141,7 +141,7 @@ const CompletedJobs: React.FC = () => {
   };
 
 
- const downloadCSV = () => {
+  const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
@@ -167,38 +167,11 @@ const CompletedJobs: React.FC = () => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
       const vt = firstTech.VehicleTechnician || {};
 
-      // Step 1: Calculate subtotal
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
-
-      // Step 2: Calculate Technician Costs
-      let technicianTotal = 0;
-      jobData.assignedTechnicians.forEach((tech: any) => {
-        const techDetails = tech.VehicleTechnician || {};
-        const amountPercentage = parseFloat(techDetails.amountPercentage || '0');
-
-        // If there's an amountPercentage, calculate based on subtotal
-        if (amountPercentage > 0) {
-          technicianTotal += (amountPercentage * subTotal) / 100;
-        }
-
-        // Add simple flat rate if available
-        let simpleFlatRate = 0;
-        if (techDetails.simpleFlatRate) {
-          try {
-            const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-            simpleFlatRate = parsedRate[techDetails.payVehicleType] || 0;
-          } catch (error) {
-            console.error('Error parsing simpleFlatRate:', error);
-          }
-        }
-        technicianTotal += simpleFlatRate;
-      });
-
-      // Step 3: Calculate totalCost (including technician costs)
-      const totalCost = subTotal + technicianTotal;
-
+      // Extract technician data including techFlatRate and rRate
+      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
+        const vt = tech.VehicleTechnician || {};
+        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+      }).join(', ');
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -209,7 +182,6 @@ const CompletedJobs: React.FC = () => {
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
         vehicleType: jobData.vehicleType,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
@@ -221,12 +193,8 @@ const CompletedJobs: React.FC = () => {
         notes: jobData.notes,
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        payRate: vt.payRate || 'N/A',
-        simpleFlatRate: vt.simpleFlatRate !== undefined && vt.simpleFlatRate !== null && vt.simpleFlatRate !== '' ? vt.simpleFlatRate : 'N/A',
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-        totalCost: totalCost.toFixed(2), // Show the calculated total cost
+        jobDescription: jobData.jobDescription.join(', '),
+        technicianRates: technicianRates,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -234,145 +202,126 @@ const CompletedJobs: React.FC = () => {
 
 
 
-
-
   const handleImportCSV = (file: File) => {
-  setLoading(true);
-  const token = localStorage.getItem('token');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = async (e) => {
-    let text = (e.target?.result as string)
-      .replace(/^\uFEFF/, '') // Remove BOM
-      .trimStart(); // Remove leading whitespace/newlines
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // Remove BOM
+        .trimStart(); // Remove leading whitespace/newlines
 
-    const manualHeaders = [
-      'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
-      'make', 'model', 'amountPercentage', 'vehicleType',
-      'modelYear', 'vehicleDescriptor', 'manufacturerName',
-      'plantCompanyName', 'plantCountry', 'plantState',
-      'notes', 'technicians', 'assignTechnicians',
-      'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
-    ];
+      const manualHeaders = [
+        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'make', 'model', 'vehicleType',
+        'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'notes', 'technicians', 'assignTechnicians',
+        'jobDescription', 'technicianRates'
+      ];
 
-    Papa.parse(text, {
-      header: false,
-      skipEmptyLines: true,
-      complete: async (result) => {
-        const rows = result.data as string[][];
+      Papa.parse(text, {
+        header: false,
+        skipEmptyLines: true,
+        complete: async (result) => {
+          const rows = result.data as string[][];
 
-        const cleanedData = rows
-          .slice(1) // Skip raw header row
-          .map((row) => {
-            const obj: any = {};
-            manualHeaders.forEach((key, idx) => {
-              let value = row[idx];
-              value = typeof value === 'string' ? value.trim() : value;
-              obj[key] = value;
+          const cleanedData = rows
+            .slice(1) // Skip raw header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value = row[idx];
+                value = typeof value === 'string' ? value.trim() : value;
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              const hasData = Object.values(row).some((val) => val && val !== '');
+              return !isHeaderRow && hasData;
             });
-            return obj;
-          })
-          .filter((row) => {
-            const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-            const hasData = Object.values(row).some((val) => val && val !== '');
-            return !isHeaderRow && hasData;
-          });
 
-        try {
-          const payloadData = cleanedData.map(row => {
-            // Process technicians data
-            const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
-            const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
-            const payRates = row.payRate ? row.payRate.split(',').map((rate: any) => rate.trim()) : [];
-            const amountPercentages = row.amountPercentage ? row.amountPercentage.split(',').map((perc: any) => perc.trim()) : [];
-            
-            // Process simpleFlatRate - ensure it's never null
-            let simpleFlatRates = {};
-            if (row.simpleFlatRate) {
-              try {
-                // Try parsing as JSON first
-                const parsed = JSON.parse(row.simpleFlatRate);
-                if (parsed && typeof parsed === 'object') {
-                  simpleFlatRates = parsed;
-                } else if (!isNaN(Number(row.simpleFlatRate))) {
-                  // Handle case where it's just a number
-                  simpleFlatRates = { default: Number(row.simpleFlatRate) };
-                }
-              } catch (e) {
-                // If parsing fails, try to extract numeric value
-                const numericValue = Number(String(row.simpleFlatRate).replace(/[^0-9.]/g, ''));
-                if (!isNaN(numericValue)) {
-                  simpleFlatRates = { default: numericValue };
-                }
-              }
-            }
+          try {
+            const payloadData = cleanedData.map(row => {
+              // Extract technician names and IDs
+              const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+              const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
 
-            const technicians = technicianNames.map((name: any, index: any) => {
-              // Create technician object with proper fallbacks
+              // Extract rate strings using regex for accurate FlatRate and Rate capture
+              const rateChunks = row.technicianRates
+                ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
+                : [];
+
+              const technicians = technicianNames.map((name: any, index: number) => {
+                let techFlatRate = '';
+                let rRate = '';
+
+                if (rateChunks && rateChunks[index]) {
+                  const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
+                  techFlatRate = match?.[1]?.trim() || '';
+                  rRate = match?.[2]?.trim() || '';
+                }
+
+                return {
+                  id: technicianIds[index] || null,
+                  name,
+                  techFlatRate,
+                  rRate,
+                };
+              });
+
+              // Handle jobDescription array
+              const jobDescriptions = row.jobDescription
+                ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
+                : [];
+
               return {
-                id: technicianIds[index] || null,
-                name: name,
-                payRate: payRates[index] || null,
-                amountPercentage: amountPercentages[index] || null, 
-                simpleFlatRate: simpleFlatRates || {}   // Both fields for compatibility
+                ...row,
+                technicians,
+                jobDescription: jobDescriptions,
+                assignTechnicians: undefined, // cleanup unused field
               };
-            });
+            }).filter(row =>
+              !manualHeaders.some(header => row[header] === header)
+            );
 
-            // Process jobDescription and cost
-            const jobDescriptions = row.jobDescription 
-              ? row.jobDescription.split(',').map((desc: any, idx: any) => ({
-                  jobDescription: desc.trim(),
-                  cost: row.cost?.split(',')[idx]?.trim() || '0'
-                }))
-              : [];
+            // Send payload to backend
+            const response = await axios.post(
+              `/api/importVehicle`,
+              { data: payloadData },
+              { headers }
+            );
 
-            return {
-              ...row,
-              technicians: technicians,
-              jobDescription: jobDescriptions,
-              // Clean up unused fields
-              assignTechnicians: undefined,
-              payRate: undefined,
-              amountPercentage: undefined,
-              simpleFlatRate: undefined,
-              cost: undefined
-            };
-          }).filter(row => 
-            // Remove any rows that might still be headers
-            !manualHeaders.some(header => row[header] === header)
-          );
-
-          const response = await axios.post(
-            `/api/importVehicle`,
-            { data: payloadData },
-            { headers }
-          );
-          toast.success('CSV Import Successful!');
-          fetchCompleteJobs(currentPage, searchTerm, pageSize);
-        } catch (error: unknown) {
-          console.error('❌ Import failed:', error);
-          if (axios.isAxiosError(error)) {
-            toast.error(error.response?.data?.error || error.message);
-          } else if (error instanceof Error) {
-            toast.error(error.message);
-          } else {
-            toast.error('An unknown error occurred');
+            toast.success('CSV Import Successful!');
+            fetchCompleteJobs(currentPage, searchTerm, pageSize);
+          } catch (error: unknown) {
+            console.error('❌ Import failed:', error);
+            if (axios.isAxiosError(error)) {
+              toast.error(error.response?.data?.error || error.message);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error('An unknown error occurred');
+            }
           }
-        }
-        setLoading(false);
-      },
-      error: (err: any) => {
-        console.error('❌ CSV Parse error:', err);
-        toast.error('Error parsing CSV file');
-        setLoading(false);
-      },
-    });
+          setLoading(false);
+        },
+        error: (err: any) => {
+          console.error('❌ CSV Parse error:', err);
+          toast.error('Error parsing CSV file');
+          setLoading(false);
+        },
+      });
+    };
+
+    reader.readAsText(file);
   };
-  reader.readAsText(file);
-};
 
   const handlePageSizeChange = (size: number) => {
     // Calculate the total number of pages based on the current totalJobs and the new pageSize
@@ -395,7 +344,7 @@ const CompletedJobs: React.FC = () => {
     );
   };
 
-   const toggleApproval = async (vehicleId: number, currentApprovalStatus: boolean) => {
+  const toggleApproval = async (vehicleId: number, currentApprovalStatus: boolean) => {
     // Show a confirmation dialog before proceeding
     const result = await Swal.fire({
       title: 'Are you sure?',
@@ -430,7 +379,7 @@ const CompletedJobs: React.FC = () => {
             if (job.id === vehicleId) {
               return { ...job, jobStatus: !job.jobStatus };
             }
-           fetchCompleteJobs(currentPage, searchTerm, pageSize);
+            fetchCompleteJobs(currentPage, searchTerm, pageSize);
             return job;
           }));
           Swal.fire({
@@ -469,80 +418,51 @@ const CompletedJobs: React.FC = () => {
     }
   };
 
+  const handleDateChange = async (dateRange: [Date, Date] | null) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-   const calculateTechnicianTotalCost = (jobData: any) => {
-  if (!jobData) return 0;
+    // Function to format the date as DD-MM-YYYY
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
 
-  // Calculate subtotal from jobDescription
-  let subtotalcost = 0;
-  if (Array.isArray(jobData.jobDescription)) {
-    subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-      let parsedItem = item;
-      if (typeof item === 'string') {
-        try {
-          parsedItem = JSON.parse(item);
-        } catch {
-          return total;
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]);
+      const endDate = formatDate(dateRange[1]);
+
+      try {
+        setLoading(true);
+        let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
+        const requestBody: { [key: string]: any } = {
+          startDate: startDate,
+          endDate: endDate,
+          roleType:roleType,
+          vehicleStatus: 'true',
+        };
+        if (roleType !== 'superadmin' && roleType !== 'manager') {
+          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
         }
+        const response = await axios.post(apiPoint, requestBody, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        setActiveJob(response.data.vehicles);
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+      } finally {
+        setLoading(false);
       }
-      const cost = parseFloat(parsedItem?.cost || '0');
-      return total + (isNaN(cost) ? 0 : cost);
-    }, 0);
-  }
-
-  // If no technicians, return just the subtotal
-  if (!Array.isArray(jobData.assignedTechnicians)) {
-    return subtotalcost;
-  }
-
-  let technicianTotal = subtotalcost;
-
-  // Process each technician
-  jobData.assignedTechnicians.forEach((tech: any) => {
-    const techDetails = tech.VehicleTechnician;
-    if (!techDetails) return;
-
-    // Parse simpleFlatRate
-    let simpleFlatRate = 0;
-    try {
-      if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
-        const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-        
-        if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
-          // For Pay Per Vehicles, get the rate for the specific vehicle type
-          simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
-        } else if (typeof parsedRate === 'object') {
-          // For other payment methods, try to get a technician rate
-          const technicianRate = parsedRate['technician'];
-          simpleFlatRate = parseFloat(technicianRate) || 0;
-        } else if (typeof parsedRate === 'number') {
-          simpleFlatRate = parsedRate;
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing simpleFlatRate:', error);
-      simpleFlatRate = 0;
     }
+  };
 
-    // Parse amountPercentage safely
-    const amountPercentage = parseFloat(
-      techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
-    );
-
-    // Add costs based on payment method
-    if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
-      technicianTotal += simpleFlatRate;
-    } 
-    else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
-      technicianTotal += simpleFlatRate;
-    }
-    else if (amountPercentage > 0) {
-      technicianTotal += (amountPercentage * subtotalcost) / 100;
-    }
-  });
-
-  return technicianTotal;
-};
   const renderRow = (completejob: any) => {
 
     const isChecked = selectedIds.includes(completejob.id);
@@ -568,15 +488,15 @@ const CompletedJobs: React.FC = () => {
               </span>
             </label>
           </td>
-          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline'>{completejob.id}</Link></td>
-          <td> <Link href={`/jobs/view?jobId=${completejob.id}&completedJob`} className='hover:underline capitalize'>{completejob?.customer?.fullName}</Link></td>
-
+          <td>  {completejob.id} </td>
           <td>{completejob?.jobName}</td>
-          <td> <Link href={`/technicians/view?technicianId=${completejob.technicians?.map((tech: any) => tech.id).join(',')}`} className='hover:underline'>{completejob?.assignedTechnicians?.map((tech: any, index: number) => (
+          <td>  {completejob?.customer?.fullName} </td>
+
+          <td> {completejob?.assignedTechnicians?.map((tech: any, index: number) => (
             <div key={`${tech.id}-${index}`} className='capitalize'>
               {tech.firstName} {tech.lastName}
             </div>
-          ))}</Link></td>
+          ))} </td>
 
           {/* <td>  {completejob?.technicians?.map((tech: any, index: number) => (
             <div key={`${tech.id}-${index}`}>
@@ -584,80 +504,33 @@ const CompletedJobs: React.FC = () => {
             </div>
           ))}</td> */}
           {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
-          {roleType !== 'single-technician' && (
-          <td>
-            ${calculateTechnicianTotalCost(completejob).toFixed(2)}
-            
-          </td>
-        )}
 
-          {roleType === 'single-technician' && (
-            <td>
-              {(() => {
-                if (!completejob) return null;
 
-                const subtotalcost = completejob.jobDescription.reduce((sum: number, item: any) => {
-                  return sum + Number(item.cost || 0);
-                }, 0);
 
-                const labourCost = Number(completejob.labourCost || 0); // <-- Fix here
-
-                const totalCost = subtotalcost + labourCost;
-
-                if (subtotalcost === 0) {
-                  const tooltipId = `tooltip-${completejob.id}`;
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <span
-                        data-tooltip-id={tooltipId}
-                        data-tooltip-content="R/I/R/R price is not added for this job."
-                        style={{
-                          height: '12px',
-                          width: '12px',
-                          backgroundColor: 'red',
-                          borderRadius: '50%',
-                          display: 'inline-block',
-                          cursor: 'pointer',
-                        }}
-                      ></span>
-                      <Tooltip id={tooltipId} place="top" />
-                    </div>
-                  );
-                }
-
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${totalCost.toFixed(2)}
-                  </div>
-                );
-              })()}
-            </td>
-
-          )}
           <td>{completejob.vin}</td>
           <td>{completejob.make}</td>
-          <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>
-          <td>{new Date(completejob.completedDate).toLocaleDateString('en-GB')}</td>
-           <td> 
+          <td>{completejob.startDate ? new Date(completejob.startDate).toLocaleDateString() : ''}</td>
+          <td>{completejob.endDate ? new Date(completejob.endDate).toLocaleDateString() : ''}</td>
+          <td>
             <span onClick={() => toggleApproval(completejob.id, completejob.vehicleStatus)} style={{ cursor: 'pointer' }}
               className={`badge ${completejob.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {completejob.vehicleStatus ? 'Completed' : 'In Progress'}
             </span>
-         
 
-        </td>
- 
+
+          </td>
+
           <td>
-             <TableActions
-            editRoute={`/vehicle/create-vehicle?vahicleId=${completejob.id}&completeOrder`}
-            deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
-            viewRoute={`/vehicle/view?vehicleId=${completejob.id}`}
-            idKey="vehicleId"
-            userRole='Activejobs'
-            itemId={completejob.id}  // Pass the technician ID
-            onDeleteSuccess={() => handleDeleteSuccess(completejob.id)}
-          />
+            <TableActions
+              editRoute={`/vehicle/create-vehicle?vahicleId=${completejob.id}&completeOrder`}
+              deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
+              viewRoute={`/vehicle/view?vehicleId=${completejob.id}`}
+              idKey="vehicleId"
+              userRole='Activejobs'
+              itemId={completejob.id}  // Pass the technician ID
+              onDeleteSuccess={() => handleDeleteSuccess(completejob.id)}
+            />
           </td>
         </tr>
       </React.Fragment>
@@ -671,7 +544,8 @@ const CompletedJobs: React.FC = () => {
           { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' }
         ]}
       />
-      <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" />
+      <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -715,6 +589,7 @@ const CompletedJobs: React.FC = () => {
                   </span>
                 )}
               </th> */}
+              <th className="w-[100px]">Job Title</th>
               <th className="w-[160px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
@@ -723,7 +598,6 @@ const CompletedJobs: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[100px]">Job Name</th>
 
               <th className="w-[160px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
@@ -733,12 +607,10 @@ const CompletedJobs: React.FC = () => {
                   </span>
                 )}
               </th>
-
-              <th className="w-[100px]">Total Cost</th>
               <th className="w-[160px]">VIN</th>
               <th className="w-[100px]">Vehicle Make</th>
               <th className="w-[100px]">Start Date</th>
-              <th className="w-[120px]">Completion Date</th>
+              <th className="w-[120px]">End Date</th>
               <th className="w-[120px]">Order Status</th>
               <th className="w-[120px]">Action</th>
             </tr>

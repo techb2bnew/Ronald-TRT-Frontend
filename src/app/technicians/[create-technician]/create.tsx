@@ -35,17 +35,14 @@ interface TechnicianForm {
   address: string;
   secondaryEmail: string;
   password: string;
-  confirmPassword: string;
-  payRate: string;
+  confirmPassword: string; 
+  techType: string;
   taxForms: File[];
   image: File | null;
-  businessLogo: File | null;
-  amountPercentage: string;
-  simpleFlatRate: { [vehicleType: string]: string };
+  businessLogo: File | null; 
   role: string;
   types: string;
-  agreeTerms: string;
-  payVehicleType: string[];
+  agreeTerms: string; 
 
 }
 
@@ -102,15 +99,12 @@ export default function Technicians() {
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
-    confirmPassword: '',
-    payRate: '',
-    simpleFlatRate: {},
+    confirmPassword: '', 
+    techType: 'technician', 
     taxForms: [],
     image: null,
     businessLogo: null,
-    businessName: '',
-    payVehicleType: [],
-    amountPercentage: '',
+    businessName: '', 
     role: '',
     types: '',
     agreeTerms: 'true',
@@ -204,21 +198,7 @@ export default function Technicians() {
       }
 
       // Construct the full address for display
-      const fullAddress = addressParts.join(', ');
- 
-      const simpleFlatRateParsed =
-        typeof data.technician.simpleFlatRate === 'string'
-          ? JSON.parse(data.technician.simpleFlatRate)
-          : data.technician.simpleFlatRate;
-
-      const payVehicleTypeParsed =
-        typeof data.technician.payVehicleType === 'string' && data.technician.payVehicleType !== ''
-          ? data.technician.payVehicleType.split(',').map((v: string) => v.trim())
-          : Array.isArray(data.technician.payVehicleType)
-            ? data.technician.payVehicleType
-            : [];
-
-
+      const fullAddress = addressParts.join(', '); 
       // const matchedRole = roles.find(role => role.id === data.technician.roleId);
       // const roleName = matchedRole?.name || '';
 
@@ -239,12 +219,11 @@ export default function Technicians() {
           ...data.technician,
           id: technicianId,
           password: '',
-          taxForms: data.technician.taxForms || [], 
+          taxForms: data.technician.taxForms || [],
           address: fullAddress,
           role: data.technician.Role.name || '',
-          types: data.technician.types || '',
-          simpleFlatRate: simpleFlatRateParsed || {},
-          payVehicleType: payVehicleTypeParsed,
+          techType: data.technician.techType || '',
+          types: data.technician.types || '', 
         }));
       }
     } catch (error) {
@@ -272,26 +251,7 @@ export default function Technicians() {
   ) => {
     const name = event.target.name;
     const value = event.target.value;
-    if (name === "payRate") {
-      // If changing payRate to anything other than 'Pay Per Vehicles',
-      // clear payVehicleType and simpleFlatRate
-      if (value !== 'Pay Per Vehicles') {
-        setFormData(prev => ({
-          ...prev,
-          payRate: value,
-          payVehicleType: [],          // clear vehicle types
-          simpleFlatRate: {},          // clear simple flat rate
-          amountPercentage: value === 'Simple Percentage' ? prev.amountPercentage : '', // reset amountPercentage if needed
-        }));
-        return; // return here to avoid further setFormData calls below
-      } else{
-         setFormData(prev => ({
-      ...prev,
-      payRate: value,
-      amountPercentage: ''
-    }))
-      }
-    }
+    
     if (name === "role") {
       const selectedRole = roles.find((role) => role.name === value);
       setSelectedRole(selectedRole);
@@ -654,19 +614,7 @@ export default function Technicians() {
     }
   };
 
-  useEffect(() => {
-    if (typeof formData.simpleFlatRate === 'string') {
-      try {
-        const parsed = JSON.parse(formData.simpleFlatRate);
-        setFormData(prev => ({
-          ...prev,
-          simpleFlatRate: parsed,
-        }));
-      } catch (e) {
-        console.warn('Failed to parse simpleFlatRate:', e);
-      }
-    }
-  }, [formData.simpleFlatRate]);
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -676,14 +624,12 @@ export default function Technicians() {
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
-    if (!formData.email?.trim()) newErrors.email = 'Email is required'; 
-    if (!formData.address?.trim()) newErrors.address = 'Address is required'; 
+    if (!formData.email?.trim()) newErrors.email = 'Email is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!isEdit) {
       if (!formData.password?.trim()) newErrors.password = 'Password is required';
     }
-    if (isTechnician) {
-      if (!formData.payRate?.trim()) newErrors.payRate = 'Pay Rate is required';
-    }
+
     if (formData.secondaryEmail && !emailPattern.test(formData.secondaryEmail)) {
       newErrors.secondaryEmail = 'Please enter a valid email address';
     }
@@ -714,20 +660,7 @@ export default function Technicians() {
         formData[key].forEach(file => {
           formDataObj.append('taxForms', file); // Append each file to FormData
         });
-      } else if (key === 'simpleFlatRate' && formData.simpleFlatRate) {
-        const value = formData.simpleFlatRate;
-        const cleanedFlatRate: Record<string, number> = {};
-        // Convert all string values to numbers
-        Object.keys(value).forEach(k => {
-          const num = parseFloat(value[k]);
-          if (!isNaN(num)) {
-            cleanedFlatRate[k] = num;
-          }
-        });
-
-        // Now append as a JSON string
-        formDataObj.append('simpleFlatRate', JSON.stringify(cleanedFlatRate));
-      }
+      }  
 
 
 
@@ -762,10 +695,14 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
     }
-    formDataObj.append("createdBy", "admin");
+    formDataObj.append("createdBy", "admin"); 
+    console.log('techType before appending:', formData.techType);
+
+
     try {
-      setSubmitting(true);
-      const response = await fetch(`${isEdit ? '/api/signup' : '/api/signup'}`, {
+      setSubmitting(true); 
+
+      const response = await fetch(`${isEdit ? `${apiUrl}/updateTechnician` : `${apiUrl}/register`}`, {
         method: 'POST',
         body: formDataObj, // Send the FormData object without setting Content-Type header
         headers,
@@ -969,7 +906,7 @@ export default function Technicians() {
     });
   };
 
- 
+
   const fetchRoles = async () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -1051,7 +988,7 @@ export default function Technicians() {
     fetchRoles();
   }, []);
 
- 
+
 
   useEffect(() => {
     if (isEdit) {
@@ -1059,46 +996,98 @@ export default function Technicians() {
     }
   }, [isEdit]);
 
-  const simpleFlatRateValues = formData.simpleFlatRate ? Object.values(formData.simpleFlatRate) : [];
-  const allRatesEqual = simpleFlatRateValues.length > 0 && simpleFlatRateValues.every(val => val === simpleFlatRateValues[0]);
-
+ 
 
   return (
     <div className='w-[60%] m-auto mb-5 m-auto'>
-    <Breadcrumb
-      items={[
-        {
-          label: isSingleTechnician ? 'Single Technician' : 'IFS Technicians',
-          href: isSingleTechnician ? '/single-technicians/listing' : '/technicians/listing',
-        },
-        isEdit
-          ? { label: isTechnician ? 'Edit Technician' : isManager ? 'Edit Manager' : 'Edit Job' }
-          : {
+      <Breadcrumb
+        items={[
+          {
+            label: isSingleTechnician ? 'Single Technician' : 'IFS Technicians',
+            href: isSingleTechnician ? '/single-technicians/listing' : '/technicians/listing',
+          },
+          isEdit
+            ? { label: isTechnician ? 'Edit Technician' : isManager ? 'Edit Manager' : 'Edit Job' }
+            : {
               label: isTechnician ? 'Create Technician' : isManager ? 'Create Manager' : 'Create Single Technician',
               href: '/technicians/create-technician',
             },
-      ]}
-    />
+        ]}
+      />
 
-    <h1 className="text-lg leading-6 font-bold text-gray-900">
-      {isEdit
-        ? isTechnician
-          ? 'Edit Technician'
-          : isManager
-          ? 'Edit Manager'
-          : 'Edit Single Technician'
-        : isTechnician
-        ? 'Create Technician'
-        : isManager
-        ? 'Create Manager'
-        : 'Create Single Technician'}
-    </h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900">
+        {isEdit
+          ? isTechnician
+            ? 'Edit Technician'
+            : isManager
+              ? 'Edit Manager'
+              : 'Edit Single Technician'
+          : isTechnician
+            ? 'Create Technician'
+            : isManager
+              ? 'Create Manager'
+              : 'Create Single Technician'}
+      </h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
         {/* <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Copy Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div> */}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-4" style={{display:'none'}}>
+          {!isManager && (
+          <div className="flex items-center mb-4 gap-4"> 
+            <div className="inline-flex items-center">
+              <label className="flex items-center cursor-pointer relative">
+                <input
+                  type="radio"
+                  name="techType" // Ensure both radio buttons have the same 'name' to group them
+                  checked={formData.techType === "technician"} // This would be the other option
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      techType: e.target.checked ? "technician" : "", // Set or unset the value based on selection
+                    }));
+                  }}
+                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
+                  id="check2" // Ensure unique ID for each input
+                />
+                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                </span>
+              </label>
+              <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check2">
+                Technician 
+              </label>
+            </div> 
+            <div className="inline-flex items-center">
+              <label className="flex items-center cursor-pointer relative">
+                <input
+                  type="radio"
+                  name="techType" // Ensure both radio buttons have the same 'name' to group them
+                  checked={formData.techType === "R/I/R/R"}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      techType: e.target.checked ? "R/I/R/R" : "", // Set or unset the value based on selection
+                    }));
+                  }}
+                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
+                  id="check1" // Ensure unique ID for each input
+                />
+                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                </span>
+              </label>
+              <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check1">
+                R/I/R/R
+              </label>
+            </div> 
+          </div>
+            )}
+          <div className="grid grid-cols-1 gap-4" style={{ display: 'none' }}>
 
             <div className='mb-4 relative'>
               <FormControl fullWidth size="small">
@@ -1318,8 +1307,16 @@ export default function Technicians() {
                 onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                   if (newValue) {
                     handleAddressSelect(newValue);
-                  }
+                  } else if (actionMeta.action === 'clear') {
+                      // Handle clear action
+                      setAddressValue(null); // Make sure you have this state setter
+                      setFormData(prev => ({
+                        ...prev,
+                        address: '',
+                      }));
+                    }
                 },
+                isClearable: true,
                 styles: {
                   input: (provided) => ({
                     ...provided,
@@ -1338,11 +1335,11 @@ export default function Technicians() {
                   }),
                 }
               }}
-               autocompletionRequest={{
-                  componentRestrictions: {
-                    country: 'us' // Restrict to US addresses only
-                  }
-                }}
+              autocompletionRequest={{
+                componentRestrictions: {
+                  country: 'us' // Restrict to US addresses only
+                }
+              }}
             />
             {errors.address && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -1476,324 +1473,7 @@ export default function Technicians() {
                 </div>
               )}
             </div>
-          </div>
-
-          <div className={`grid gap-4 mb-4 ${formData.payRate === 'Simple Flat Rate' || formData.payRate === 'Simple Percentage'
-            ? 'grid-cols-2'
-            : 'grid-cols-3'
-            }`}
-          >
-            {formData.role === 'ifs' || isTechnician && (
-              <div className=' relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                  <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                  <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-
-                {/* <p className='text-sm mb-2'>Pay Rate <span className='text-red-500'>*</span></p> */}
-                <FormControl fullWidth size="small" >
-                  <InputLabel id="payRate" color="warning">Select pay rate(R/1/R/R) *</InputLabel>
-                  <Select
-                    labelId="payRate"
-                    color="warning"
-                    id="select-payRate"
-                    value={formData.payRate}
-                    label="Select pay rate(R/1/R/R)"
-                    name="payRate"
-                    onChange={handleSelectChange}
-                  >
-                    <MenuItem value='Pay Per Vehicles'>Pay Per Vehicle</MenuItem>
-                    <MenuItem value='Pay Per Job'>Pay Per Job</MenuItem>
-                    <MenuItem value='Simple Flat Rate'>Simple Flat Rate</MenuItem>
-                    <MenuItem value='Simple Percentage'>Simple Percentage</MenuItem>
-
-                  </Select>
-                </FormControl>
-                {errors.payRate && (
-                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                    {errors.payRate}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {formData.payRate === 'Pay Per Vehicles' && (
-              <div className='mb relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                  <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
-                  <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
-                </svg>
-                <FormControl fullWidth size="small" className="mt-4" error={!!errors.payVehicleType}>
-                  <InputLabel id="payVehicleType" color="warning">Select Vehicle Type</InputLabel>
-                  <Select
-                    labelId="payVehicleType"
-                    color="warning"
-                    id="select-vehicleType"
-                    multiple
-                    value={Array.isArray(formData.payVehicleType) ? formData.payVehicleType : []}
-                    label="Select Vehicle Type"
-                    name="payVehicleType"
-                    renderValue={(selected) => {
-                      if (!Array.isArray(selected)) return '';
-                      return selected.join(', ');
-                    }}
-                    onChange={(event) => {
-                      let value = event.target.value;
-                      if (typeof value === 'string') value = value.split(',');
-
-                      // Check if "select-all" clicked
-                      if (value.includes('select-all')) {
-                        if (formData.payVehicleType.length === vehicleTypes.length) {
-                          // Deselect all if all were selected
-                          value = [];
-                        } else {
-                          // Select all vehicle types
-                          value = [...vehicleTypes];
-                        }
-                      }
-
-                      // Always remove 'select-all' from value (don't store it)
-                      value = value.filter(v => v !== 'select-all');
-
-                      // Identify removed vehicle types
-                      const removedTypes = (formData.payVehicleType || []).filter(
-                        type => !value.includes(type)
-                      );
-
-                      // Remove corresponding keys from simpleFlatRate
-                      const updatedSimpleFlatRate = { ...formData.simpleFlatRate };
-                      removedTypes.forEach(type => {
-                        if (updatedSimpleFlatRate.hasOwnProperty(type)) {
-                          delete updatedSimpleFlatRate[type];
-                        }
-                      });
-
-                      setFormData(prev => ({
-                        ...prev,
-                        payVehicleType: value,
-                        simpleFlatRate: updatedSimpleFlatRate,
-                      }));
-                    }}
-
-                  >
-                    <MenuItem value="select-all">
-                      <Checkbox
-                        checked={formData.payVehicleType.length === vehicleTypes.length}
-                        indeterminate={
-                          formData.payVehicleType.length > 0 &&
-                          formData.payVehicleType.length < vehicleTypes.length
-                        }
-                      />
-                      <ListItemText primary="Select All" />
-                    </MenuItem>
-
-                    {vehicleTypes.map(type => (
-                      <MenuItem key={type} value={type}>
-                        <Checkbox checked={formData.payVehicleType.indexOf(type) > -1} />
-                        <ListItemText primary={type} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.payVehicleType && (
-                    <FormHelperText>{errors.payVehicleType}</FormHelperText>
-                  )}
-                </FormControl>
-
-              </div>
-            )}
-
-            {(formData.payRate === 'Simple Percentage') && (
-              <div className='relative'>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                  <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                  <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                <TextField fullWidth type='number' error={!!errors.amountPercentage} helperText={errors.amountPercentage || ''} name="amountPercentage" id="outlined-basic" color="warning" label="Simple Persentage" size="small" value={formData.amountPercentage} inputProps={{ min: 0, max: 100 }} onChange={handleChange} />
-              </div>
-            )}
-            {formData?.payRate === 'Pay Per Vehicles' &&
-              Array.isArray(formData?.payVehicleType) &&
-              formData.payVehicleType.length > 1 &&
-              allRatesEqual && (
-
-                <div className='relative'>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={simpleFlatRateAll}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setSimpleFlatRateAll(checked);
-
-                          setFormData(prev => {
-                            let updatedSimpleFlatRate = { ...prev.simpleFlatRate };
-
-                            if (checked) {
-                              // Use first non-empty price or empty string
-                              const firstValue = Object.values(updatedSimpleFlatRate).find(val => val !== '') || '';
-                              updatedSimpleFlatRate = {};
-                              formData.payVehicleType.forEach(type => {
-                                updatedSimpleFlatRate[type] = firstValue;
-                              });
-                            }
-                            // If unchecked, keep existing prices as is
-
-                            return {
-                              ...prev,
-                              simpleFlatRate: updatedSimpleFlatRate,
-                            };
-                          });
-                        }}
-                        name="simpleFlatRateAll"
-                        color="warning"
-
-                      />
-                    }
-                    label="Assign Price for all vehicles"
-                  />
-
-                </div>
-              )}
-            {(formData.payRate === 'Simple Flat Rate' &&
-              Array.isArray(formData.payVehicleType)) && (
-                <>
-                  {/* Individual inputs hamesha dikhen */}
-                  {(formData.payRate === 'Simple Flat Rate'
-                    ? ['technician'] // fallback vehicle type
-                    : formData.payVehicleType
-                  ).map(type => (
-                    <div className="" key={type}>
-
-                      <div className='relative w-full'>
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                          <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                          <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                          <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                          <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                        </svg>
-                        <TextField
-                          fullWidth
-                          type='number'
-                          label={`Simple Flat Rate ($) for ${type}`}
-                          size="small"
-                          color="warning"
-                          name="simpleFlatRate"
-                          value={formData.simpleFlatRate?.[type] || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (!/^\d*\.?\d*$/.test(value)) return;
-                            setFormData(prev => ({
-                              ...prev,
-                              simpleFlatRate: {
-                                ...prev.simpleFlatRate,
-                                [type]: value,
-                              },
-                            }));
-                          }}
-                          inputProps={{ step: "0.01", min: 0 }}
-                        />
-                      </div>
-
-
-                    </div>
-                  ))}
-                </>
-              )}
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            {(formData.payRate === 'Simple Flat Rate' ||
-              (formData.payRate === 'Pay Per Vehicles' &&
-                Array.isArray(formData.payVehicleType) &&
-                formData.payVehicleType.length > 0)) && (
-                <>
-                  {/* Individual inputs hamesha dikhen */}
-                  {(formData.payRate === 'Simple Flat Rate'
-                    ? ['technician'] // fallback vehicle type
-                    : formData.payVehicleType
-                  ).map(type => (
-                    <div className="grid grid-cols-3 gap-4" key={type}>
-                      {(formData.payRate === 'Pay Per Vehicles' && (
-
-                        <div className='w-full'>
-                          <Input
-                            type="text"
-                            readOnly
-                            value='Pay Per Vehicles'
-                            style={{
-                              border: "1px solid #ccc",
-                              borderRadius: "4px",
-                              padding: "4px 12px",
-                              backgroundColor: "#f9f9f9",
-                              cursor: "default",
-                              width: '100%'
-                            }}
-                          />
-                        </div>
-                      ))}
-
-                      {(formData.payRate === 'Pay Per Vehicles' && (
-                        <div className='w-full'>
-                          <Input
-                            type="text"
-                            readOnly
-                            value={type}
-                            style={{
-                              border: "1px solid #ccc",
-                              borderRadius: "4px",
-                              padding: "4px 12px",
-                              backgroundColor: "#f9f9f9",
-                              cursor: "default",
-                              width: '100%'
-                            }}
-                          />
-                        </div>
-                      ))}
-                      {(formData.payRate === 'Pay Per Vehicles' && (
-                        <div className='relative w-full'>
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                            <path d="M10 3V17" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M13 5.5C13 4.1 11.6 3 10 3C8.4 3 7 4.1 7 5.5C7 6.9 8.4 8 10 8C11.6 8 13 9.1 13 10.5C13 11.9 11.6 13 10 13C8.4 13 7 11.9 7 10.5" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
-                            <circle cx="15" cy="15" r="3" stroke="#5B5B99" strokeWidth="1.5" />
-                            <path d="M15 13V15L16.2 16" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" />
-                          </svg>
-                          <TextField
-                            fullWidth
-                            type='number'
-                            label={`Simple Flat Rate ($) for ${type}`}
-                            size="small"
-                            color="warning"
-                            name="simpleFlatRate"
-                            value={formData.simpleFlatRate?.[type] || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              const regex = /^\d{0,5}(?:\.\d{0,2})?$/;
-
-                              if (value === '' || regex.test(value)) {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  simpleFlatRate: {
-                                    ...prev.simpleFlatRate,
-                                    [type]: value,
-                                  },
-                                }));
-                              }
-                            }}
-                            inputProps={{ inputMode: 'decimal', pattern: '\\d{0,5}(\\.\\d{0,2})?' }}
-                            disabled={simpleFlatRateAll && !isEdit}
-                          />
-                        </div>
-                      ))}
-
-                    </div>
-                  ))}
-                </>
-              )}
-          </div>
+          </div> 
 
 
 

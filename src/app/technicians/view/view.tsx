@@ -329,7 +329,8 @@ export default function ViewDetails() {
                   <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                {technician?.address}</p>
+                {technician.address ? technician.address.replace(/^,|\s* \s*/g, '') : 'N/A'}
+              </p>
               <p className='flex gap-2 items-center'>
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="view__detail" xmlns="http://www.w3.org/2000/svg">
                   <rect x="5" y="2" width="10" height="16" rx="2" stroke="#5B5B99" strokeWidth="1.5" />
@@ -381,53 +382,12 @@ export default function ViewDetails() {
                   <span className="text-sm text-black-500">N/A</span>
                 )}
               </p>
-              {technician.payRate && (
-                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
-                  <strong className='w-[200px] inline-block'>Pay Rate:</strong>
-                  {technician?.payRate ? (
-                    technician.payRate
-                  ) : (
-                    <span className="text-sm text-black-500">N/A</span>
-                  )}
+             
+             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] inline-block'>Type:</strong>
+                {technician.techType}
                 </p>
-              )}
-              {technician.amountPercentage && (
-                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
-                  <strong className='w-[200px] inline-block'>Amount Percentage:</strong>
-                  {technician?.amountPercentage ? (
-                    `${technician.amountPercentage}%`
-                  ) : (
-                    <span className="text-sm text-black-500">N/A</span>
-                  )}
-                </p>
-              )}
-              {technician.simpleFlatRate && technician.simpleFlatRate !== "null" && technician.simpleFlatRate !== null && technician.simpleFlatRate !== "" && technician.simpleFlatRate !== "{}" && (<p className='mb-2 border-b flex border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] min-w-[200px] inline-block'>Flat Rate:</strong>
-                {technician?.simpleFlatRate ? (() => {
-                  try {
-                    // Try parse JSON
-                    const rates = JSON.parse(technician.simpleFlatRate);
-
-                    if (typeof rates === 'object' && rates !== null) {
-                      // If multiple vehicle types, show as comma-separated
-                      return Object.entries(rates)
-                        .map(([vehicle, rate]) => `${vehicle}: $${rate}`)
-                        .join(', ');
-                    } else {
-                      // If it's a single number or string after parsing
-                      return `$${rates}`;
-                    }
-                  } catch (e) {
-                    // If parsing fails, just show the raw value with $ if number
-                    const val = technician.simpleFlatRate;
-                    if (!isNaN(Number(val))) return `$${val}`;
-                    return val; // fallback to raw string
-                  }
-                })() : (
-                  <span className="text-sm text-black-500">N/A</span>
-                )}
-              </p>
-              )}
+              
 
             </div>
 

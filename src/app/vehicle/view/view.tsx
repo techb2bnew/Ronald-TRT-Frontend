@@ -60,85 +60,85 @@ export default function ViewDetails() {
     return acc + parseFloat(job.cost || '0');
   }, 0);
 
- const calculateTechnicianTotalCost = (jobData: any) => {
-  if (!jobData) return 0;
+  const calculateTechnicianTotalCost = (jobData: any) => {
+    if (!jobData) return 0;
 
-  // Calculate subtotal from jobDescription
-  let subtotalcost = 0;
-  if (Array.isArray(jobData.jobDescription)) {
-    subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-      let parsedItem = item;
-      if (typeof item === 'string') {
-        try {
-          parsedItem = JSON.parse(item);
-        } catch {
-          return total;
+    // Calculate subtotal from jobDescription
+    let subtotalcost = 0;
+    if (Array.isArray(jobData.jobDescription)) {
+      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
+        let parsedItem = item;
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item);
+          } catch {
+            return total;
+          }
         }
-      }
-      const cost = parseFloat(parsedItem?.cost || '0');
-      return total + (isNaN(cost) ? 0 : cost);
-    }, 0);
-  }
+        const cost = parseFloat(parsedItem?.cost || '0');
+        return total + (isNaN(cost) ? 0 : cost);
+      }, 0);
+    }
 
-  // If no technicians, return just the subtotal
-  if (!Array.isArray(jobData.assignedTechnicians)) {
-    return subtotalcost;
-  }
+    // If no technicians, return just the subtotal
+    if (!Array.isArray(jobData.assignedTechnicians)) {
+      return subtotalcost;
+    }
 
-  let technicianTotal = subtotalcost;
+    let technicianTotal = subtotalcost;
 
-  // Check if labourCost exists and add it to the total if available
-  const labourCost = parseFloat(jobData.labourCost || '0');
-  if (!isNaN(labourCost) && labourCost > 0) {
-    technicianTotal += labourCost; // Add labourCost to the technician total
-  }
+    // Check if labourCost exists and add it to the total if available
+    const labourCost = parseFloat(jobData.labourCost || '0');
+    if (!isNaN(labourCost) && labourCost > 0) {
+      technicianTotal += labourCost; // Add labourCost to the technician total
+    }
 
-  // Process each technician
-  jobData.assignedTechnicians.forEach((tech: any) => {
-    const techDetails = tech.VehicleTechnician;
-    if (!techDetails) return;
+    // Process each technician
+    jobData.assignedTechnicians.forEach((tech: any) => {
+      const techDetails = tech.VehicleTechnician;
+      if (!techDetails) return;
 
-    // Parse simpleFlatRate
-    let simpleFlatRate = 0;
-    try {
-      if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
-        const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-        
-        if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
-          // For Pay Per Vehicles, get the rate for the specific vehicle type
-          simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
-        } else if (typeof parsedRate === 'object') {
-          // For other payment methods, try to get a technician rate
-          const technicianRate = parsedRate['technician'];
-          simpleFlatRate = parseFloat(technicianRate) || 0;
-        } else if (typeof parsedRate === 'number') {
-          simpleFlatRate = parsedRate;
+      // Parse simpleFlatRate
+      let simpleFlatRate = 0;
+      try {
+        if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
+          const parsedRate = JSON.parse(techDetails.simpleFlatRate);
+
+          if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
+            // For Pay Per Vehicles, get the rate for the specific vehicle type
+            simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
+          } else if (typeof parsedRate === 'object') {
+            // For other payment methods, try to get a technician rate
+            const technicianRate = parsedRate['technician'];
+            simpleFlatRate = parseFloat(technicianRate) || 0;
+          } else if (typeof parsedRate === 'number') {
+            simpleFlatRate = parsedRate;
+          }
         }
+      } catch (error) {
+        console.error('Error parsing simpleFlatRate:', error);
+        simpleFlatRate = 0;
       }
-    } catch (error) {
-      console.error('Error parsing simpleFlatRate:', error);
-      simpleFlatRate = 0;
-    }
 
-    // Parse amountPercentage safely
-    const amountPercentage = parseFloat(
-      techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
-    );
+      // Parse amountPercentage safely
+      const amountPercentage = parseFloat(
+        techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
+      );
 
-    // Add costs based on payment method
-    if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
-      technicianTotal += simpleFlatRate;
-    } 
-    else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
-      technicianTotal += simpleFlatRate;
-    }
-    else if (amountPercentage > 0) {
-      technicianTotal += (amountPercentage * subtotalcost) / 100;
-    }
-  });
+      // Add costs based on payment method
+      if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
+        technicianTotal += simpleFlatRate;
+      }
+      else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
+        technicianTotal += simpleFlatRate;
+      }
+      else if (amountPercentage > 0) {
+        technicianTotal += (amountPercentage * subtotalcost) / 100;
+      }
+    });
 
-  return technicianTotal;
-};
+    return technicianTotal;
+  };
 
   return (
     <>
@@ -155,7 +155,7 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Job Name:</strong>
+                <strong className='w-[210px] inline-block'>Job Title:</strong>
                 {jobData?.jobName || <span className="text-black-500">N/A</span>}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
@@ -186,14 +186,20 @@ export default function ViewDetails() {
                 <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
                 {jobData?.vehicleType || <span className="text-black-500">N/A</span>}
               </p>
-            </div>
-
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Body Class:</strong>
                 {jobData?.bodyClass || <span className="text-black-500">N/A</span>}
               </p>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : ''} </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : ''}
+              </div>
+            </div>
+
+            {/* Right Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Color:</strong>
                 {jobData?.color || <span className="text-black-500">N/A</span>}
@@ -215,6 +221,10 @@ export default function ViewDetails() {
                 {jobData?.createdBy || <span className="text-black-500">N/A</span>}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Estimated By:</strong>
+                {jobData?.estimatedBy || <span className="text-black-500">N/A</span>}
+              </p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Customer:</strong>
                 {jobData?.customer?.fullName || <span className="text-black-500">N/A</span>}
               </p>
@@ -226,6 +236,21 @@ export default function ViewDetails() {
                   </a>
                 ) : <span className="text-black-500">N/A</span>}
               </p>
+              {roleType !== 'single-technician' && (
+                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                  <strong className='w-[210px] inline-block'>Manager:</strong>
+                  {jobData?.job?.manager?.firstName || <span className="text-black-500">N/A</span>} {jobData?.job?.manager?.lastName || <span className="text-black-500">N/A</span>}
+                </p>
+              )}
+              {roleType !== 'single-technician' && (
+                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                  <strong className='w-[210px] inline-block'>Manager Email:</strong>
+                  <a className="hover:underline" href={`mailto:${jobData?.job?.manager?.email}`}>
+                    {jobData?.job?.manager?.email || <span className="text-black-500">N/A</span>}
+                  </a>
+                </p>
+              )}
+
             </div>
           </div>
 
@@ -234,107 +259,51 @@ export default function ViewDetails() {
             <h3 className="text-lg font-semibold mb-3 text-white">Work Order Description</h3>
             {jobData?.jobDescription?.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {jobData.jobDescription.map((job: any, index: number) => (
+                {jobData.jobDescription.map((jobDescription: string, index: number) => (
                   <div key={index} className="bg-gray-50 p-4 rounded shadow">
-                    <p className="mb-2"><strong className='w-[210px] inline-block'>Description:</strong> {job.jobDescription || 'N/A'}</p>
-                    <p><strong className='w-[210px] inline-block'>Cost:</strong> ${job.cost || '0'}</p>
+                    <p className="mb-2"><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'N/A'}</p>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-gray-500">No work order descriptions available</p>
             )}
-
-            <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 bg-white p-4 mt-4'>
-              <strong className='w-[210px] inline-block font-semibold'>Sub Total Cost:</strong>
-              <span>{subTotalCost ? `$${subTotalCost}` : <span className="text-black-500">N/A</span>}</span>
-            </p>
           </div>
-          <div className="pl-6 pr-6">
-            <div className=' border-b border-gray-500 text-sm bg-white p-4 flex'>
-
-              <strong className='w-[210px] inline-block'>Total Cost:</strong>
 
 
-              ${calculateTechnicianTotalCost(jobData).toFixed(2)}
-
-
-            </div>
-          </div>
           {/* Assigned Technicians Section */}
           <div className="p-6">
 
             {jobData?.assignedTechnicians?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {jobData.assignedTechnicians.map((tech: any) => {
-                  let flatRateDisplay = "N/A"; // Default display message
-                  if (tech.VehicleTechnician?.simpleFlatRate) {
-                    try {
-                      const rates = JSON.parse(tech.VehicleTechnician.simpleFlatRate);
-                      const entries = Object.entries(rates);
-
-                      // Check if "default" key exists and handle it
-                      if (entries.length === 1 && entries[0][0] === "default") {
-                        flatRateDisplay = (entries[0][1] as string).toString(); // Type assertion here
-                      } else {
-                        // Show non-default entries if available
-                        flatRateDisplay = entries
-                          .filter(([type]) => type !== "default") // Exclude the "default" key if present
-                          .map(([type, amount]) => `${type}: ${amount}`)
-                          .join(", ");
-                        if (flatRateDisplay === "") {
-                          flatRateDisplay = ""; // If no non-default rates, set to "N/A"
-                        }
-                      }
-
-                      // Remove the word "technician" if it appears in the string
-                      flatRateDisplay = flatRateDisplay.replace(/technician/gi, "").trim(); // Remove 'technician'
-
-                    } catch (e) {
-                      // If parsing fails, fallback to the original string value
-                      flatRateDisplay = tech.VehicleTechnician.simpleFlatRate;
-                    }
-                  }
 
 
                   return (
                     <div key={tech.id} className="bg-gray-50 p-4 rounded shadow">
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Name:</strong> {tech.firstName} {tech.lastName}</p>
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Email:</strong> {tech.email}</p>
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Phone:</strong> {tech.phoneNumber}</p>
-                      {tech.VehicleTechnician && (
-                        <>
-                          {tech.VehicleTechnician.payRate && (
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Pay Rate:</strong> {tech.VehicleTechnician.payRate}</p>
-                          )}
-                          {tech.VehicleTechnician.payVehicleType && (
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Pay Vehicle Type:</strong> {tech.VehicleTechnician.payVehicleType}</p>
-                          )}
-                          {roleType === 'single-technician' && (
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData.labourCost}</p>
-
-                          )}
-                          {jobData.labourCost !== null || roleType !== 'single-technician' && ( 
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong> ${jobData.labourCost}</p>
-                          )}
-                          {roleType !== 'single-technician' && (
-                              <div>
-                          {flatRateDisplay && (
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Amount:</strong> {flatRateDisplay}</p>
-                          )}
-                          {tech.VehicleTechnician?.amountPercentage &&
-                            tech.VehicleTechnician?.amountPercentage !== "undefined" &&
-                            tech.VehicleTechnician?.amountPercentage !== "" ? (
-                            <p className="mb-1">
-                              <strong className='w-[210px] inline-block'>Amount Percentage:</strong>
-                              {tech.VehicleTechnician.amountPercentage}%
-                            </p>
-                          ) : null}
-                          </div>
-                          )}
-
-                        </>
+                      <p className="mb-1"><strong className='w-[210px] inline-block'>Name:</strong>
+                        {tech.firstName} {tech.lastName}</p>
+                      <p className="mb-1"><strong className='w-[210px] inline-block'>Email:</strong>
+                        <a className="hover:underline" href={`mailto:${tech.email}`}>
+                          {tech.email}</a></p>
+                      <p className="mb-1"><strong className='w-[210px] inline-block'>Phone:</strong>
+                        <a className="hover:underline" href={`tel:${tech.email}`}>
+                          {tech.phoneNumber}</a></p>
+                      {tech.VehicleTechnician.rRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block'>R/I/R/R:</strong>
+                          ${tech.VehicleTechnician.rRate}</p>
                       )}
+                      {tech.VehicleTechnician.techFlatRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block'>Flat Rate:</strong>
+                          ${tech.VehicleTechnician.techFlatRate}</p>
+                      )}
+
+                      <>
+                        {jobData.labourCost !== 'null' && roleType === 'single-technician' && (
+                          <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong>
+                            ${jobData.labourCost}</p>
+                        )}
+                      </>
                     </div>
                   );
                 })}

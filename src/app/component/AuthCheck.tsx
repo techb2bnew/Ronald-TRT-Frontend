@@ -54,7 +54,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           await Swal.fire({
             icon: 'error',
             title: 'Access Revoked',
-            text: 'Technician access revoked. Logging out...',
+            text: ' Access revoked. Logging out...',
             customClass: {
               container: 'z-[999999]'
             }
@@ -67,7 +67,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           await Swal.fire({
             icon: 'warning',
             title: 'Account Inactive',
-            text: 'Your technician account is inactive. Please contact support.',
+            text: 'Your account is inactive. Please contact support.',
             customClass: {
               container: 'z-[999999]'
             }
@@ -79,7 +79,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           await Swal.fire({
             icon: 'warning',
             title: 'Account Deleted',
-            text: 'Your technician account has been deleted. Please contact support.',
+            text: 'Your account has been deleted. Please contact support.',
             customClass: {
               container: 'z-[999999]'
             }

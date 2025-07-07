@@ -63,7 +63,7 @@ export default function ClientListing() {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `/api/customer?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `/api/customer?userId=${userId}&page=${page}&limit=${limit}`;
+        : `/api/customer?userId=${userId}&page=${page}&limit=${limit}&roleType=${encodeURIComponent(roleType)}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -179,7 +179,6 @@ export default function ClientListing() {
       Id: customerData.id,
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
-      Phone: customerData.phoneNumber || 'N/A',
       Address: customerData.address || 'N/A'
     }));
 
@@ -210,7 +209,7 @@ export default function ClientListing() {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address'
+        'Id', 'Name', 'Email', 'Address'
       ];
 
       Papa.parse(text, {
@@ -347,7 +346,8 @@ export default function ClientListing() {
             {cust.phoneNumber || 'N/A'}
           </a>
         </td>
-        <td>{cust.address || 'N/A'}</td>
+       <td>{cust.address ? cust.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}</td>
+
         <td>
           <TableActions
             editRoute={`/client/create?customerId=${cust.id}`}

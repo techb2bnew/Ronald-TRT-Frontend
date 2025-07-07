@@ -40,8 +40,15 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+ 
+  const [roleType, setRoleType] = useState<string | null>(null);
 
-
+  useEffect(() => {
+      // Ensure this code runs only on the client-side (after the component mounts)
+      const storedRoleType = localStorage.getItem('types');
+      setRoleType(storedRoleType); // Set the roleType from localStorage
+    }, []);
+    
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
@@ -297,38 +304,11 @@ const JobTable: React.FC = () => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
       const vt = firstTech.VehicleTechnician || {};
 
-      // Step 1: Calculate subtotal
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
-
-      // Step 2: Calculate Technician Costs
-      let technicianTotal = 0;
-      jobData.assignedTechnicians.forEach((tech: any) => {
-        const techDetails = tech.VehicleTechnician || {};
-        const amountPercentage = parseFloat(techDetails.amountPercentage || '0');
-
-        // If there's an amountPercentage, calculate based on subtotal
-        if (amountPercentage > 0) {
-          technicianTotal += (amountPercentage * subTotal) / 100;
-        }
-
-        // Add simple flat rate if available
-        let simpleFlatRate = 0;
-        if (techDetails.simpleFlatRate) {
-          try {
-            const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-            simpleFlatRate = parsedRate[techDetails.payVehicleType] || 0;
-          } catch (error) {
-            console.error('Error parsing simpleFlatRate:', error);
-          }
-        }
-        technicianTotal += simpleFlatRate;
-      });
-
-      // Step 3: Calculate totalCost (including technician costs)
-      const totalCost = subTotal + technicianTotal;
-
+      // Extract technician data including techFlatRate and rRate
+      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
+        const vt = tech.VehicleTechnician || {};
+        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+      }).join(', ');
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -339,7 +319,6 @@ const JobTable: React.FC = () => {
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
         vehicleType: jobData.vehicleType,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
@@ -351,12 +330,8 @@ const JobTable: React.FC = () => {
         notes: jobData.notes,
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        payRate: vt.payRate || 'N/A',
-        simpleFlatRate: vt.simpleFlatRate !== undefined && vt.simpleFlatRate !== null && vt.simpleFlatRate !== '' ? vt.simpleFlatRate : 'N/A',
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-        totalCost: totalCost.toFixed(2), // Show the calculated total cost
+        jobDescription: jobData.jobDescription.join(' '),
+        technicianRates: technicianRates,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -379,11 +354,11 @@ const JobTable: React.FC = () => {
 
       const manualHeaders = [
         'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'vehicleType',
+        'make', 'model', 'vehicleType',
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians',
-        'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
+        'jobDescription', 'technicianRates'
       ];
 
       Papa.parse(text, {
@@ -411,73 +386,55 @@ const JobTable: React.FC = () => {
 
           try {
             const payloadData = cleanedData.map(row => {
-              // Process technicians data
+              // Extract technician names and IDs
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
-              const payRates = row.payRate ? row.payRate.split(',').map((rate: any) => rate.trim()) : [];
-              const amountPercentages = row.amountPercentage ? row.amountPercentage.split(',').map((perc: any) => perc.trim()) : [];
 
-              // Process simpleFlatRate - ensure it's never null
-              let simpleFlatRates = {};
-              if (row.simpleFlatRate) {
-                try {
-                  // Try parsing as JSON first
-                  const parsed = JSON.parse(row.simpleFlatRate);
-                  if (parsed && typeof parsed === 'object') {
-                    simpleFlatRates = parsed;
-                  } else if (!isNaN(Number(row.simpleFlatRate))) {
-                    // Handle case where it's just a number
-                    simpleFlatRates = { default: Number(row.simpleFlatRate) };
-                  }
-                } catch (e) {
-                  // If parsing fails, try to extract numeric value
-                  const numericValue = Number(String(row.simpleFlatRate).replace(/[^0-9.]/g, ''));
-                  if (!isNaN(numericValue)) {
-                    simpleFlatRates = { default: numericValue };
-                  }
+              // Extract rate strings using regex for accurate FlatRate and Rate capture
+              const rateChunks = row.technicianRates
+                ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
+                : [];
+
+              const technicians = technicianNames.map((name: any, index: number) => {
+                let techFlatRate = '';
+                let rRate = '';
+
+                if (rateChunks && rateChunks[index]) {
+                  const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
+                  techFlatRate = match?.[1]?.trim() || '';
+                  rRate = match?.[2]?.trim() || '';
                 }
-              }
 
-              const technicians = technicianNames.map((name: any, index: any) => {
-                // Create technician object with proper fallbacks
                 return {
                   id: technicianIds[index] || null,
-                  name: name,
-                  payRate: payRates[index] || null,
-                  amountPercentage: amountPercentages[index] || null,
-                  simpleFlatRate: simpleFlatRates || {}   // Both fields for compatibility
+                  name,
+                  techFlatRate,
+                  rRate,
                 };
               });
 
-              // Process jobDescription and cost
+              // Handle jobDescription array
               const jobDescriptions = row.jobDescription
-                ? row.jobDescription.split(',').map((desc: any, idx: any) => ({
-                  jobDescription: desc.trim(),
-                  cost: row.cost?.split(',')[idx]?.trim() || '0'
-                }))
+                ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
                 : [];
 
               return {
                 ...row,
-                technicians: technicians,
+                technicians,
                 jobDescription: jobDescriptions,
-                // Clean up unused fields
-                assignTechnicians: undefined,
-                payRate: undefined,
-                amountPercentage: undefined,
-                simpleFlatRate: undefined,
-                cost: undefined
+                assignTechnicians: undefined, // cleanup unused field
               };
             }).filter(row =>
-              // Remove any rows that might still be headers
               !manualHeaders.some(header => row[header] === header)
             );
 
+            // Send payload to backend
             const response = await axios.post(
               `/api/importVehicle`,
               { data: payloadData },
               { headers }
             );
+
             toast.success('CSV Import Successful!');
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
@@ -499,8 +456,13 @@ const JobTable: React.FC = () => {
         },
       });
     };
+
     reader.readAsText(file);
   };
+
+
+
+
 
 
 
@@ -514,93 +476,58 @@ const JobTable: React.FC = () => {
     );
   };
 
-  const calculateTechnicianTotalCost = (jobData: any) => {
-    if (!jobData) return 0;
 
-    // Calculate subtotal from jobDescription
-    let subtotalcost = 0;
-    if (Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-        let parsedItem = item;
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item);
-          } catch {
-            return total;
-          }
-        }
-        const cost = parseFloat(parsedItem?.cost || '0');
-        return total + (isNaN(cost) ? 0 : cost);
-      }, 0);
-    }
 
-    // If no technicians, return just the subtotal
-    if (!Array.isArray(jobData.assignedTechnicians)) {
-      return subtotalcost;
-    }
+  const handleDateChange = async (dateRange: [Date, Date] | null) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-    let technicianTotal = subtotalcost;
+    // Function to format the date as DD-MM-YYYY
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
 
-    // Process each technician
-    jobData.assignedTechnicians.forEach((tech: any) => {
-      const techDetails = tech.VehicleTechnician;
-      if (!techDetails) return;
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]);
+      const endDate = formatDate(dateRange[1]);
 
-      // Parse simpleFlatRate
-      let simpleFlatRate = 0;
       try {
-        if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
-          const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-
-          if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
-            // For Pay Per Vehicles, get the rate for the specific vehicle type
-            simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
-          } else if (typeof parsedRate === 'object') {
-            // For other payment methods, try to get a technician rate
-            const technicianRate = parsedRate['technician'];
-            simpleFlatRate = parseFloat(technicianRate) || 0;
-          } else if (typeof parsedRate === 'number') {
-            simpleFlatRate = parsedRate;
-          }
+        setLoading(true);
+        let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
+         
+        const requestBody: { [key: string]: any } = {
+          startDate: startDate,
+          endDate: endDate,
+          roleType:roleType,
+          vehicleStatus: 'false'
+        };
+        if (roleType !== 'superadmin' && roleType !== 'manager') {
+          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
         }
+        const response = await axios.post(apiPoint, requestBody, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        setActiveJob(response.data.vehicles);
       } catch (error) {
-        console.error('Error parsing simpleFlatRate:', error);
-        simpleFlatRate = 0;
+        console.error("Error fetching filtered jobs:", error);
+      } finally {
+        setLoading(false);
       }
-
-      // Parse amountPercentage safely
-      const amountPercentage = parseFloat(
-        techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
-      );
-
-      // Add costs based on payment method
-      if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (amountPercentage > 0) {
-        technicianTotal += (amountPercentage * subtotalcost) / 100;
-      }
-    });
-
-    return technicianTotal;
+    }
   };
-
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
 
-    const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
-      const parsedJob = job;
-      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-    }, 0);
-    const simpleFlatRate = Number(job?.simpleFlatRate);
-    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-      ? subtotalcost + simpleFlatRate
-      : subtotalcost;
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -618,11 +545,11 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td>  {job.id} </td>
 
 
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
         <td>{job?.jobName}</td>
+        <td>  {job?.customer?.fullName} </td>
 
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
         <td>  {job?.assignedTechnicians?.map((tech: any) => (
@@ -638,174 +565,38 @@ const JobTable: React.FC = () => {
           </div>
         ))}</td> */}
         <td>{job?.vin}</td>
-        <td>{job?.make}</td>
-        <td>{job?.model}</td>
-        <td>{job?.modelYear}</td>
-        <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
         {roleType !== 'single-technician' && (
           <td>
-            {(() => {
-              if (!job) return null;
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.techFlatRate !== '' && (
+                  `$${tech.VehicleTechnician?.techFlatRate}`
+                )}
 
-              // Calculate subtotal from jobDescription items
-              const subtotal = (job?.jobDescription || []).reduce((sum: number, item: any) => {
-                return sum + Number(item?.cost || 0);
-              }, 0);
-
-              // Initialize variables for simpleFlatRate and amountPercentage
-              let totalSimpleFlatRate = 0;
-              let totalAmountPercentage = 0;
-
-              (job?.assignedTechnicians || []).forEach((tech: any) => {
-                try {
-                  // Handle technicians with simpleFlatRate
-                  const flatRateData = tech?.VehicleTechnician?.simpleFlatRate || tech?.simpleFlatRate;
-                  if (flatRateData) {
-                    if (typeof flatRateData === 'string') {
-                      try {
-                        const parsed = JSON.parse(flatRateData);
-                        if (typeof parsed === 'object' && parsed !== null) {
-                          // Sum all values in the simpleFlatRate object
-                          Object.values(parsed).forEach((value: any) => {
-                            const numericValue = Number(String(value).replace(/[^0-9.]/g, ''));
-                            if (!isNaN(numericValue)) {
-                              totalSimpleFlatRate += numericValue;
-                            }
-                          });
-                        } else if (!isNaN(Number(flatRateData))) {
-                          totalSimpleFlatRate += Number(flatRateData);
-                        }
-                      } catch {
-                        // If JSON parsing fails, try to extract numeric value
-                        const numericValue = Number(String(flatRateData).replace(/[^0-9.]/g, ''));
-                        if (!isNaN(numericValue)) {
-                          totalSimpleFlatRate += numericValue;
-                        }
-                      }
-                    } else if (typeof flatRateData === 'number') {
-                      totalSimpleFlatRate += flatRateData;
-                    }
-                  }
-
-                  // Handle amountPercentage (take the first valid percentage found)
-                  const percentage = tech?.VehicleTechnician?.amountPercentage || tech?.amountPercentage;
-                  if (percentage && totalAmountPercentage === 0) {
-                    const numericPercentage = Number(String(percentage).replace(/[^0-9.]/g, ''));
-                    if (!isNaN(numericPercentage)) {
-                      totalAmountPercentage = numericPercentage;
-                    }
-                  }
-                } catch (e) {
-                  console.error('Error processing technician rates:', e);
-                }
-              });
-
-              // Calculate the final amount:
-              let finalAmount = totalSimpleFlatRate;
-
-              // If amountPercentage is present, calculate and show the amount based on the subtotal
-              if (totalAmountPercentage > 0) {
-                const percentageAmount = (subtotal * totalAmountPercentage) / 100;
-                finalAmount += percentageAmount;  // Add the percentage amount to the total
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${finalAmount.toFixed(2)}
-                  </div>
-                );
-              }
-
-              // If no percentage, just show the simpleFlatRate total
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${finalAmount.toFixed(2)}
-                </div>
-              );
-            })()}
+              </div>
+            ))}
           </td>
         )}
-
-
-
-
-
-
-        {roleType === 'single-technician' && (
-          <td>
-            {(() => {
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job?.labourCost || technicianFlatRate);
-
-              if (labourCost === 0) {
-                const tooltipId = `tooltip-${job.id}-labour`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per job
-                  </div>
-                );
-              }
-
-              return `$${labourCost.toFixed(2)}`;
-            })()}
-          </td>
-        )}
-
         {roleType !== 'single-technician' && (
           <td>
-            ${calculateTechnicianTotalCost(job).toFixed(2)}
-
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.rRate !== '' && (
+                  `$${tech.VehicleTechnician?.rRate}`
+                )}
+              </div>
+            ))}
           </td>
         )}
-
-
-
-
         {roleType === 'single-technician' && (
           <td>
-            {(() => {
-              if (!job) return null;
-
-              const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
-                const parsedJob = job;
-                return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-              }, 0);
-
-
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job.labourCost || technicianFlatRate);
-
-              const totalCost = subtotalcost + labourCost;
-
-              if (subtotalcost === 0) {
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per Job
-                  </div>
-                );
-              }
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              );
-            })()}
+            {job.labourCost !== '' && (
+              `$${job.labourCost}`
+            )}
           </td>
-
         )}
-
-
         <td>
           {canCreate && (
 
@@ -840,7 +631,8 @@ const JobTable: React.FC = () => {
         ]}
       />
 
-      <CommonHeader heading="Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Vehicle / Work Order" buttonLink="/vehicle/create-vehicle" />
+      <CommonHeader heading="Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Vehicle / Work Order" buttonLink="/vehicle/create-vehicle" showDatePicker={true}
+        onDateChange={handleDateChange} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -874,28 +666,30 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('fullName')}>
+              <th className="w-[100px]">Job Title</th>
+
+              <th className="w-[120px]"  >
                 Customer Name
-                {sortBy === 'fullName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+
               </th>
               {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
-              <th className="w-[100px]">Job Name</th>
               <th className="w-[150px]" >
                 Assigned Technician
               </th>
               <th className="w-[140px]">VIN</th>
-              <th className="w-[80px]">Make</th>
-              <th className="w-[80px]">Model</th>
-              <th className="w-[80px]">Year</th>
-              <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[80px]">R/I R/R</th>
-              <th className="w-[80px]">Total Cost</th>
+              <th className="w-[80px]">Start Date</th>
+              <th className="w-[80px]">End Date</th>
+              {roleType !== 'single-technician' && (
+                <th className="w-[150px]">Tech Flat Rate</th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[80px]">R/I/R/R</th>
+              )}
+              {roleType === 'single-technician' && (
+                <th className="w-[80px]">Labour   Cost</th>
+              )}
               <th className="w-[130px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>
@@ -903,13 +697,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={13} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 11 : 12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={13} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 11 : 12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

@@ -3,12 +3,10 @@ import Link from 'next/link';
 import React, { useEffect, useState } from "react";
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs, { Dayjs } from 'dayjs';
-
-
+import { addDays } from 'date-fns';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css'; // core styles
+import 'react-date-range/dist/theme/default.css'; // theme styles
 
 interface CommonHeaderProps {
   heading: string;
@@ -36,8 +34,21 @@ interface CommonHeaderProps {
 const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [showDatePickers, setShowDatePicker] = useState(false);
+  const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
+    startDate: null,
+    endDate: null
+  });
+
+  const handleDateChange = (ranges: any) => {
+    setDates({
+      startDate: ranges.selection.startDate,
+      endDate: ranges.selection.endDate,
+    });
+    if (onDateChange) {
+      onDateChange([ranges.selection.startDate, ranges.selection.endDate]);
+    }
+  };
 
 
   const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
@@ -101,10 +112,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   };
 
 
+ const handleDateFilterClick = () => {
+    setShowDatePicker(!showDatePickers);
+  };
 
 
-
-
+  const handleApplyFilter = () => {
+    if (onDateChange) {
+      onDateChange([dates.startDate, dates.endDate]);
+    }
+    setShowDatePicker(false); // Close the date picker after applying filter
+  };
 
   return (
     <div className="px-1 mb-4">
@@ -116,7 +134,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         <div className='flex items-center gap-4'>
           {onSearch && (
 
-            <div className="flex w-[350px] relative search__input">
+            <div className="flex w-[250px] relative search__input">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -129,44 +147,32 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               {additionalComponents}
             </div>
           )}
-
           {showDatePicker && (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <div className="flex gap-4">
-                <DatePicker
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(newValue) => {
-                    setStartDate(newValue);
-                    onDateChange?.([newValue, endDate]);
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      color: 'warning',
-
-                    },
-                  }}
-                />
-                <DatePicker
-                  label="End Date"
-                  value={endDate}
-                  onChange={(newValue) => {
-                    setEndDate(newValue);
-                    onDateChange?.([startDate, newValue]);
-                  }}
-                  minDate={startDate || undefined}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      color: 'warning',
-                    },
-                  }}
-                />
+          <button
+            className="p-3 bg-white text-[12px] rounded"
+            onClick={handleDateFilterClick}
+          >
+            Date Filter
+          </button>
+          )}
+          {showDatePickers && (
+            <div className="absolute z-40" style={{top:'14rem'}}>
+              <DateRange
+                editableDateInputs={true}
+                onChange={handleDateChange}
+                moveRangeOnFirstSelection={false}
+                ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
+                rangeColors={["#383d71"]}
+              />
+              <div className="text-right">
+                <button
+                  className="bg-[#383d71] text-white p-2 text-sm rounded"
+                  onClick={handleApplyFilter}
+                >
+                  Close
+                </button>
               </div>
-            </LocalizationProvider>
+            </div>
           )}
 
 
@@ -174,7 +180,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           {onPageSizeChange && (
 
-            <select name="" id="" className='w-[180px] p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+            <select name="" id="" className='w-[150px] p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
               <option value="">Number of rows</option>
               <option value="10">10</option>
               <option value="20">20</option>

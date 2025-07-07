@@ -89,9 +89,13 @@ export default function Technicians() {
 
     // Immediately update both states
     setAddressValue(selectedAddress);
+
+    // Clean the selected address before updating the formData
+    const cleanedAddress = selectedAddress.label.replace(/^,|\s*,\s*/g, '').trim();
+
     setFormData(prev => ({
       ...prev,
-      address: selectedAddress.label, // Use the raw label as fallback
+      address: cleanedAddress, // Use the cleaned address
     }));
 
     try {
@@ -118,26 +122,26 @@ export default function Technicians() {
         }
       });
 
-      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+      // Clean up the formatted address
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`.replace(/^,|\s*,\s*/g, '').trim();
 
-      // Update formData with the parsed address
+      // Update formData with the cleaned full address
       setFormData(prev => ({
         ...prev,
         address: fullAddress,
       }));
 
-
-
     } catch (error) {
       console.error('Error fetching address details:', error);
       toast.error('Failed to process address details');
-      // Fallback to the raw selected address if geocoding fails
+      // Fallback to the cleaned address if geocoding fails
       setFormData(prev => ({
         ...prev,
-        address: selectedAddress.label,
+        address: cleanedAddress,
       }));
     }
   };
+
 
   // Handle form field change
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
@@ -603,8 +607,16 @@ export default function Technicians() {
                   onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                     if (newValue) {
                       handleAddressSelect(newValue);
+                    } else if (actionMeta.action === 'clear') {
+                      // Handle clear action
+                      setAddressValue(null); // Make sure you have this state setter
+                      setFormData(prev => ({
+                        ...prev,
+                        address: '',
+                      }));
                     }
                   },
+                  isClearable: true,
                   styles: {
                     input: (provided) => ({
                       ...provided,
@@ -629,11 +641,6 @@ export default function Technicians() {
                   }
                 }}
               />
-              {errors.address && (
-                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.address}
-                </div>
-              )}
             </div>
             {/* <div className='mb-4 relative'>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"

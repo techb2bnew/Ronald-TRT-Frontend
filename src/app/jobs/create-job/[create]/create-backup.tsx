@@ -212,7 +212,7 @@ export default function Technicians() {
   const handleAddVehicle = async () => {
     const newErrors: { [key: string]: string } = {};
     jobForms.forEach((form, index) => {
-      if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Name is required';
+      if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Title is required';
       if (!form.vin?.trim()) newErrors[`vin`] = 'VIN is required';
       if (!form.vehicleDescriptor?.trim()) newErrors[`vehicleDescriptor`] = 'Vehicle Descriptor is required';
       if (!form.color?.trim()) newErrors[`color`] = 'Color is required';
@@ -734,7 +734,7 @@ export default function Technicians() {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
     jobForms.forEach((form, index) => {
-      if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Name is required';
+      if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Title is required';
       if (!form.assignCustomer) newErrors[`assignCustomer`] = 'Customer is required';
     });
     // Validate form data if needed
@@ -1473,7 +1473,7 @@ export default function Technicians() {
                     <rect x="13.5" y="16" width="1" height="3" fill="#5B5B99" />
                   </svg>
 
-                  <TextField fullWidth name="jobName" id="outlined-basic" color="warning" label="Enter Job Name *" size="small" value={form.jobName || ''} onChange={(e) => handleChange(e, 'jobName', index)} />
+                  <TextField fullWidth name="jobName" id="outlined-basic" color="warning" label="Enter Job Title *" size="small" value={form.jobName || ''} onChange={(e) => handleChange(e, 'jobName', index)} />
                   {errors.jobName && (
                     <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                       {errors.jobName}

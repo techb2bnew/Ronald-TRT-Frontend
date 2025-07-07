@@ -179,10 +179,10 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Name:</strong> {jobData?.jobName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Title:</strong> {jobData?.jobName}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Customer Name:</strong>
                 <div className="flex gap-3 items-center capitalize">
-                
+
                   {jobData?.customer?.fullName}
                 </div>
               </div>
@@ -197,18 +197,24 @@ export default function ViewDetails() {
                 </a>
               </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {new Date(jobData.createdAt).toLocaleDateString('en-GB')} </div>
-              {searchParams!.has('completedJob') && jobData.completedDate && (
-                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <strong className='w-[210px] inline-block'>End Date:</strong> {new Date(jobData.completedDate).toLocaleDateString('en-GB')}
-                </div>
-              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : ''} </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : ''}
+              </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
                   className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
                 >
                   {jobData.jobStatus ? 'Completed' : 'Inprogress'}
                 </span>
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
+                <div className="flex gap-3 items-center capitalize">
+
+                  ${jobData?.estimatedCost || '0'}
+                </div>
               </div>
 
             </div>
@@ -249,17 +255,15 @@ export default function ViewDetails() {
                     <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
                     <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
                   </div>
-
+                  {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
+                    <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
+                  )}
+                  {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
+                    <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
+                  )}
                   {/* Pay Details */}
                   {tech.UserJob && (
                     <>
-                      {tech.UserJob.payRate && (
-                        <div className="mb-2 flex text-sm">
-                          <strong className="w-[210px] min-w-[210px] inline-block">Pay Rate:</strong>
-                          {tech.UserJob.payRate}
-                        </div>
-                      )}
-
                       {tech.UserJob.payVehicleType && (
                         <div className="mb-2 flex text-sm">
                           <strong className="w-[210px] min-w-[210px] inline-block">Vehicle Type:</strong>
@@ -267,61 +271,34 @@ export default function ViewDetails() {
                         </div>
                       )}
 
-                      {/* Simple Flat Rate */}
-                      {tech.UserJob.simpleFlatRate && tech.UserJob.simpleFlatRate !== "{}" && (
-                        <div className="mb-2 flex text-sm">
-                          <strong className="w-[210px] min-w-[210px] inline-block">Simple Flat Rate:</strong>
-                          <div className='w-[200px]'>
-                            {
-                              (() => {
-                                const flatRateData = tech.UserJob.simpleFlatRate;
-                                if (flatRateData && flatRateData.startsWith('{')) {
-                                  try {
-                                    const parsed = JSON.parse(flatRateData);
-                                    return Object.entries(parsed).map(([vehicleType, rate]) => {
-                                      let rateValue: number = 0;
-
-                                      if (typeof rate === 'string') {
-                                        const parsedRate = parseFloat(rate);
-                                        rateValue = isNaN(parsedRate) ? 0 : parsedRate;
-                                      } else if (typeof rate === 'number') {
-                                        rateValue = rate;
-                                      }
-
-                                      return (
-                                        <div key={vehicleType}>
-                                         <div className='grid grid-cols-2'><span> {vehicleType}:</span> <span> ${rateValue.toFixed(2)}</span> </div>
-                                        </div>
-                                      );
-                                    });
-                                  } catch (error) {
-                                    console.error('Error parsing flat rate data:', error);
-                                    return '$0.00';
-                                  }
-                                } else {
-                                  return flatRateData;
-                                }
-                              })()
-                            }
-
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Amount Percentage */}
-                      {tech.UserJob.amountPercentage && (
-                        <div className="mb-2 flex text-sm">
-                          <strong className="w-[210px] min-w-[210px] inline-block">Amount Percentage:</strong>
-                          {tech.UserJob.amountPercentage}%
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
               ))}
-
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
-
+              {jobData?.estimatedBy !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
+              )}
+              {userType !== 'single-technician' && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Manager Name:</strong>
+                  <div className="flex gap-3 items-center capitalize">
+                    {jobData?.manager?.firstName} {jobData?.manager?.lastName}
+                  </div>
+                </div>
+              )}
+              {userType !== 'single-technician' && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Email:</strong>
+                  <a className="hover:underline" href={`mailto:${jobData?.manager?.email}`}>
+                    {jobData?.manager?.email || 'N/A'}
+                  </a>
+                </div>
+              )}
+              {userType !== 'single-technician' && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Ph. Number:</strong>
+                  <a className="hover:underline" href={`tel:${jobData?.manager?.phoneNumber}`}>
+                    {jobData?.manager?.phoneNumber || 'N/A'}
+                  </a>
+                </div>
+              )}
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>Labour Cost:</strong>

@@ -64,56 +64,56 @@ export default function ProfileCard() {
   const { updateProfileImage } = useTechnician();
   const { updateTechnicianProfile } = useTechnician();
 
-   const handleAddressSelect = async (selectedAddress: AddressValue) => {
-      if (!selectedAddress) return;
-  
-      setAddressValue(selectedAddress);
-  
-      try {
-        const results = await geocodeByAddress(selectedAddress.label);
-        const addressComponents = results[0].address_components;
-  
-        let street = '', city = '', state = '', country = '', zip = '';
-  
-        addressComponents.forEach(component => {
-          if (component.types.includes('street_number') || component.types.includes('route')) {
-            street += component.long_name + ' ';
-          }
-          if (component.types.includes('locality')) {
-            city = component.long_name;
-          }
-          if (component.types.includes('administrative_area_level_1')) {
-            state = component.long_name;
-          }
-          if (component.types.includes('country')) {
-            country = component.long_name;
-          }
-          if (component.types.includes('postal_code')) {
-            zip = component.long_name;
-          }
-        });
-  
-        const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
-        // Update form data with the full address
-        setFormData(prev => ({
-          ...prev,
-          address: fullAddress,  // Store combined address here
-        }));
-  
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.address;
-          delete newErrors.city;
-          delete newErrors.state;
-          delete newErrors.zipCode;
-          return newErrors;
-        });
-  
-      } catch (error) {
-        console.error('Error fetching address details:', error);
-        toast.error('Failed to process address details');
-      }
-    };
+  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+    if (!selectedAddress) return;
+
+    setAddressValue(selectedAddress);
+
+    try {
+      const results = await geocodeByAddress(selectedAddress.label);
+      const addressComponents = results[0].address_components;
+
+      let street = '', city = '', state = '', country = '', zip = '';
+
+      addressComponents.forEach(component => {
+        if (component.types.includes('street_number') || component.types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          zip = component.long_name;
+        }
+      });
+
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+      // Update form data with the full address
+      setFormData(prev => ({
+        ...prev,
+        address: fullAddress,  // Store combined address here
+      }));
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.address;
+        delete newErrors.city;
+        delete newErrors.state;
+        delete newErrors.zipCode;
+        return newErrors;
+      });
+
+    } catch (error) {
+      console.error('Error fetching address details:', error);
+      toast.error('Failed to process address details');
+    }
+  };
 
   // ✅ Fetch Technician Data
   const fetchTechnicianData = async (technicianId: string) => {
@@ -127,14 +127,14 @@ export default function ProfileCard() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-    const response = await fetch(`/api/fetchTechnicianProfile`, {
-      method: "POST", // Change to POST
-      headers,
-      body: JSON.stringify({ technicianId }), // Send technicianId in the body
-    });
+      const response = await fetch(`/api/fetchTechnicianProfile`, {
+        method: "POST", // Change to POST
+        headers,
+        body: JSON.stringify({ technicianId }), // Send technicianId in the body
+      });
 
       const data = await response.json();
-          let addressParts = [];
+      let addressParts = [];
       if (data.technician.address) {
         // Split the address string and filter out empty parts
         addressParts = data.technician.address.split(',').map((part: any) => part.trim()).filter((part: any) => part !== '');
@@ -144,7 +144,7 @@ export default function ProfileCard() {
       const fullAddress = addressParts.join(', ');
 
       if (response.ok) {
-          if (fullAddress) {
+        if (fullAddress) {
           const addressValue: AddressValue = {
             label: fullAddress,
             value: {
@@ -186,12 +186,12 @@ export default function ProfileCard() {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-     if (errors[name]) {
-    setErrors({
-      ...errors,
-      [name]: "", // Remove error for the specific field
-    });
-  }
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "", // Remove error for the specific field
+      });
+    }
   };
 
 
@@ -405,7 +405,7 @@ export default function ProfileCard() {
       return digitsOnly;
     }
   };
-const handlePhoneChange = (value: string | undefined) => {
+  const handlePhoneChange = (value: string | undefined) => {
     if (!value) {
       setFormData(prev => ({
         ...prev,
@@ -444,7 +444,7 @@ const handlePhoneChange = (value: string | undefined) => {
     }));
   };
 
- 
+
 
   return (
     <div className="rounded-lg p-6 mx-auto">
@@ -458,7 +458,7 @@ const handlePhoneChange = (value: string | undefined) => {
             />
           ) : (
             <p className="font-[600] text-[34px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center uppercase flex items-center justify-center">
-                 {technician?.firstName ? technician?.firstName[0] : 'N/A'}
+              {technician?.firstName ? technician?.firstName[0] : 'N/A'}
             </p>
           )}
 
@@ -547,7 +547,7 @@ const handlePhoneChange = (value: string | undefined) => {
             )}
           </div>
 
-          
+
 
         </div>
       </div>
@@ -555,42 +555,56 @@ const handlePhoneChange = (value: string | undefined) => {
         <h3 className="font-semibold text-lg">Address</h3>
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className='mb-4 relative z-10'>
-                    <GooglePlacesAutocomplete
-                      apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
-                      selectProps={{
-                        placeholder: 'Search for an address...',
-                        value: address,
-                        onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
-                          if (newValue) {
-                            handleAddressSelect(newValue);
-                          }
-                        },
-                        styles: {
-                          input: (provided) => ({
-                            ...provided,
-                            borderRadius: '4px',
-                            width: '100%'
-                          }),
-                          control: (provided) => ({
-                            ...provided,
-                            borderColor: errors.address ? 'red' : '#ccc', // Red border if error exists
-                            '&:hover': {
-                              borderColor: errors.address ? 'orange' : 'orange',
-                            },
-                            '&:focus': {
-                              borderColor: errors.address ? 'orange' : 'orange',
-                            },
-                          }),
-                        }
-                      }}
-                    />
-                    {errors.address && (
-                      <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                        {errors.address}
-                      </div>
-                    )}
-                  </div>
-                  <div className='mb-4'>
+            <GooglePlacesAutocomplete
+              apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+              selectProps={{
+                placeholder: 'Search for an address...',
+                value: address,
+                onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
+                  if (newValue) {
+                    handleAddressSelect(newValue);
+                  }  else if (actionMeta.action === 'clear') {
+                      // Handle clear action
+                      setAddressValue(null); // Make sure you have this state setter
+                      setFormData(prev => ({
+                        ...prev,
+                        address: '',
+                      }));
+                    }
+                },
+                isDisabled: !isEditing,
+                  isClearable: true,
+                styles: {
+                  input: (provided) => ({
+                    ...provided,
+                    borderRadius: '4px',
+                    width: '100%'
+                  }),
+                  control: (provided) => ({
+                    ...provided,
+                    borderColor: errors.address ? 'red' : '#ccc', // Red border if error exists
+                    '&:hover': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                    '&:focus': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                  }),
+                }
+              }}
+              autocompletionRequest={{
+                componentRestrictions: {
+                  country: 'us' // Restrict to US addresses only
+                }
+              }}
+             />
+            {errors.address && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.address}
+              </div>
+            )}
+          </div>
+          <div className='mb-4'>
             <PhoneInput
               international
               defaultCountry="US"
@@ -598,17 +612,17 @@ const handlePhoneChange = (value: string | undefined) => {
               onChange={handlePhoneChange}
               disabled={!isEditing}
               onKeyDown={(e: any) => {
-                  // Prevent typing if already 10 digits in national number
-                  const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
-                  const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
-                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
-                    e.preventDefault();
-                  }
-                }}
-                onPaste={(e: any) => {
-                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
-                  if (pasted.length > 10) e.preventDefault();
-                }}
+                // Prevent typing if already 10 digits in national number
+                const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e: any) => {
+                const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                if (pasted.length > 10) e.preventDefault();
+              }}
               className="input text-xs input-bordered w-full p-2 rounded"
             />
             {errors.phoneNumber && (

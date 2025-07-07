@@ -100,9 +100,9 @@ const TableActions: React.FC<TableActionsProps> = ({
         }
       }else {
       // If the error message is about associated jobs, show a specific alert
-      if (data.error === "Customer has associated jobs. Please delete the jobs first before deleting the customer.") {
+      if (data.error) {
         Swal.fire("Error!", data.error, "error");
-      } else {
+      } else   {
         Swal.fire("Error!", data.message || "Failed to delete the item.", "error");
       }
     }

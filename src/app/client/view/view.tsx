@@ -82,9 +82,9 @@ export default function ViewDetails() {
       <Breadcrumb
         items={[
           {
-            label: isSingleTechnician ? 'All TRT Customer' : 'Customer',
+            label: isSingleTechnician ? 'All Customer' : 'Customer',
             href: isSingleTechnician
-              ? '/all-customer/listing'
+              ? '/single-technicians/listing'
               : '/client/listing',
           },
           { label: 'View Detail', href: '' }
@@ -111,7 +111,7 @@ export default function ViewDetails() {
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Ph. Number:</strong>
                 <a className="hover:underline" href={`tel:${CustomerData?.phoneNumber}`}> {CustomerData?.phoneNumber || 'N/A'}</a>
               </p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Address:</strong> {CustomerData?.address || 'N/A'}</p>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Address:</strong> {CustomerData.address ? CustomerData.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}  </p>
                
             </div>
           </div>

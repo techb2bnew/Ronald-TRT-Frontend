@@ -280,7 +280,7 @@ function JobTListing() {
           <thead>
             <tr>
               <th className="w-[100px]" onClick={() => handleSort('jobName')}>
-                Job Name
+                Job Title
                 {sortBy === 'jobName' && (
                   <span className="ml-2">
                     {sortDirection === 'asc' ? '▲' : '▼'}

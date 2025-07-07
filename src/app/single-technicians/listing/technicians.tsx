@@ -392,10 +392,7 @@ const TechnicianTable: React.FC = () => {
       Email: tech.email,
       Phone: tech.phoneNumber,
       Address: tech.address,
-      SimpleFlatRate: tech.simpleFlatRate,
-      AmountPercentage: tech.simpleFlatRate,
-      PayVehicleType: tech.payVehicleType,
-      PayRate: tech.payRate,
+      Type: tech.techType,
       Status: tech.isApproved,
       AccountStatus: tech.accountStatus,
       DeletedStatus: tech.deletedStatus,
@@ -430,8 +427,8 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate', 'Status',
+        'Id', 'Name', 'Email', 'Phone', 'Address',
+        'Type', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
 

@@ -155,7 +155,7 @@ export default function ViewDetails() {
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Job Name:</strong>
+                <strong className='w-[210px] inline-block'>Job Title:</strong>
                 {jobData?.jobName || <span className="text-gray-500">No data available</span>}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
