@@ -78,7 +78,7 @@ const VehicleTable: React.FC = () => {
           : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');

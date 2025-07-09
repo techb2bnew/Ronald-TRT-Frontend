@@ -584,10 +584,20 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 .css-1q55ijt-MuiInputBase-input-MuiOutlinedInput-input{
   height: 22px !important;
 }
+
+.swal-title {
+  font-size: 18px;  
+}
+@media screen and (max-width: 1536px) {
+ .container {
+        max-width: 1200px !important;
+    }
+    }
 @media (min-width: 1200px) and (max-width: 1600px) {
   .laptop-narrow {
     max-width: 840px;
   }
+ 
  .laptop__font {
     font-size: 10px;
     font-weight: 600;
@@ -606,10 +616,10 @@ table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody
   font-size: 12px;
 }
 .laptop__icon img {
-  width: 10px;
+  max-width: 16px;
 }
 .laptop__icon button img {
-  width: 8px;
+  width:12px;
 }
 span.badge.badge-success, span.badge.badge-error  {
   padding: 5px;

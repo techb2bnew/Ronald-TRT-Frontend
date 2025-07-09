@@ -56,20 +56,26 @@ const JobTable: React.FC = () => {
   };
 
 
-  const handlePageSizeChange = (size: number) => {
-    // Calculate the total number of pages based on the current totalJobs and the new pageSize
-    const newTotalPages = Math.ceil(totalJobs / size);
+ const handlePageSizeChange = (size: number) => {
+  // Calculate the total number of pages based on the current totalJobs and the new pageSize
+  const newTotalPages = Math.ceil(totalJobs / size);
 
-    // If the current page is greater than the new total pages, reset it to the last page
-    let newPage = currentPage;
-    if (newPage > newTotalPages) {
-      newPage = newTotalPages;
-    }
+  // If the current page is greater than the new total pages, reset it to the last page
+  let newPage = currentPage;
+  if (newPage > newTotalPages) {
+    newPage = newTotalPages;
+  }
 
-    // Update the state with the new page size and set the current page accordingly
-    setPageSize(size);
-    setCurrentPage(newPage); // Set the current page to the last valid page
-  };
+  // Ensure the page number is not less than 1
+  if (newPage < 1) {
+    newPage = 1;
+  }
+
+  // Update the state with the new page size and set the current page accordingly
+  setPageSize(size);
+  setCurrentPage(newPage); // Set the current page to the last valid page
+};
+
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -430,7 +436,7 @@ const handleImportCSV = (file: File) => {
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
         <td>  {job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName},
+            {tech.firstName} {tech.lastName}
           </div>
         ))}</td>
         {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
@@ -449,7 +455,7 @@ const handleImportCSV = (file: File) => {
         <td>
           {canCreate && (
 
-            <span  style={{ cursor: 'pointer' }}
+            <span   
               className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {job.vehicleStatus ? 'Completed' : 'In Progress'}
@@ -526,7 +532,7 @@ const handleImportCSV = (file: File) => {
                 Customer Number
               </th> */}
               <th className="w-[150px]" >
-                Assigned Technician
+                  Technician Name
               </th>
               <th className="w-[140px]">VIN</th>
               <th className="w-[80px]">Make</th>

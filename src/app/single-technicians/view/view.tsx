@@ -388,7 +388,7 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong>{technician.address ? technician.address.replace(/^,|\s* \s*/g, '') : 'N/A'} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2 flex'><strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong>{technician.address || 'N/A'} </p>
                <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>

@@ -40,15 +40,16 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
- 
+  const [selectedJobId, setSelectedJobId] = useState<string>(''); // State for selected job ID
+
   const [roleType, setRoleType] = useState<string | null>(null);
 
   useEffect(() => {
-      // Ensure this code runs only on the client-side (after the component mounts)
-      const storedRoleType = localStorage.getItem('types');
-      setRoleType(storedRoleType); // Set the roleType from localStorage
-    }, []);
-    
+    // Ensure this code runs only on the client-side (after the component mounts)
+    const storedRoleType = localStorage.getItem('types');
+    setRoleType(storedRoleType); // Set the roleType from localStorage
+  }, []);
+
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
@@ -71,10 +72,16 @@ const JobTable: React.FC = () => {
       newPage = newTotalPages;
     }
 
+    // Ensure the page number is not less than 1
+    if (newPage < 1) {
+      newPage = 1;
+    }
+
     // Update the state with the new page size and set the current page accordingly
     setPageSize(size);
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
+
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -94,13 +101,8 @@ const JobTable: React.FC = () => {
           ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
-
-      console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
-
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-
-      console.log('API response data:', data);  // Debugging API response
 
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
@@ -499,11 +501,11 @@ const JobTable: React.FC = () => {
       try {
         setLoading(true);
         let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
-         
+
         const requestBody: { [key: string]: any } = {
           startDate: startDate,
           endDate: endDate,
-          roleType:roleType,
+          roleType: roleType,
           vehicleStatus: 'false'
         };
         if (roleType !== 'superadmin' && roleType !== 'manager') {
@@ -552,21 +554,17 @@ const JobTable: React.FC = () => {
         <td>  {job?.customer?.fullName} </td>
 
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        <td>  {job?.assignedTechnicians?.map((tech: any) => (
-          <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName},
-          </div>
-        ))}</td>
-        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
-          <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech.technicians}`}>
-              {tech.phoneNumber}
-            </a>
-          </div>
-        ))}</td> */}
-        <td>{job?.vin}</td>
-        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.firstName} {tech.lastName}
+                </div>
+              ))}
+          </td>
+        )}
         {roleType !== 'single-technician' && (
           <td>
             {job?.assignedTechnicians?.map((tech: any) => (
@@ -580,6 +578,20 @@ const JobTable: React.FC = () => {
           </td>
         )}
         {roleType !== 'single-technician' && (
+
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.firstName} {tech.lastName}
+                </div>
+              ))}
+          </td>
+        )}
+
+
+        {roleType !== 'single-technician' && (
           <td>
             {job?.assignedTechnicians?.map((tech: any) => (
               <div key={tech.id} className="capitalize">
@@ -590,6 +602,21 @@ const JobTable: React.FC = () => {
             ))}
           </td>
         )}
+        {roleType !== 'single-technician' && (
+          <td>${job?.totalCombined}</td>
+        )}
+
+        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
+          <div key={tech.id}>
+            <a className="hover:underline" href={`tel:${tech.technicians}`}>
+              {tech.phoneNumber}
+            </a>
+          </div>
+        ))}</td> */}
+        <td>{job?.vin}</td>
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+
         {roleType === 'single-technician' && (
           <td>
             {job.labourCost !== '' && (
@@ -622,6 +649,51 @@ const JobTable: React.FC = () => {
       </tr>
     )
   };
+  const handleNewJobClick = async (jobId: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    console.log(jobId, 'jobId');
+
+    // Prepare the payload dynamically
+    const payload = {
+      roleType: roleType,  // Dynamic roleType from localStorage
+      jobId: jobId,        // Dynamic jobId passed from the selected job
+      vehicleStatus: false, // Example status, can change based on the filter criteria
+    };
+    console.log(payload, 'payload');
+
+    try {
+      // Check if the token is available
+      if (!token) {
+        console.error("No token found");
+        return; // Stop if the token is missing
+      }
+
+      // Make the POST request to the vehicleJobNameFilter API endpoint
+      const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload), // Send the payload as JSON
+      });
+
+      const data = await response.json(); // Parse the JSON response
+
+      // Handle success or failure based on the API response
+      if (response.ok) {
+        setActiveJob(data.vehicles);
+        // You can update state or perform further operations based on the response
+      } else {
+        console.error("Failed to apply filter:", data.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error("Error during API request:", error);
+    }
+  };
+
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -632,7 +704,7 @@ const JobTable: React.FC = () => {
       />
 
       <CommonHeader heading="Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Vehicle / Work Order" buttonLink="/vehicle/create-vehicle" showDatePicker={true}
-        onDateChange={handleDateChange} />
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -666,29 +738,39 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[100px]">Job Title</th>
+              <th className="w-[120px]">Job Title</th>
 
               <th className="w-[120px]"  >
                 Customer Name
-
               </th>
               {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
-              <th className="w-[150px]" >
-                Assigned Technician
-              </th>
-              <th className="w-[140px]">VIN</th>
-              <th className="w-[80px]">Start Date</th>
-              <th className="w-[80px]">End Date</th>
               {roleType !== 'single-technician' && (
-                <th className="w-[150px]">Tech Flat Rate</th>
+                <th className="w-[150px]" >
+                  Assigned Technician
+                </th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[120px]">Tech Flat Rate</th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[130px]" >
+                  Assigned R/I/R/R
+                </th>
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">R/I/R/R</th>
               )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[120px]">Total Expense</th>
+              )}
+              <th className="w-[150px]">VIN</th>
+              <th className="w-[100px]">Start Date</th>
+              <th className="w-[80px]">End Date</th>
+
               {roleType === 'single-technician' && (
-                <th className="w-[80px]">Labour   Cost</th>
+                <th className="w-[80px]">Labour Cost</th>
               )}
               <th className="w-[130px]">Status</th>
               <th className="w-[100px]">Action</th>
@@ -697,13 +779,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 11 : 12} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 11 : 12} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

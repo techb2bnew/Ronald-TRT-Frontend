@@ -88,6 +88,12 @@ interface Technician {
   };
   // other fields...
 }
+interface Job {
+  id: string | number;
+  jobName: string;
+  technicians?: Technician[];  // Add this line to include technicians
+}
+
 // Define the actual map based on your fields
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
   vehicledescriptor: 'vehicleDescriptor',
@@ -167,6 +173,9 @@ export default function Technicians() {
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [allTechnicians, setAllTechnicians] = useState<Technicians[]>([]);
+
   const [technicianPayRates, setTechnicianPayRates] = useState<{
     [techId: string]: { rRate?: string; techFlatRate?: string };
   }>({});
@@ -451,23 +460,59 @@ export default function Technicians() {
         ]);
 
       }
-      else {
-        if (result.error) {
-          if (result.error.toLowerCase().includes('technician')) {
-            setErrors(prev => ({ ...prev, assignTechnicians: result.error }));
-          } else {
-            toast.error(result.error || 'Error fetching job data');
+    else {  
+      if (result.error) {
+       
+        const swalResult = await Swal.fire({
+          title: 'Are you sure you want to proceed and add this vehicle with the same VIN to the job?',
+          text: result.details.error,  // Show the message from the API response
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#383d71',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Re-enter',
+          customClass: {
+            title: 'swal-title',  // Custom class for title
+            popup: 'swal-text'    // Custom class for content
+          }
+        });
+
+        // Check if the user clicked "Yes"
+        if (swalResult.isConfirmed) {
+          const vinDetailsEndpoint = `${apiUrl}/createVinDetails`;
+          // Call the createVinDetails API
+          try {
+            const response = await fetch(vinDetailsEndpoint, {
+              method: 'POST',
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+              body: formDataObj,
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+              toast.success('VIN details created successfully.');
+              router.push('/vehicle/vehicle');
+            } else {
+              toast.error('Failed to create VIN details.');
+            }
+          } catch (error) {
+            console.error('Error creating VIN details:', error);
+            toast.error('Failed to create VIN details.');
           }
         }
-      }
+      } 
+  }
+} catch (error) {
+  console.error('Error creating job:', error);
+  toast.error('An error occurred while creating the job.');
+} finally {
+  setSubmitting(false);
+}
+}
 
-    } catch (error) {
-      console.error('Error creating job:', error);
-      toast.error('An error occurred while creating the job.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
 
   const handleDeleteForm = (index: number) => {
@@ -1030,7 +1075,7 @@ export default function Technicians() {
   const handleSelectChange = async (
     event: SelectChangeEvent<string>,
     field: string,
-    formIndex: number,
+    index: number,  // This is passed to the function
     techIndex?: number
   ) => {
     const value = event.target.value;
@@ -1038,8 +1083,8 @@ export default function Technicians() {
     // Update the specific form in jobForms
     setJobForms(prevForms => {
       const updatedForms = [...prevForms];
-      updatedForms[formIndex] = {
-        ...updatedForms[formIndex],
+      updatedForms[index] = {  // Use index here instead of formIndex
+        ...updatedForms[index],
         [field]: value,
       };
       return updatedForms;
@@ -1047,52 +1092,10 @@ export default function Technicians() {
 
     // If this is a customer selection change
     if (field === 'assignCustomer') {
-      try {
-        // Fetch jobs for the selected customer
-        const jobs = await fetchCustomerData(value);  // assuming fetchCustomerData returns jobs related to the customer
-        const jobNames = jobs.map((job: any) => job.jobName);
-        console.log(jobNames, 'jobNames');
+      await handleCustomerSelect(value); // Call handleCustomerSelect when a customer is selected
 
-        setJobNames(jobs);
-        console.log(jobNames, 'setJobNames');
-
-        setSelectedJobName('');
-        console.log(selectedJobName, 'slectedJobName');
-
-
-        // Now, filter technicians associated with the selected customer job
-        const selectedJob = jobs.find((job: any) => job.assignCustomer === parseInt(value)); // Find the job with the selected customerId
-
-        if (selectedJob) {
-          // If job is found, get the technicians associated with that job
-          const technicians = selectedJob.technicians || [];
-          setTechnicians(technicians);  // Update state to reflect the technicians for the selected customer
-
-          // Pre-select technicians based on the current assignment in form
-          setJobForms(prevForms => {
-            const updatedForms = [...prevForms];
-            updatedForms[formIndex] = {
-              ...updatedForms[formIndex],
-              assignTechnicians: selectedJob.technicians.map((tech: any) => String(tech.id)),  // Assign technicians to form
-              technicianDetails: selectedJob.technicians.map((tech: any) => ({
-                id: tech.id,
-                firstName: tech.firstName,
-                lastName: tech.lastName,
-                email: tech.email,
-                phoneNumber: tech.phoneNumber,
-                techFlatRate: tech.UserJob?.techFlatRate || '{}', // Default to empty object if not available 
-                rRate: tech.UserJob?.rRate || '{}', // Default to empty object if not available 
-              })),
-            };
-            return updatedForms;
-          });
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        setJobNames([]);
-        setSelectedJobName('');
-        setTechnicians([]);  // Ensure technicians is reset if there's an error
-      }
+      // You can now safely fetch jobs and technicians for the selected customer.
+      setSelectedCustomerId(value); // Store the selected customer ID
     }
 
     // Update formData if needed (only if not a technician field)
@@ -1109,6 +1112,8 @@ export default function Technicians() {
       });
     }
   };
+
+
 
 
 
@@ -1495,26 +1500,117 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`, {
-        method: 'GET',
-        headers,
-      });
+      const response = await fetch(
+        `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        // Ensure technicians is always an array
-        setTechnicians(data.jobs?.technicians || []); // Default to empty array if no technicians
-        return data.jobs || [];
+        // Return both jobs and all technicians (we'll filter later when job is selected)
+        return {
+          jobs: data.jobs || [],
+          allTechnicians: data.jobs?.flatMap((job: any) => job.technicians) || []
+        };
       } else {
         toast.error(data.error || 'Error fetching customer data');
-        return []; // Return empty array on error
+        return { jobs: [], allTechnicians: [] };
       }
     } catch (error) {
       toast.error('An error occurred while fetching customer data');
-      return []; // Return empty array on error
+      return { jobs: [], allTechnicians: [] };
     }
   };
+  const handleCustomerSelect = async (customerId: string) => {
+    setSelectedCustomerId(customerId);
+
+    // Fetch customer data (jobs and technicians)
+    const { jobs, allTechnicians } = await fetchCustomerData(customerId);
+
+    setJobNames(jobs); // Update available jobs for the customer
+    setTechnicians([]); // Clear previous technician list
+
+    // Optionally, store all technicians in state for later filtering
+    setAllTechnicians(allTechnicians);  // Store all technicians globally
+  };
+
+
+  const handleJobNameSelect = async (selectedName: string) => {
+    setSelectedJobName(selectedName);
+    setTechnicians([]); // Clear technicians first to avoid showing old ones
+
+    const selectedJob = jobNames.find(job => job.jobName === selectedName);
+    console.log('selectedJob:', selectedJob);
+
+    if (selectedJob) {
+      setJobId(selectedJob.id);
+      localStorage.setItem('jobId', selectedJob.id.toString());
+
+      // Safely handle the technicians array and ensure no duplicates
+      const jobTechnicians = selectedJob.technicians
+        ? allTechnicians.filter((tech) =>
+          selectedJob.technicians?.some((selectedTech: any) => selectedTech.id === tech.id)
+        )
+        : [];
+
+      // Remove duplicates based on technician id
+      const uniqueTechnicians = Array.from(
+        new Map(jobTechnicians.map((tech: any) => [tech.id, tech])).values()
+      );
+
+      console.log('jobTechnicians:', uniqueTechnicians);
+
+      setTechnicians(uniqueTechnicians); // Set the new unique technicians
+
+      setJobForms(prev => {
+        const updatedForms = [...prev];
+        updatedForms[0] = {
+          ...updatedForms[0],
+          jobId: selectedJob.id.toString(),
+          jobName: selectedName,
+          assignTechnicians: uniqueTechnicians.map((tech: any) => String(tech.id)),
+          technicianDetails: uniqueTechnicians.map((tech: any) => ({
+            id: tech.id,
+            firstName: tech.firstName,
+            lastName: tech.lastName,
+            email: tech.email,
+            phoneNumber: tech.phoneNumber,
+            techFlatRate: tech.UserJob?.techFlatRate || '',
+            rRate: tech.UserJob?.rRate || '',
+            techType: tech.techType || 'technician',
+          })),
+        };
+        return updatedForms;
+      });
+    } else {
+      // If no job selected, clear everything
+      setTechnicians([]);
+      setJobForms(prev => {
+        const updatedForms = [...prev];
+        updatedForms[0] = {
+          ...updatedForms[0],
+          jobId: '',
+          jobName: '',
+          assignTechnicians: [],
+          technicianDetails: [],
+        };
+        return updatedForms;
+      });
+    }
+  };
+
+
+
+
+
+
+
+
+
 
   const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
     // Do something with the selected dates
@@ -1587,26 +1683,7 @@ export default function Technicians() {
                     label="Select Job Title *"
                     size="small"
                     value={selectedJobName || jobForms[0]?.jobName || ''}
-                    onChange={async (e) => {
-                      const selectedName = e.target.value;
-                      setSelectedJobName(selectedName);
-
-                      // Find the selected job from jobNames
-                      const selectedJob = jobNames.find(job => job.jobName === selectedName);
-                      if (selectedJob) {
-                        setJobId(selectedJob.id); // Set the job ID
-                        localStorage.setItem('jobId', selectedJob.id.toString());
-                        setJobForms(prev => {
-                          const updatedForms = [...prev];
-                          updatedForms[0] = {
-                            ...updatedForms[0],
-                            jobId: selectedJob.id.toString(),
-                            jobName: selectedName,
-                          };
-                          return updatedForms;
-                        });
-                      }
-                    }}
+                    onChange={(e) => handleJobNameSelect(e.target.value)}
                     select
                   >
                     {jobNames.length > 0 ? (
@@ -2109,7 +2186,7 @@ export default function Technicians() {
                                     size="small"
                                     type="number"
                                     name="techFlatRate"
-                                    label="Flat Rate"
+                                    label="Flat Rate ($)"
                                     color="warning"
                                     value={rateValue}
                                     onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'techFlatRate')}
@@ -2120,7 +2197,7 @@ export default function Technicians() {
                                   <TextField
                                     size="small"
                                     type="number"
-                                    label="R Rate"
+                                    label="R Rate ($)"
                                     name="rRate"
                                     color="warning"
                                     value={rateValue}

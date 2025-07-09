@@ -17,6 +17,8 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Papa from 'papaparse';
 import Link from 'next/link';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -39,7 +41,14 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [roleType, setRoleType] = useState<string | null>(null);
 
+
+  useEffect(() => {
+    // Ensure this code runs only on the client-side (after the component mounts)
+    const storedRoleType = localStorage.getItem('types');
+    setRoleType(storedRoleType); // Set the roleType from localStorage
+  }, []);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -79,12 +88,12 @@ const JobTable: React.FC = () => {
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
-        ? roleType === 'single-technician' || roleType === 'manager'
+        ? roleType === 'superadmin' || roleType === 'manager'
           ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}`
-          : `/api/jobListing?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
-        : roleType === 'superadmin' || roleType === 'manager'
+          : `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}`
+        : roleType === 'superadmin'
           ? `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}`
-          : `/api/jobListing?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          : `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -206,31 +215,47 @@ const JobTable: React.FC = () => {
           });
         } else {
           console.error('Failed to update job status');
+          const errorMessage = response.data.message || 'Failed to update job status'; // Fallback if no message is found
           Swal.fire({
             title: 'Error!',
-            text: 'Failed to update job status.',
+            text: errorMessage,
             icon: 'error',
             confirmButtonText: 'OK'
           });
         }
       } catch (error) {
+        // Network errors or 400/500 errors that don't reach the response.data handling
+        let errorMessage = 'Failed to update job status';
+
+        if (axios.isAxiosError(error)) {
+          // Handle Axios errors specifically
+          if (error.response) {
+            // The request was made and the server responded with a status code
+            errorMessage = error.response.data?.message ||
+              error.response.data?.error ||
+              error.message;
+          } else if (error.request) {
+            // The request was made but no response was received
+            errorMessage = 'No response from server';
+          } else {
+            // Something happened in setting up the request
+            errorMessage = error.message;
+          }
+        } else if (error instanceof Error) {
+          // Generic Error
+          errorMessage = error.message;
+        }
+
         console.error('Error updating job status:', error);
         Swal.fire({
           title: 'Error!',
-          text: 'Error updating job status.',
+          text: errorMessage,
           icon: 'error',
+          confirmButtonColor: '#383d71',
           confirmButtonText: 'OK'
         });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Job status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
+      };
+    };
   };
 
   const handlePageChange = (data: { selected: number }) => {
@@ -291,48 +316,14 @@ const JobTable: React.FC = () => {
           return rate;
         }
       };
-
-      const jobSimpleFlatRate = parseSimpleFlatRate(jobData.simpleFlatRate);
-      const techSimpleFlatRate = parseSimpleFlatRate(technician.simpleFlatRate);
-      const simpleFlatRate = !isEmpty(jobSimpleFlatRate) ? jobSimpleFlatRate : techSimpleFlatRate;
-
-      const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
-        ? Number(jobData.amountPercentage)
-        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
-
-
       return {
         id: jobData.id,
         customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
-        jobName: jobData.jobName,
-
+        jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-
         assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
-
-        payRate: jobData.technicians.map((tech: any) => tech.UserJob?.payRate || 'N/A').join(', '),
-
-        simpleFlatRate: jobData.technicians.map((tech: any) => {
-          const flatRate = tech.UserJob?.simpleFlatRate;
-          if (!flatRate) return 'N/A';
-
-          let parsedRate: Record<string, any> = {};
-          try {
-            parsedRate = typeof flatRate === 'string' ? JSON.parse(flatRate) : flatRate;
-          } catch {
-            return 'Invalid';
-          }
-
-          return Object.entries(parsedRate)
-            .map(([vehicle, rate]) => `${vehicle}: $${Number(rate).toFixed(2)}`)
-            .join(' | ');
-        }).join(' || '), // Separator between multiple technicians
-
-        amountPercentage: jobData.technicians.map((tech: any) => {
-          const percent = tech.UserJob?.amountPercentage;
-          return percent ? `${percent}%` : '0%';
-        }).join(', '),
+        estimatedCost: jobData.estimatedCost
       };
 
     });
@@ -399,9 +390,8 @@ const JobTable: React.FC = () => {
         .trimStart();
 
       const manualHeaders = [
-        'id', 'customer', 'assignCustomer', 'jobName',
-        'technicians', 'assignTechnicians',
-        'payRate', 'simpleFlatRate', 'amountPercentage',
+        'id', 'customer', 'assignCustomer', 'jobTitle',
+        'technicians', 'assignTechnicians', 'estimatedCost',
       ];
 
       Papa.parse(text, {
@@ -431,48 +421,22 @@ const JobTable: React.FC = () => {
             const payloadData = cleanedData.map(row => {
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
-              const payRates = row.payRate ? row.payRate.split(',').map((rate: any) => rate.trim()) : [];
-              const amountPercentages = row.amountPercentage ? row.amountPercentage.split(',').map((perc: any) => perc.trim()) : [];
-              const simpleFlatRates = row.simpleFlatRate
-                ? row.simpleFlatRate.split('||').map((rate: string) => {
-                  const obj: Record<string, string> = {};
-                  rate.split('|').forEach(pair => {
-                    const [key, value] = pair.split(':').map(p => p.trim());
-                    if (key && value) obj[key] = value;
-                  });
-                  return obj;
-                })
-                : [];
+
 
               const technicians = technicianNames.map((name: any, index: any) => {
-                const payRate = payRates[index] || null;
 
                 const technicianObj: any = {
                   id: technicianIds[index] || null,
                   name: name,
-                  payRate: payRates[index] || null,
-                  amountPercentage: amountPercentages[index] || null,
-                  simpleFlatRates: simpleFlatRates[index] || null
                 };
-                if (payRate?.toLowerCase() === "simple flat rate") {
-                  technicianObj.simpleFlatRate = simpleFlatRates[index] || null;
-                }
-
-                // Directly assign simpleFlatRate if payRate is "Simple Flat Rate"
-
-
                 return technicianObj;
               });
 
               return {
                 ...row,
                 technicians: technicians,
-                // Clean up unused fields
                 assignTechnicians: undefined,
-                jobName:undefined,
-                payRate: undefined,
-                amountPercentage: undefined,
-                simpleFlatRate: undefined
+                jobName: undefined,
               };
             });
 
@@ -536,27 +500,29 @@ const JobTable: React.FC = () => {
         <td> {job?.jobName}</td>
 
 
-        <td> {job?.customer?.fullName}  </td>
-        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName}
-          </div>
-        ))}</td>
-        <td>{job.vehicleCount} Work Order</td>
+        <td> {job?.customer?.fullName}  </td> 
+        <td>({job.vehicleCount || 0}) Work Order</td>
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+        <td>${job.estimatedCost || '0'}</td>
         <td>
           {canCreate && (
-// onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
             <span 
               className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {job.jobStatus ? 'Completed' : 'In Progress'}
             </span>
           )}
-
         </td>
         <td>
-          <TableActions
+
+          <Link href={`/jobs/view?jobId=${job.id}`} >
+            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+              data-tooltip-content="View" />
+          </Link>
+          <Tooltip id="view" place="top" />
+
+          {/* <TableActions
             editRoute={`/jobs/create-job/create?jobId=${job.id}`}
             deleteRoute={`/api/deleteJob`}  // Pass the correct endpoint
             viewRoute={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`}
@@ -564,11 +530,62 @@ const JobTable: React.FC = () => {
             userRole='Activejobs'
             itemId={job.id}  // Pass the technician ID
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-          />
+          /> */}
         </td>
       </tr>
     )
   };
+
+
+  const handleDateChange = async (dateRange: [Date, Date] | null) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+    // Function to format the date as DD-MM-YYYY
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]); // Format start date
+      const endDate = formatDate(dateRange[1]);   // Format end date
+
+      try {
+        setLoading(true);
+        let apiPoint = `${apiUrl}/jobFilter`;
+
+        const requestBody: { [key: string]: any } = {
+          startDate: startDate,
+          endDate: endDate,
+          roleType: roleType
+        };
+        if (roleType !== 'superadmin' && roleType !== 'manager') {
+          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
+        }
+
+        // Make the API call using POST with the query params and body
+        const response = await axios.post(apiPoint, requestBody, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include token if necessary for authentication
+          },
+        });
+
+        setActiveJob(response.data.jobs.jobs); // Update the jobs with filtered data
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+
+
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -578,7 +595,8 @@ const JobTable: React.FC = () => {
         ]}
       />
 
-      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
+        onDateChange={handleDateChange} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -622,16 +640,14 @@ const JobTable: React.FC = () => {
               </th>
               <th className="w-[150px]">
                 Customer Name
-                
-              </th>
 
-              <th className="w-[150px]" >
-                Technician Name
               </th>
-              <th className="w-[100px]">Vehicle / Work Order</th>
-              {/* <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[120px]">R/I R/R </th>
-              <th className="w-[120px]">Total Cost</th> */}
+               
+              <th className="w-[150px]">Vehicle / Work Order</th>
+              {/* <th className="w-[100px]">Sub Total Cost</th>*/}
+              <th className="w-[120px]">Start Date</th>
+              <th className="w-[120px]">End Date</th>
+              <th className="w-[120px]">Job Estimate</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>
@@ -639,13 +655,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-10">
+                <td colSpan={10} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10">
+                <td colSpan={10} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

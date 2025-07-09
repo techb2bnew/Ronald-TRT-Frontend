@@ -579,6 +579,13 @@ const Sidebar = () => {
                     <span>Vehicles List</span>
                   </Link>
                 </li>
+                 {userType !== 'single-technician' && (
+                 <li>
+                    <Link href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                      <span>Accounts Report</span>
+                    </Link>
+                  </li>
+                 )}
                 {/* {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
                     <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -704,7 +711,7 @@ const Sidebar = () => {
             <li className='p-1 pl-4'>
 
               <Link href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
-                <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
+                <div className={`flex items-center gap-1  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                   <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Staff Management </span>
                 </div>
@@ -785,6 +792,11 @@ const Sidebar = () => {
                       <span>Technicians</span>
                     </Link>
                   </li>
+                  <li>
+                    <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                      <span>All Jobs</span>
+                    </Link>
+                  </li>
                   <li >
                     <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Work Orders</span>
@@ -795,6 +807,7 @@ const Sidebar = () => {
                       <span>Vehicles Info</span>
                     </Link>
                   </li>
+                  
                   {/* <li>
                     <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Jobs</span>

@@ -22,13 +22,12 @@ import Eye from '../../../../public/eye.svg'
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
-interface VehcileInfo {
+interface Jobs {
   id: string;
-  jobName: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
-  Role: { name: string };
+  vehicles: [];
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
@@ -43,13 +42,7 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-const [roleType, setRoleType] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Ensure this code runs only on the client-side (after the component mounts)
-    const storedRoleType = localStorage.getItem('types');
-    setRoleType(storedRoleType); // Set the roleType from localStorage
-  }, []);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -63,31 +56,30 @@ const [roleType, setRoleType] = useState<string | null>(null);
   };
 
 
- const handlePageSizeChange = (size: number) => {
-  // Calculate the total number of pages based on the current totalJobs and the new pageSize
-  const newTotalPages = Math.ceil(totalJobs / size);
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
 
-  // If the current page is greater than the new total pages, reset it to the last page
-  let newPage = currentPage;
-  if (newPage > newTotalPages) {
-    newPage = newTotalPages;
-  }
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
 
-  // Ensure the page number is not less than 1
-  if (newPage < 1) {
-    newPage = 1;
-  }
+    // Ensure the page number is not less than 1
+    if (newPage < 1) {
+      newPage = 1;
+    }
 
-  // Update the state with the new page size and set the current page accordingly
-  setPageSize(size);
-  setCurrentPage(newPage); // Set the current page to the last valid page
-};
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || "";
       const userId = localStorage.getItem('userID');
@@ -97,12 +89,11 @@ const [roleType, setRoleType] = useState<string | null>(null);
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin' || roleType === 'manager'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'superadmin' || roleType === 'manager'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-
+          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+          : `/api/jobListing?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
+        : roleType === 'superadmin'
+          ? `/api/jobListing?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/jobListing?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -112,12 +103,15 @@ const [roleType, setRoleType] = useState<string | null>(null);
       console.log('API response data:', data);  // Debugging API response
 
       if (response.ok) {
-        const fetchedTechnicians: VehcileInfo[] = query.trim()
-          ? data.data.vehicles || []
-          : data.jobs.vehicles || [];
-        setActiveJob(fetchedTechnicians);
+        const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
+        const jobsWithVehicleCount = fetchedJobs.map(job => ({
+          ...job,
+          vehicleCount: job.vehicles ? job.vehicles.length : 0  // Count vehicles for each job
+        }));
+
+        setActiveJob(jobsWithVehicleCount);
         setTotalPages(data.jobs?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalVehicles || 0); // Ensure totalJobs is set correctly
+        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -232,8 +226,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
   };
   const canCreate = hasPermission("approve");
 
-
-  const downloadCSV = () => {
+ const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
@@ -241,13 +234,13 @@ const [roleType, setRoleType] = useState<string | null>(null);
       return;
     }
     const csvOptions = {
-      filename: 'Vehicle / Work Orders',
+      filename: 'Account Reports',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicle / Work Orders',
+      title: 'Account Reports',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -256,37 +249,21 @@ const [roleType, setRoleType] = useState<string | null>(null);
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
-      const firstTech = jobData.assignedTechnicians?.[0] || {};
-      const vt = firstTech.VehicleTechnician || {};
-
-      // Extract technician data including techFlatRate and rRate
-      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
-        const vt = tech.VehicleTechnician || {};
-        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
-      }).join(', ');
+       
       return {
         id: jobData.id,
-        vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName,
         assignCustomer: jobData?.customer?.id,
-        bodyClass: jobData.bodyClass,
-        color: jobData.color,
-        make: jobData.make,
-        model: jobData.model,
-        vehicleType: jobData.vehicleType,
-        'modelYear': jobData.modelYear,
-        'vehicleDescriptor': jobData.vehicleDescriptor,
-        'manufacturerName': jobData.manufacturerName,
-        'plantCompanyName': jobData.plantCompanyName,
-        'plantCountry': jobData.plantCountry,
-        'plantState': jobData.plantState,
-        deletedStatus: jobData.deletedStatus,
+        manager: `${jobData.manager.firstName} ${jobData.manager.lastName}`,
+        assignManager: `${jobData.manager.id}`,
+        estimatedCost: jobData.estimatedCost, 
+        totalFlatRate: jobData.totalFlatRate,
+        totalRRate: jobData.totalRRate,
+        totalCombined: jobData.totalCombined,
+        estimatedProfitLoss: jobData.estimatedProfitLoss,
+        actualProfitLoss: jobData.actualProfitLoss,
         notes: jobData.notes,
-        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.join(''),
-        technicianRates: technicianRates,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -308,12 +285,9 @@ const [roleType, setRoleType] = useState<string | null>(null);
         .trimStart(); // Remove leading whitespace/newlines
 
       const manualHeaders = [
-        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'vehicleType',
-        'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'id', 'customer', 'jobName', 'assignCustomer',
         'notes', 'technicians', 'assignTechnicians',
-        'jobDescription', 'technicianRates'
+       'technicianRates', 'estimatedCost', 'manager', 'assignManager'
       ];
 
       Papa.parse(text, {
@@ -349,7 +323,8 @@ const [roleType, setRoleType] = useState<string | null>(null);
               const rateChunks = row.technicianRates
                 ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
                 : [];
-
+              console.log(row.technicianRates, 'rateChunks');
+              
               const technicians = technicianNames.map((name: any, index: number) => {
                 let techFlatRate = '';
                 let rRate = '';
@@ -366,17 +341,11 @@ const [roleType, setRoleType] = useState<string | null>(null);
                   techFlatRate,
                   rRate,
                 };
-              });
-
-              // Handle jobDescription array
-              const jobDescriptions = row.jobDescription
-                ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
-                : [];
+              }); 
 
               return {
                 ...row,
-                technicians,
-                jobDescription: jobDescriptions,
+                technicians, 
                 assignTechnicians: undefined, // cleanup unused field
               };
             }).filter(row =>
@@ -446,11 +415,11 @@ const [roleType, setRoleType] = useState<string | null>(null);
 
       try {
         setLoading(true);
-        let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
+        let apiPoint = `${apiUrl}/jobFilter?roleType=${encodeURIComponent(roleType)}`;
         const requestBody: { [key: string]: any } = {
           startDate: startDate,
           endDate: endDate,
-          roleType:roleType,
+          roleType: roleType,
           vehicleStatus: 'false'
         };
         if (roleType !== 'superadmin' && roleType !== 'manager') {
@@ -462,7 +431,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
           },
         });
 
-        setActiveJob(response.data.vehicles);
+        setActiveJob(response.data.jobs.jobs);
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -472,7 +441,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
   };
 
 
-    const handleNewJobClick = async (jobId: string) => {
+   const handleNewJobClick = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
@@ -493,7 +462,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
       }
 
       // Make the POST request to the vehicleJobNameFilter API endpoint
-      const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
+      const response = await fetch(`${apiUrl}/jobFilterWithJobName`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -506,7 +475,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
 
       // Handle success or failure based on the API response
       if (response.ok) {
-       setActiveJob(data.vehicles);
+       setActiveJob(data.jobs.jobs);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -516,19 +485,10 @@ const [roleType, setRoleType] = useState<string | null>(null);
     }
   };
 
-
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
 
-    const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
-      const parsedJob = job;
-      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-    }, 0);
-    const simpleFlatRate = Number(job?.simpleFlatRate);
-    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-      ? subtotalcost + simpleFlatRate
-      : subtotalcost;
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -546,83 +506,82 @@ const [roleType, setRoleType] = useState<string | null>(null);
             </span>
           </label>
         </td>
-        <td> {job.jobId} </td>
-        <td>{job?.jobName}</td>
         <td>  {job?.customer?.fullName} </td>
-        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        
-         <td>
-          {job?.assignedTechnicians
-            ?.filter((tech: any) => tech.techType === 'technician')
-            ?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.firstName} {tech.lastName}
-              </div>
-            ))}
-        </td>
-        {roleType !== 'single-technician' && (
-          <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.techFlatRate !== '' && (
-                  `$${tech.VehicleTechnician?.techFlatRate}`
-                )}
-
-              </div>
-            ))}
-          </td>
-        )}
+        <td>  {job?.manager?.firstName} {job?.manager?.lastName} </td>
+        {/* <td> {job.id} </td> */}
+        <td>{job?.jobName}</td>
+        <td>{job.vehicleCount || 0}</td>
         <td>
-          {job?.assignedTechnicians
-            ?.filter((tech: any) => tech.techType === 'R/I/R/R')
-            ?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.firstName} {tech.lastName}
+          {job?.technicians?.length > 0 ? (
+            <>
+              <div className="">
+                {job.technicians.length}
               </div>
-            ))}
+            </>
+          ) : (
+            <span className="text-gray-400">No technicians assigned</span>
+          )}
+        </td>
+        <td>
+          {job.vehicles?.length > 0 ? (
+            <div className="flex gap-1">
+              <span className=" ">
+                   {job.vehicles.filter((v: any) => v.vehicleStatus === true).length}
+              </span>
+              /
+              <span className=" ">
+                  {job.vehicles.filter((v: any) => v.vehicleStatus === false).length}
+              </span>
+            </div>
+          ) : (
+            <span className="text-gray-400">No vehicles</span>
+          )}
+        </td>
+        <td>{`${job.estimatedCost ? '$' + job.estimatedCost : '-'}`}</td>
+
+
+
+        <td>{`${job.totalFlatRate ? '$' + job.totalFlatRate : '-'}`}</td>
+        <td>{`${job.totalRRate ? '$' + job.totalRRate : '-'}`}</td>
+        <td>{`${job.totalCombined ? '$' + job.totalCombined : '-'}`}</td>
+        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
+
+        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
+          <div key={tech.id}>
+            <a className="hover:underline" href={`tel:${tech.technicians}`}>
+              {tech.phoneNumber}
+            </a>
+          </div>
+        ))}</td> */}
+
+
+
+        <td>
+          <span className={`${job.estimatedProfitLoss < 0 ? 'text-red-500' : 'text-green-700'}`}>
+
+            {`${job.estimatedProfitLoss.toFixed(2) ? '$' + job.estimatedProfitLoss.toFixed(2) : '-'}`}
+
+          </span>
+        </td>
+        <td>
+          <span className={`${job.actualProfitLoss < 0 ? 'text-red-500' : 'text-green-700'}`}>
+            {job.actualProfitLoss !== null && job.actualProfitLoss !== undefined
+              ? `$${job.actualProfitLoss.toFixed(2)}`
+              : '-'}
+          </span>
         </td>
 
-
-        {roleType !== 'single-technician' && (
-          <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.rRate !== '' && (
-                  `$${tech.VehicleTechnician?.rRate}`
-                )}
-              </div>
-            ))}
-          </td>
-        )}
-        <td>${job?.totalCombined}</td>
-
-        <td>{job?.vin}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-         
-        <td>
-          {canCreate && (
 
-            <span  
-              className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-            >
-              {job.vehicleStatus ? 'Completed' : 'In Progress'}
-            </span>
-          )}
-
-        </td>
 
         <td className='text-left'>
+          <Link href={`/reporting/account-view?jobId=${job.id}`} >
+            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+              data-tooltip-content="View" />
+          </Link>
+          <Tooltip id="view" place="top" />
 
-          <TableActions
-            editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
-            deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
-            viewRoute={`/vehicle/view?vehicleId=${job.id}`}
-            idKey="vehicleId"
-            userRole='Activejobs'
-            itemId={job.id}  // Pass the technician ID
-            onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-          />
         </td>
       </tr>
     )
@@ -632,11 +591,11 @@ const [roleType, setRoleType] = useState<string | null>(null);
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'All Work Order List', href: '/vehicle/vehicle' }
+          { label: 'Account Reports', href: '/reporting/account-reports' }
         ]}
       />
 
-      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+      <CommonHeader heading="Account Reports" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick}/>
 
       <div className="overflow-auto rounded-md">
@@ -647,12 +606,12 @@ const [roleType, setRoleType] = useState<string | null>(null);
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === activeJob.length}
+                    checked={selectedIds.length === activeJob?.length}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
                     onChange={() =>
                       setSelectedIds(
-                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                        selectedIds.length === activeJob?.length ? [] : activeJob.map((cust) => cust.id)
                       )
                     }
                   />
@@ -663,64 +622,62 @@ const [roleType, setRoleType] = useState<string | null>(null);
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
-                Job ID
+              <th className="w-[120px]" onClick={() => handleSort('id')}>
+                Customer Name
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
+                <th className="w-[100px]">Manager Name
+              </th>
+              {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
+                Job ID
+                {sortBy === 'id' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th> */}
               <th className="w-[100px]"   >Job Title
               </th>
-              <th className="w-[120px]"  >
-                Customer Name
+              <th className="w-[120px]">Total Vehicle</th>
+              <th className="w-[120px]" >
+                No. Of Technician
               </th>
-              {/* <th className="w-[120px]">
-                Customer Number
-              </th> */}
-              <th className="w-[150px]" >
-                Assigned Technician
-              </th>
-              {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Tech Flat Rate</th>
-              )}
-              <th className="w-[130px]" >
-                Assigned R/I/R/R
-              </th>
-              {roleType !== 'single-technician' && (
-                <th className="w-[80px]">R/I/R/R</th>
-              )}
-              {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Total Expense</th>
-              )}
-              <th className="w-[140px]">VIN</th>
+              <th className="w-[120px]">Work Order Completed </th>
+              <th className="w-[100px]">Job Estimate</th>
+              <th className="w-[100px]">All Tech Total</th>
+              <th className="w-[80px]">All RR Total</th>
+              <th className="w-[100px]">Total Expense</th> 
+              <th className="w-[100px]">Estimated Profit/Loss</th>
+              <th className="w-[100px]">Actual Profit/Loss </th>
               <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
-              <th className="w-[130px]">Status</th>
-              <th className="w-[100px]">Action</th>
+              <th className="w-[80px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={15} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob.length === 0 ? (
+            ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={15} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob.map((job) => renderRow(job))
+              activeJob?.map((job) => renderRow(job))
             )}
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
+      {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>

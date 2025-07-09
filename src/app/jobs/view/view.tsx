@@ -202,79 +202,74 @@ export default function ViewDetails() {
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : ''}
               </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
-                <span
-                  className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-                >
-                  {jobData.jobStatus ? 'Completed' : 'Inprogress'}
-                </span>
-              </div>
+            </div>
 
+            {/* Right Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+              {userType === 'single-technician' && (
+                <>
+                  {jobData.technicians?.map((tech: any, index: number) => (
+                    <div key={index} className="mb-6 border-b border-gray-400 pb-4">
+
+                      {/* Technician Image and Name */}
+                      <div className="mb-2 flex items-start text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
+                        <div className="flex items-center gap-2">
+                          {tech.image ? (
+                            <img
+                              onClick={() => setPreviewImage(tech.image)}
+                              src={tech.image}
+                              alt={`${tech.firstName} ${tech.lastName}`}
+                              className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                              {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+                          <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
+                        </div>
+                      </div>
+
+                      {/* Email */}
+                      <div className="mb-2 flex text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                        <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
+                      </div>
+
+                      {/* Phone Number */}
+                      <div className="mb-2 flex text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                        <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
+                      </div>
+                      {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
+                      )}
+                      {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
+                      )}
+                      {/* Pay Details */}
+                      {tech.UserJob && (
+                        <>
+                          {tech.UserJob.payVehicleType && (
+                            <div className="mb-2 flex text-sm">
+                              <strong className="w-[210px] min-w-[210px] inline-block">Vehicle Type:</strong>
+                              {tech.UserJob.payVehicleType}
+                            </div>
+                          )}
+
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
                 <div className="flex gap-3 items-center capitalize">
 
                   ${jobData?.estimatedCost || '0'}
                 </div>
               </div>
-
-            </div>
-
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-              {jobData.technicians?.map((tech: any, index: number) => (
-                <div key={index} className="mb-6 border-b border-gray-400 pb-4">
-
-                  {/* Technician Image and Name */}
-                  <div className="mb-2 flex items-start text-sm">
-                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
-                    <div className="flex items-center gap-2">
-                      {tech.image ? (
-                        <img
-                          onClick={() => setPreviewImage(tech.image)}
-                          src={tech.image}
-                          alt={`${tech.firstName} ${tech.lastName}`}
-                          className="w-8 h-8 rounded-full object-cover cursor-pointer"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
-                          {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
-                        </div>
-                      )}
-                      <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="mb-2 flex text-sm">
-                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
-                    <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
-                  </div>
-
-                  {/* Phone Number */}
-                  <div className="mb-2 flex text-sm">
-                    <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
-                    <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
-                  </div>
-                  {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
-                    <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
-                  )}
-                  {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
-                    <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
-                  )}
-                  {/* Pay Details */}
-                  {tech.UserJob && (
-                    <>
-                      {tech.UserJob.payVehicleType && (
-                        <div className="mb-2 flex text-sm">
-                          <strong className="w-[210px] min-w-[210px] inline-block">Vehicle Type:</strong>
-                          {tech.UserJob.payVehicleType}
-                        </div>
-                      )}
-
-                    </>
-                  )}
-                </div>
-              ))}
               {jobData?.estimatedBy !== null && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
               )}
@@ -308,11 +303,102 @@ export default function ViewDetails() {
                 </div>
 
               )}
-
+              {jobData?.notes !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
+              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
+                <span
+                  className={`badge ${jobData.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+                >
+                  {jobData.jobStatus ? 'Completed' : 'Inprogress'}
+                </span>
+              </div>
 
             </div>
 
           </div>
+          {userType !== 'single-technician' && (
+            <div className="overflow-x-auto bg-white pt-3">
+              <table className="table w-full table-fixed">
+                <thead className=" ">
+                  <tr>
+                    <th scope="col">
+                      Name
+                    </th>
+                    <th scope="col">
+                      Vehicle Type
+                    </th>
+                    <th scope="col">
+                      Email
+                    </th>
+                    <th scope="col">
+                      Phone
+                    </th>
+                    <th scope="col">
+                      R/I/R/R
+                    </th>
+                    <th scope="col">
+                      Flat Rate
+                    </th>
+
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {jobData.technicians?.map((tech: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          {tech.image ? (
+                            <img
+                              onClick={() => setPreviewImage(tech.image)}
+                              src={tech.image}
+                              alt={`${tech.firstName} ${tech.lastName}`}
+                              className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                              {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+
+                          <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
+                        </div>
+                      </td>
+                      {/* Vehicle Type */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {tech.techType || 'N/A'}
+                      </td>
+                      {/* Email */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a className="  hover:underline" href={`mailto:${tech.email}`}>
+                          {tech.email}
+                        </a>
+                      </td>
+
+                      {/* Phone */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a className="  hover:underline" href={`tel:${tech.phoneNumber}`}>
+                          {tech.phoneNumber || 'N/A'}
+                        </a>
+                      </td>
+
+                      {/* R/I/R/R Rate */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {tech.UserJob?.rRate ? `$${tech.UserJob.rRate}` : 'N/A'}
+                      </td>
+
+                      {/* Flat Rate */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {tech.UserJob?.techFlatRate ? `$${tech.UserJob.techFlatRate}` : 'N/A'}
+                      </td>
+
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
         <ToastContainer />
         {previewImage && (

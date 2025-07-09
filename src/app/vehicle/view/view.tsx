@@ -298,8 +298,13 @@ export default function ViewDetails() {
                           ${tech.VehicleTechnician.techFlatRate}</p>
                       )}
 
+                      {tech.VehicleTechnician.techType !== '' || tech.VehicleTechnician.techType !== 'null' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block'>Tech Type:</strong>
+                          {tech?.techType}</p>
+                      )}
+
                       <>
-                        {jobData.labourCost !== 'null' && roleType === 'single-technician' && (
+                        {jobData.labourCost !== null  && (
                           <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong>
                             ${jobData.labourCost}</p>
                         )}

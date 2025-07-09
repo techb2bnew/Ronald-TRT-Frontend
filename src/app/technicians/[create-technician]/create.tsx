@@ -1033,7 +1033,7 @@ export default function Technicians() {
         {/* <div onClick={handleCopy} className='text-right mb-4 text-md flex items-center gap-1 justify-end cursor-pointer'>Copy Registration Link <Image src={Share} className='w-[14px]' alt='share' /> </div> */}
 
         <form onSubmit={handleSubmit}>
-          {!isManager && (
+          {!isManager && !isSingleTechnician && (
           <div className="flex items-center mb-4 gap-4"> 
             <div className="inline-flex items-center">
               <label className="flex items-center cursor-pointer relative">

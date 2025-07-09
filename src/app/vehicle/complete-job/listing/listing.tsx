@@ -463,6 +463,52 @@ const CompletedJobs: React.FC = () => {
     }
   };
 
+
+   const handleNewJobClick = async (jobId: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    console.log(jobId, 'jobId');
+    
+    // Prepare the payload dynamically
+    const payload = {
+      roleType: roleType,  // Dynamic roleType from localStorage
+      jobId: jobId,        // Dynamic jobId passed from the selected job
+      vehicleStatus: true, // Example status, can change based on the filter criteria
+    };
+    console.log(payload, 'payload');
+
+    try {
+      // Check if the token is available
+      if (!token) {
+        console.error("No token found");
+        return; // Stop if the token is missing
+      }
+
+      // Make the POST request to the vehicleJobNameFilter API endpoint
+      const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload), // Send the payload as JSON
+      });
+
+      const data = await response.json(); // Parse the JSON response
+
+      // Handle success or failure based on the API response
+      if (response.ok) {
+       setActiveJob(data.vehicles);
+        // You can update state or perform further operations based on the response
+      } else {
+        console.error("Failed to apply filter:", data.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error("Error during API request:", error);
+    }
+  };
+
   const renderRow = (completejob: any) => {
 
     const isChecked = selectedIds.includes(completejob.id);
@@ -545,7 +591,7 @@ const CompletedJobs: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} />
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick}/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

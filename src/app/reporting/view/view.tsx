@@ -245,57 +245,14 @@ export default function ViewDetails() {
               <p className="text-gray-500">No job descriptions available</p>
             )}
 
-            <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 bg-white p-4 mt-4'>
-              <strong className='w-[210px] inline-block font-semibold'>Sub Total Cost:</strong>
-              <span>{subTotalCost ? `$${subTotalCost}` : <span className="text-gray-500">No data available</span>}</span>
-            </p>
-          </div>
-          <div className="pl-6 pr-6">
-            <div className=' border-b border-gray-500 text-sm bg-white p-4 flex'>
-
-              <strong className='w-[210px] inline-block'>Total Cost:</strong>
-
-
-              ${calculateTechnicianTotalCost(jobData).toFixed(2)}
-
-            </div>
-          </div>
+            
+          </div> 
           {/* Assigned Technicians Section */}
           <div className="p-6">
 
             {jobData?.assignedTechnicians?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {jobData.assignedTechnicians.map((tech: any) => {
-                  let flatRateDisplay = "N/A"; // Default display message
-                  if (tech.VehicleTechnician?.simpleFlatRate) {
-                    try {
-                      const rates = JSON.parse(tech.VehicleTechnician.simpleFlatRate);
-                      const entries = Object.entries(rates);
-
-                      // Check if "default" key exists and handle it
-                      if (entries.length === 1 && entries[0][0] === "default") {
-                        flatRateDisplay = (entries[0][1] as string).toString(); // Type assertion here
-                      } else {
-                        // Show non-default entries if available
-                        flatRateDisplay = entries
-                          .filter(([type]) => type !== "default") // Exclude the "default" key if present
-                          .map(([type, amount]) => `${type}: ${amount}`)
-                          .join(", ");
-                        if (flatRateDisplay === "") {
-                          flatRateDisplay = "N/A"; // If no non-default rates, set to "N/A"
-                        }
-                      }
-
-                      // Remove the word "technician" if it appears in the string
-                      flatRateDisplay = flatRateDisplay.replace(/technician/gi, "").trim(); // Remove 'technician'
-
-                    } catch (e) {
-                      // If parsing fails, fallback to the original string value
-                      flatRateDisplay = tech.VehicleTechnician.simpleFlatRate;
-                    }
-                  }
-
-
+                {jobData.assignedTechnicians.map((tech: any) => { 
                   return (
                     <div key={tech.id} className="bg-gray-50 p-4 rounded shadow">
                       <p className="mb-1"><strong className='w-[210px] inline-block'>Name:</strong> {tech.firstName} {tech.lastName}</p>
@@ -309,14 +266,8 @@ export default function ViewDetails() {
                           {tech.VehicleTechnician.payVehicleType && (
                             <p className="mb-1"><strong className='w-[210px] inline-block'>Pay Vehicle Type:</strong> {tech.VehicleTechnician.payVehicleType}</p>
                           )}
-                          {flatRateDisplay &&  tech.VehicleTechnician.simpleFlatRate ==='' && (
-                            <p className="mb-1"><strong className='w-[210px] inline-block'>Amount:</strong> {flatRateDisplay}</p>
-                          )}
-                          {tech.VehicleTechnician.amountPercentage && (
-                            <p className="mb-1">
-                              <strong className='w-[210px] inline-block'>Amount Percentage:</strong> {tech.VehicleTechnician.amountPercentage}%
-                            </p>
-                          )}
+                          
+                          
                         </>
                       )}
                     </div>

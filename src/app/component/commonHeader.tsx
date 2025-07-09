@@ -1,6 +1,6 @@
 // components/CommonHeader.tsx
 import Link from 'next/link';
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { addDays } from 'date-fns';
@@ -27,14 +27,21 @@ interface CommonHeaderProps {
   additionalComponents?: React.ReactNode;
   showDatePicker?: boolean;
   onDateChange?: (newValue: [any, any]) => void;
+  onNewJobClick?: (jobId: string) => void;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);  // Store the job data here
+  const [jobsFilter, setJobsFilter] = useState<string>('');
+  const [selectedJobId, setSelectedJobId] = useState<string>(''); // State for selected job ID
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
   const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
     startDate: null,
     endDate: null
@@ -104,15 +111,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
-  const handleColumnChange = (event: SelectChangeEvent<string[]>) => {
-    const value = event.target.value as string[];
-    const filteredColumns = value.filter(col => col !== 'select');
-    setSelectedColumn(filteredColumns);  // Update selected columns state
-    if (onColumnSelect) onColumnSelect(filteredColumns);  // Pass the updated columns to parent if needed
-  };
 
 
- const handleDateFilterClick = () => {
+
+  const handleDateFilterClick = () => {
     setShowDatePicker(!showDatePickers);
   };
 
@@ -123,6 +125,61 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
     setShowDatePicker(false); // Close the date picker after applying filter
   };
+
+const fetchJobs = async (page = 1) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // Adjust API URL if necessary
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const url = roleType === 'admin'
+      ? `/api/jobListing?page=${page}&roleType=${encodeURIComponent(roleType)}`
+      : `/api/jobListing?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}`;
+
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+
+      if (response.ok) {
+        const fetchedJobs = data.jobs?.jobs || [];
+        setJobs((prev) => [...prev, ...fetchedJobs]); // Append new jobs to existing jobs
+        setHasMore(fetchedJobs.length > 0); // Check if more jobs are available
+      } else {
+        console.error('Error fetching job data:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+    }
+  };
+
+  // Trigger data fetch when the page changes
+  useEffect(() => {
+    fetchJobs(page);
+  }, [page]);
+ 
+
+ 
+
+  const handleScroll = (e: any) => {
+    const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
+    if (bottom && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+
+  const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value; // Selected job ID
+    setJobsFilter(value);  // Update the job filter state
+    setSelectedJobId(value); // Store the selected job ID for dynamic filtering
+    if (onNewJobClick) {
+      onNewJobClick(value);
+    }
+  };
+
 
   return (
     <div className="px-1 mb-4">
@@ -142,21 +199,52 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
             </div>
           )}
+          {onNewJobClick && (
+            <FormControl size="small" variant="outlined" className="w-[180px]">
+              <InputLabel id="job-dropdown-label" color="warning">Jobs</InputLabel>
+              <Select
+                labelId="job-dropdown-label"
+                id="job-dropdown"
+                value={jobsFilter}
+                onChange={handleJobFilterChange}
+                label="Jobs"
+                color="warning"
+                MenuProps={{
+                  PaperProps: {
+                  onScroll: handleScroll,
+                    style: {
+                      maxHeight: 300, // Fixed height in pixels
+                      width: 250, // Optional: set width if needed
+                    },
+                  },
+                }}
+              >
+                {jobs?.length > 0 ? (
+                  jobs?.map((job) => (
+                    <MenuItem key={`${job.id}-${job.jobName}`} value={job.id}>{job.jobName}</MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No Jobs Available</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          )}
+
           {additionalComponents && (
             <div className="flex items-center gap-4">
               {additionalComponents}
             </div>
           )}
           {showDatePicker && (
-          <button
-            className="p-3 bg-white text-[12px] rounded"
-            onClick={handleDateFilterClick}
-          >
-            Date Filter
-          </button>
+            <button
+              className="p-3 bg-white text-[12px] rounded"
+              onClick={handleDateFilterClick}
+            >
+              Date Filter
+            </button>
           )}
           {showDatePickers && (
-            <div className="absolute z-40" style={{top:'14rem'}}>
+            <div className="absolute z-40" style={{ top: '14rem' }}>
               <DateRange
                 editableDateInputs={true}
                 onChange={handleDateChange}

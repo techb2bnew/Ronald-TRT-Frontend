@@ -49,6 +49,7 @@ interface JobPayload {
   assignTechnicians: string[];
   technicianId: string[];
   assignCustomer: string;
+  notes:string;
   assignManager: string;
   createdBy: string;
   jobId?: string;
@@ -67,6 +68,7 @@ export default function JobForm() {
     assignTechnicians: [],
     technicianId: [],
     assignCustomer: '',
+    notes: '',
     assignManager: '',
     createdBy: 'admin',
     jobId: '',
@@ -210,6 +212,7 @@ export default function JobForm() {
           assignManager: jobData.assignManager || '',
           labourCost: jobData.labourCost || '',
           estimatedCost: jobData.estimatedCost || '',
+          notes: jobData.notes || '',
           techFlatRate: normalTechs[0]?.UserJob?.techFlatRate || '',
           rRate: rirrTechs[0]?.UserJob?.rRate || '',
           assignTechnicians: technicians.map((tech: any) => String(tech.id)),
@@ -296,6 +299,7 @@ export default function JobForm() {
       const selectedTechnicians: SelectedTechnician[] = roleType === 'single-technician'
         ? [{
           userId: currentUserId || '',
+          
         }]
         : [
           ...selectedNormalTechnicians.map(tech => ({
@@ -322,6 +326,7 @@ export default function JobForm() {
         assignTechnician: roleType === 'single-technician' ? assignTechnician : formData.technicianId,
         assignManager: roleType === 'single-technician' ? null : formData.assignManager,
         createdBy: formData.createdBy,
+        notes: formData.notes,
         roleType: roleType,
         estimatedBy: estimatedByName,
         labourCost: labourCost ?? formData.labourCost,
@@ -574,7 +579,7 @@ export default function JobForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="Job Estimate"
+                label="Job Estimate ($)"
                 size="small"
                 color="warning"
                 value={formData.estimatedCost}
@@ -586,12 +591,13 @@ export default function JobForm() {
               />
             </div>
           </div>
+          {userType !== 'single-technician' && (
           <div className="grid grid-cols-2 gap-4 mb-2">
             <div className="mb-4">
               <TextField
                 fullWidth
                 type="number"
-                label="Technician Flat Rate"
+                label="Technician Flat Rate ($)"
                 size="small"
                 color="warning"
                 value={simpleFlatRate}
@@ -607,7 +613,7 @@ export default function JobForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="R/I/R/R"
+                label="R/I/R/R ($)"
                 size="small"
                 color="warning"
                 value={rirValue}
@@ -619,7 +625,7 @@ export default function JobForm() {
               />
             </div>
           </div>
-
+          )}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="grid grid-cols-2 gap-4">
               <DateTimePicker
@@ -655,10 +661,24 @@ export default function JobForm() {
             </div>
           </LocalizationProvider>
 
+           <div className="grid grid-cols-1 gap-4 mt-4"> 
+                <div className='mb-4'> 
+                  <textarea
+                    name="notes"
+                    id="notes"
+                    placeholder='Notes'
+                    value={formData.notes}
+                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    className="w-full p-3 border border-gray-300 rounded-md resize-y min-h-[100px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+                  />  
+                </div>
+              </div>
+
+
           {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start relative mt-3'>
               <FormControl fullWidth size="small">
-                <FormLabel color="warning" className='mb-4'>Assign Technician(s) to this vehicle*</FormLabel>
+                <FormLabel color="warning" className='mb-4'>Assign Technician(s) to this vehicle</FormLabel>
                 <TextField
                   label="Search Technician"
                   variant="outlined"
@@ -715,7 +735,7 @@ export default function JobForm() {
           {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start gap-3 relative mt-3'>
               <FormControl fullWidth size="small">
-                <FormLabel color="warning" className='mb-4'>Assign R/IR/R to this vehicle*</FormLabel>
+                <FormLabel color="warning" className='mb-4'>Assign R/IR/R to this vehicle</FormLabel>
                 <TextField
                   label="Search Technician"
                   variant="outlined"

@@ -501,12 +501,7 @@ const JobTable: React.FC = () => {
 
 
         <td> {job?.customer?.fullName}  </td>
-        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName}
-          </div>
-        ))}</td>
+
         {roleType !== 'single-technician' && (
           <td>{job?.manager?.firstName} {job?.manager?.lastName}</td>
         )}
@@ -516,14 +511,14 @@ const JobTable: React.FC = () => {
         <td>${job.estimatedCost || '0'}</td>
         <td>
           {canCreate && (
-
-            <span onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
-              className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            <span
+              onClick={() => job.vehicleCount > 0 && toggleApproval(job.id, job.jobStatus)}
+              style={{ cursor: job.vehicleCount > 0 ? 'pointer' : 'not-allowed' }}
+              className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'} ${job.vehicleCount === 0 ? 'opacity-50' : ''}`}
             >
               {job.jobStatus ? 'Completed' : 'In Progress'}
             </span>
           )}
-
         </td>
         <td>
           <TableActions
@@ -562,11 +557,11 @@ const JobTable: React.FC = () => {
       try {
         setLoading(true);
         let apiPoint = `${apiUrl}/jobFilter`;
-        
+
         const requestBody: { [key: string]: any } = {
           startDate: startDate,
-          endDate: endDate, 
-          roleType:roleType
+          endDate: endDate,
+          roleType: roleType
         };
         if (roleType !== 'superadmin' && roleType !== 'manager') {
           requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
@@ -646,10 +641,6 @@ const JobTable: React.FC = () => {
                 Customer Name
 
               </th>
-
-              <th className="w-[150px]" >
-                Technician Name
-              </th>
               {roleType !== 'single-technician' && (
                 <th className="w-[150px]" >
                   Manager Name
@@ -667,13 +658,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
