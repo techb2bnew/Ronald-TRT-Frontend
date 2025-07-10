@@ -5,7 +5,7 @@ const nextConfig = {
   images: {
     domains: ["ronaldo-trt.s3.ap-south-1.amazonaws.com"], // ✅ Add the domain here
   },
-  // output: 'export' 
+  // output: 'export'  
 };
 
 module.exports = nextConfig;
