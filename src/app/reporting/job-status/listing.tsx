@@ -545,8 +545,9 @@ const [roleType, setRoleType] = useState<string | null>(null);
               </svg>
             </span>
           </label>
-        </td>
-        <td> {job.jobId} </td>
+        </td> 
+        <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job?.id}</Link> </td>
+
         <td>{job?.jobName}</td>
         <td>  {job?.customer?.fullName} </td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}

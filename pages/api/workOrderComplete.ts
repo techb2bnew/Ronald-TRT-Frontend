@@ -6,9 +6,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { vehicleId, vehicleStatus } = req.body;
+    const { vehicleId, vehicleStatus, completedBy } = req.body;
 
-    if (typeof vehicleId !== 'number' || typeof vehicleStatus !== 'boolean') {
+    if (typeof vehicleId !== 'number' || typeof vehicleStatus !== 'boolean' || typeof completedBy !=='string') {
       return res.status(400).json({ error: 'Invalid or missing vehicleId or vehicleStatus' });
     }
 
@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
         ...(token ? { Authorization: token } : {}),
       },
-      body: JSON.stringify({ vehicleId, vehicleStatus }),
+      body: JSON.stringify({ vehicleId, vehicleStatus, completedBy }),
     });
 
     const data = await response.json();

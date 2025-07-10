@@ -360,7 +360,16 @@ const CompletedJobs: React.FC = () => {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-
+        const technicianData = localStorage.getItem('technicianData'); 
+        let completedBy = '';
+        if (technicianData) {
+          try {
+            const parsed = JSON.parse(technicianData);
+            completedBy = `${parsed.firstName} ${parsed.lastName}`;
+          } catch (err) {
+            console.error('Failed to parse technicianData:', err);
+          }
+        }
         const config = {
           headers: {
             'Content-Type': 'application/json',
@@ -370,6 +379,7 @@ const CompletedJobs: React.FC = () => {
 
         const response = await axios.post(`/api/workOrderComplete`, {
           vehicleId,
+          completedBy,
           vehicleStatus: !currentApprovalStatus
         }, config);
 
@@ -442,7 +452,7 @@ const CompletedJobs: React.FC = () => {
         const requestBody: { [key: string]: any } = {
           startDate: startDate,
           endDate: endDate,
-          roleType:roleType,
+          roleType: roleType,
           vehicleStatus: 'true',
         };
         if (roleType !== 'superadmin' && roleType !== 'manager') {
@@ -464,12 +474,12 @@ const CompletedJobs: React.FC = () => {
   };
 
 
-   const handleNewJobClick = async (jobId: string) => {
+  const handleNewJobClick = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
     console.log(jobId, 'jobId');
-    
+
     // Prepare the payload dynamically
     const payload = {
       roleType: roleType,  // Dynamic roleType from localStorage
@@ -499,7 +509,7 @@ const CompletedJobs: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-       setActiveJob(data.vehicles);
+        setActiveJob(data.vehicles);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -534,7 +544,7 @@ const CompletedJobs: React.FC = () => {
               </span>
             </label>
           </td>
-          <td>  {completejob.id} </td>
+          <td> <Link href={`/vehicle/view?vehicleId=${completejob.id}`} className='hover:underline'> {completejob.id}</Link> </td>
           <td>{completejob?.jobName}</td>
           <td>  {completejob?.customer?.fullName} </td>
 
@@ -591,7 +601,7 @@ const CompletedJobs: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick}/>
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

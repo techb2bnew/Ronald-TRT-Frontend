@@ -77,7 +77,7 @@ const JobTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
+  const fetchTech = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -131,7 +131,7 @@ const JobTable: React.FC = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
+      fetchTech(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
     }, 500);
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm, pageSize]);
@@ -203,7 +203,7 @@ const JobTable: React.FC = () => {
             if (job.id === jobId) {
               return { ...job, jobStatus: !job.jobStatus };
             }
-            fetchJobs(currentPage, searchTerm);
+            fetchTech(currentPage, searchTerm);
             return job;
           }));
           Swal.fire({
@@ -448,7 +448,7 @@ const JobTable: React.FC = () => {
               { headers }
             );
             toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
+            fetchTech(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
             if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -496,15 +496,22 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td>
         <td> {job?.jobName}</td>
 
 
         <td> {job?.customer?.fullName}  </td> 
+        <td>  {job?.technicians?.map((tech: any) => (
+          <div key={tech.id} className="capitalize">
+            {tech.firstName} {tech.lastName}
+          </div>
+        ))}</td>
         <td>({job.vehicleCount || 0}) Work Order</td>
+        
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-        <td>${job.estimatedCost || '0'}</td>
+          <td> {`${job.estimatedCost ? '$' + job.estimatedCost : '-'}`}</td>
+
         <td>
           {canCreate && (
             <span 
@@ -516,7 +523,7 @@ const JobTable: React.FC = () => {
         </td>
         <td>
 
-          <Link href={`/jobs/view?jobId=${job.id}`} >
+          <Link href={`/jobs/view?jobId=${job.id}&workorder`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>
@@ -584,7 +591,46 @@ const JobTable: React.FC = () => {
     }
   };
 
+const handleNewTechClick = async (technicianId: string, roleType: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token'); 
+    // Prepare the payload dynamically
+    const payload = {
+      roleType: roleType,  // Dynamic roleType from localStorage
+      technicianId: technicianId,        // Dynamic jobId passed from the selected job 
+    };
+    console.log(payload, 'payload');
 
+    try {
+      // Check if the token is available
+      if (!token) {
+        console.error("No token found");
+        return; // Stop if the token is missing
+      }
+
+      // Make the POST request to the vehicleJobNameFilter API endpoint
+      const response = await fetch(`${apiUrl}/jobFilterWithTechName`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload), // Send the payload as JSON
+      });
+
+      const data = await response.json(); // Parse the JSON response
+
+      // Handle success or failure based on the API response
+      if (response.ok) {
+        setActiveJob(data.jobs.jobs);
+        // You can update state or perform further operations based on the response
+      } else {
+        console.error("Failed to apply filter:", data.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error("Error during API request:", error);
+    }
+  };
 
 
   return (
@@ -595,8 +641,8 @@ const JobTable: React.FC = () => {
         ]}
       />
 
-      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
-        onDateChange={handleDateChange} />
+      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -606,12 +652,12 @@ const JobTable: React.FC = () => {
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === activeJob.length}
+                    checked={selectedIds.length === activeJob?.length}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
                     onChange={() =>
                       setSelectedIds(
-                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                        selectedIds.length === activeJob?.length ? [] : activeJob.map((cust) => cust.id)
                       )
                     }
                   />
@@ -630,7 +676,7 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('jobName')}>
+              <th className="w-[100px]" onClick={() => handleSort('jobName')}>
                 Job Title
                 {sortBy === 'jobName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -638,11 +684,14 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]">
+              <th className="w-[160px]">
                 Customer Name
 
               </th>
-               
+                <th className="w-[150px]">
+                Technician Name
+
+              </th>
               <th className="w-[150px]">Vehicle / Work Order</th>
               {/* <th className="w-[100px]">Sub Total Cost</th>*/}
               <th className="w-[120px]">Start Date</th>
@@ -659,19 +708,19 @@ const JobTable: React.FC = () => {
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob.length === 0 ? (
+            ) : activeJob?.length === 0 ? (
               <tr>
                 <td colSpan={10} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob.map((job) => renderRow(job))
+              activeJob?.map((job) => renderRow(job))
             )}
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
+      {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>

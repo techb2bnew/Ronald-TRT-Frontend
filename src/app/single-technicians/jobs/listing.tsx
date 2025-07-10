@@ -56,25 +56,25 @@ const JobTable: React.FC = () => {
   };
 
 
- const handlePageSizeChange = (size: number) => {
-  // Calculate the total number of pages based on the current totalJobs and the new pageSize
-  const newTotalPages = Math.ceil(totalJobs / size);
+  const handlePageSizeChange = (size: number) => {
+    // Calculate the total number of pages based on the current totalJobs and the new pageSize
+    const newTotalPages = Math.ceil(totalJobs / size);
 
-  // If the current page is greater than the new total pages, reset it to the last page
-  let newPage = currentPage;
-  if (newPage > newTotalPages) {
-    newPage = newTotalPages;
-  }
+    // If the current page is greater than the new total pages, reset it to the last page
+    let newPage = currentPage;
+    if (newPage > newTotalPages) {
+      newPage = newTotalPages;
+    }
 
-  // Ensure the page number is not less than 1
-  if (newPage < 1) {
-    newPage = 1;
-  }
+    // Ensure the page number is not less than 1
+    if (newPage < 1) {
+      newPage = 1;
+    }
 
-  // Update the state with the new page size and set the current page accordingly
-  setPageSize(size);
-  setCurrentPage(newPage); // Set the current page to the last valid page
-};
+    // Update the state with the new page size and set the current page accordingly
+    setPageSize(size);
+    setCurrentPage(newPage); // Set the current page to the last valid page
+  };
 
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
@@ -84,7 +84,7 @@ const JobTable: React.FC = () => {
       const roleType = 'single-technician';
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -167,14 +167,14 @@ const JobTable: React.FC = () => {
     setActiveJob(sortedJobs);
   };
 
- 
+
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
     setCurrentPage(data.selected + 1);
   };
 
- const downloadCSV = () => {
+  const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
@@ -198,9 +198,9 @@ const JobTable: React.FC = () => {
 
     const formattedData = selectedJobs.map((jobData) => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
-      const vt = firstTech.VehicleTechnician || {}; 
+      const vt = firstTech.VehicleTechnician || {};
 
-   
+
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -223,7 +223,7 @@ const JobTable: React.FC = () => {
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.join(''),
-        labourCost: jobData.labourCost,  
+        labourCost: jobData.labourCost,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -231,126 +231,126 @@ const JobTable: React.FC = () => {
 
 
 
-const handleImportCSV = (file: File) => {
-  setLoading(true);
-  const token = localStorage.getItem('token');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const handleImportCSV = (file: File) => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = async (e) => {
-    let text = (e.target?.result as string)
-      .replace(/^\uFEFF/, '') // Remove BOM
-      .trimStart(); // Remove leading whitespace/newlines
+    reader.onload = async (e) => {
+      let text = (e.target?.result as string)
+        .replace(/^\uFEFF/, '') // Remove BOM
+        .trimStart(); // Remove leading whitespace/newlines
 
-    const manualHeaders = [
-      'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
-      'make', 'model', 'vehicleType',
-      'modelYear', 'vehicleDescriptor', 'manufacturerName',
-      'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-      'notes', 'technicians', 'assignTechnicians',
-      'jobDescription', 'labourCost'
-    ];
+      const manualHeaders = [
+        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'make', 'model', 'vehicleType',
+        'modelYear', 'vehicleDescriptor', 'manufacturerName',
+        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+        'notes', 'technicians', 'assignTechnicians',
+        'jobDescription', 'labourCost'
+      ];
 
-    Papa.parse(text, {
-      header: false,
-      skipEmptyLines: true,
-      complete: async (result) => {
-        const rows = result.data as string[][];
+      Papa.parse(text, {
+        header: false,
+        skipEmptyLines: true,
+        complete: async (result) => {
+          const rows = result.data as string[][];
 
-        const cleanedData = rows
-          .slice(1) // Skip raw header row
-          .map((row) => {
-            const obj: any = {};
-            manualHeaders.forEach((key, idx) => {
-              let value = row[idx];
-              value = typeof value === 'string' ? value.trim() : value;
-              obj[key] = value;
-            });
-            return obj;
-          })
-          .filter((row) => {
-            const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-            const hasData = Object.values(row).some((val) => val && val !== '');
-            return !isHeaderRow && hasData;
-          });
-
-        try {
-          const payloadData = cleanedData.map(row => {
-            // Extract technician names and IDs
-            const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
-            const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
-
-            // Extract rate strings using regex for accurate FlatRate and Rate capture
-            const rateChunks = row.technicianRates
-              ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
-              : [];
-
-            const technicians = technicianNames.map((name: any, index: number) => {
-              let techFlatRate = '';
-              let rRate = '';
-
-              if (rateChunks && rateChunks[index]) {
-                const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
-                techFlatRate = match?.[1]?.trim() || '';
-                rRate = match?.[2]?.trim() || '';
-              }
-
-              return {
-                id: technicianIds[index] || null,
-                name,
-                techFlatRate,
-                rRate,
-              };
+          const cleanedData = rows
+            .slice(1) // Skip raw header row
+            .map((row) => {
+              const obj: any = {};
+              manualHeaders.forEach((key, idx) => {
+                let value = row[idx];
+                value = typeof value === 'string' ? value.trim() : value;
+                obj[key] = value;
+              });
+              return obj;
+            })
+            .filter((row) => {
+              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+              const hasData = Object.values(row).some((val) => val && val !== '');
+              return !isHeaderRow && hasData;
             });
 
-            // Handle jobDescription array
-            const jobDescriptions = row.jobDescription
+          try {
+            const payloadData = cleanedData.map(row => {
+              // Extract technician names and IDs
+              const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+              const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
+
+              // Extract rate strings using regex for accurate FlatRate and Rate capture
+              const rateChunks = row.technicianRates
+                ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
+                : [];
+
+              const technicians = technicianNames.map((name: any, index: number) => {
+                let techFlatRate = '';
+                let rRate = '';
+
+                if (rateChunks && rateChunks[index]) {
+                  const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
+                  techFlatRate = match?.[1]?.trim() || '';
+                  rRate = match?.[2]?.trim() || '';
+                }
+
+                return {
+                  id: technicianIds[index] || null,
+                  name,
+                  techFlatRate,
+                  rRate,
+                };
+              });
+
+              // Handle jobDescription array
+              const jobDescriptions = row.jobDescription
                 ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
                 : [];
 
-            return {
-              ...row,
-              technicians,
-              jobDescription: jobDescriptions,
-              assignTechnicians: undefined, // cleanup unused field
-            };
-          }).filter(row =>
-            !manualHeaders.some(header => row[header] === header)
-          );
+              return {
+                ...row,
+                technicians,
+                jobDescription: jobDescriptions,
+                assignTechnicians: undefined, // cleanup unused field
+              };
+            }).filter(row =>
+              !manualHeaders.some(header => row[header] === header)
+            );
 
-          // Send payload to backend
-          const response = await axios.post(
-            `/api/importVehicle`,
-            { data: payloadData },
-            { headers }
-          );
+            // Send payload to backend
+            const response = await axios.post(
+              `/api/importVehicle`,
+              { data: payloadData },
+              { headers }
+            );
 
-          toast.success('CSV Import Successful!');
-          fetchJobs(currentPage, searchTerm, pageSize);
-        } catch (error: unknown) {
-          console.error('❌ Import failed:', error);
-          if (axios.isAxiosError(error)) {
-            toast.error(error.response?.data?.error || error.message);
-          } else if (error instanceof Error) {
-            toast.error(error.message);
-          } else {
-            toast.error('An unknown error occurred');
+            toast.success('CSV Import Successful!');
+            fetchJobs(currentPage, searchTerm, pageSize);
+          } catch (error: unknown) {
+            console.error('❌ Import failed:', error);
+            if (axios.isAxiosError(error)) {
+              toast.error(error.response?.data?.error || error.message);
+            } else if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error('An unknown error occurred');
+            }
           }
-        }
-        setLoading(false);
-      },
-      error: (err: any) => {
-        console.error('❌ CSV Parse error:', err);
-        toast.error('Error parsing CSV file');
-        setLoading(false);
-      },
-    });
-  };
+          setLoading(false);
+        },
+        error: (err: any) => {
+          console.error('❌ CSV Parse error:', err);
+          toast.error('Error parsing CSV file');
+          setLoading(false);
+        },
+      });
+    };
 
-  reader.readAsText(file);
-};
+    reader.readAsText(file);
+  };
 
 
 
@@ -397,7 +397,48 @@ const handleImportCSV = (file: File) => {
     );
   };
 
+  const handleNewJobClick = async (jobId: string, roleType: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    console.log(jobId, 'jobId');  
  
+     // Prepare the payload dynamically
+    const payload = {
+      roleType: roleType,  // Dynamic roleType from localStorage
+      jobId: jobId,        // Dynamic jobId passed from the selected job 
+    };
+    console.log(payload, 'payload');
+
+    try {
+      // Check if the token is available
+      if (!token) {
+        console.error("No token found");
+        return; // Stop if the token is missing
+      }
+
+      // Make the POST request to the vehicleJobNameFilter API endpoint
+      const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload), // Send the payload as JSON
+      });
+
+      const data = await response.json(); // Parse the JSON response
+
+      // Handle success or failure based on the API response
+      if (response.ok) {
+        setActiveJob(data.vehicles);
+        // You can update state or perform further operations based on the response
+      } else {
+        console.error("Failed to apply filter:", data.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error("Error during API request:", error);
+    }
+  };
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
@@ -428,11 +469,11 @@ const handleImportCSV = (file: File) => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
         <td>{job?.jobName}</td>
 
 
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
         <td>  {job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id} className="capitalize">
@@ -450,28 +491,28 @@ const handleImportCSV = (file: File) => {
         <td>{job?.make}</td>
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
-         <td>${job.labourCost || ''}</td>
+        <td> {`${job.labourCost ? '$' + job.labourCost : '-'}`}</td>
 
         <td>
           {canCreate && (
 
-            <span   
+            <span
               className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {job.vehicleStatus ? 'Completed' : 'In Progress'}
             </span>
           )}
 
-        </td> 
-          
-          <td className='text-left'>
+        </td>
 
-          <Link href={`/reporting/view?vehicleId=${job.id}&jobStatus`} >
+        <td className='text-left'>
+
+          <Link href={`/reporting/view?vehicleId=${job.id}&singleWorkOrder`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>
           <Tooltip id="view" place="top" />
-        </td> 
+        </td>
       </tr>
     )
   };
@@ -484,7 +525,7 @@ const handleImportCSV = (file: File) => {
         ]}
       />
 
-      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -518,9 +559,16 @@ const handleImportCSV = (file: File) => {
                   </span>
                 )}
               </th>
-              <th className="w-[140px]">Job Title</th>
+              <th className="w-[140px]" onClick={() => handleSort('jobName')}>
+                Job Title
+                {sortBy === 'jobName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
 
-              <th className="w-[120px]" onClick={() => handleSort('fullName')}>
+              <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Customer Name
                 {sortBy === 'fullName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -532,13 +580,13 @@ const handleImportCSV = (file: File) => {
                 Customer Number
               </th> */}
               <th className="w-[150px]" >
-                  Technician Name
+                Technician Name
               </th>
               <th className="w-[140px]">VIN</th>
               <th className="w-[80px]">Make</th>
               <th className="w-[80px]">Model</th>
-              <th className="w-[80px]">Year</th> 
-              <th className="w-[120px]">Labour Cost</th> 
+              <th className="w-[80px]">Year</th>
+              <th className="w-[120px]">Labour Cost</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>

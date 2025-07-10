@@ -29,7 +29,7 @@ const JobTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);  
   const [loading, setLoading] = useState<boolean>(true); 
   const [searchTerm, setSearchTerm] = useState('');
-
+const [token, setToken] = useState<string | null>(null);
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
     // Implement search logic here
@@ -43,7 +43,10 @@ const JobTable: React.FC = () => {
     const fetchJobs = async (page = 1, query = '') => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
+        
+        // const token = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('token');
+        setToken(storedToken);
         const roleType =  "single-technician";
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -118,78 +121,7 @@ const JobTable: React.FC = () => {
   };
 
 
-  const toggleApproval = async (jobId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this job?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-  
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-  
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
-  
-        const response = await axios.post(`${apiUrl}/updateJobStatus`, {
-          jobId,
-          jobStatus: !currentApprovalStatus
-        }, config);
-  
-        if (response.data.status ) {
-          // Optimistically update the local state
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === jobId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Job status updated successfully.',
-            confirmButtonColor:'#383d71',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update job status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update job status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        }
-      } catch (error) {
-        console.error('Error updating job status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating job status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
-  };
+ 
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index

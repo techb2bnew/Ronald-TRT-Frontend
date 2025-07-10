@@ -183,7 +183,16 @@ const JobTable: React.FC = () => {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-
+        const technicianData = localStorage.getItem('technicianData'); 
+        let completedBy = '';
+        if (technicianData) {
+          try {
+            const parsed = JSON.parse(technicianData);
+            completedBy = `${parsed.firstName} ${parsed.lastName}`;
+          } catch (err) {
+            console.error('Failed to parse technicianData:', err);
+          }
+        }
         const config = {
           headers: {
             'Content-Type': 'application/json',
@@ -193,6 +202,7 @@ const JobTable: React.FC = () => {
 
         const response = await axios.post(`/api/workOrderComplete`, {
           vehicleId,
+          completedBy,
           vehicleStatus: !currentApprovalStatus
         }, config);
 
@@ -547,7 +557,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>  {job.id} </td>
+        <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job.id}</Link> </td>
 
 
         <td>{job?.jobName}</td>

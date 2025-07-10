@@ -506,7 +506,8 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>  {job?.customer?.fullName} </td>
+        
+        <td><Link href={`/reporting/account-view?jobId=${job.id}`} className='hover:underline'>  {job?.customer?.fullName} </Link></td>
         <td>  {job?.manager?.firstName} {job?.manager?.lastName} </td>
         {/* <td> {job.id} </td> */}
         <td>{job?.jobName}</td>

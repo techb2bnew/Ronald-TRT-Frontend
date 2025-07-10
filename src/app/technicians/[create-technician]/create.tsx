@@ -1132,7 +1132,7 @@ export default function Technicians() {
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
 
-              <TextField fullWidth className='form__input' name="firstName" id="outlined-basic" color="warning" label="First name" size="small" value={formData.firstName} onChange={handleChange} />
+              <TextField fullWidth className='form__input' name="firstName" id="outlined-basic" color="warning" label="First name *" size="small" value={formData.firstName} onChange={handleChange} />
               {errors.firstName && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.firstName}
@@ -1144,7 +1144,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
+              <TextField fullWidth name="lastName" id="outlined-basic" color="warning" label="Last name *" size="small" value={formData.lastName} onChange={handleChange} />
               {errors.lastName && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.lastName}
@@ -1159,7 +1159,7 @@ export default function Technicians() {
                   <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 {/* <p className='text-sm mb-2'>Last Name <span className='text-red-500'>*</span></p> */}
-                <TextField fullWidth name="businessName" id="outlined-basic" color="warning" label="Business name *" size="small" value={formData.businessName} onChange={handleChange} />
+                <TextField fullWidth name="businessName" id="outlined-basic" color="warning" label="Business name" size="small" value={formData.businessName} onChange={handleChange} />
               </div>
             )}
 
@@ -1202,7 +1202,7 @@ export default function Technicians() {
 
 
               {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email" size="small" value={formData.email} onChange={handleChange} disabled={isEdit} />
+              <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} disabled={isEdit} />
               {errors.email && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.email}
@@ -1302,7 +1302,7 @@ export default function Technicians() {
             <GooglePlacesAutocomplete
               apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
               selectProps={{
-                placeholder: 'Search for an address...',
+                placeholder: 'Search for an address... *',
                 value: address,
                 onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                   if (newValue) {

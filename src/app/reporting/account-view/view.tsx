@@ -144,7 +144,7 @@ export default function ViewDetails() {
                                     {jobData?.customer?.phoneNumber || 'N/A'}
                                 </a>
                             </div>
-{userType !== 'single-technician' && (
+                            {userType !== 'single-technician' && (
                                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Manager Name:</strong>
                                     <div className="flex gap-3 items-center capitalize">
                                         {jobData?.manager?.firstName} {jobData?.manager?.lastName}
@@ -256,14 +256,14 @@ export default function ViewDetails() {
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Estimated Profit / loss:</strong>
                                 <div className="flex gap-3 items-center capitalize">
                                     <span className={`${jobData.estimatedProfitLoss < 0 ? 'text-red-500' : 'text-green-700'}`}>
-                                    ${jobData?.estimatedProfitLoss.toFixed(2) || '-'}
+                                        ${jobData?.estimatedProfitLoss.toFixed(2) || '-'}
                                     </span>
                                 </div>
                             </div>
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Actual Profit / Loss:</strong>
                                 <div className="flex gap-3 items-center capitalize">
                                     <span className={`${jobData.actualProfitLoss < 0 ? 'text-red-500' : 'text-green-700'}`}>
-                                    ${jobData?.actualProfitLoss.toFixed(2) || '-'}
+                                        ${jobData?.actualProfitLoss.toFixed(2) || '-'}
                                     </span>
 
                                 </div>
@@ -271,7 +271,7 @@ export default function ViewDetails() {
                             {jobData?.estimatedBy !== null && (
                                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
                             )}
-                            
+
                             {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                                     <strong className='w-[210px] inline-block'>Labour Cost:</strong>

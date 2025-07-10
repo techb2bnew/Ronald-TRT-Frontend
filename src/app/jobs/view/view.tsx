@@ -271,23 +271,26 @@ export default function ViewDetails() {
                 </div>
               </div>
               {jobData?.estimatedBy !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Created By:</strong> {jobData?.createdBy}</div>
+              )}
+              {jobData?.estimatedBy !== null && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.estimatedBy}</div>
               )}
-              {userType !== 'single-technician' && (
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Manager Name:</strong>
                   <div className="flex gap-3 items-center capitalize">
                     {jobData?.manager?.firstName} {jobData?.manager?.lastName}
                   </div>
                 </div>
               )}
-              {userType !== 'single-technician' && (
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Email:</strong>
                   <a className="hover:underline" href={`mailto:${jobData?.manager?.email}`}>
                     {jobData?.manager?.email || 'N/A'}
                   </a>
                 </div>
               )}
-              {userType !== 'single-technician' && (
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Ph. Number:</strong>
                   <a className="hover:underline" href={`tel:${jobData?.manager?.phoneNumber}`}>
                     {jobData?.manager?.phoneNumber || 'N/A'}

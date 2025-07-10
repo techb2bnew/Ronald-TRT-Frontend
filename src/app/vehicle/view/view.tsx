@@ -4,13 +4,15 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 export default function ViewDetails() {
+    const searchParams = useSearchParams(); 
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [roleType, setUserType] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
+ const isSingleTechnicianWorkOrder = searchParams!.has('singleWorkOrder');
   const fetchCustomerData = async (vehicleId: string) => {
     try {
       const token = localStorage.getItem('token');
@@ -225,6 +227,10 @@ export default function ViewDetails() {
                 {jobData?.estimatedBy || <span className="text-black-500">N/A</span>}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Completed By:</strong>
+                {jobData?.completedBy || <span className="text-black-500">N/A</span>}
+              </p>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Customer:</strong>
                 {jobData?.customer?.fullName || <span className="text-black-500">N/A</span>}
               </p>
@@ -236,13 +242,21 @@ export default function ViewDetails() {
                   </a>
                 ) : <span className="text-black-500">N/A</span>}
               </p>
-              {roleType !== 'single-technician' && (
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Status:</strong>
+               <span   
+              className={`badge ${jobData.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            >
+              {jobData.vehicleStatus ? 'Completed' : 'In Progress'}
+            </span>
+            </p>
+              {roleType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>Manager:</strong>
                   {jobData?.job?.manager?.firstName || <span className="text-black-500">N/A</span>} {jobData?.job?.manager?.lastName || <span className="text-black-500">N/A</span>}
                 </p>
               )}
-              {roleType !== 'single-technician' && (
+              {roleType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>Manager Email:</strong>
                   <a className="hover:underline" href={`mailto:${jobData?.job?.manager?.email}`}>

@@ -356,7 +356,7 @@ const handleImportCSV = (file: File) => {
             </span>
           </label>
         </td>
-        <td>{job?.jobId}</td>
+        <td>{job?.jobId}</td> 
         <td>{job?.jobName}</td>
 
         <td>{job?.customer?.fullName}  </td>

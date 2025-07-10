@@ -326,7 +326,7 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>  */}
-        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
+        <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td>
         <td>{job.customer.fullName}</td>
         <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>

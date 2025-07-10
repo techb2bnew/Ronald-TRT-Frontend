@@ -10,15 +10,15 @@ import { SidebarProvider } from "@/app/component/SidebarContext";
 import ColorSettings from "@/app/component/colorsetting"; 
 import { Toaster } from 'react-hot-toast';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
  
 
 export default function RootLayout({
@@ -49,7 +49,7 @@ export default function RootLayout({
       <link rel="icon" href="/fav.ico" sizes="any" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={` antialiased`}
       >
         <div className="flex">
         

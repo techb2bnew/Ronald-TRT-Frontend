@@ -266,7 +266,7 @@ const ManagerTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{tech.id}</td>
+        <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td>
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
