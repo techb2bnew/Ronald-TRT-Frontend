@@ -247,7 +247,7 @@ const JobTable: React.FC = () => {
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 

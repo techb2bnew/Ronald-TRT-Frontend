@@ -306,7 +306,7 @@ export default function ViewDetails() {
                     <span>{technician.secondaryContactName}</span>
                   </a>
                 ) : (
-                  <span className="text-gray-400 text-sm">No data available</span>
+                  <span className="text-gray-400 text-sm">N/A</span>
                 )} 
               </p>
               <p className='border-b border-gray-500 mb-3 pb-2'>
@@ -316,7 +316,7 @@ export default function ViewDetails() {
                     <span>{technician.secondaryEmail}</span>
                   </a>
                 ) : (
-                  <span className="text-gray-400 text-sm">No data available</span>
+                  <span className="text-gray-400 text-sm">N/A</span>
                 )}
               </p>
 
@@ -383,7 +383,30 @@ export default function ViewDetails() {
 
 
               </div>
+            
+            </div>
+
+            {/* Right Section */}
+            <div className='shadow-lg p-5 bg-white rounded'>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2 flex'><strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong>{technician.address || 'N/A'} </p>
+               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
+                <strong className='w-[200px] inline-block'>Business Logo:</strong>
+
+
+                {technician?.businessLogo ? (
+                  <img onClick={() => setPreviewImage(technician.businessLogo)} src={technician.businessLogo} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                )}
+
+              </div>
+                <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Profile Image:</strong>
 
                   {technician?.image ? (
@@ -399,38 +422,6 @@ export default function ViewDetails() {
                     </div>
                   )}
 
-
-              </div>
-            </div>
-
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Address:</strong>{technician?.address}</p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Country:</strong>
-                {getCountryName(technician?.country)}
-              </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>State:</strong>
-                {getStateName(technician?.country, technician?.state)}
-              </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong>{technician?.city}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong>{technician?.zipCode}</p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
-              <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
-                <strong className='w-[200px] inline-block'>Business Logo:</strong>
-
-
-                {technician?.businessLogo ? (
-                  <img onClick={() => setPreviewImage(technician.businessLogo)} src={technician.businessLogo} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
 
               </div>
               {technician?.taxForms?.length > 0 && (

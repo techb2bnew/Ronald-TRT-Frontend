@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       backendUrl = `${apiBaseUrl}/fetchGroupJob?filterType=${encodeURIComponent(filterType)}&roleType=${encodeURIComponent(roleType)}&userId=${encodeURIComponent(userId)}`;
     } else if (searchQuery && searchQuery.trim() !== '') {
       // Search group job
-      backendUrl = `${apiBaseUrl}/searchGroupJob?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType)}&userId=${encodeURIComponent(userId)}`;
+      backendUrl = `${apiBaseUrl}/searchGroupJob?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType)}`;
     } else {
       // Default fetch group job pagination
       backendUrl = `${apiBaseUrl}/fetchGroupJob?page=${encodeURIComponent(page)}&roleType=${encodeURIComponent(roleType)}&limit=${encodeURIComponent(limit)}&userId=${encodeURIComponent(userId)}`;

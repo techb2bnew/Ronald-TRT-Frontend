@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
-import toast  from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -18,7 +18,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+import 'react-tooltip/dist/react-tooltip.css'; 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -62,11 +62,11 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 
@@ -75,10 +75,10 @@ const VehicleTable: React.FC = () => {
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.response.vehicles || [];
+          : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -150,156 +150,7 @@ const VehicleTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
-  // CSV Export Functions
-  const downloadCSV = () => {
-    const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
-    if (selectedJobs.length === 0) {
-      toast.error("Please select at least job group to export.");
-      return;
-    }
-    const csvOptions = {
-      filename: 'Vehicles Info',
-      fieldSeparator: ',',
-      quoteStrings: '"',
-      decimalSeparator: '.',
-      showLabels: true,
-      showTitle: true,
-      title: 'Vehicles Info',
-      useTextFile: false,
-      useBom: true,
-      useKeysAsHeaders: true, // Use object keys as headers
-    };
-
-    const csvExporter = new ExportToCsv(csvOptions);
-
-    const formattedData = selectedJobs.map((jobData) => {
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
-      return {
-        id: jobData.id,
-        vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        assignCustomer: jobData.assignCustomer,
-        bodyClass: jobData.bodyClass,
-        color: jobData.color,
-        make: jobData.make,
-        model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
-        vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
-        'modelYear': jobData.modelYear,
-        'vehicleDescriptor': jobData.vehicleDescriptor,
-        'manufacturerName': jobData.manufacturerName,
-        'plantCompanyName': jobData.plantCompanyName,
-        'plantCountry': jobData.plantCountry,
-        'plantState': jobData.plantState,
-        deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
-        notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-
-      };
-    });
-    csvExporter.generateCsv(formattedData);
-  }
-
-  const handleImportCSV = (file: File) => {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // Remove BOM
-        .trimStart(); // Remove leading whitespace/newlines
-
-      const manualHeaders = [
-        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
-      ];
-
-      Papa.parse(text, {
-        header: false,
-        skipEmptyLines: true,
-        complete: async (result) => {
-          const rows = result.data as string[][];
-
-          const cleanedData = rows
-            .slice(1) // Skip raw header row
-            .map((row) => {
-              const obj: any = {};
-              manualHeaders.forEach((key, idx) => {
-                let value = row[idx];
-                value = typeof value === 'string' ? value.trim() : value;
-                obj[key] = value;
-              });
-              return obj;
-            })
-            .filter((row) => {
-              // Skip if all values match their keys (header row)
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
-              const hasData = Object.values(row).some((val) => val && val !== '');
-              return !isHeaderRow && hasData;
-            });
-
-          try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
-            });
-
-            const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
-              { data: payloadData },
-              { headers }
-            );
-            toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error: unknown) {
-            console.error('❌ Import failed:', error);
-          
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error(String(error));
-            }
-          }
-          
-          setLoading(false);
-        },
-        error: (err: any) => {
-          console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
-        },
-      });
-    };
-
-    reader.readAsText(file);
-  };
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
@@ -326,9 +177,9 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>  */}
-        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
-        <td>{job.customer.firstName} {job.customer.lastName}</td>
-        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email}</a></td>
+        <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'> {job?.id}</Link> </td>
+        <td>{job.customer.fullName}</td>
+        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>
 
         {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
@@ -338,7 +189,7 @@ const VehicleTable: React.FC = () => {
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td> */}
-        <td>{job.vehicleDescriptor}</td> 
+        <td>{job.vehicleDescriptor}</td>
         <td>{job.make} </td>
         <td>{job.model}</td>
         <td>{job.modelYear}</td>
@@ -354,7 +205,7 @@ const VehicleTable: React.FC = () => {
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
           /> */}
 
-           <Link href={`/reporting/view?customerId=${job.customerId}`} >
+          <Link href={`/reporting/view?vehicleId=${job.id}`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>
@@ -372,7 +223,7 @@ const VehicleTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
- 
+
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -404,7 +255,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-                <th className="w-[120px]" onClick={() => handleSort('customerName')}>
+              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -412,7 +263,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-               <th className="w-[120px]">
+              <th className="w-[120px]">
                 Customer Email
               </th>
               <th className="w-[150px]">
@@ -431,7 +282,7 @@ const VehicleTable: React.FC = () => {
               </th> */}
               <th className="w-[120px]">
                 Vehicle Descriptor
-              </th>   
+              </th>
               <th className="w-[100px]">
                 Make
               </th>
@@ -460,8 +311,8 @@ const VehicleTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && ( 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+      {activeJob.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>
   );

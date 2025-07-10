@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `&limit=${encodeURIComponent(limit)}` +
         `&page=${encodeURIComponent(page)}`;
 
-      if (roleType !== 'superadmin' && userId) {
+      if (roleType !== 'superadmin' && roleType !== 'manager' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
       }
     } else {

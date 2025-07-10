@@ -62,11 +62,11 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'single-technician'
-          ? `/api/singleTechVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/singleTechVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'single-technician'
-          ? `/api/singleTechVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/singleTechVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
 
 
@@ -75,10 +75,10 @@ const VehicleTable: React.FC = () => {
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.response.vehicles || [];
+          : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -125,8 +125,8 @@ const VehicleTable: React.FC = () => {
 
     const sortedJobs = [...activeJob].sort((a, b) => {
       if (column === 'customerName') {
-        const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
-        const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
+        const nameA = `${a?.customer?.fullName}`;
+        const nameB = `${b?.customer?.fullName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
       if (column === 'technicianName') {
@@ -180,7 +180,7 @@ const VehicleTable: React.FC = () => {
       return {
         id: jobData.id,
         vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
@@ -326,9 +326,9 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>  */}
-        <td> <Link href={`/reporting/view?customerId=${job.customerId}`} className='hover:underline'>{job?.id}</Link></td>
-        <td>{job.customer.firstName} {job.customer.lastName}</td>
-        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email}</a></td>
+        <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td>
+        <td>{job.customer.fullName}</td>
+        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>
 
         {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
@@ -354,7 +354,7 @@ const VehicleTable: React.FC = () => {
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
           /> */}
 
-           <Link href={`/reporting/view?customerId=${job.customerId}`} >
+           <Link href={`/reporting/view?vehicleId=${job.id}`} >
             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
               data-tooltip-content="View" />
           </Link>

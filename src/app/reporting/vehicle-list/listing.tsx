@@ -58,8 +58,8 @@ const VehicleTable: React.FC = () => {
 
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `/api/vehicalList?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicalList?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin'
           ? `/api/vehicalList?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `/api/vehicalList?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
@@ -68,11 +68,11 @@ const VehicleTable: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
-          ? data.VehicalInfo || []
-          : data.vehicles || [];
+          ? data.data.vehicles || []
+          : data.jobs.vehicles || [];
 
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.totalPages);
+        setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -145,21 +145,22 @@ const VehicleTable: React.FC = () => {
   };
 
   // CSV Export Functions
-  const downloadCSV = () => {
+ 
+ const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
-      toast.error("Please select at least job group to export.");
+      toast.error("Please select at least one work order to export.");
       return;
     }
     const csvOptions = {
-      filename: 'Vehicle List',
+      filename: 'Vehicle / Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicle List',
+      title: 'Vehicle / Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -168,22 +169,25 @@ const VehicleTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
+      const firstTech = jobData.assignedTechnicians?.[0] || {};
+      const vt = firstTech.VehicleTechnician || {}; 
+
+    // Extract technician data including techFlatRate and rRate
+    const technicianRates = jobData.assignedTechnicians.map((tech:any) => {
+      const vt = tech.VehicleTechnician || {};
+      return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+    }).join(', ');
       return {
         id: jobData.id,
         vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
-        assignCustomer: jobData.assignCustomer,
+        customer: `${jobData?.customer?.fullName}`,
+        jobName: jobData.jobName,
+        assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
@@ -191,109 +195,138 @@ const VehicleTable: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-
+        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
+        jobDescription: jobData.jobDescription.join(', '),
+        technicianRates: technicianRates,  
       };
     });
     csvExporter.generateCsv(formattedData);
-  }
-
-  const handleImportCSV = (file: File) => {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // Remove BOM
-        .trimStart(); // Remove leading whitespace/newlines
-
-      const manualHeaders = [
-        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'payRate', 'vehicleType',
-        'simpleFlatRate', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'cost', 'subTotal'
-      ];
-
-      Papa.parse(text, {
-        header: false,
-        skipEmptyLines: true,
-        complete: async (result) => {
-          const rows = result.data as string[][];
-
-          const cleanedData = rows
-            .slice(1) // Skip raw header row
-            .map((row) => {
-              const obj: any = {};
-              manualHeaders.forEach((key, idx) => {
-                let value = row[idx];
-                value = typeof value === 'string' ? value.trim() : value;
-                obj[key] = value;
-              });
-              return obj;
-            })
-            .filter((row) => {
-              // Skip if all values match their keys (header row)
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
-              const hasData = Object.values(row).some((val) => val && val !== '');
-              return !isHeaderRow && hasData;
-            });
-
-          try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
-            });
-
-            const response = await axios.post(
-              `${apiUrl}/importActiveJob`,
-              { data: payloadData },
-              { headers }
-            );
-            toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
-          } catch (error: unknown) {
-            console.error('❌ Import failed:', error);
-
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
-            } else if (error instanceof Error) {
-              toast.error(error.message);
-            } else {
-              toast.error(String(error));
-            }
-          }
-
-          setLoading(false);
-        },
-        error: (err: any) => {
-          console.error('❌ CSV Parse error:', err);
-          alert('❌ Error parsing CSV file.');
-        },
-      });
-    };
-
-    reader.readAsText(file);
   };
+
+
+
+const handleImportCSV = (file: File) => {
+  setLoading(true);
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    let text = (e.target?.result as string)
+      .replace(/^\uFEFF/, '') // Remove BOM
+      .trimStart(); // Remove leading whitespace/newlines
+
+    const manualHeaders = [
+      'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+      'make', 'model', 'vehicleType',
+      'modelYear', 'vehicleDescriptor', 'manufacturerName',
+      'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
+      'notes', 'technicians', 'assignTechnicians',
+      'jobDescription', 'technicianRates'
+    ];
+
+    Papa.parse(text, {
+      header: false,
+      skipEmptyLines: true,
+      complete: async (result) => {
+        const rows = result.data as string[][];
+
+        const cleanedData = rows
+          .slice(1) // Skip raw header row
+          .map((row) => {
+            const obj: any = {};
+            manualHeaders.forEach((key, idx) => {
+              let value = row[idx];
+              value = typeof value === 'string' ? value.trim() : value;
+              obj[key] = value;
+            });
+            return obj;
+          })
+          .filter((row) => {
+            const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
+            const hasData = Object.values(row).some((val) => val && val !== '');
+            return !isHeaderRow && hasData;
+          });
+
+        try {
+          const payloadData = cleanedData.map(row => {
+            // Extract technician names and IDs
+            const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+            const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
+
+            // Extract rate strings using regex for accurate FlatRate and Rate capture
+            const rateChunks = row.technicianRates
+              ? row.technicianRates.match(/([^-]+- TechnicianFlatRate:\s*[^,]*, RIRR:\s*[^,]*)(?=, [^-]+- TechnicianFlatRate:|$)/g)
+              : [];
+
+            const technicians = technicianNames.map((name: any, index: number) => {
+              let techFlatRate = '';
+              let rRate = '';
+
+              if (rateChunks && rateChunks[index]) {
+                const match = rateChunks[index].match(/- TechnicianFlatRate:\s*(.*?), RIRR:\s*(.*)/);
+                techFlatRate = match?.[1]?.trim() || '';
+                rRate = match?.[2]?.trim() || '';
+              }
+
+              return {
+                id: technicianIds[index] || null,
+                name,
+                techFlatRate,
+                rRate,
+              };
+            });
+
+            // Handle jobDescription array
+            const jobDescriptions = row.jobDescription
+                ? row.jobDescription.split(',').map((desc: any) => desc.trim())  // Split by commas and trim each description
+                : [];
+
+            return {
+              ...row,
+              technicians,
+              jobDescription: jobDescriptions,
+              assignTechnicians: undefined, // cleanup unused field
+            };
+          }).filter(row =>
+            !manualHeaders.some(header => row[header] === header)
+          );
+
+          // Send payload to backend
+          const response = await axios.post(
+            `/api/importVehicle`,
+            { data: payloadData },
+            { headers }
+          );
+
+          toast.success('CSV Import Successful!');
+          fetchJobs(currentPage, searchTerm, pageSize);
+        } catch (error: unknown) {
+          console.error('❌ Import failed:', error);
+          if (axios.isAxiosError(error)) {
+            toast.error(error.response?.data?.error || error.message);
+          } else if (error instanceof Error) {
+            toast.error(error.message);
+          } else {
+            toast.error('An unknown error occurred');
+          }
+        }
+        setLoading(false);
+      },
+      error: (err: any) => {
+        console.error('❌ CSV Parse error:', err);
+        toast.error('Error parsing CSV file');
+        setLoading(false);
+      },
+    });
+  };
+
+  reader.readAsText(file);
+};
 
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
@@ -301,6 +334,7 @@ const VehicleTable: React.FC = () => {
     );
   };
 
+ 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
 
@@ -322,30 +356,26 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{job?.id}</td>
+        <td>{job?.jobId}</td> 
+        <td>{job?.jobName}</td>
 
-        <td>{job?.customer?.firstName} {job?.customer?.lastName}</td>
-        <td>  {job?.technicians?.map((tech: any) => (
+        <td>{job?.customer?.fullName}  </td>
+        <td>  {job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id} className='capitalize'>
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td>
+        <td>{job.vin} </td>
         <td>{job.make} </td>
         <td>{job.model}</td>
-        <td>{job.modelYear}</td>
-        <td>{job.color}</td>
-        <td> {new Date(job.createdAt).toLocaleDateString('en-GB')}</td>
+        <td>{job.modelYear}</td> 
+        <td> {job.endDate?new Date(job.startDate).toLocaleDateString('en-GB') : ''}</td>
         <td>
-          {job.completedDate
-            ? new Date(job.completedDate).toLocaleDateString('en-GB')
-            : '-'}
+          {job.endDate
+            ? new Date(job.endDate).toLocaleDateString('en-GB')
+            : ''}
         </td>
-
-        <td> <span
-          className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-        >
-          {job.jobStatus ? 'Completed' : 'In Progress'}
-        </span></td>
+ 
 
       </tr>
     );
@@ -384,7 +414,7 @@ const VehicleTable: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+              <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -392,26 +422,29 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[120px]" onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
+              <th className="w-[80px]" onClick={() => handleSort('jobName')}>
+                Job Title
+                {sortBy === 'jobName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
+              <th className="w-[120px]">
+                Customer Name 
+              </th>
               <th className="w-[160px]">Assigned Technician</th>
 
-
               <th className="w-[120px]" >
+                VIN
+              </th>
+              <th className="w-[60px]" >
                 Make
               </th>
-              <th className="w-[100px]">Model</th>
-              <th className="w-[60px]">Year</th>
-              <th className="w-[50px]">Color</th>
+              <th className="w-[60px]">Model</th>
+              <th className="w-[60px]">Year</th> 
               <th className="w-[100px]">Start Date</th>
-              <th className="w-[100px]">Completion Date</th>
-              <th className="w-[100px]">Status</th>
+              <th className="w-[100px]">End Date</th> 
             </tr>
           </thead>
           <tbody>

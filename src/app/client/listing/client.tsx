@@ -63,7 +63,7 @@ export default function ClientListing() {
       // Determine correct endpoint
       const endpoint = query.trim()
         ? `/api/customer?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : `/api/customer?userId=${userId}&page=${page}&limit=${limit}`;
+        : `/api/customer?userId=${userId}&page=${page}&limit=${limit}&roleType=${encodeURIComponent(roleType)}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -149,44 +149,37 @@ export default function ClientListing() {
 
 
   const downloadCSV = () => {
-
+    // Determine which customers to export
     const selectedCustomers = customer.filter(c => selectedIds.includes(c.id));
 
     if (selectedCustomers.length === 0) {
       toast.error("Please select at least one customer to export.");
       return;
     }
+
     const csvOptions = {
-      filename: 'IFS Customer',
+      filename: 'Customer',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'IFS Customer Data',
+      title: 'Customer Data',
       useTextFile: false,
       useBom: true,
-      useKeysAsHeaders: true, // Use object keys as headers
+      useKeysAsHeaders: true,
     };
 
     const csvExporter = new ExportToCsv(csvOptions);
-
-
     if (!selectedCustomers || selectedCustomers.length === 0) {
       alert("Please select at least one customer to export.");
       return;
     }
     const formattedData = selectedCustomers.map((customerData) => ({
       Id: customerData.id,
-      Name: `${customerData.firstName} ${customerData.lastName}`,
-      Email: customerData.email,
-      Phone: customerData.phoneNumber,
-      Address: customerData.address,
-      Country: customerData.country,
-      City: customerData.city,
-      State: customerData.state,
-      ZipCode: customerData.zipCode,
-      DeletedStatus: customerData.deletedStatus,
+      Name: `${customerData.fullName}`,
+      Email: customerData.email || 'N/A',
+      Address: customerData.address || 'N/A'
     }));
 
     csvExporter.generateCsv(formattedData);
@@ -216,8 +209,7 @@ export default function ClientListing() {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'zipCode', 'DeletedStatus'
+        'Id', 'Name', 'Email', 'Address'
       ];
 
       Papa.parse(text, {
@@ -337,32 +329,25 @@ export default function ClientListing() {
         </td>
         <td>{cust.id}</td>
         <td>
-          <div className="flex items-center gap-2"> 
-            {cust?.image ? (
-              <img src={cust.image} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            )}
+          <div className="flex items-center gap-2">
+
             <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline capitalize'>
-              {cust?.firstName} {cust?.lastName}
+              {cust?.fullName}
             </Link>
           </div>
         </td>
         <td>
           <a href={`mailto:${cust.email}`} style={{ color: '#383d71' }} className='hover:underline'>
-            {cust.email}
+            {cust.email || 'N/A'}
           </a>
         </td>
         <td>
           <a href={`tel:${cust.phoneNumber}`} style={{ color: '#383d71' }} className='hover:underline'>
-            {cust.phoneNumber}
+            {cust.phoneNumber || 'N/A'}
           </a>
         </td>
-        <td>{cust.address}</td> 
+       <td>{cust.address ? cust.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}</td>
+
         <td>
           <TableActions
             editRoute={`/client/create?customerId=${cust.id}`}
@@ -418,9 +403,9 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('name')}>
+              <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Name
-                {sortBy === 'name' && (
+                {sortBy === 'fullName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
@@ -449,7 +434,7 @@ export default function ClientListing() {
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th> 
+              </th>
               <th className="w-[160px]">Action</th>
             </tr>
           </thead>

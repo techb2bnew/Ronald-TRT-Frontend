@@ -82,9 +82,9 @@ export default function ViewDetails() {
       <Breadcrumb
         items={[
           {
-            label: isSingleTechnician ? 'All TRT Customer' : 'Customer',
+            label: isSingleTechnician ? 'All Customer' : 'Customer',
             href: isSingleTechnician
-              ? '/all-customer/listing'
+              ? '/single-technicians/listing'
               : '/client/listing',
           },
           { label: 'View Detail', href: '' }
@@ -96,54 +96,28 @@ export default function ViewDetails() {
           <div className="grid grid-cols-2 gap-6 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Customer Id:</strong> {CustomerData?.id}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4 capitalize'><strong className='w-[200px] inline-block'>Customer Name:</strong> {CustomerData?.firstName} {CustomerData?.lastName}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Email:</strong>
-                <a className="hover:underline" href={`mailto:${CustomerData?.email}`}> {CustomerData?.email}</a></p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Ph. Number:</strong>
-                <a className="hover:underline" href={`tel:${CustomerData?.phoneNumber}`}> {CustomerData?.phoneNumber}</a>
-              </p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Address:</strong> {CustomerData?.address}</p>
-              <div className="flex">
-                {CustomerData?.image ? (
-                  <img
-                    onClick={() => setPreviewImage(CustomerData.image)}
-                    src={CustomerData?.image}
-                    alt='Technician Tax Form'
-                    className="w-[60px] h-[60px] rounded shadow-lg cursor-pointer object-cover"
-                  />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-[100px] h-[100px] text-black-400 bg-gray-300 p-2 rounded" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
-              </div>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Customer Id:</strong> {CustomerData?.id}</p>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4 capitalize'><strong className='w-[150px] inline-block'>Customer Name:</strong> {CustomerData?.fullName} {CustomerData?.lastName}</p>
+              {/* <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Role Type:</strong> {CustomerData?.roleType}</p> */}
+               <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Email:</strong>
+                <a className="hover:underline" href={`mailto:${CustomerData?.email}`}> {CustomerData?.email || 'N/A'}</a></p>
+              
+              
             </div>
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Role Type:</strong> {CustomerData?.roleType}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
-                <strong className='w-[200px] inline-block'>Country:</strong> {getCountryName(CustomerData?.country)}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'>
-                <strong className='w-[200px] inline-block'>State:</strong> {getStateName(CustomerData?.country, CustomerData?.state)}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>City:</strong> {CustomerData?.city}</p>
-              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[200px] inline-block'>Zip Code:</strong> {CustomerData?.zipCode}</p>
+             
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Ph. Number:</strong>
+                <a className="hover:underline" href={`tel:${CustomerData?.phoneNumber}`}> {CustomerData?.phoneNumber || 'N/A'}</a>
+              </p>
+              <p className='mb-4 border-b border-gray-500 mb-3 pb-4'><strong className='w-[150px] inline-block'>Address:</strong> {CustomerData.address ? CustomerData.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}  </p>
+               
             </div>
           </div>
         </div>
         <ToastContainer />
-        {previewImage && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            onClick={() => setPreviewImage(null)} // Close on backdrop click
-          >
-            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
-          </div>
-        )}
+        
       </div>
     </>
   );

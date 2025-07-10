@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     } else {
       // Use fetchVehicleInfo API for paginated data
-      backendUrl = `${apiBaseUrl}/fetchVehicleInfo?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&roleType=${encodeURIComponent(roleType)}`;
+      backendUrl = `${apiBaseUrl}/fetchVehicleInfo?&userId=${encodeURIComponent(userId)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&roleType=${encodeURIComponent(roleType)}`;
       if (roleType !== 'superadmin' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
       }

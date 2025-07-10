@@ -4,6 +4,7 @@ import View from '../view/view';
 import React, { Suspense, useState } from 'react'; 
 import AuthCheck from '@/app/component/AuthCheck';
 import { useSidebar } from "@/app/component/SidebarContext";
+import CustomerJobs from '../customerJobs/listing'
 export default function ViewCustomer() { 
      const { isCollapsed } = useSidebar();
      const ViewDetails = dynamic(() => import('./view'), { ssr: false });
@@ -15,6 +16,7 @@ export default function ViewCustomer() {
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-6 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
             <ViewDetails />
+            <CustomerJobs />
         </div>
     </div>
     </Suspense>

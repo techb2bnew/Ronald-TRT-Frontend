@@ -24,6 +24,7 @@ interface Jobs {
   name: string;
   email: string;
   deletedStatus?: boolean;
+  vehicles: [];
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
@@ -38,7 +39,14 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [roleType, setRoleType] = useState<string | null>(null);
 
+
+  useEffect(() => {
+    // Ensure this code runs only on the client-side (after the component mounts)
+    const storedRoleType = localStorage.getItem('types');
+    setRoleType(storedRoleType); // Set the roleType from localStorage
+  }, []);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -78,7 +86,7 @@ const JobTable: React.FC = () => {
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
-        ? roleType === 'superadmin'
+        ? roleType === 'superadmin' || roleType === 'manager'
           ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
           : `/api/jobListing?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&limit=${limit}&page=${page}`
         : roleType === 'superadmin'
@@ -94,7 +102,12 @@ const JobTable: React.FC = () => {
 
       if (response.ok) {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
-        setActiveJob(fetchedJobs);
+        const jobsWithVehicleCount = fetchedJobs.map(job => ({
+          ...job,
+          vehicleCount: job.vehicles ? job.vehicles.length : 0  // Count vehicles for each job
+        }));
+
+        setActiveJob(jobsWithVehicleCount);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
 
@@ -200,31 +213,47 @@ const JobTable: React.FC = () => {
           });
         } else {
           console.error('Failed to update job status');
+          const errorMessage = response.data.message || 'Failed to update job status'; // Fallback if no message is found
           Swal.fire({
             title: 'Error!',
-            text: 'Failed to update job status.',
+            text: errorMessage,
             icon: 'error',
             confirmButtonText: 'OK'
           });
         }
       } catch (error) {
+        // Network errors or 400/500 errors that don't reach the response.data handling
+        let errorMessage = 'Failed to update job status';
+
+        if (axios.isAxiosError(error)) {
+          // Handle Axios errors specifically
+          if (error.response) {
+            // The request was made and the server responded with a status code
+            errorMessage = error.response.data?.message ||
+              error.response.data?.error ||
+              error.message;
+          } else if (error.request) {
+            // The request was made but no response was received
+            errorMessage = 'No response from server';
+          } else {
+            // Something happened in setting up the request
+            errorMessage = error.message;
+          }
+        } else if (error instanceof Error) {
+          // Generic Error
+          errorMessage = error.message;
+        }
+
         console.error('Error updating job status:', error);
         Swal.fire({
           title: 'Error!',
-          text: 'Error updating job status.',
+          text: errorMessage,
           icon: 'error',
+          confirmButtonColor: '#383d71',
           confirmButtonText: 'OK'
         });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Technician status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
-      });
-    }
+      };
+    };
   };
 
   const handlePageChange = (data: { selected: number }) => {
@@ -239,73 +268,80 @@ const JobTable: React.FC = () => {
       toast.error("Please select at least one work order to export.");
       return;
     }
+
     const csvOptions = {
-      filename: 'Active Work Orders',
+      filename: 'Jobs',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Active Work Orders',
+      title: 'Jobs',
       useTextFile: false,
       useBom: true,
-      useKeysAsHeaders: true, // Use object keys as headers
+      useKeysAsHeaders: true,
     };
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-
     const formattedData = selectedJobs.map((jobData) => {
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
+
+
       const technician = jobData.technicians?.[0] || {};
-      const simpleFlatRate = !isNaN(Number(jobData.simpleFlatRate)) && Number(jobData.simpleFlatRate) > 0
-        ? Number(jobData.simpleFlatRate)
-        : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
 
-      const amountPercentage = !isNaN(Number(jobData.amountPercentage)) && Number(jobData.amountPercentage) > 0
-        ? Number(jobData.amountPercentage)
-        : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
+      // Parse simpleFlatRate from both jobData and technician
+      const parseSimpleFlatRate = (rate: any) => {
+        if (!rate) return {};
 
-      // Step 3: Calculate percentage amount
-      const percentageAmount = (amountPercentage * subTotal) / 100;
-      const totalCost = subTotal + simpleFlatRate + percentageAmount;
+        try {
+          // If it's already a number, return as is
+          if (!isNaN(Number(rate))) return Number(rate);
 
+          // If it's a JSON string, parse it
+          if (typeof rate === 'string') {
+            const parsed = JSON.parse(rate);
+            // If it's an object with vehicle types, format it
+            if (typeof parsed === 'object' && parsed !== null) {
+              return Object.entries(parsed)
+                .map(([vehicle, rate]) => `${vehicle}: $${rate}`)
+                .join(', ');
+            }
+            return parsed;
+          }
+          return rate;
+        } catch (e) {
+          console.error('Error parsing simpleFlatRate:', e);
+          return rate;
+        }
+      };
       return {
         id: jobData.id,
-        vin: jobData.vin,
-        customer: `${jobData?.customer?.firstName} ${jobData?.customer?.lastName}`,
+        customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
-        bodyClass: jobData.bodyClass,
-        color: jobData.color,
-        make: jobData.make,
-        model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
-        vehicleType: jobData.vehicleType,
-        'modelYear': jobData.modelYear,
-        'vehicleDescriptor': jobData.vehicleDescriptor,
-        'manufacturerName': jobData.manufacturerName,
-        'plantCompanyName': jobData.plantCompanyName,
-        'plantCountry': jobData.plantCountry,
-        'plantState': jobData.plantState,
-        deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
-        notes: jobData.notes,
-        jobStatus: jobData.jobStatus,
+        jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        payRate: jobData.payRate,
-        simpleFlatRate: jobData.simpleFlatRate,
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-        totalCost: totalCost.toFixed(2),
-
+        assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
+        estimatedCost: jobData.estimatedCost,
+        manager: `${jobData.manager.firstName} ${jobData.manager.lastName}`,
+        assignManager: `${jobData.manager.id}`
       };
+
     });
+
     csvExporter.generateCsv(formattedData);
-  }
+  };
+
+  // Helper function to check if a value is empty
+  const isEmpty = (value: any) => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') {
+      return value.trim() === '' || value === '{}' || value === '0';
+    }
+    if (typeof value === 'object') {
+      return Object.keys(value).length === 0;
+    }
+    return false;
+  };
 
 
 
@@ -325,7 +361,7 @@ const JobTable: React.FC = () => {
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 
@@ -350,16 +386,12 @@ const JobTable: React.FC = () => {
 
     reader.onload = async (e) => {
       let text = (e.target?.result as string)
-        .replace(/^\uFEFF/, '') // Remove BOM
-        .trimStart(); // Remove leading whitespace/newlines
+        .replace(/^\uFEFF/, '')
+        .trimStart();
 
       const manualHeaders = [
-        'id', 'vin', 'customer', 'assignCustomer', 'bodyClass', 'color',
-        'make', 'model', 'amountPercentage', 'vehicleType',
-        'modelYear', 'vehicleDescriptor', 'manufacturerName',
-        'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'estimatedBy', 'notes', 'jobStatus', 'technicians', 'assignTechnicians',
-        'jobDescription', 'payRate', 'simpleFlatRate', 'cost', 'subTotal', 'totalCost'
+        'id', 'customer', 'assignCustomer', 'jobTitle',
+        'technicians', 'assignTechnicians', 'estimatedCost', 'manager', 'assignManager'
       ];
 
       Papa.parse(text, {
@@ -369,7 +401,7 @@ const JobTable: React.FC = () => {
           const rows = result.data as string[][];
 
           const cleanedData = rows
-            .slice(1) // Skip raw header row
+            .slice(1)
             .map((row) => {
               const obj: any = {};
               manualHeaders.forEach((key, idx) => {
@@ -380,19 +412,35 @@ const JobTable: React.FC = () => {
               return obj;
             })
             .filter((row) => {
-              // Skip if all values match their keys (header row)
               const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              // Skip if empty row
               const hasData = Object.values(row).some((val) => val && val !== '');
               return !isHeaderRow && hasData;
             });
 
           try {
-            // Only filter out the first object if it's a header row
-            const payloadData = cleanedData.filter(row => {
-              const isHeaderRow = Object.entries(row).every(([key, val]) => key === val);
-              return !isHeaderRow;
+            const payloadData = cleanedData.map(row => {
+              const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
+              const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
+
+
+              const technicians = technicianNames.map((name: any, index: any) => {
+
+                const technicianObj: any = {
+                  id: technicianIds[index] || null,
+                  name: name,
+                };
+                return technicianObj;
+              });
+
+              return {
+                ...row,
+                technicians: technicians,
+                assignTechnicians: undefined,
+                jobName: undefined,
+              };
             });
+
+            console.log('Processed import data:', JSON.stringify(payloadData, null, 2));
 
             const response = await axios.post(
               `/api/importActiveJob`,
@@ -403,21 +451,14 @@ const JobTable: React.FC = () => {
             fetchJobs(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             console.error('❌ Import failed:', error);
-
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as any).response?.data?.error === 'string'
-            ) {
-              toast.error((error as any).response.data.error);
+            if (typeof error === 'object' && error !== null && 'response' in error) {
+              toast.error((error as any).response?.data?.error || 'Unknown error');
             } else if (error instanceof Error) {
               toast.error(error.message);
             } else {
               toast.error(String(error));
             }
           }
-
           setLoading(false);
         },
         error: (err: any) => {
@@ -426,13 +467,8 @@ const JobTable: React.FC = () => {
         },
       });
     };
-
     reader.readAsText(file);
   };
-
-
-
-
 
 
   const handleCheckboxChange = (id: string) => {
@@ -443,16 +479,6 @@ const JobTable: React.FC = () => {
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
-    const roleType = localStorage.getItem('types') || "";
-
-    const subtotalcost = job.jobDescription.reduce((sum: number, job: any) => {
-      const parsedJob = (job);
-      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-    }, 0);
-    const simpleFlatRate = Number(job.simpleFlatRate);
-    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-      ? subtotalcost + simpleFlatRate
-      : subtotalcost;
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -471,273 +497,35 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td> {job?.jobName}</td>
 
 
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
-        <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td>
-        <td>  {job?.technicians?.map((tech: any) => (
-          <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName}
-          </div>
-        ))}</td>
-        <td>{job?.technicians?.map((tech: any) => (
-          <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech.technicians}`}>
-              {tech.phoneNumber}
-            </a>
-          </div>
-        ))}</td>
-        <td>${(job.simpleFlatRate && !isNaN(simpleFlatRate) && simpleFlatRate > 0 ? subtotalcost : totalCost).toFixed(2)}</td>
-        {roleType !== 'single-technician' && (
-          <td>
-            {(() => {
-              if (!job) return null;
-
-              // Parse jobDescription items and calculate total cost
-              let totalCost = 0;
-
-              if (job?.jobDescription && Array.isArray(job.jobDescription)) {
-                totalCost = job.jobDescription.reduce((sum: number, item: any) => {
-                  return sum + Number(item?.cost || 0); // Accumulate the cost
-                }, 0);
-              }
-
-              const simpleFlatRate = Number(job.simpleFlatRate);
-              const amountPercentage = Number(job.amountPercentage);
-
-              // If both are invalid in the first job data, fallback to jobnician data
-              const fallbackSimpleFlatRate = Number(job?.technicians?.[0]?.simpleFlatRate || 0);
-              const fallbackAmountPercentage = Number(job?.technicians?.[0]?.amountPercentage || 0);
-
-              // Check if both simpleFlatRate and amountPercentage are invalid
-              if (
-                (isNaN(simpleFlatRate) || simpleFlatRate === 0) &&
-                (isNaN(amountPercentage) || amountPercentage === 0)
-              ) {
-                // Fallback to technician data if primary values are invalid
-                if (!isNaN(fallbackSimpleFlatRate) && fallbackSimpleFlatRate > 0) {
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      ${fallbackSimpleFlatRate.toFixed(2)}
-                    </div>
-                  );
-                }
-
-                // If technician simpleFlatRate is also invalid, fallback to percentage-based calculation
-                if (!isNaN(fallbackAmountPercentage) && fallbackAmountPercentage > 0) {
-                  const fallbackPercentageAmount = (totalCost * fallbackAmountPercentage) / 100;
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      ${fallbackPercentageAmount.toFixed(2)} ({fallbackAmountPercentage}%)
-                    </div>
-                  );
-                }
-
-                // Show red dot with tooltip if both fallback values are invalid
-                const tooltipId = `tooltip-${job.id}`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    {/* <span
-                            data-tooltip-id={tooltipId}
-                            data-tooltip-content="R/I/R/R price is not added for this job."
-                            style={{
-                              height: '12px',
-                              width: '12px',
-                              backgroundColor: 'red',
-                              borderRadius: '50%',
-                              display: 'inline-block',
-                              cursor: 'pointer',
-                            }}
-                          ></span>
-                          <Tooltip id={tooltipId} place="top" /> */}
-                    Per Job
-                  </div>
-                );
-              }
-
-              // If jobData has valid `simpleFlatRate` or `amountPercentage`, show them
-              if (!isNaN(simpleFlatRate) && simpleFlatRate > 0) {
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${simpleFlatRate.toFixed(2)}
-                  </div>
-                );
-              }
-
-              // Show percentage-based calculation
-              if (!isNaN(amountPercentage) && amountPercentage > 0) {
-                const percentageAmount = (totalCost * amountPercentage) / 100;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${percentageAmount.toFixed(2)} ({amountPercentage}%)
-                  </div>
-                );
-              }
-
-              return null;
-            })()}
-          </td>
-        )}
-
-        {roleType === 'single-technician' && (
-          <td>
-            {(() => {
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job?.labourCost || technicianFlatRate);
-
-              if (labourCost === 0) {
-                const tooltipId = `tooltip-${job.id}-labour`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per job
-                  </div>
-                );
-              }
-
-              return `$${labourCost.toFixed(2)}`;
-            })()}
-          </td>
-        )}
+        <td> {job?.customer?.fullName}  </td>
 
         {roleType !== 'single-technician' && (
-
-          <td>
-            {(() => {
-              if (!job) return null;
-
-              // Step 1: Calculate subtotal from jobDescription
-              const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-                return sum + Number(item.cost || 0);
-              }, 0);
-
-              // Step 2: Get flat rate and percentage — fallback to technician if job-level value is null/invalid
-              const technician = job.technicians?.[0] || {};
-              const simpleFlatRate = !isNaN(Number(job.simpleFlatRate)) && Number(job.simpleFlatRate) > 0
-                ? Number(job.simpleFlatRate)
-                : (!isNaN(Number(technician.simpleFlatRate)) ? Number(technician.simpleFlatRate) : 0);
-
-              const amountPercentage = !isNaN(Number(job.amountPercentage)) && Number(job.amountPercentage) > 0
-                ? Number(job.amountPercentage)
-                : (!isNaN(Number(technician.amountPercentage)) ? Number(technician.amountPercentage) : 0);
-
-              // Step 3: Calculate percentage amount
-              const percentageAmount = (amountPercentage * subtotalcost) / 100;
-
-              // Step 4: Check if flat rate or percentage amount is missing and display accordingly
-              if (simpleFlatRate === 0 && amountPercentage === 0) {
-                // If no valid flat rate or percentage, just show the subtotal
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    ${subtotalcost.toFixed(2)}
-                  </div>
-                );
-              }
-
-              // Step 5: Calculate total = subtotal + flat rate + percentage amount
-              const totalCost = subtotalcost + simpleFlatRate + percentageAmount;
-
-              // Step 6: Show red dot tooltip if neither flat rate nor percentage are valid
-              if (simpleFlatRate === 0 && amountPercentage === 0) {
-                const tooltipId = `tooltip-${job.id}`;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span
-                      data-tooltip-id={tooltipId}
-                      data-tooltip-content="R/I/R/R price is not added for this job."
-                      style={{
-                        height: '12px',
-                        width: '12px',
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                      }}
-                    ></span>
-                    <Tooltip id={tooltipId} place="top" />
-                  </div>
-                );
-              }
-
-              // Step 7: Return total cost
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              );
-            })()}
-          </td>
-
+          <td>{job?.manager?.firstName} {job?.manager?.lastName}</td>
         )}
-
-        {roleType === 'single-technician' && (
-          <td>
-            {(() => {
-              if (!job) return null;
-
-              const subtotalcost = job.jobDescription.reduce((sum: number, item: any) => {
-                return sum + Number(item.cost || 0);
-              }, 0);
-
-              // Get the first technician's simpleFlatRate if available
-              const technician = job.technicians?.[0] || {};
-              const technicianFlatRate = !isNaN(Number(technician.simpleFlatRate))
-                ? Number(technician.simpleFlatRate)
-                : 0;
-
-              // Use labourCost if available, otherwise use technician's flat rate
-              const labourCost = Number(job.labourCost || technicianFlatRate);
-
-              const totalCost = subtotalcost + labourCost;
-
-              if (subtotalcost === 0) {
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'red' }}>
-                    Per Job
-                  </div>
-                );
-              }
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  ${totalCost.toFixed(2)}
-                </div>
-              );
-            })()}
-          </td>
-
-        )}
-
-
-
-
-
-
-
-
-
+        <td>({job.vehicleCount || 0}) Work Order</td>
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+        <td>${job.estimatedCost || '0'}</td>
         <td>
           {canCreate && (
-
-            <span onClick={() => toggleApproval(job.id, job.jobStatus)} style={{ cursor: 'pointer' }}
-              className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            <span
+              onClick={() => job.vehicleCount > 0 && toggleApproval(job.id, job.jobStatus)}
+              style={{ cursor: job.vehicleCount > 0 ? 'pointer' : 'not-allowed' }}
+              className={`badge ${job.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'} ${job.vehicleCount === 0 ? 'opacity-50' : ''}`}
             >
               {job.jobStatus ? 'Completed' : 'In Progress'}
             </span>
           )}
-
         </td>
         <td>
           <TableActions
             editRoute={`/jobs/create-job/create?jobId=${job.id}`}
             deleteRoute={`/api/deleteJob`}  // Pass the correct endpoint
             viewRoute={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`}
-            idKey="jobid"
+            idKey="jobId"
             userRole='Activejobs'
             itemId={job.id}  // Pass the technician ID
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
@@ -747,21 +535,73 @@ const JobTable: React.FC = () => {
     )
   };
 
+
+  const handleDateChange = async (dateRange: [Date, Date] | null) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+    // Function to format the date as DD-MM-YYYY
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]); // Format start date
+      const endDate = formatDate(dateRange[1]);   // Format end date
+
+      try {
+        setLoading(true);
+        let apiPoint = `${apiUrl}/jobFilter`;
+
+        const requestBody: { [key: string]: any } = {
+          startDate: startDate,
+          endDate: endDate,
+          roleType: roleType
+        };
+        if (roleType !== 'superadmin' && roleType !== 'manager') {
+          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
+        }
+
+        // Make the API call using POST with the query params and body
+        const response = await axios.post(apiPoint, requestBody, {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include token if necessary for authentication
+          },
+        });
+
+        setActiveJob(response.data.jobs.jobs); // Update the jobs with filtered data
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+
+
+
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Active Work Orders', href: '/jobs/active-job' }
+          { label: 'Jobs List', href: '/jobs/active-job' }
         ]}
       />
 
-      <CommonHeader heading="Active Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Work Order" buttonLink="/jobs/create-job/create" />
+      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
+        onDateChange={handleDateChange} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              <th className="w-[55px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -781,32 +621,36 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
+              <th className="w-[100px]" onClick={() => handleSort('id')}>
+                Job Id
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[150px]" onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
+              <th className="w-[150px]" onClick={() => handleSort('jobName')}>
+                Job Title
+                {sortBy === 'jobName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[120px]">
-                Customer Number
+              <th className="w-[150px]">
+                Customer Name
+
               </th>
-              <th className="w-[150px]" >
-                Technician Name
-              </th>
-              <th className="w-[100px]">Tech. Number</th>
-              <th className="w-[100px]">Sub Total Cost</th>
-              <th className="w-[120px]">R/I R/R </th>
-              <th className="w-[120px]">Total Cost</th>
+              {roleType !== 'single-technician' && (
+                <th className="w-[150px]" >
+                  Manager Name
+                </th>
+              )}
+              <th className="w-[150px]">Vehicle / Work Order</th>
+              {/* <th className="w-[100px]">Sub Total Cost</th>*/}
+              <th className="w-[120px]">Start Date</th>
+              <th className="w-[120px]">End Date</th>
+              <th className="w-[120px]">Job Estimate</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>
@@ -814,13 +658,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

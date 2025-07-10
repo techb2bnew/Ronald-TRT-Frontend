@@ -253,7 +253,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&types=single-technician`
+        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&roleType=single-technician`
         : `/api/fetchIndividualTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -392,13 +392,6 @@ const TechnicianTable: React.FC = () => {
       Email: tech.email,
       Phone: tech.phoneNumber,
       Address: tech.address,
-      Country: tech.country,
-      City: tech.city,
-      State: tech.state,
-      SimpleFlatRate: tech.simpleFlatRate,
-      AmountPercentage: tech.simpleFlatRate,
-      PayVehicleType: tech.payVehicleType,
-      PayRate: tech.payRate,
       Status: tech.isApproved,
       AccountStatus: tech.accountStatus,
       DeletedStatus: tech.deletedStatus,
@@ -433,9 +426,7 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate', 'Status',
+        'Id', 'Name', 'Email', 'Phone', 'Address', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
 
@@ -579,6 +570,9 @@ const TechnicianTable: React.FC = () => {
         </td>
         <td><a className="hover:underline" href={`mailto:${tech?.email}`}> {tech.email}</a></td>
         <td><a className="hover:underline" href={`tel:${tech?.phoneNumber}`}>{tech.phoneNumber}</a></td>
+        <td>{tech?.jobs?.length || 0}</td>
+        <td> <div>{tech.jobs?.reduce((total:any, job:any) => total + (job?.vehicles?.length || 0), 0) || 0}</div></td>
+
         {/* <td>{tech.payRate}</td> */}
         <td
           onClick={() => {
@@ -673,7 +667,7 @@ const TechnicianTable: React.FC = () => {
       />
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Approval Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}

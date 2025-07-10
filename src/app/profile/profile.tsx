@@ -12,17 +12,37 @@ import { SelectChangeEvent } from '@mui/material/Select';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { geocodeByAddress, getLatLng } from 'react-google-places-autocomplete';
+import { SingleValue, ActionMeta } from 'react-select';
 
 interface FormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
   address: string;
-  city: string;
-  state: string;
-  country: string;
-  zipCode: string;
 }
+
+interface PlaceType {
+  place_id: string;
+  description: string;
+  // Add other properties you might need from Google Places
+}
+
+interface AddressValue {
+  label: string;
+  value: PlaceType;
+}
+
+type GooglePlacesOption = {
+  label: string;
+  value: {
+    place_id: string;
+    description: string;
+  };
+};
+
+type NullableGooglePlacesOption = SingleValue<GooglePlacesOption>;
 
 export default function ProfileCard() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -30,6 +50,7 @@ export default function ProfileCard() {
   const [technician, setTechnician] = useState<any>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
 
 
   const [formData, setFormData] = useState<FormData>({
@@ -37,15 +58,62 @@ export default function ProfileCard() {
     lastName: "",
     phoneNumber: "",
     address: "",
-    city: "",
-    state: '',
-    country: "",
-    zipCode: "",
   });
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
   const { updateProfileImage } = useTechnician();
   const { updateTechnicianProfile } = useTechnician();
+
+  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+    if (!selectedAddress) return;
+
+    setAddressValue(selectedAddress);
+
+    try {
+      const results = await geocodeByAddress(selectedAddress.label);
+      const addressComponents = results[0].address_components;
+
+      let street = '', city = '', state = '', country = '', zip = '';
+
+      addressComponents.forEach(component => {
+        if (component.types.includes('street_number') || component.types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (component.types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+        if (component.types.includes('country')) {
+          country = component.long_name;
+        }
+        if (component.types.includes('postal_code')) {
+          zip = component.long_name;
+        }
+      });
+
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`;
+      // Update form data with the full address
+      setFormData(prev => ({
+        ...prev,
+        address: fullAddress,  // Store combined address here
+      }));
+
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.address;
+        delete newErrors.city;
+        delete newErrors.state;
+        delete newErrors.zipCode;
+        return newErrors;
+      });
+
+    } catch (error) {
+      console.error('Error fetching address details:', error);
+      toast.error('Failed to process address details');
+    }
+  };
 
   // ✅ Fetch Technician Data
   const fetchTechnicianData = async (technicianId: string) => {
@@ -59,24 +127,40 @@ export default function ProfileCard() {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-    const response = await fetch(`/api/fetchTechnicianProfile`, {
-      method: "POST", // Change to POST
-      headers,
-      body: JSON.stringify({ technicianId }), // Send technicianId in the body
-    });
+      const response = await fetch(`/api/fetchTechnicianProfile`, {
+        method: "POST", // Change to POST
+        headers,
+        body: JSON.stringify({ technicianId }), // Send technicianId in the body
+      });
 
       const data = await response.json();
+      let addressParts = [];
+      if (data.technician.address) {
+        // Split the address string and filter out empty parts
+        addressParts = data.technician.address.split(',').map((part: any) => part.trim()).filter((part: any) => part !== '');
+      }
+
+      // Construct the full address for display
+      const fullAddress = addressParts.join(', ');
+
       if (response.ok) {
+        if (fullAddress) {
+          const addressValue: AddressValue = {
+            label: fullAddress,
+            value: {
+              place_id: `existing-address-${Date.now()}`,
+              description: fullAddress
+            }
+          };
+          setAddressValue(addressValue);
+        }
+
         setTechnician(data.technician);
         setFormData({
           firstName: data.technician.firstName,
           lastName: data.technician.lastName,
           phoneNumber: data.technician.phoneNumber,
-          address: data.technician.address || "",
-          city: data.technician.city || "",
-          state: data.technician.state || "",
-          country: data.technician.country || "",
-          zipCode: data.technician.zipCode || "",
+          address: data.fullAddress,
         });
       } else {
         toast.error(data.error || "Error fetching technician data");
@@ -102,12 +186,12 @@ export default function ProfileCard() {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-     if (errors[name]) {
-    setErrors({
-      ...errors,
-      [name]: "", // Remove error for the specific field
-    });
-  }
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "", // Remove error for the specific field
+      });
+    }
   };
 
 
@@ -128,10 +212,6 @@ export default function ProfileCard() {
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
-    if (!formData.country?.trim()) newErrors.country = 'Country is required';
-    // if (!formData.state?.trim()) newErrors.state = 'State is required';
-    // if (!formData.city?.trim()) newErrors.city = 'City is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -144,10 +224,6 @@ export default function ProfileCard() {
     formDataPayload.append("lastName", formData.lastName);
     formDataPayload.append("phoneNumber", formData.phoneNumber);
     formDataPayload.append("address", formData.address);
-    formDataPayload.append("city", formData.city);
-    formDataPayload.append("state", formData.state);
-    formDataPayload.append("country", formData.country);
-    formDataPayload.append("zipCode", formData.zipCode);
 
     // ✅ Add image if selected
     if (selectedImage) {
@@ -329,7 +405,7 @@ export default function ProfileCard() {
       return digitsOnly;
     }
   };
-const handlePhoneChange = (value: string | undefined) => {
+  const handlePhoneChange = (value: string | undefined) => {
     if (!value) {
       setFormData(prev => ({
         ...prev,
@@ -368,11 +444,7 @@ const handlePhoneChange = (value: string | undefined) => {
     }));
   };
 
- 
 
-
-  const countries = Country.getAllCountries();
-  const states = formData.country ? State.getStatesOfCountry(formData.country) : [];
 
   return (
     <div className="rounded-lg p-6 mx-auto">
@@ -386,7 +458,7 @@ const handlePhoneChange = (value: string | undefined) => {
             />
           ) : (
             <p className="font-[600] text-[34px] bg-[#fff] rounded-full p-[10px] w-[85px] h-[85px] text-center uppercase flex items-center justify-center">
-                 {technician?.firstName ? technician?.firstName[0] : 'N/A'}
+              {technician?.firstName ? technician?.firstName[0] : 'N/A'}
             </p>
           )}
 
@@ -448,7 +520,7 @@ const handlePhoneChange = (value: string | undefined) => {
           )}
 
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-2 gap-4">
           <div className='mb-4 relative'>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
               <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
@@ -475,6 +547,63 @@ const handlePhoneChange = (value: string | undefined) => {
             )}
           </div>
 
+
+
+        </div>
+      </div>
+      <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
+        <h3 className="font-semibold text-lg">Address</h3>
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className='mb-4 relative z-10'>
+            <GooglePlacesAutocomplete
+              apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+              selectProps={{
+                placeholder: 'Search for an address...',
+                value: address,
+                onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
+                  if (newValue) {
+                    handleAddressSelect(newValue);
+                  }  else if (actionMeta.action === 'clear') {
+                      // Handle clear action
+                      setAddressValue(null); // Make sure you have this state setter
+                      setFormData(prev => ({
+                        ...prev,
+                        address: '',
+                      }));
+                    }
+                },
+                isDisabled: !isEditing,
+                  isClearable: true,
+                styles: {
+                  input: (provided) => ({
+                    ...provided,
+                    borderRadius: '4px',
+                    width: '100%'
+                  }),
+                  control: (provided) => ({
+                    ...provided,
+                    borderColor: errors.address ? 'red' : '#ccc', // Red border if error exists
+                    '&:hover': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                    '&:focus': {
+                      borderColor: errors.address ? 'orange' : 'orange',
+                    },
+                  }),
+                }
+              }}
+              autocompletionRequest={{
+                componentRestrictions: {
+                  country: 'us' // Restrict to US addresses only
+                }
+              }}
+             />
+            {errors.address && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {errors.address}
+              </div>
+            )}
+          </div>
           <div className='mb-4'>
             <PhoneInput
               international
@@ -483,112 +612,22 @@ const handlePhoneChange = (value: string | undefined) => {
               onChange={handlePhoneChange}
               disabled={!isEditing}
               onKeyDown={(e: any) => {
-                  // Prevent typing if already 10 digits in national number
-                  const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
-                  const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
-                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
-                    e.preventDefault();
-                  }
-                }}
-                onPaste={(e: any) => {
-                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
-                  if (pasted.length > 10) e.preventDefault();
-                }}
+                // Prevent typing if already 10 digits in national number
+                const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+                const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+                if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e: any) => {
+                const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                if (pasted.length > 10) e.preventDefault();
+              }}
               className="input text-xs input-bordered w-full p-2 rounded"
             />
             {errors.phoneNumber && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                 {errors.phoneNumber}
-              </div>
-            )}
-          </div>
-
-        </div>
-      </div>
-      <div className="mt-8 bg-white shadow-lg p-6 rounded-lg">
-        <h3 className="font-semibold text-lg">Address</h3>
-        <div className="mt-4 grid grid-cols-4 gap-4">
-          <div className=' relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <FormControl fullWidth size='small'>
-              <InputLabel id="country" color="warning">Select country *</InputLabel>
-              <Select
-                labelId="country"
-                color="warning"
-                id="country"
-                value={formData.country}
-                label="selectcountry"
-                name="country" 
-                disabled={!isEditing}
-                onChange={handleSelectChange}
-              >
-                {countries.map((country: ICountry) => (
-                  <MenuItem key={country.isoCode} value={country.isoCode}> {country.name} </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {errors.country && (
-              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.country}
-              </div>
-            )}
-          </div>
-          <div className=' relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <FormControl fullWidth size='small'>
-              <InputLabel id="state" color="warning"> Select state</InputLabel>
-              <Select
-                labelId="state"
-                color="warning"
-                id="select-state"
-                value={formData.state}
-                label="selectState"
-                name="state" 
-                disabled={!isEditing}
-                onChange={handleSelectChange}
-              >
-                {states.map((state: IState) => (
-                  <MenuItem key={state.isoCode} value={state.isoCode}>{state.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* {errors.state && (
-              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.state}
-              </div>
-            )} */}
-          </div>
-          <div className='mb-4 relative'>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#5B5B99" className="icon__tech"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <TextField fullWidth name="city" id="outlined-basic" color="warning" label="Enter your city" size='small' value={formData.city} onChange={handleInputChange} disabled={!isEditing}  />
-            {/* {errors.city && (
-              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.city}
-              </div>
-            )} */}
-          </div>
-          <div className='mb-4 relative'>
-            <svg width="20" height="20" viewBox="0 0 20 20" stroke="#000" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-              <path d="M7 5L2 10L7 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M13 5L18 10L13 15" stroke="#5B5B99" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <TextField fullWidth name="zipCode" id="outlined-basic" color="warning" label="Enter your zip code" size='small' value={formData.zipCode} onChange={handleInputChange} disabled={!isEditing}  />
-            {errors.zipCode && (
-              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.zipCode}
               </div>
             )}
           </div>

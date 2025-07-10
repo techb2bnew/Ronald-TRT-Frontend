@@ -41,7 +41,7 @@ const TableActions: React.FC<TableActionsProps> = ({
         console.error("❌ Failed to parse permissions:", error);
       }
     } else {
-      console.warn("⚠️ No permissions found in localStorage. Showing all icons.");
+      console.log("No permissions found in localStorage. Showing all icons.");
     }
   }, []);
 
@@ -82,7 +82,7 @@ const TableActions: React.FC<TableActionsProps> = ({
       }
       const body = JSON.stringify({
         [idKey]: itemId,
-        deletedStatus: false,
+        deletedStatus: true,
       });
 
       const response = await fetch(deleteRoute, {
@@ -98,9 +98,14 @@ const TableActions: React.FC<TableActionsProps> = ({
         if (onDeleteSuccess) {
           onDeleteSuccess();
         }
-      } else {
+      }else {
+      // If the error message is about associated jobs, show a specific alert
+      if (data.error) {
+        Swal.fire("Error!", data.error, "error");
+      } else   {
         Swal.fire("Error!", data.message || "Failed to delete the item.", "error");
       }
+    }
     } catch (error) {
       Swal.fire("Error!", "An error occurred while deleting the item.", "error");
     }

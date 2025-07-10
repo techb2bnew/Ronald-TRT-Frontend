@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (searchQuery && searchQuery.trim() !== '') {
       // Use search API if search query is provided
       backendUrl =
-        `${apiBaseUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(searchQuery)}` + 
+        `${apiBaseUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(searchQuery)}` + 
         `&limit=${encodeURIComponent(limit)}` +
         `&page=${encodeURIComponent(page)}`;
 

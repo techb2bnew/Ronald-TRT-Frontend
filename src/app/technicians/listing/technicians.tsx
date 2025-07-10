@@ -27,6 +27,7 @@ interface Technicians {
   id: string;
   name: string;
   email: string;
+  techType: string;
   deletedStatus?: boolean;
   Role: { name: string };
 }
@@ -128,7 +129,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&types=${encodeURIComponent(roleType)}`
+        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : `/api/technician?page=${page}&limit=${limit}`;
 
 
@@ -176,7 +177,7 @@ const TechnicianTable: React.FC = () => {
   };
 
   // Function to handle sorting logic
-  const handleSort = (column: string) => {
+   const handleSort = (column: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortBy === column) {
       direction = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -184,18 +185,29 @@ const TechnicianTable: React.FC = () => {
     setSortDirection(direction);
     setSortBy(column);
 
-    // Properly sort data
     const sortedData = [...technicians].sort((a, b) => {
-      let valueA, valueB;
+      let valueA: string | number, valueB: string | number;
 
-      if (column === 'name') {
-        valueA = `${a.firstName} ${a.lastName}`.toLowerCase(); // Combine firstName and lastName
-        valueB = `${b.firstName} ${b.lastName}`.toLowerCase();
-      } else {
-        valueA = a[column]?.toString().toLowerCase() || ''; // Handle undefined
-        valueB = b[column]?.toString().toLowerCase() || '';
+      // Handle different column types
+      switch (column) {
+        case 'type':
+          valueA = a.techType ? a.techType.toString().trim().toLowerCase() : '';
+          valueB = b.techType ? b.techType.toString().trim().toLowerCase() : '';
+          break;
+        case 'name':
+          valueA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          valueB = `${b.firstName} ${b.lastName}`.toLowerCase();
+          break;
+        case 'email':
+          valueA = a.email?.toString().toLowerCase() || '';
+          valueB = b.email?.toString().toLowerCase() || '';
+          break;
+        default:
+          valueA = a[column]?.toString().toLowerCase() || '';
+          valueB = b[column]?.toString().toLowerCase() || '';
       }
 
+      // Perform comparison based on direction
       if (valueA < valueB) return direction === 'asc' ? -1 : 1;
       if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -203,6 +215,14 @@ const TechnicianTable: React.FC = () => {
 
     setTechnicians(sortedData);
   };
+
+
+
+
+
+
+
+
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -309,9 +329,9 @@ const TechnicianTable: React.FC = () => {
             {tech.accountStatus ? 'Active' : 'Inactive'}
           </span>
         </td>
+        <td>{tech.techType}</td>
 
-
-        <td className='font-sm'>
+        {/* <td className='font-sm'>
           <Link
             href={tech.accountStatus === true && tech.isApproved === 'accept' ? '/jobs/create-job/create' : '#'}
             className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === 'accept'
@@ -369,12 +389,12 @@ const TechnicianTable: React.FC = () => {
             }}
           />
 
-        </td>
+        </td> */}
 
 
         <td>
           <TableActions
-            editRoute={`/technicians/create-technician?technicianId=${tech.id}`}
+            editRoute={`/technicians/create-technician?technicianId=${tech.id}&technician`}
             viewRoute={`/technicians/view?technicianId=${tech.id}`}
             deleteRoute={`/api/deleteTechnician`}  // Pass the correct endpoint
             itemId={tech.id}  // Pass the technician ID
@@ -417,18 +437,8 @@ const TechnicianTable: React.FC = () => {
         Id: tech.id,
         Name: `${tech.firstName} ${tech.lastName}`,
         Email: tech.email,
-        Phone: tech.phoneNumber,
         Address: tech.address,
-        Country: countryName,
-        City: tech.city,
-        State: stateName,
-        SimpleFlatRate: tech.simpleFlatRate,
-        AmountPercentage: tech.amountPercentage,
-        PayVehicleType: tech.payVehicleType,
-        PayRate: tech.payRate,
-        AccountStatus: tech.accountStatus,
-        DeletedStatus: tech.deletedStatus,
-        IsApproved: tech.isApproved,
+        Type: tech.techType,
       };
     });
 
@@ -460,10 +470,7 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Country',
-        'City', 'State', 'SimpleFlatRate', 'AmountPercentage',
-        'PayVehicleType', 'PayRate',
-        'AccountStatus', 'DeletedStatus', 'IsApproved'
+        'Id', 'Name', 'Email', 'Address', 'Type'
       ];
 
       Papa.parse(text, {
@@ -583,7 +590,7 @@ const TechnicianTable: React.FC = () => {
       />
       <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?technician" />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Create Work Order', 'Approval Status', 'Action']}
+        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -612,13 +619,13 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'create new job', 'account status'];
+          const sortableColumns = ['id', 'name', 'email', 'type'];
 
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 7 ? 'w-[200px]' : ''} ${index === 5 ? 'w-[130px]' : ''}${index === 8 ? 'w-[100px]' : ''}`}
-              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+              className={`cursor-pointer ${index === 1 ? 'w-[60px]' : ''}`}
+              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)} // Ensure the column is passed correctly
             >
               {header}
               {sortableColumns.includes(columnKey) && sortBy === columnKey && (
@@ -627,6 +634,7 @@ const TechnicianTable: React.FC = () => {
                 </span>
               )}
             </th>
+
           );
         }}
       />
