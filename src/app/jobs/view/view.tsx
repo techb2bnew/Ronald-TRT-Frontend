@@ -7,7 +7,9 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
-
+import { Link } from '@mui/material';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -322,6 +324,8 @@ export default function ViewDetails() {
           </div>
           {userType !== 'single-technician' && (
             <div className="overflow-x-auto bg-white pt-3">
+              <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
+
               <table className="table w-full table-fixed">
                 <thead className=" ">
                   <tr>
@@ -329,7 +333,7 @@ export default function ViewDetails() {
                       Name
                     </th>
                     <th scope="col">
-                      Vehicle Type
+                      Type
                     </th>
                     <th scope="col">
                       Email
@@ -343,65 +347,164 @@ export default function ViewDetails() {
                     <th scope="col">
                       Flat Rate
                     </th>
-
+                    <th scope="col">
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {jobData.technicians?.map((tech: any, index: number) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          {tech.image ? (
-                            <img
-                              onClick={() => setPreviewImage(tech.image)}
-                              src={tech.image}
-                              alt={`${tech.firstName} ${tech.lastName}`}
-                              className="w-8 h-8 rounded-full object-cover cursor-pointer"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
-                              {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
-                            </div>
-                          )}
+                  {Array.isArray(jobData.technicians) && jobData.technicians.length > 0 ? (
+                    jobData.technicians.map((tech: any, index: number) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {tech.image ? (
+                              <img
+                                onClick={() => setPreviewImage(tech.image)}
+                                src={tech.image}
+                                alt={`${tech.firstName} ${tech.lastName}`}
+                                className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                                {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                              </div>
+                            )}
+                            <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
+                          </div>
+                        </td>
 
-                          <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
-                        </div>
-                      </td>
-                      {/* Vehicle Type */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {tech.techType || 'N/A'}
-                      </td>
-                      {/* Email */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a className="  hover:underline" href={`mailto:${tech.email}`}>
-                          {tech.email}
-                        </a>
-                      </td>
+                        <td className="px-6 py-4">
+                          {tech.techType || 'N/A'}
+                        </td>
 
-                      {/* Phone */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a className="  hover:underline" href={`tel:${tech.phoneNumber}`}>
-                          {tech.phoneNumber || 'N/A'}
-                        </a>
+                        <td className="px-6 py-4">
+                          <a className="hover:underline" href={`mailto:${tech.email}`}>
+                            {tech.email}
+                          </a>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>
+                            {tech.phoneNumber || 'N/A'}
+                          </a>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {tech.UserJob?.rRate ? `$${tech.UserJob.rRate}` : 'N/A'}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {tech.UserJob?.techFlatRate ? `$${tech.UserJob.techFlatRate}` : 'N/A'}
+                        </td>
+                        <td>
+                          <Link href={`/technicians/view?technicianId=${tech.id}`} >
+                            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+                              data-tooltip-content="View" />
+                          </Link>
+                          <Tooltip id="view" place="top" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="text-center py-4 text-gray-500">
+                        No technician found
                       </td>
-
-                      {/* R/I/R/R Rate */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {tech.UserJob?.rRate ? `$${tech.UserJob.rRate}` : 'N/A'}
-                      </td>
-
-                      {/* Flat Rate */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {tech.UserJob?.techFlatRate ? `$${tech.UserJob.techFlatRate}` : 'N/A'}
-                      </td>
-
-
                     </tr>
-                  ))}
+                  )}
                 </tbody>
+
               </table>
             </div>
           )}
+
+          <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
+          <div className="overflow-x-auto bg-white">
+            <table className="table w-full table-fixed">
+              <thead className=" ">
+                <tr>
+                  <th scope="col">
+                    Technician Name
+                  </th>
+                  <th scope="col">
+                    VIN
+                  </th>
+                  <th scope="col">
+                    Make
+                  </th>
+                  <th scope="col">
+                    Model
+                  </th>
+                  <th scope="col">
+                    Model Year
+                  </th>
+                  <th scope="col">
+                    Description
+                  </th>
+                  <th scope="col">
+                    Notes
+                  </th>
+                  <th scope="col">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.isArray(jobData.vehicles) && jobData.vehicles.length > 0 ? (
+                  jobData.vehicles.map((vehicles: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4">
+                        <span className="capitalize">
+                          {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
+                            ? vehicles.assignedTechnicians
+                              .map((tech: any) => `${tech.firstName} ${tech.lastName}`)
+                              .join(', ')
+                            : '-'}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="capitalize">{vehicles.vin || '-'}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.make || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.model || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.modelYear || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {Array.isArray(vehicles.jobDescription) &&
+                          vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
+                          ? vehicles.jobDescription.join(', ')
+                          : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '-'}
+                      </td>
+                      <td>
+                        <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} >
+                          <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+                            data-tooltip-content="View" />
+                        </Link>
+                        <Tooltip id="view" place="top" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                      No vehicle found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+
+            </table>
+          </div>
         </div>
         <ToastContainer />
         {previewImage && (

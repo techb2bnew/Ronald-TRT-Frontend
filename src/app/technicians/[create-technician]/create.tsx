@@ -747,7 +747,9 @@ export default function Technicians() {
       } else {
         if (isSingleTechnician) {
           toast.success('Single technician added successfully');
-        } else {
+        } else if (searchParams!.has('manager')) {
+          toast.success('Manager added successfully');
+        } else { 
           toast.success('Technician added successfully');
         }
         if (searchParams!.has('singletechnician')) {

@@ -367,13 +367,13 @@ const Sidebar = () => {
                     Completed Work Order
                   </Link>
                 </li>
-                {/* {userType !== 'single-technician' && (
+                {userType !== 'single-technician' && (
                   <li >
                     <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
-                       Group Work Orders 
+                      Group Work Orders
                     </Link>
                   </li>
-                )} */}
+                )}
               </ul>
             )}
           </li>
@@ -530,8 +530,8 @@ const Sidebar = () => {
 
           <li className='p-1 pl-4 relative group'>
             <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
-    ${isUser5Open ? 'text-[#fff900]' : ''}
-    ${!isUser5Open && (
+            ${isUser5Open ? 'text-[#fff900]' : ''}
+            ${!isUser5Open && (
                 activeLink === '/reporting/vehicle-info' ||
                 activeLink === '/reporting/job-status' ||
                 activeLink === '/reporting/vehicle-list' ||
@@ -579,13 +579,14 @@ const Sidebar = () => {
                     <span>Vehicles List</span>
                   </Link>
                 </li>
-                 {userType !== 'single-technician' && (
-                 <li>
+                {userType !== 'single-technician' && (
+                  <li>
                     <Link href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Accounts Report</span>
                     </Link>
                   </li>
-                 )}
+                )}
+
                 {/* {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
                     <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -671,25 +672,52 @@ const Sidebar = () => {
             <span>Subscribers</span>
           </Link>
         </li> */}
-          {/* <li className='p-1'>
-          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white  rounded">
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_217_1077)">
-                <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
-                <path d="M12.1827 6.62988H7.6484C7.24227 6.62988 6.91309 6.95906 6.91309 7.3652C6.91309 7.77133 7.24227 8.10051 7.6484 8.10051H12.1827C12.5888 8.10051 12.918 7.77133 12.918 7.3652C12.918 6.95906 12.5888 6.62988 12.1827 6.62988Z" fill="currentColor" />
-                <path d="M15.6141 10.0613H7.6484C7.24227 10.0613 6.91309 10.3905 6.91309 10.7966C6.91309 11.2027 7.24227 11.5319 7.6484 11.5319H15.6141C16.0202 11.5319 16.3494 11.2027 16.3494 10.7966C16.3494 10.3905 16.0202 10.0613 15.6141 10.0613Z" fill="currentColor" />
-                <path d="M19.5667 0.15083C19.3027 0.0321973 18.9941 0.0790332 18.7775 0.270439L16.7184 2.092L14.6569 0.248604C14.3777 -0.00116212 13.9557 -0.00116212 13.6765 0.248604L11.6177 2.08978L9.55859 0.248604C9.27942 -0.00116212 8.85762 -0.00116212 8.57844 0.248604L6.51691 2.092L4.45785 0.270439C4.24145 0.0792676 3.93262 0.0324316 3.66863 0.15083C3.40492 0.269697 3.23531 0.531963 3.23531 0.821182V13.9094H0.735313C0.32918 13.9094 0 14.2386 0 14.6447V16.4339C0 18.3665 1.5723 19.9388 3.50488 19.9388V18.4682C2.38309 18.4682 1.47059 17.5555 1.47059 16.4339V15.38H12.9902V16.4339C12.9902 18.3665 14.5625 19.9388 16.4951 19.9388C18.4277 19.9388 20 18.3665 20 16.434V0.821143C20 0.531924 19.8304 0.269697 19.5667 0.15083ZM18.5294 16.4339C18.5294 17.5555 17.6167 18.4682 16.4951 18.4682C15.3736 18.4682 14.4608 17.5555 14.4608 16.4339V14.6447C14.4608 14.2386 14.1316 13.9094 13.7255 13.9094H4.7059V2.45325L6.03262 3.62704C6.31203 3.87411 6.73211 3.87286 7.00981 3.62435L9.06863 1.78317L11.1275 3.62411C11.4066 3.87388 11.8287 3.87388 12.1079 3.62411L14.1669 1.78294L16.2257 3.62411C16.5037 3.87263 16.9238 3.8736 17.2029 3.62681L18.5294 2.45329V16.4339Z" fill="currentColor" />
-              </g>
-              <defs>
-                <clipPath id="clip0_217_1077">
-                  <rect width="20" height="20" fill="currentColor" />
-                </clipPath>
-              </defs>
-            </svg>
+          {userType !== 'single-technician' && (
+            <li className='p-1 pl-4'>
 
-            <span>Invoice</span>
-          </Link>
-        </li>  */}
+              <Link href="/reporting/invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clipPath="url(#clip0_217_1077)">
+                    <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
+                    <path d="M12.1827 6.62988H7.6484C7.24227 6.62988 6.91309 6.95906 6.91309 7.3652C6.91309 7.77133 7.24227 8.10051 7.6484 8.10051H12.1827C12.5888 8.10051 12.918 7.77133 12.918 7.3652C12.918 6.95906 12.5888 6.62988 12.1827 6.62988Z" fill="currentColor" />
+                    <path d="M15.6141 10.0613H7.6484C7.24227 10.0613 6.91309 10.3905 6.91309 10.7966C6.91309 11.2027 7.24227 11.5319 7.6484 11.5319H15.6141C16.0202 11.5319 16.3494 11.2027 16.3494 10.7966C16.3494 10.3905 16.0202 10.0613 15.6141 10.0613Z" fill="currentColor" />
+                    <path d="M19.5667 0.15083C19.3027 0.0321973 18.9941 0.0790332 18.7775 0.270439L16.7184 2.092L14.6569 0.248604C14.3777 -0.00116212 13.9557 -0.00116212 13.6765 0.248604L11.6177 2.08978L9.55859 0.248604C9.27942 -0.00116212 8.85762 -0.00116212 8.57844 0.248604L6.51691 2.092L4.45785 0.270439C4.24145 0.0792676 3.93262 0.0324316 3.66863 0.15083C3.40492 0.269697 3.23531 0.531963 3.23531 0.821182V13.9094H0.735313C0.32918 13.9094 0 14.2386 0 14.6447V16.4339C0 18.3665 1.5723 19.9388 3.50488 19.9388V18.4682C2.38309 18.4682 1.47059 17.5555 1.47059 16.4339V15.38H12.9902V16.4339C12.9902 18.3665 14.5625 19.9388 16.4951 19.9388C18.4277 19.9388 20 18.3665 20 16.434V0.821143C20 0.531924 19.8304 0.269697 19.5667 0.15083ZM18.5294 16.4339C18.5294 17.5555 17.6167 18.4682 16.4951 18.4682C15.3736 18.4682 14.4608 17.5555 14.4608 16.4339V14.6447C14.4608 14.2386 14.1316 13.9094 13.7255 13.9094H4.7059V2.45325L6.03262 3.62704C6.31203 3.87411 6.73211 3.87286 7.00981 3.62435L9.06863 1.78317L11.1275 3.62411C11.4066 3.87388 11.8287 3.87388 12.1079 3.62411L14.1669 1.78294L16.2257 3.62411C16.5037 3.87263 16.9238 3.8736 17.2029 3.62681L18.5294 2.45329V16.4339Z" fill="currentColor" />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_217_1077">
+                      <rect width="20" height="20" fill="currentColor" />
+                    </clipPath>
+                  </defs>
+                </svg>
+
+                <span>Create Invoice</span>
+              </Link>
+            </li>
+          )}
+
+          {userType !== 'single-technician' && (
+            <li className='p-1 pl-4'>
+
+              <Link href="/reporting/genrated-invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clipPath="url(#clip0_217_1077)">
+                    <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
+                    <path d="M12.1827 6.62988H7.6484C7.24227 6.62988 6.91309 6.95906 6.91309 7.3652C6.91309 7.77133 7.24227 8.10051 7.6484 8.10051H12.1827C12.5888 8.10051 12.918 7.77133 12.918 7.3652C12.918 6.95906 12.5888 6.62988 12.1827 6.62988Z" fill="currentColor" />
+                    <path d="M15.6141 10.0613H7.6484C7.24227 10.0613 6.91309 10.3905 6.91309 10.7966C6.91309 11.2027 7.24227 11.5319 7.6484 11.5319H15.6141C16.0202 11.5319 16.3494 11.2027 16.3494 10.7966C16.3494 10.3905 16.0202 10.0613 15.6141 10.0613Z" fill="currentColor" />
+                    <path d="M19.5667 0.15083C19.3027 0.0321973 18.9941 0.0790332 18.7775 0.270439L16.7184 2.092L14.6569 0.248604C14.3777 -0.00116212 13.9557 -0.00116212 13.6765 0.248604L11.6177 2.08978L9.55859 0.248604C9.27942 -0.00116212 8.85762 -0.00116212 8.57844 0.248604L6.51691 2.092L4.45785 0.270439C4.24145 0.0792676 3.93262 0.0324316 3.66863 0.15083C3.40492 0.269697 3.23531 0.531963 3.23531 0.821182V13.9094H0.735313C0.32918 13.9094 0 14.2386 0 14.6447V16.4339C0 18.3665 1.5723 19.9388 3.50488 19.9388V18.4682C2.38309 18.4682 1.47059 17.5555 1.47059 16.4339V15.38H12.9902V16.4339C12.9902 18.3665 14.5625 19.9388 16.4951 19.9388C18.4277 19.9388 20 18.3665 20 16.434V0.821143C20 0.531924 19.8304 0.269697 19.5667 0.15083ZM18.5294 16.4339C18.5294 17.5555 17.6167 18.4682 16.4951 18.4682C15.3736 18.4682 14.4608 17.5555 14.4608 16.4339V14.6447C14.4608 14.2386 14.1316 13.9094 13.7255 13.9094H4.7059V2.45325L6.03262 3.62704C6.31203 3.87411 6.73211 3.87286 7.00981 3.62435L9.06863 1.78317L11.1275 3.62411C11.4066 3.87388 11.8287 3.87388 12.1079 3.62411L14.1669 1.78294L16.2257 3.62411C16.5037 3.87263 16.9238 3.8736 17.2029 3.62681L18.5294 2.45329V16.4339Z" fill="currentColor" />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_217_1077">
+                      <rect width="20" height="20" fill="currentColor" />
+                    </clipPath>
+                  </defs>
+                </svg>
+
+                <span>Sent Invoice</span>
+              </Link>
+            </li>
+          )}
+
           {/* {userType !== 'single-technician' && (
             <li className='p-1 pl-4'>
               <Link href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
@@ -807,7 +835,7 @@ const Sidebar = () => {
                       <span>Vehicles Info</span>
                     </Link>
                   </li>
-                  
+
                   {/* <li>
                     <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Jobs</span>

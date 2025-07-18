@@ -17,34 +17,54 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Papa from 'papaparse';
 import Link from 'next/link';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
+import { FormControl, FormLabel, TextField } from '@mui/material';
+import InvoiceGenerator from '@/app/component/invoice-genrated';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
 interface VehcileInfo {
   id: string;
+  jobName: string;
   name: string;
   email: string;
+  pdr: string;
   deletedStatus?: boolean;
   Role: { name: string };
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
+  const [dentTechTotalAmount, setDentTechTotalAmount] = useState<any[]>([]);
+  const [rRTotalAmount, setRRTotalAmount] = useState<any[]>([]);
+  const [totalEstimateAmount, setTotalEstimateAmount] = useState<any[]>([]);
+  const [totalJobAmount, setTotalJobAmount] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id'); // Manage sorting column state
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); // Sorting direction state
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalExpense, setTotalExpense] = useState('0');
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string>(''); // State for selected job ID
-
   const [roleType, setRoleType] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<string>('');
+  const [pdrValues, setPdrValues] = useState<Record<string, string>>({});
+  const [customerFilter, setCustomerFilter] = useState<string>('');  // Initialize the customerFilter state
+  const [customerJobs, setCustomerJobs] = useState<any[]>([]);  // Add this state to store customer-specific jobs
+  const [originalJobs, setOriginalJobs] = useState<any[]>([]);
 
+  const handlePdrChange = (jobId: string, value: string) => {
+    setPdrValues(prev => ({
+      ...prev,
+      [jobId]: value
+    }));
+  };
   useEffect(() => {
     // Ensure this code runs only on the client-side (after the component mounts)
     const storedRoleType = localStorage.getItem('types');
@@ -87,6 +107,7 @@ const JobTable: React.FC = () => {
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || "";
       const userId = localStorage.getItem('userID');
@@ -95,24 +116,52 @@ const JobTable: React.FC = () => {
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
-        ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        ? roleType === 'superadmin' || roleType === 'manager'
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin' || roleType === 'manager'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+
+      console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
 
+      console.log('API response data:', data);  // Debugging API response
+
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.response.vehicles || [];
-        setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0);
-        setTotalExpense(data.response?.totalEstimateCost || data.data.totalEstimateCost);
+          : data.jobs.vehicles || [];
+
+        const initialPdrValues: Record<string, string> = {};
+        fetchedTechnicians.forEach(job => {
+          if (job.pdr) { // Only set PDR value if it exists
+            initialPdrValues[job.id] = job.pdr.toString();
+          }
+        });
+        setPdrValues(initialPdrValues);
+        // When a customer is selected, show customer-specific jobs along with existing jobs
+        const updatedJobs = customerFilter ? [...fetchedTechnicians, ...customerJobs] : fetchedTechnicians;
+        setOriginalJobs(updatedJobs);  // Store the original jobs
+
+        // Optionally, filter and update activeJob after fetching
+        const filteredJobs = updatedJobs.filter((job: any) => {
+          return selectedStatus === 'completed'
+            ? job.vehicleStatus === true
+            : selectedStatus === 'inProgress'
+              ? job.vehicleStatus === false
+              : true;
+        });
+
+        setActiveJob(updatedJobs);
+        setDentTechTotalAmount(data.jobs?.totalDantTechCost || data.data.totalDantTechCost);
+        setRRTotalAmount(data.jobs?.totalRrCost || data.data.totalRrCost);
+        setTotalEstimateAmount(data.jobs?.totalEstimateCost || data.data.totalEstimateCost);
+        setTotalJobAmount(data.jobs?.totalJobEstimateCost || data.data.totalJobEstimateCost || '0');
+        setTotalPages(data.jobs?.totalPages || 1);
+        setTotalJobs(data.jobs?.totalVehicles || 0); // Ensure totalJobs is set correctly
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -127,6 +176,7 @@ const JobTable: React.FC = () => {
       setLoading(false);
     }
   };
+
 
 
 
@@ -148,112 +198,45 @@ const JobTable: React.FC = () => {
     setSortDirection(direction);
     setSortBy(column);
 
-    const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'fullName') {
-        const nameA = `${a?.customer?.fullName}`;
-        const nameB = `${b?.customer?.fullName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
-      }
-
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    setActiveJob(sortedJobs);
-  };
-
-
-  const toggleApproval = async (vehicleId: number, currentApprovalStatus: boolean) => {
-    // Show a confirmation dialog before proceeding
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to change the status of this Vehicle / Work Order?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#383d71',
-      cancelButtonColor: 'black',
-      confirmButtonText: 'Yes, change it!'
-    });
-
-    // Check if the user confirmed the action
-    if (result.isConfirmed) {
-      try {
-        const token = localStorage.getItem('token');
-        const technicianData = localStorage.getItem('technicianData');
-        let completedBy = '';
-        if (technicianData) {
-          try {
-            const parsed = JSON.parse(technicianData);
-            completedBy = `${parsed.firstName} ${parsed.lastName}`;
-          } catch (err) {
-            console.error('Failed to parse technicianData:', err);
-          }
+    setActiveJob(prevJobs => {
+      return [...prevJobs].sort((a, b) => {
+        // Handle job name sorting
+        if (column === 'jobName') {
+          const nameA = a?.jobName || '';
+          const nameB = b?.jobName || '';
+          return direction === 'asc'
+            ? nameA.localeCompare(nameB)
+            : nameB.localeCompare(nameA);
         }
-        const config = {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        };
 
-        const response = await axios.post(`/api/workOrderComplete`, {
-          vehicleId,
-          completedBy,
-          vehicleStatus: !currentApprovalStatus
-        }, config);
-
-        if (response.data.status) {
-          // Optimistically update the local state
-          fetchJobs(currentPage, searchTerm);
-
-          setActiveJob(prev => prev.map(job => {
-            if (job.id === vehicleId) {
-              return { ...job, jobStatus: !job.jobStatus };
-            }
-            fetchJobs(currentPage, searchTerm);
-            return job;
-          }));
-          Swal.fire({
-            title: 'Success!',
-            text: 'Vehicle / Work Order status updated successfully.',
-            confirmButtonColor: '#383d71',
-            icon: 'success',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          console.error('Failed to update Vehicle / Work Order status');
-          Swal.fire({
-            title: 'Error!',
-            text: 'Failed to update Vehicle / Work Order status.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
+        // Handle customer name sorting
+        if (column === 'fullName') {
+          const nameA = a?.customer?.fullName || '';
+          const nameB = b?.customer?.fullName || '';
+          return direction === 'asc'
+            ? nameA.localeCompare(nameB)
+            : nameB.localeCompare(nameA);
         }
-      } catch (error) {
-        console.error('Error updating Vehicle / Work Order status:', error);
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error updating Vehicle / Work Order status.',
-          icon: 'error',
-          confirmButtonText: 'OK'
-        });
-      }
-    } else {
-      // User clicked 'Cancel', do nothing
-      Swal.fire({
-        title: 'Cancelled',
-        text: 'Vehicle / Work Order status change was cancelled.',
-        icon: 'info',
-        confirmButtonText: 'OK'
+
+        // Handle other columns
+        const valueA = a[column] || '';
+        const valueB = b[column] || '';
+
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          return direction === 'asc'
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+        }
+
+        // For numbers or other types
+        if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+        if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+        return 0;
       });
-    }
+    });
   };
+
+
 
   const handlePageChange = (data: { selected: number }) => {
     console.log(`Going to page number ${data.selected + 1}`);  // react-paginate uses zero-based index
@@ -294,6 +277,7 @@ const JobTable: React.FC = () => {
   };
   const canCreate = hasPermission("approve");
 
+
   const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
@@ -302,13 +286,13 @@ const JobTable: React.FC = () => {
       return;
     }
     const csvOptions = {
-      filename: 'Vehicle / Work Orders',
+      filename: 'Invoice',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicle / Work Orders',
+      title: 'Invoice',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -346,7 +330,7 @@ const JobTable: React.FC = () => {
         notes: jobData.notes,
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.join(' '),
+        jobDescription: jobData.jobDescription.join(''),
         technicianRates: technicianRates,
       };
     });
@@ -481,18 +465,11 @@ const JobTable: React.FC = () => {
 
 
 
-
-
-
-
-
   const handleCheckboxChange = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
-
-
 
   const handleDateChange = async (dateRange: [Date, Date] | null) => {
     const token = localStorage.getItem('token');
@@ -515,7 +492,6 @@ const JobTable: React.FC = () => {
       try {
         setLoading(true);
         let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
-
         const requestBody: { [key: string]: any } = {
           startDate: startDate,
           endDate: endDate,
@@ -532,8 +508,6 @@ const JobTable: React.FC = () => {
         });
 
         setActiveJob(response.data.vehicles.updatedVehicles);
-        setTotalExpense(response.data.vehicles?.totalEstimateCost || 0);
-
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -542,132 +516,7 @@ const JobTable: React.FC = () => {
     }
   };
 
-  const renderRow = (job: any) => {
-    const isChecked = selectedIds.includes(job.id);
-    const roleType = localStorage.getItem('types') || "";
 
-    return (
-      <>
-        <tr key={job.id}>
-          <td key="checkbox">
-            <label className="flex items-center cursor-pointer relative">
-              <input
-                type="checkbox"
-                className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
-                checked={isChecked}
-                onChange={() => handleCheckboxChange(job.id)}
-              />
-              <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                </svg>
-              </span>
-            </label>
-          </td>
-          <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job.id}</Link> </td>
-
-
-          <td>{job?.jobName}</td>
-          <td>  {job?.customer?.fullName} </td>
-
-          {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-          {roleType !== 'single-technician' && (
-            <td>
-              {job?.assignedTechnicians
-                ?.filter((tech: any) => tech.techType === 'technician')
-                ?.map((tech: any) => (
-                  <div key={tech.id} className="capitalize">
-                    {tech.firstName} {tech.lastName}
-                  </div>
-                ))}
-            </td>
-          )}
-          {roleType !== 'single-technician' && (
-            <td>
-              {job?.assignedTechnicians?.map((tech: any) => (
-                <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.techFlatRate !== '' && (
-                    `$${tech.VehicleTechnician?.techFlatRate}`
-                  )}
-
-                </div>
-              ))}
-            </td>
-          )}
-          {roleType !== 'single-technician' && (
-
-            <td>
-              {job?.assignedTechnicians
-                ?.filter((tech: any) => tech.techType === 'R/I/R/R')
-                ?.map((tech: any) => (
-                  <div key={tech.id} className="capitalize">
-                    {tech.firstName} {tech.lastName}
-                  </div>
-                ))}
-            </td>
-          )}
-
-
-          {roleType !== 'single-technician' && (
-            <td>
-              {job?.assignedTechnicians?.map((tech: any) => (
-                <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.rRate !== '' && (
-                    `$${tech.VehicleTechnician?.rRate}`
-                  )}
-                </div>
-              ))}
-            </td>
-          )}
-          {roleType !== 'single-technician' && (
-            <td>${job?.totalCombined}</td>
-          )}
-
-          {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
-          <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech.technicians}`}>
-              {tech.phoneNumber}
-            </a>
-          </div>
-        ))}</td> */}
-          <td>{job?.vin}</td>
-          <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-          <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-
-          {roleType === 'single-technician' && (
-            <td>
-              {job.labourCost !== null && (
-                `$${job.labourCost}`
-              )}
-            </td>
-          )}
-          <td>
-            {canCreate && (
-
-              <span onClick={() => toggleApproval(job.id, job.vehicleStatus)} style={{ cursor: 'pointer' }}
-                className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-              >
-                {job.vehicleStatus ? 'Completed' : 'In Progress'}
-              </span>
-            )}
-
-          </td>
-          <td>
-            <TableActions
-              editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
-              deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
-              viewRoute={`/vehicle/view?vehicleId=${job.id}`}
-              idKey="vehicleId"
-              userRole='Activejobs'
-              itemId={job.id}  // Pass the technician ID
-              onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-            />
-          </td>
-        </tr>
-
-      </>
-    )
-  };
   const handleNewJobClick = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
@@ -677,8 +526,7 @@ const JobTable: React.FC = () => {
     // Prepare the payload dynamically
     const payload = {
       roleType: roleType,  // Dynamic roleType from localStorage
-      jobId: jobId,        // Dynamic jobId passed from the selected job
-      vehicleStatus: false, // Example status, can change based on the filter criteria
+      jobId: jobId,        // Dynamic jobId passed from the selected job 
     };
     console.log(payload, 'payload');
 
@@ -703,9 +551,22 @@ const JobTable: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.vehicles.updatedVehicles);
-        setTotalExpense(data.vehicles?.totalEstimateCost || 0);
+        setOriginalJobs(data.vehicles.updatedVehicles);  // Store the original jobs
 
+        // Optionally, filter and update activeJob after fetching
+        const filteredJobs = data.vehicles.updatedVehicles.filter((job: any) => {
+          return selectedStatus === 'completed'
+            ? job.vehicleStatus === true
+            : selectedStatus === 'inProgress'
+              ? job.vehicleStatus === false
+              : true;
+        });
+        setDentTechTotalAmount(data.vehicles?.totalDantTechCost);
+        setRRTotalAmount(data.vehicles?.totalRrCost);
+        setTotalEstimateAmount(data.vehicles?.totalEstimateCost);
+        setTotalJobAmount(data.vehicles?.totalJobEstimateCost || '0');
+
+        setActiveJob(filteredJobs);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -715,18 +576,285 @@ const JobTable: React.FC = () => {
     }
   };
 
+  const handleNewCustomerClick = async (customerId: string) => {
+  }
+
+
+  const handleStatusChange = (status: string) => {
+    console.log(status, 'status');
+    setSelectedStatus(status);
+  };
+
+  useEffect(() => {
+    if (selectedStatus === '') {
+      // When no status is selected, show all original jobs
+      setActiveJob(originalJobs);  // Set active jobs to the original jobs
+    } else {
+      // When a status is selected, filter jobs from originalJobs
+      const filtered = originalJobs.filter(job => {
+        console.log(job.vehicleStatus, 'job vehicleStatus');
+
+        if (selectedStatus === 'completed') {
+          return job.vehicleStatus === true;   // Show completed jobs
+        } else if (selectedStatus === 'inProgress') {
+          return job.vehicleStatus === false;   // Show in-progress jobs
+        }
+        return true;  // For "All Status", no filtering
+      });
+
+      if (filtered.length === 0) {
+        console.log('No jobs match the filter criteria');
+      }
+
+      setActiveJob(filtered);  // Update the active job list with filtered data
+    }
+  }, [selectedStatus, originalJobs]);
+
+
+  const handleSavePdr = async (vehicleId: string, pdrValue: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      // Validate if pdrValue exists and is a valid number
+      if (!pdrValue || isNaN(Number(pdrValue))) {
+        alert('Please enter a valid PDR value');
+        return;
+      }
+
+      // Prepare payload according to your API requirements
+      const payload = [{
+        vehicleId: vehicleId,
+        pdr: Number(pdrValue) // Convert string to number
+      }];
+
+      // Make API call
+      const response = await fetch(`${apiUrl}/updateVehiclePdr`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update PDR');
+      }
+
+      const data = await response.json();
+      toast.success("PDR updated successfully!");
+      fetchJobs(currentPage, searchTerm, pageSize);
+    } catch (error) {
+      console.error('Error updating PDR:', error);
+    }
+  };
+
+
+  const handleGenerateInvoice = async () => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || '';
+
+    // Get selected jobs
+    const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
+
+    if (selectedJobs.length === 0) {
+      toast.error('Please select at least one vehicle to generate invoice');
+      return;
+    }
+
+    try {
+      // Prepare payload
+      const payload = {
+        vehicles: selectedJobs.map(job => ({
+          vehicleId: job.id,
+          jobId: job.jobId || job.id, // Use jobId if available, fallback to id
+          customerId: job.customer?.id
+        })),
+      };
+
+      // Make API call
+      const response = await axios.post(`${apiUrl}/createInvoice`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data) {
+        toast.success('Invoice generated successfully!');
+        const pdfLink = response.data.invoice.invoiceUrl;
+        const subject = 'Your Invoice is Ready';
+        const body = `Dear Customer,\n\nPlease find your invoice below:\n\n${pdfLink}\n\nBest regards.`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        fetchJobs(currentPage, searchTerm, pageSize);
+      } else {
+        toast.error(response.data.message || 'Failed to generate invoice');
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      toast.error('An error occurred while generating invoice');
+    }
+  };
+
+
+  const renderRow = (job: any) => {
+    const isChecked = selectedIds.includes(job.id);
+    const roleType = localStorage.getItem('types') || "";
+
+    const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
+      const parsedJob = job;
+      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
+    }, 0);
+    const simpleFlatRate = Number(job?.simpleFlatRate);
+    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
+      ? subtotalcost + simpleFlatRate
+      : subtotalcost;
+    return (
+      <tr key={job.id}>
+        <td key="checkbox">
+          <label className="flex items-center cursor-pointer relative">
+            <input
+              type="checkbox"
+              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+              checked={isChecked}
+              onChange={() => handleCheckboxChange(job.id)}
+            />
+            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+              </svg>
+            </span>
+          </label>
+        </td>
+        <td>{job?.vin}</td>
+
+        {/* <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job?.id}</Link> </td>
+
+        <td>{job?.jobName}</td> */}
+        <td>  {job?.customer?.fullName} </td>
+        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
+
+        <td>
+          {job?.assignedTechnicians
+            ?.filter((tech: any) => tech.techType === 'technician')
+            ?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.firstName} {tech.lastName}
+              </div>
+            ))}
+        </td>
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.techFlatRate !== '' && (
+                  `$${tech.VehicleTechnician?.techFlatRate}`
+                )}
+
+              </div>
+            ))}
+          </td>
+        )}
+        <td>
+          {job?.assignedTechnicians
+            ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+            ?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.firstName} {tech.lastName}
+              </div>
+            ))}
+        </td>
+
+
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.rRate !== '' && (
+                  `$${tech.VehicleTechnician?.rRate}`
+                )}
+              </div>
+            ))}
+          </td>
+        )}
+        <td>${job?.totalCombined}</td>
+
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+<td>
+          <FormControl fullWidth size="small">
+            <TextField
+              label=""
+              variant="outlined"
+              fullWidth
+              color="warning"
+              size="small"
+              type='date'
+              value='date'
+            />
+          </FormControl></td>
+        <td>
+          {canCreate && (
+
+            <span
+              className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            >
+              {job.vehicleStatus ? 'Completed' : 'In Progress'}
+            </span>
+          )}
+
+        </td>
+        <td>
+          <div className="flex gap-2 items-center">
+            <FormControl fullWidth size="small">
+              <TextField
+                label="PDR"
+                variant="outlined"
+                fullWidth
+                color="warning"
+                size="small"
+                type='number'
+                value={pdrValues[job.id] || ''}
+                onChange={(e) => handlePdrChange(job.id, e.target.value)}
+              />
+            </FormControl>
+            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
+          </div>
+        </td>
+        <td className='text-left'>
+          <div className="flex gap-3 items-center">
+            <Link href={`/vehicle/view?vehicleId=${job.id}`} >
+              <Image alt='eye' src={Eye} className='w-[20px] ' data-tooltip-id="view"
+                data-tooltip-content="View" />
+            </Link>
+            <Tooltip id="view" place="top" />
+          </div>
+        </td>
+      </tr>
+    )
+  };
 
   return (
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Work Order List', href: '/vehicle/vehicle' }
+          { label: 'Invoice', href: '/reporting/invoice' }
         ]}
       />
-
-      <CommonHeader heading="Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Vehicle / Work Order" buttonLink="/vehicle/create-vehicle" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} />
-
+      <div className="flex justify-end gap-3 mb-3 items-center">
+        <button onClick={handleGenerateInvoice} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Genrate Invoice</button>
+        <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} />
+        <button className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
+      </div>
+      <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} />
+      <div className="flex gap-[3rem] mb-2 shadow-lg p-2">
+        <div><b>Total Work Order </b>: {totalJobs}</div>
+        <div><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
+        <div><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
+        <div><b>Total Job Estimate </b>: ${totalJobAmount}</div>
+        <div><b>Total Expense </b>: ${totalEstimateAmount}</div>
+      </div>
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
@@ -751,15 +879,17 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
+              {/* <th className="w-[80px]" onClick={() => handleSort('id')}>
+                Job ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[120px]">Job Title</th>
+              <th className="w-[100px]"   >Job Title
+              </th> */}
+              <th className="w-[160px]">VIN</th>
 
               <th className="w-[120px]"  >
                 Customer Name
@@ -767,68 +897,53 @@ const JobTable: React.FC = () => {
               {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
+              <th className="w-[150px]" >
+                Assigned Technician
+              </th>
               {roleType !== 'single-technician' && (
-                <th className="w-[150px]" >
-                  Assigned Technician
-                </th>
+                <th className="w-[100px]">Dent Tech Rate</th>
               )}
-              {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Tech Flat Rate</th>
-              )}
-              {roleType !== 'single-technician' && (
-                <th className="w-[130px]" >
-                  Assigned R/I/R/R
-                </th>
-              )}
+              <th className="w-[130px]" >
+                Assigned R/I/R/R
+              </th>
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">R/I/R/R</th>
               )}
               {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Total Expense</th>
+                <th className="w-[80px]">Total Expense</th>
               )}
-              <th className="w-[150px]">VIN</th>
-              <th className="w-[100px]">Start Date</th>
+              <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
-
-              {roleType === 'single-technician' && (
-                <th className="w-[80px]">Labour Cost</th>
-              )}
+              <th className="w-[150px]">Generated Invoice Date</th>
               <th className="w-[130px]">Status</th>
-              <th className="w-[100px]">Action</th>
+              <th className="w-[160px]">PDR</th>
+              <th className="w-[80px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                <td colSpan={12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob?.length === 0 ? (
+            ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                <td colSpan={12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob?.map((job) => renderRow(job))
-            )}
-            {roleType !== 'single-technician' && (
-
-              <tr>
-                <td colSpan={9} className='text-right font-semibold'>
-                  <span className='pr-6'>
-                    Total: ${totalExpense}
-                  </span>
-                </td>
-              </tr>
+              activeJob.map((job) => renderRow(job))
             )}
           </tbody>
         </table>
       </div>
-      {activeJob?.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )}
+      <div className="flex justify-end gap-3 items-center">
+        {activeJob.length > 0 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
+      </div>
     </div>
   );
 };

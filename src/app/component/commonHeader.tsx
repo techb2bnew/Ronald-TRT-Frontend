@@ -7,6 +7,7 @@ import { addDays } from 'date-fns';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
+import toast from 'react-hot-toast';
 
 interface CommonHeaderProps {
   heading: string;
@@ -26,32 +27,50 @@ interface CommonHeaderProps {
   onColumnSelect?: (column: string[]) => void;
   additionalComponents?: React.ReactNode;
   showDatePicker?: boolean;
-  onDateChange?: (newValue: [any, any]) => void; 
+  onDateChange?: (newValue: [any, any]) => void;
   onNewJobClick?: (jobId: string, roleType: string) => void;
   onNewTechClick?: (jobId: string, roleType: string) => void;
-  roleType?: string; 
+  roleType?: string;
+  onCustomerChange?: (customer: string, roleType: string) => void;
+  onStatusChange?: (status: string) => void;
+  onInvoiceStatueChange?: (status: string) => void;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
-  const [jobs, setJobs] = useState<any[]>([]); 
-  const [tech, setTech] = useState<any[]>([]); 
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [tech, setTech] = useState<any[]>([]);
   const [jobsFilter, setJobsFilter] = useState<string>('');
+  const [customerFilter, setCustomerFilter] = useState<string>('');
   const [techFilter, settechFilter] = useState<string>('');
-  const [selectedJobId, setSelectedJobId] = useState<string>(''); // State for selected job ID
-  const [selectedTechId, setSelectedTechId] = useState<string>(''); // State for selected job ID
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedTechId, setSelectedTechId] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  const [effectiveRoleType, setEffectiveRoleType] = useState(roleType || '');
+  const [customer, setCustomer] = useState<any[]>([]);
+  const [customerJobs, setCustomerJobs] = useState<any[]>([]);
   const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
     startDate: null,
     endDate: null
   });
-  const effectiveRoleType = roleType || localStorage.getItem('types') || '';
+
+  useEffect(() => {
+    // This code only runs on the client side
+    if (typeof window !== 'undefined') {
+      const storedRoleType = localStorage.getItem('types');
+      if (storedRoleType && !roleType) {
+        setEffectiveRoleType(storedRoleType);
+      }
+    }
+  }, [roleType]);
+
   const handleDateChange = (ranges: any) => {
     setDates({
       startDate: ranges.selection.startDate,
@@ -131,100 +150,157 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     setShowDatePicker(false); // Close the date picker after applying filter
   };
 
- const fetchJobs = async (page = 1, passedRoleType: string) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-  const token = localStorage.getItem('token');
-  const userId = localStorage.getItem('userID');
+  const fetchJobs = async (page = 1, passedRoleType: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userID');
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+
+    // Use passedRoleType directly, no need to fallback to localStorage
+    const effectiveRoleType = passedRoleType || '';  // If passedRoleType is empty, fallback to an empty string or handle as needed
+    console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
+
+    let url;
+    if (effectiveRoleType === 'superadmin') {
+      url = `/api/jobListing?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
+    } else if (effectiveRoleType === 'single-technician') {
+      url = `/api/jobListing?page=${page}&roleType=single-technician`;
+    } else {
+      url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+
+      if (response.ok) {
+        const fetchedJobs = data.jobs?.jobs || [];
+        setJobs((prev) => [...prev, ...fetchedJobs]);
+        setHasMore(fetchedJobs.length > 0);
+      } else {
+        console.error('Error fetching job data:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+    }
   };
 
-  // Use passedRoleType directly, no need to fallback to localStorage
-  const effectiveRoleType = passedRoleType || '';  // If passedRoleType is empty, fallback to an empty string or handle as needed
-  console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
 
-  let url;
-  if (effectiveRoleType === 'superadmin') {
-    url = `/api/jobListing?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
-  } else if (effectiveRoleType === 'single-technician') {
-    url = `/api/jobListing?page=${page}&roleType=single-technician`;
-  } else {
-    url = `/api/jobListing?userId=${userId}&page=${page}`;
-  }
+  const fetchCustomer = async (page = 1, passedRoleType: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
 
-  try {
-    const response = await fetch(url, { headers });
-    const data = await response.json();
+      const response = await fetch(`/api/fetchJobCustomerTechnician?endpoint=fetchCustomer&userId=${userId}&roleType=${roleType}&page=${page}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setCustomer((prevCustomers) => [...prevCustomers, ...data.customers?.customers || []]);
 
-    if (response.ok) {
-      const fetchedJobs = data.jobs?.jobs || [];
-      setJobs((prev) => [...prev, ...fetchedJobs]);
-      setHasMore(fetchedJobs.length > 0);
-    } else {
-      console.error('Error fetching job data:', data.error);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
     }
-  } catch (error) {
-    console.error('Error fetching job data:', error);
-  }
-};
-
-
-
-
- 
-useEffect(() => {  
-  fetchJobs(page, effectiveRoleType);  
-}, [page, effectiveRoleType]);
-
-
-
- const fetchTech = async (page = 1, passedRoleType: string) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-  const token = localStorage.getItem('token');
-  const userId = localStorage.getItem('userID');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
   };
 
-  // Use passedRoleType directly, no need to fallback to localStorage
-  const effectiveRoleType = passedRoleType || '';  // If passedRoleType is empty, fallback to an empty string or handle as needed
-  console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
+  const fetchCustomerData = async (customerId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
 
-  let url;
-  if (effectiveRoleType === 'superadmin') {
-    url = `${apiUrl}/fetchIndividualTechnician?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
-  } else if (effectiveRoleType === 'single-technician') {
-    url = `${apiUrl}/fetchIndividualTechnician?page=${page}&roleType=single-technician`;
-  } else {
-    url = `${apiUrl}/fetchIndividualTechnician?userId=${userId}&page=${page}`;
-  }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-  try {
-    const response = await fetch(url, { headers });
-    const data = await response.json();
+      const response = await fetch(
+        `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
 
-    if (response.ok) {
-      const fetchedTech = data.technician?.technicians || [];
-      setTech((prev) => [...prev, ...fetchedTech]);
-      setHasMore(fetchedTech.length > 0);
-    } else {
-      console.error('Error fetching job data:', data.error);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Return both jobs and all technicians (we'll filter later when job is selected)
+        return {
+          jobs: data.jobs || [],
+          allTechnicians: data.jobs?.flatMap((job: any) => job.technicians) || []
+        };
+      } else {
+        toast.error(data.error || 'Error fetching customer data');
+        return { jobs: [], allTechnicians: [] };
+      }
+    } catch (error) {
+      toast.error('An error occurred while fetching customer data');
+      return { jobs: [], allTechnicians: [] };
     }
-  } catch (error) {
-    console.error('Error fetching job data:', error);
-  }
-};
+  };
+
+  useEffect(() => {
+    fetchCustomer(page, effectiveRoleType);
+  }, [page, effectiveRoleType]);
+
+  useEffect(() => {
+    fetchJobs(page, effectiveRoleType);
+  }, [page, effectiveRoleType]);
+
+
+
+  const fetchTech = async (page = 1, passedRoleType: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userID');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+
+    // Use passedRoleType directly, no need to fallback to localStorage
+    const effectiveRoleType = passedRoleType || '';  // If passedRoleType is empty, fallback to an empty string or handle as needed
+    console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
+
+    let url;
+    if (effectiveRoleType === 'superadmin') {
+      url = `${apiUrl}/fetchIndividualTechnician?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
+    } else if (effectiveRoleType === 'single-technician') {
+      url = `${apiUrl}/fetchIndividualTechnician?page=${page}&roleType=single-technician`;
+    } else {
+      url = `${apiUrl}/fetchIndividualTechnician?userId=${userId}&page=${page}`;
+    }
+
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+
+      if (response.ok) {
+        const fetchedTech = data.technician?.technicians || [];
+        setTech((prev) => [...prev, ...fetchedTech]);
+        setHasMore(fetchedTech.length > 0);
+      } else {
+        console.error('Error fetching job data:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+    }
+  };
 
 
 
 
- 
-useEffect(() => {  
-  fetchTech(page, effectiveRoleType);  
-}, [page, effectiveRoleType]);
+
+  useEffect(() => {
+    fetchTech(page, effectiveRoleType);
+  }, [page, effectiveRoleType]);
 
 
   const handleScroll = (e: any) => {
@@ -242,28 +318,48 @@ useEffect(() => {
   };
 
   const handleTechFilterChange = (event: SelectChangeEvent<string>) => {
-  const value = event.target.value; // Selected job ID
-  console.log(value, 'value');
-  
-  settechFilter(value);  // Update the job filter state
-  setSelectedTechId(value); // Store the selected job ID for dynamic filtering
-  
-  // Explicitly pass jobId and 'single-technician' as the roleType
-  if (onNewTechClick) {
-    onNewTechClick(value, 'single-technician');  // Pass both jobId and roleType
+    const value = event.target.value; // Selected job ID
+    console.log(value, 'value');
+
+    settechFilter(value);  // Update the job filter state
+    setSelectedTechId(value); // Store the selected job ID for dynamic filtering
+
+    // Explicitly pass jobId and 'single-technician' as the roleType
+    if (onNewTechClick) {
+      onNewTechClick(value, 'single-technician');  // Pass both jobId and roleType
+    }
+  };
+
+  const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
+    const value = event.target.value; // Selected job ID
+    setJobsFilter(value);  // Update the job filter state
+    setSelectedJobId(value); // Store the selected job ID for dynamic filtering
+
+    // Explicitly pass jobId and 'single-technician' as the roleType
+    if (onNewJobClick) {
+      onNewJobClick(value, 'single-technician');  // Pass both jobId and roleType
+    }
+  };
+
+const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
+  const value = event.target.value;
+  setCustomerFilter(value);
+  setSelectedCustomerId(value);
+
+  if (value) {
+    const { jobs } = await fetchCustomerData(value);
+    setCustomerJobs(jobs);
+  } else {
+    setCustomerJobs([]); // Reset customer jobs if no customer is selected
+  }
+
+  // Trigger the customer change event
+  if (onCustomerChange) {
+    onCustomerChange(value, 'single-technician'); // Pass the customer ID and role type
   }
 };
 
-const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
-  const value = event.target.value; // Selected job ID
-  setJobsFilter(value);  // Update the job filter state
-  setSelectedJobId(value); // Store the selected job ID for dynamic filtering
-  
-  // Explicitly pass jobId and 'single-technician' as the roleType
-  if (onNewJobClick) {
-    onNewJobClick(value, 'single-technician');  // Pass both jobId and roleType
-  }
-};
+
 
 
 
@@ -285,8 +381,41 @@ const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
               <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
             </div>
           )}
+
+          {onCustomerChange && (
+            <FormControl variant="outlined" size="small" className="w-[150px]">
+              <InputLabel id="assignCustomer" color="warning">Select customer</InputLabel>
+              <Select
+                labelId="assignCustomer"
+                id="select-assignCustomer"
+                color="warning"
+                value={customerFilter}
+                label="Select customer"
+                name="assignCustomer"
+                onChange={handleCustomerFilterChange}
+
+                MenuProps={{
+                  PaperProps: {
+                    onScroll: handleScroll,
+                    style: {
+                      maxHeight: 300,
+                    }
+                  }
+                }}
+              >
+                {customer.map((customer) => (
+                  <MenuItem key={`${customer.id}-${customer.fullName}-${Math.random().toString(36).substr(2, 5)}`} value={customer.id}>
+                    {customer.fullName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+
+
           {onNewJobClick && (
-            <FormControl size="small" variant="outlined" className="w-[180px]">
+            <FormControl size="small" variant="outlined" className="w-[150px]">
               <InputLabel id="job-dropdown-label" color="warning">Jobs</InputLabel>
               <Select
                 labelId="job-dropdown-label"
@@ -299,23 +428,70 @@ const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
                   PaperProps: {
                     onScroll: handleScroll,
                     style: {
-                      maxHeight: 300, // Fixed height in pixels
-                      width: 250, // Optional: set width if needed
+                      maxHeight: 300,
                     },
                   },
                 }}
               >
-                {jobs?.length > 0 ? (
-                  jobs?.map((job) => (
-                    <MenuItem key={`${job.id}-${job.jobName}`} value={job.id}>{job.jobName}</MenuItem>
-                  ))
+                {customerFilter ? (
+                  customerJobs.length > 0 ? (
+                    customerJobs.map((job) => (
+                      <MenuItem key={`${job.id}-${job.jobName}`} value={job.id}>
+                        {job.jobName}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No jobs for this customer</MenuItem>
+                  )
                 ) : (
-                  <MenuItem value="">No Jobs Available</MenuItem>
+                  /* When no customer is selected, show all jobs from fetchJobs */
+                  jobs.length > 0 ? (
+                    jobs.map((job) => (
+                      <MenuItem key={`${job.id}-${job.jobName}`} value={job.id}>
+                        {job.jobName}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem value="">No jobs available</MenuItem>
+                  )
                 )}
               </Select>
             </FormControl>
           )}
-
+          {onStatusChange && (
+            <FormControl size="small" variant="outlined" className="w-[140px]">
+              <InputLabel id="status-dropdown-label" color="warning">Work Order Status</InputLabel>
+              <Select
+                labelId="status-dropdown-label"
+                id="status-dropdown"
+                defaultValue=""
+                onChange={(e) => onStatusChange?.(e.target.value)}
+                label="Work Order Status"
+                color="warning"
+              >
+                <MenuItem value="">All Status</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+                <MenuItem value="inProgress">In Progress</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+          {onInvoiceStatueChange && (
+            <FormControl size="small" variant="outlined" className="w-[120px]">
+              <InputLabel id="invoiceStatus-dropdown-label" color="warning">Invoice Status</InputLabel>
+              <Select
+                labelId="invoiceStatus-dropdown-label"
+                id="invoiceStatus-dropdown"
+                defaultValue=""
+                onChange={(e) => onInvoiceStatueChange?.(e.target.value as string)}
+                label="Invoice Status"
+                color="warning"
+              >
+                <MenuItem value="">Invoice Status</MenuItem> 
+                <MenuItem value="Paid">Paid</MenuItem>
+                <MenuItem value="Unpaid">Unpaid</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           {onNewTechClick && (
             <FormControl size="small" variant="outlined" className="w-[180px]">
               <InputLabel id="tech-dropdown-label" color="warning">Technician</InputLabel>
@@ -330,15 +506,14 @@ const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
                   PaperProps: {
                     onScroll: handleTechScroll,
                     style: {
-                      maxHeight: 300, // Fixed height in pixels
-                      width: 250, // Optional: set width if needed
+                      maxHeight: 300,
                     },
                   },
                 }}
               >
                 {tech?.length > 0 ? (
                   tech?.map((tech) => (
-                    <MenuItem key={`tech-${tech.id}-${tech.firstName}-${tech.lastName}-${Math.random().toString(36).substr(2, 9)}`}  value={tech.id}>{tech.firstName} {tech.lastName}</MenuItem>
+                    <MenuItem key={`tech-${tech.id}-${tech.firstName}-${tech.lastName}-${Math.random().toString(36).substr(2, 9)}`} value={tech.id}>{tech.firstName} {tech.lastName}</MenuItem>
                   ))
                 ) : (
                   <MenuItem value="">No Technician Available</MenuItem>
@@ -352,33 +527,36 @@ const handleJobFilterChange = (event: SelectChangeEvent<string>) => {
               {additionalComponents}
             </div>
           )}
-          {showDatePicker && (
-            <button
-              className="p-3 bg-white text-[12px] rounded"
-              onClick={handleDateFilterClick}
-            >
-              Date Filter
-            </button>
-          )}
-          {showDatePickers && (
-            <div className="absolute z-40" style={{ top: '14rem' }}>
-              <DateRange
-                editableDateInputs={true}
-                onChange={handleDateChange}
-                moveRangeOnFirstSelection={false}
-                ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
-                rangeColors={["#383d71"]}
-              />
-              <div className="text-right">
-                <button
-                  className="bg-[#383d71] text-white p-2 text-sm rounded"
-                  onClick={handleApplyFilter}
-                >
-                  Close
-                </button>
+          <div className="relative">
+
+            {showDatePicker && (
+              <button
+                className="p-3 bg-white text-[12px] rounded"
+                onClick={handleDateFilterClick}
+              >
+                Date Filter
+              </button>
+            )}
+            {showDatePickers && (
+              <div className="absolute z-40" style={{ top: '3rem', right: '0rem' }}>
+                <DateRange
+                  editableDateInputs={true}
+                  onChange={handleDateChange}
+                  moveRangeOnFirstSelection={false}
+                  ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
+                  rangeColors={["#383d71"]}
+                />
+                <div className="text-right">
+                  <button
+                    className="bg-[#383d71] text-white p-2 text-sm rounded"
+                    onClick={handleApplyFilter}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
 
 

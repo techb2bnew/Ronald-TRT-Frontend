@@ -40,6 +40,7 @@ const JobTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [roleType, setRoleType] = useState<string | null>(null);
+  const [totalExpense, setTotalExpense] = useState(0);
 
 
   useEffect(() => {
@@ -110,6 +111,7 @@ const JobTable: React.FC = () => {
         setActiveJob(jobsWithVehicleCount);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+        setTotalExpense(data.jobs?.totalEstimateCost || data.totalEstimateCost);  
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -505,7 +507,7 @@ const JobTable: React.FC = () => {
         {roleType !== 'single-technician' && (
           <td>{job?.manager?.firstName} {job?.manager?.lastName}</td>
         )}
-        <td>({job.vehicleCount || 0}) Work Order</td>
+        <td>{job.vehicleCount || 0}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
         <td>${job.estimatedCost || '0'}</td>
@@ -671,6 +673,11 @@ const JobTable: React.FC = () => {
             ) : (
               activeJob.map((job) => renderRow(job))
             )}
+            <td colSpan={roleType === 'single-technician' ? 8 : 9} className='text-right font-semibold'>
+          <span className={roleType === 'single-technician' ? 'pr-[50px]' : 'pr-6'}>
+           Total: ${totalExpense}
+          </span>
+        </td>
           </tbody>
         </table>
       </div>

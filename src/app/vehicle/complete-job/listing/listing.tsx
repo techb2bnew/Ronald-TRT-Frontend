@@ -37,9 +37,17 @@ const CompletedJobs: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [roleType, setRoleType] = useState<string | null>(null);
+  const [totalExpense, setTotalExpense] = useState(0);
+
+  useEffect(() => {
+    // Ensure this code runs only on the client-side (after the component mounts)
+    const storedRoleType = localStorage.getItem('types');
+    setRoleType(storedRoleType); // Set the roleType from localStorage
+  }, []);
 
   const handleDeleteSuccess = (deletedId: string) => {
-    toast.success('Technician deleted successfully');
+    // toast.success('Completed job deleted successfully');
 
     // ✅ Remove the deleted technician from the table
     setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
@@ -77,6 +85,8 @@ const CompletedJobs: React.FC = () => {
         // const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
         setTotalPages(data?.vehicles?.totalPages);
         setActiveJob(fetchedTechnicians);
+        setTotalExpense(data.vehicles?.totalEstimateCost || data.data.totalEstimateCost);
+
         // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
         // setCurrentPage(data.jobs.currentPage); // Update current page from API
       } else {
@@ -360,7 +370,7 @@ const CompletedJobs: React.FC = () => {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-        const technicianData = localStorage.getItem('technicianData'); 
+        const technicianData = localStorage.getItem('technicianData');
         let completedBy = '';
         if (technicianData) {
           try {
@@ -464,7 +474,9 @@ const CompletedJobs: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.vehicles);
+        setActiveJob(response.data.vehicles.updatedVehicles);
+        setTotalExpense(response.data.vehicles?.totalEstimateCost || 0);
+
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -509,7 +521,9 @@ const CompletedJobs: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.vehicles);
+        setActiveJob(data.vehicles.updatedVehicles);
+        setTotalExpense(data.vehicles?.totalEstimateCost || 0);
+
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -520,15 +534,12 @@ const CompletedJobs: React.FC = () => {
   };
 
   const renderRow = (completejob: any) => {
-
     const isChecked = selectedIds.includes(completejob.id);
     const roleType = localStorage.getItem('types') || "";
 
-
     return (
-      <React.Fragment key={completejob.id}>
+      <>
         <tr key={completejob.id}>
-
           <td key="checkbox">
             <label className="flex items-center cursor-pointer relative">
               <input
@@ -545,29 +556,85 @@ const CompletedJobs: React.FC = () => {
             </label>
           </td>
           <td> <Link href={`/vehicle/view?vehicleId=${completejob.id}`} className='hover:underline'> {completejob.id}</Link> </td>
+
+
           <td>{completejob?.jobName}</td>
           <td>  {completejob?.customer?.fullName} </td>
 
-          <td> {completejob?.assignedTechnicians?.map((tech: any, index: number) => (
-            <div key={`${tech.id}-${index}`} className='capitalize'>
-              {tech.firstName} {tech.lastName}
-            </div>
-          ))} </td>
+          {/* <td><a className="hover:underline" href={`tel:${completejob?.customer?.phoneNumber}`}>{completejob?.customer?.phoneNumber}</a></td> */}
+          {roleType !== 'single-technician' && (
+            <td>
+              {completejob?.assignedTechnicians
+                ?.filter((tech: any) => tech.techType === 'technician')
+                ?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.firstName} {tech.lastName}
+                  </div>
+                ))}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
+            <td>
+              {completejob?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.techFlatRate !== '' && (
+                    `$${tech.VehicleTechnician?.techFlatRate}`
+                  )}
 
-          {/* <td>  {completejob?.technicians?.map((tech: any, index: number) => (
-            <div key={`${tech.id}-${index}`}>
-              {tech.firstName} {tech.lastName}
-            </div>
-          ))}</td> */}
-          {/* <td>{completejob?.technician?.firstName} {completejob?.technician?.lastName}</td>  */}
+                </div>
+              ))}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
+
+            <td>
+              {completejob?.assignedTechnicians
+                ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+                ?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.firstName} {tech.lastName}
+                  </div>
+                ))}
+            </td>
+          )}
 
 
+          {roleType !== 'single-technician' && (
+            <td>
+              {completejob?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.rRate !== '' && (
+                    `$${tech.VehicleTechnician?.rRate}`
+                  )}
+                </div>
+              ))}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
+            <td>${completejob?.totalCombined}</td>
+          )}
 
-          <td>{completejob.vin}</td>
-          <td>{completejob.make}</td>
+          {/* <td>{completejob?.assignedTechnicians?.map((tech: any) => (
+          <div key={tech.id}>
+            <a className="hover:underline" href={`tel:${tech.technicians}`}>
+              {tech.phoneNumber}
+            </a>
+          </div>
+        ))}</td> */}
+          <td>{completejob?.vin}</td>
           <td>{completejob.startDate ? new Date(completejob.startDate).toLocaleDateString() : ''}</td>
           <td>{completejob.endDate ? new Date(completejob.endDate).toLocaleDateString() : ''}</td>
+
+          {roleType === 'single-technician' && (
+            <td>
+              {completejob.labourCost !== '' && (
+                `$${completejob.labourCost}`
+              )}
+            </td>
+          )}
           <td>
+
+
             <span onClick={() => toggleApproval(completejob.id, completejob.vehicleStatus)} style={{ cursor: 'pointer' }}
               className={`badge ${completejob.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
@@ -576,10 +643,9 @@ const CompletedJobs: React.FC = () => {
 
 
           </td>
-
           <td>
             <TableActions
-              editRoute={`/vehicle/create-vehicle?vahicleId=${completejob.id}&completeOrder`}
+              editRoute={`/vehicle/create-vehicle?vahicleId=${completejob.id}`}
               deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
               viewRoute={`/vehicle/view?vehicleId=${completejob.id}`}
               idKey="vehicleId"
@@ -589,8 +655,9 @@ const CompletedJobs: React.FC = () => {
             />
           </td>
         </tr>
-      </React.Fragment>
-    );
+
+      </>
+    )
   };
 
   return (
@@ -607,9 +674,8 @@ const CompletedJobs: React.FC = () => {
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              <th className="w-[50px]">
                 <label className="flex items-center cursor-pointer relative">
-
                   <input
                     type="checkbox"
                     checked={selectedIds.length === activeJob.length}
@@ -627,65 +693,77 @@ const CompletedJobs: React.FC = () => {
                     </svg>
                   </span>
                 </label>
-
               </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              {/* <th className="w-[150px]" onClick={() => handleSort('jobDescription')}>
-                Job Description
-                {sortBy === 'jobDescription' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                   {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th> */}
-              <th className="w-[100px]">Job Title</th>
-              <th className="w-[160px]" onClick={() => handleSort('customerName')}>
-                Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
+              <th className="w-[120px]">Job Title</th>
 
-              <th className="w-[160px]" onClick={() => handleSort('technicianName')}>
-                Technician Name
-                {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+              <th className="w-[120px]"  >
+                Customer Name
               </th>
-              <th className="w-[160px]">VIN</th>
-              <th className="w-[100px]">Vehicle Make</th>
+              {/* <th className="w-[120px]">
+                      Customer Number
+                    </th> */}
+              {roleType !== 'single-technician' && (
+                <th className="w-[150px]" >
+                  Assigned Technician
+                </th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[120px]">Tech Flat Rate</th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[130px]" >
+                  Assigned R/I/R/R
+                </th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[80px]">R/I/R/R</th>
+              )}
+              {roleType !== 'single-technician' && (
+                <th className="w-[120px]">Total Expense</th>
+              )}
+              <th className="w-[150px]">VIN</th>
               <th className="w-[100px]">Start Date</th>
-              <th className="w-[120px]">End Date</th>
-              <th className="w-[120px]">Order Status</th>
-              <th className="w-[120px]">Action</th>
+              <th className="w-[80px]">End Date</th>
+
+              {roleType === 'single-technician' && (
+                <th className="w-[80px]">Labour Cost</th>
+              )}
+              <th className="w-[130px]">Status</th>
+              <th className="w-[100px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob.length === 0 ? (
+            ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob.map((completejob) => renderRow(completejob))
+              activeJob?.map((job) => renderRow(job))
+            )}
+            {roleType !== 'single-technician' && (
+              <tr>
+                <td colSpan={9} className='text-right font-semibold'>
+                  <span className='pr-6'>
+                    Total: ${totalExpense}
+                  </span>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

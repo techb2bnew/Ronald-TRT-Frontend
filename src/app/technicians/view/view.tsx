@@ -9,7 +9,11 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
-
+import { Link } from '@mui/material';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 export default function ViewDetails() {
@@ -382,12 +386,12 @@ export default function ViewDetails() {
                   <span className="text-sm text-black-500">N/A</span>
                 )}
               </p>
-             
-             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
+
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Type:</strong>
                 {technician.techType}
-                </p>
-              
+              </p>
+
 
             </div>
 
@@ -456,6 +460,166 @@ export default function ViewDetails() {
 
 
             </div>
+          </div>
+
+
+          <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Job List</h3>
+          <div className="overflow-x-auto bg-white">
+            <table className="table w-full table-fixed">
+              <thead className=" ">
+                <tr>
+                  <th scope="col">
+                    Job Id
+                  </th>
+                  <th scope="col">
+                    Job Name
+                  </th>
+                  <th scope="col">
+                    Estimated Cost
+                  </th>
+
+                  <th scope="col">
+                    Tech Rate
+                  </th>
+                  <th scope="col">
+                    R/I/R/R
+                  </th>
+                  <th scope="col">
+                    Notes
+                  </th>
+                  <th scope="col">
+                    Start Date
+                  </th>
+                  <th scope="col">
+                    End Date
+                  </th>
+                  <th scope='col'>
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {technician?.jobs && technician?.jobs?.length > 0 ? (
+                  technician?.jobs.map((jobs: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4">{jobs.id || '-'}</td>
+                      <td className="px-6 py-4 capitalize">{jobs.jobName || '-'}</td>
+                      <td className="px-6 py-4">
+                        {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {jobs.UserJob?.techFlatRate ? `$${jobs.UserJob.techFlatRate}` : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {jobs.UserJob?.rRate ? `$${jobs.UserJob.rRate}` : '-'}
+                      </td>
+                      <td className="px-6 py-4">{jobs.notes || '-'}</td>
+                      <td className="px-6 py-4">
+                        {jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '-'}
+                      </td>
+                      <td>
+                        <Link href={`/jobs/view?jobId=${jobs.id}`} >
+                          <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+                            data-tooltip-content="View" />
+                        </Link>
+                        <Tooltip id="view" place="top" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="text-center py-4 text-gray-500">
+                      No jobs found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+
+          <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
+          <div className="overflow-x-auto bg-white">
+            <table className="table w-full table-fixed">
+              <thead className=" ">
+                <tr>
+                  <th scope="col">
+                    Job Name
+                  </th>
+                  <th scope="col">
+                    VIN
+                  </th>
+                  <th scope="col">
+                    Make
+                  </th>
+                  <th scope="col">
+                    Model
+                  </th>
+                  <th scope="col">
+                    Model Year
+                  </th>
+                  <th scope="col">
+                    Description
+                  </th>
+                  <th scope="col">
+                    Notes
+                  </th>
+                  <th scope="col">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {technician?.jobs?.some((job: any) => Array.isArray(job.vehicles) && job.vehicles.length > 0) ? (
+                  technician.jobs.map((job: any, jobIndex: number) =>
+                    job.vehicles?.map((vehicle: any, vehicleIndex: number) => (
+                      <tr key={`${jobIndex}-${vehicleIndex}`}>
+                        <td className="px-6 py-4">
+                          {vehicle.jobName || '-'}
+                        </td>
+                        <td className="px-6 py-4 capitalize">
+                          {vehicle.vin || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vehicle.make || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vehicle.model || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vehicle.modelYear || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {Array.isArray(vehicle.jobDescription) &&
+                            vehicle.jobDescription.some((desc: string) => desc.trim() !== '')
+                            ? vehicle.jobDescription.join(', ')
+                            : '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vehicle.notes && vehicle.notes.trim() !== '' ? vehicle.notes : '-'}
+                        </td>
+                        <td>
+                          <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} >
+                            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+                              data-tooltip-content="View" />
+                          </Link>
+                          <Tooltip id="view" place="top" />
+                        </td>
+                      </tr>
+                    ))
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                      No vehicle found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
         <RejectReasonModal

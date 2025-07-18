@@ -208,15 +208,28 @@ export default function ViewDetails() {
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Country:</strong>
+                {jobData?.plantCountry !== 'undefined' &&(
+                  <>
                 {jobData?.plantCountry || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'} 
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Company:</strong>
+                {jobData?.plantCompanyName !== 'undefined' &&(
+                  <>
                 {jobData?.plantCompanyName || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant State:</strong>
+                 {jobData?.plantState !== 'undefined' &&(
+                  <>
                 {jobData?.plantState || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'}
+ 
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Created By:</strong>
@@ -312,7 +325,7 @@ export default function ViewDetails() {
                           ${tech.VehicleTechnician.techFlatRate}</p>
                       )}
 
-                      {tech.VehicleTechnician.techType !== '' || tech.VehicleTechnician.techType !== 'null' && (
+                      {tech.VehicleTechnician.techType !== '' && (
                         <p className="mb-1"><strong className='w-[210px] inline-block'>Tech Type:</strong>
                           {tech?.techType}</p>
                       )}

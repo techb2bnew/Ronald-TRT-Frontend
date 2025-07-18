@@ -600,7 +600,7 @@ const TechnicianTable: React.FC = () => {
         renderHeaderCell={(header, index) => {
           if (index === 0) {
             return (
-              <th key={index} className='w-[40px]'>
+              <th key={index} className='w-[50px]'>
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"

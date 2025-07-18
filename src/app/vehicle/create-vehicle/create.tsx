@@ -460,58 +460,58 @@ export default function Technicians() {
         ]);
 
       }
-    else {  
-      if (result.error) {
-       
-        const swalResult = await Swal.fire({
-          title: 'Are you sure you want to proceed and add this vehicle with the same VIN to the job?',
-          text: result.details.error,  // Show the message from the API response
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#383d71',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Yes',
-          cancelButtonText: 'Re-enter',
-          customClass: {
-            title: 'swal-title',  // Custom class for title
-            popup: 'swal-text'    // Custom class for content
-          }
-        });
+      else {
+        if (result.error) {
 
-        // Check if the user clicked "Yes"
-        if (swalResult.isConfirmed) {
-          const vinDetailsEndpoint = `${apiUrl}/createVinDetails`;
-          // Call the createVinDetails API
-          try {
-            const response = await fetch(vinDetailsEndpoint, {
-              method: 'POST',
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
-              body: formDataObj,
-            });
-            const data = await response.json();
+          const swalResult = await Swal.fire({
+            title: 'Are you sure you want to proceed and add this vehicle with the same VIN to the job?',
+            text: result.details.error,  // Show the message from the API response
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#383d71',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Re-enter',
+            customClass: {
+              title: 'swal-title',  // Custom class for title
+              popup: 'swal-text'    // Custom class for content
+            }
+          });
 
-            if (response.ok) {
-              toast.success('VIN details created successfully.');
-              router.push('/vehicle/vehicle');
-            } else {
+          // Check if the user clicked "Yes"
+          if (swalResult.isConfirmed) {
+            const vinDetailsEndpoint = `${apiUrl}/createVinDetails`;
+            // Call the createVinDetails API
+            try {
+              const response = await fetch(vinDetailsEndpoint, {
+                method: 'POST',
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                },
+                body: formDataObj,
+              });
+              const data = await response.json();
+
+              if (response.ok) {
+                toast.success('VIN details created successfully.');
+                router.push('/vehicle/vehicle');
+              } else {
+                toast.error('Failed to create VIN details.');
+              }
+            } catch (error) {
+              console.error('Error creating VIN details:', error);
               toast.error('Failed to create VIN details.');
             }
-          } catch (error) {
-            console.error('Error creating VIN details:', error);
-            toast.error('Failed to create VIN details.');
           }
         }
-      } 
+      }
+    } catch (error) {
+      console.error('Error creating job:', error);
+      toast.error('An error occurred while creating the job.');
+    } finally {
+      setSubmitting(false);
+    }
   }
-} catch (error) {
-  console.error('Error creating job:', error);
-  toast.error('An error occurred while creating the job.');
-} finally {
-  setSubmitting(false);
-}
-}
 
 
 
@@ -547,8 +547,11 @@ export default function Technicians() {
           }
           return value;
         };
-        setStartDate(dayjs(new Date(vehicleData.startDate)));
-        setEndDate(dayjs(new Date(vehicleData.endDate)));
+        const validDate = (date: any) => {
+          return date && date !== 'null' && date !== '';
+        };
+        setStartDate(validDate(vehicleData.startDate) ? dayjs(new Date(vehicleData.startDate)) : null);
+        setEndDate(validDate(vehicleData.endDate) ? dayjs(new Date(vehicleData.endDate)) : null);
 
         // Process job descriptions
         const jobDescriptionsArray = vehicleData.jobDescription?.map((job: any) => ({
@@ -1499,7 +1502,7 @@ export default function Technicians() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
+ 
       const response = await fetch(
         `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
         {

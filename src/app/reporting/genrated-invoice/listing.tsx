@@ -19,11 +19,14 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import { FormControl, FormLabel, TextField } from '@mui/material';
+import InvoiceGenerator from '@/app/component/invoice-genrated';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
 interface VehcileInfo {
   id: string;
+  jobName: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
@@ -42,7 +45,16 @@ const JobTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [roleType, setRoleType] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<string>('');
 
+  useEffect(() => {
+    // Ensure this code runs only on the client-side (after the component mounts)
+    const storedRoleType = localStorage.getItem('types');
+    setRoleType(storedRoleType); // Set the roleType from localStorage
+  }, []);
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -80,20 +92,19 @@ const JobTable: React.FC = () => {
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const token = localStorage.getItem('token');
-      const roleType = 'single-technician';
+      const roleType = localStorage.getItem('types') || "";
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
-        ? roleType === 'single-technician'
+        ? roleType === 'superadmin' || roleType === 'manager'
           ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'single-technician'
+        : roleType === 'superadmin' || roleType === 'manager'
           ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
@@ -110,8 +121,8 @@ const JobTable: React.FC = () => {
           ? data.data.vehicles || []
           : data.jobs.vehicles || [];
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+        setTotalPages(data.jobs?.totalPages || 1);
+        setTotalJobs(data.jobs?.totalVehicles || 0); // Ensure totalJobs is set correctly
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -147,24 +158,42 @@ const JobTable: React.FC = () => {
     setSortDirection(direction);
     setSortBy(column);
 
-    const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'fullName') {
-        const nameA = `${a?.customer?.fullName}`;
-        const nameB = `${b?.customer?.fullName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
-      }
+    setActiveJob(prevJobs => {
+      return [...prevJobs].sort((a, b) => {
+        // Handle job name sorting
+        if (column === 'jobName') {
+          const nameA = a?.jobName || '';
+          const nameB = b?.jobName || '';
+          return direction === 'asc'
+            ? nameA.localeCompare(nameB)
+            : nameB.localeCompare(nameA);
+        }
 
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
-      return 0;
+        // Handle customer name sorting
+        if (column === 'fullName') {
+          const nameA = a?.customer?.fullName || '';
+          const nameB = b?.customer?.fullName || '';
+          return direction === 'asc'
+            ? nameA.localeCompare(nameB)
+            : nameB.localeCompare(nameA);
+        }
+
+        // Handle other columns
+        const valueA = a[column] || '';
+        const valueB = b[column] || '';
+
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          return direction === 'asc'
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+        }
+
+        // For numbers or other types
+        if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+        if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
     });
-
-    setActiveJob(sortedJobs);
   };
 
 
@@ -174,6 +203,41 @@ const JobTable: React.FC = () => {
     setCurrentPage(data.selected + 1);
   };
 
+
+
+
+
+
+
+  const [permissions, setPermissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const storedPermissions = localStorage.getItem("permissions");
+
+    if (storedPermissions) {
+      try {
+        const parsedPermissions = JSON.parse(storedPermissions);
+        setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
+        console.log("✅ Loaded Permissions:ssss", parsedPermissions);
+      } catch (error) {
+        console.error("❌ Failed to parse permissions:", error);
+      }
+    } else {
+      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
+    }
+  }, []);
+
+  // ✅ Function to check permission based on role and action
+  const hasPermission = (action: string) => {
+    if (permissions.length === 0) return true; // If no permissions exist, show all icons
+
+    return permissions.some(
+      (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
+    );
+  };
+  const canCreate = hasPermission("approve");
+
+
   const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
@@ -182,13 +246,13 @@ const JobTable: React.FC = () => {
       return;
     }
     const csvOptions = {
-      filename: 'Vehicle / Work Orders',
+      filename: 'Genrated Invoice',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicle / Work Orders',
+      title: 'Genrated Invoice',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -200,7 +264,11 @@ const JobTable: React.FC = () => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
       const vt = firstTech.VehicleTechnician || {};
 
-
+      // Extract technician data including techFlatRate and rRate
+      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
+        const vt = tech.VehicleTechnician || {};
+        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+      }).join(', ');
       return {
         id: jobData.id,
         vin: jobData.vin,
@@ -223,7 +291,7 @@ const JobTable: React.FC = () => {
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.join(''),
-        labourCost: jobData.labourCost,
+        technicianRates: technicianRates,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -250,7 +318,7 @@ const JobTable: React.FC = () => {
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians',
-        'jobDescription', 'labourCost'
+        'jobDescription', 'technicianRates'
       ];
 
       Papa.parse(text, {
@@ -354,40 +422,6 @@ const JobTable: React.FC = () => {
 
 
 
-  const [permissions, setPermissions] = useState<any[]>([]);
-
-  useEffect(() => {
-    const storedPermissions = localStorage.getItem("permissions");
-
-    if (storedPermissions) {
-      try {
-        const parsedPermissions = JSON.parse(storedPermissions);
-        setPermissions(Array.isArray(parsedPermissions) ? parsedPermissions : []);
-        console.log("✅ Loaded Permissions:ssss", parsedPermissions);
-      } catch (error) {
-        console.error("❌ Failed to parse permissions:", error);
-      }
-    } else {
-      // console.log("⚠️ No permissions found in localStorage. Showing all icons.");
-    }
-  }, []);
-
-  // ✅ Function to check permission based on role and action
-  const hasPermission = (action: string) => {
-    if (permissions.length === 0) return true; // If no permissions exist, show all icons
-
-    return permissions.some(
-      (perm) => perm.permissionName === 'Activejobs' && perm.action === action && perm.isActive
-    );
-  };
-  const canCreate = hasPermission("approve");
-
-
-
-
-
-
-
 
 
 
@@ -397,12 +431,59 @@ const JobTable: React.FC = () => {
     );
   };
 
-  const handleNewJobClick = async (jobId: string, roleType: string) => {
+  const handleDateChange = async (dateRange: [Date, Date] | null) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+    // Function to format the date as DD-MM-YYYY
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]);
+      const endDate = formatDate(dateRange[1]);
+
+      try {
+        setLoading(true);
+        let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
+        const requestBody: { [key: string]: any } = {
+          startDate: startDate,
+          endDate: endDate,
+          roleType: roleType,
+          vehicleStatus: 'false'
+        };
+        if (roleType !== 'superadmin' && roleType !== 'manager') {
+          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
+        }
+        const response = await axios.post(apiPoint, requestBody, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        setActiveJob(response.data.vehicles.updatedVehicles);
+      } catch (error) {
+        console.error("Error fetching filtered jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+
+  const handleNewJobClick = async (jobId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-    console.log(jobId, 'jobId');  
- 
-     // Prepare the payload dynamically
+    const roleType = localStorage.getItem('types') || "";
+    console.log(jobId, 'jobId');
+
+    // Prepare the payload dynamically
     const payload = {
       roleType: roleType,  // Dynamic roleType from localStorage
       jobId: jobId,        // Dynamic jobId passed from the selected job 
@@ -440,6 +521,12 @@ const JobTable: React.FC = () => {
     }
   };
 
+  const handleNewCustomerClick = async (jobId: string) => {
+  }
+
+  const handleStatusChange = async (jobId: string) => {
+  }
+
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
@@ -469,49 +556,113 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
-        <td>{job?.jobName}</td>
+        <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job?.id}</Link> </td>
 
-
-        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
+        <td>  {job?.customer?.fullName} </td>
+        <td>  {job?.jobName} </td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        <td>  {job?.assignedTechnicians?.map((tech: any) => (
-          <div key={tech.id} className="capitalize">
-            {tech.firstName} {tech.lastName}
-          </div>
-        ))}</td>
-        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
-          <div key={tech.id}>
-            <a className="hover:underline" href={`tel:${tech.technicians}`}>
-              {tech.phoneNumber}
-            </a>
-          </div>
-        ))}</td> */}
-        <td>{job?.vin}</td>
-        <td>{job?.make}</td>
-        <td>{job?.model}</td>
-        <td>{job?.modelYear}</td>
-        <td> {`${job.labourCost ? '$' + job.labourCost : '-'}`}</td>
+
+        {/* <td>
+          {job?.assignedTechnicians
+            ?.filter((tech: any) => tech.techType === 'technician')
+            ?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.firstName} {tech.lastName}
+              </div>
+            ))}
+        </td>
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.techFlatRate !== '' && (
+                  `$${tech.VehicleTechnician?.techFlatRate}`
+                )}
+
+              </div>
+            ))}
+          </td>
+        )}
+        <td>
+          {job?.assignedTechnicians
+            ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+            ?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.firstName} {tech.lastName}
+              </div>
+            ))}
+        </td>
+
+
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians?.map((tech: any) => (
+              <div key={tech.id} className="capitalize">
+                {tech.VehicleTechnician?.rRate !== '' && (
+                  `$${tech.VehicleTechnician?.rRate}`
+                )}
+              </div>
+            ))}
+          </td>
+        )}
+        <td>${job?.totalCombined}</td>
+
+        <td>{job?.vin}</td>*/}
+        <td>${job?.totalCombined}</td>
+        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+        {/* <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td> */}
 
         <td>
           {canCreate && (
 
-            <span
-              className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            <div
+              className={`badge w-[80px] text-center ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
-              {job.vehicleStatus ? 'Completed' : 'In Progress'}
-            </span>
+              {job.vehicleStatus ? 'Paid' : 'Unpaid'}
+            </div>
           )}
 
         </td>
-
+        <td>
+          <FormControl fullWidth size="small">
+            <TextField
+              label=""
+              variant="outlined"
+              fullWidth
+              color="warning"
+              size="small"
+              type='date'
+              value='date'
+            />
+          </FormControl></td>
         <td className='text-left'>
+          <div className="flex gap-3 items-center">
+            {/* <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} /> */}
+            <button data-tooltip-id="Download" data-tooltip-content="Download Invoice">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            <Tooltip id="Download" place="top" />
 
-          <Link href={`/reporting/view?vehicleId=${job.id}&singleWorkOrder`} >
-            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-              data-tooltip-content="View" />
-          </Link>
-          <Tooltip id="view" place="top" />
+            <Link href={`/vehicle/view?vehicleId=${job.id}`} >
+              <Image alt='eye' src={Eye} className='w-[20px] ' data-tooltip-id="view"
+                data-tooltip-content="View" />
+            </Link>
+            <Tooltip id="view" place="top" />
+          </div>
         </td>
       </tr>
     )
@@ -521,17 +672,21 @@ const JobTable: React.FC = () => {
     <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'All Work Order List', href: '/vehicle/vehicle' }
+          { label: 'Sent Invoice', href: '/reporting/invoice' }
         ]}
       />
-
-      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" />
+     {/* <div className="flex justify-end gap-3 mb-3 items-center"> 
+         <button className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Genrate Invoice</button>
+          <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} />
+       </div> */}
+      <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)}  userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={(status) => setSelectedInvoiceStatus(status)} onStatusChange={(status) => setSelectedStatus(status)} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              <th className="w-[50px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -551,56 +706,37 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
-                Job ID
+              <th onClick={() => handleSort('id')}>
+                Invoice ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
               </th>
-              <th className="w-[140px]" onClick={() => handleSort('jobName')}>
-                Job Title
-                {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-
-              <th className="w-[150px]" onClick={() => handleSort('fullName')}>
+              <th    >
                 Customer Name
-                {sortBy === 'fullName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
               </th>
-              {/* <th className="w-[120px]">
-                Customer Number
-              </th> */}
-              <th className="w-[150px]" >
-                Technician Name
-              </th>
-              <th className="w-[140px]">VIN</th>
-              <th className="w-[80px]">Make</th>
-              <th className="w-[80px]">Model</th>
-              <th className="w-[80px]">Year</th>
-              <th className="w-[120px]">Labour Cost</th>
-              <th className="w-[120px]">Status</th>
-              <th className="w-[100px]">Action</th>
+              <th>
+                Job Name
+              </th> 
+              <th className="w-[160px]">Grand Total</th>
+              <th>Invoice Created Date</th>
+              <th className="w-[130px]">Status</th>
+              <th className="w-[160px]">Add Paid Date</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={12} className="text-center py-10">
+                <td colSpan={9} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={12} className="text-center py-10">
+                <td colSpan={9} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
@@ -610,9 +746,12 @@ const JobTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )}
+      <div className="flex justify-end gap-3 items-center">
+        
+        {activeJob.length > 0 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
+      </div>
     </div>
   );
 };

@@ -295,7 +295,7 @@ const ManagerTable: React.FC = () => {
             {tech.phoneNumber}
           </a>
         </td>
-          <td>{tech.jobCount} Jobs</td>
+          <td>{tech.jobCount}</td>
 
         {/* <td>{tech.payRate}</td> */}
 
