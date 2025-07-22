@@ -192,10 +192,10 @@ export default function ViewDetails() {
                 <strong className='w-[210px] inline-block'>Body Class:</strong>
                 {jobData?.bodyClass || <span className="text-black-500">N/A</span>}
               </p>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : ''} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : 'N/A'} </div>
 
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : ''}
+                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'}
               </div>
             </div>
 
@@ -325,7 +325,7 @@ export default function ViewDetails() {
                           ${tech.VehicleTechnician.techFlatRate}</p>
                       )}
 
-                      {tech.VehicleTechnician.techType !== '' && (
+                      {tech.VehicleTechnician.techType !== '' || roleType !== 'single-technician' && (
                         <p className="mb-1"><strong className='w-[210px] inline-block'>Tech Type:</strong>
                           {tech?.techType}</p>
                       )}

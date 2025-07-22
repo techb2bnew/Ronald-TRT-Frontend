@@ -672,7 +672,7 @@ const Sidebar = () => {
             <span>Subscribers</span>
           </Link>
         </li> */}
-          {userType !== 'single-technician' && (
+        
             <li className='p-1 pl-4'>
 
               <Link href="/reporting/invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -693,9 +693,9 @@ const Sidebar = () => {
                 <span>Create Invoice</span>
               </Link>
             </li>
-          )}
+           
 
-          {userType !== 'single-technician' && (
+         
             <li className='p-1 pl-4'>
 
               <Link href="/reporting/genrated-invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -716,7 +716,7 @@ const Sidebar = () => {
                 <span>Sent Invoice</span>
               </Link>
             </li>
-          )}
+           
 
           {/* {userType !== 'single-technician' && (
             <li className='p-1 pl-4'>

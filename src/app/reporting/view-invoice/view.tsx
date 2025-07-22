@@ -1,0 +1,470 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Loading from '@/app/component/loader';
+import Breadcrumb from '@/app/component/breadcrumb';
+import { useSearchParams, usePathname } from 'next/navigation';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
+import { Link } from '@mui/material';
+import Image from 'next/image';
+import Eye from '../../../../public/eye.svg'
+export default function ViewDetails() {
+  const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
+  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const isSingleTechnician = searchParams!.has('ActiveWorkOrder');
+  const isSingleTechnicianWorkOrder = searchParams!.has('workorder');
+
+  const fetchInvoiceData = async (invoiceId: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/fetchSingleInvoice?invoiceId=${invoiceId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setJobsData(data.response.invoice);  // Set the  CustomerData data
+      } else {
+        toast.error(data.error || 'Error fetching technician data');
+      }
+    } catch (error) {
+      toast.error('An error occurred while fetching technician data');
+    }
+  };
+
+  React.useEffect(() => {
+    const type = localStorage.getItem('types');
+    setUserType(type);
+  });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const invoiceId = searchParams.get('invoiceId') || '';
+
+    if (invoiceId) {
+      setIsEdit(true);  // Set to true if `fetchInvoiceData` exists in the URL
+      fetchInvoiceData(invoiceId);
+    } else {
+      setIsEdit(false);
+    }
+  }, []);
+
+
+  if (!jobData) {
+    return <div><Loading /></div>;
+  }
+
+
+
+
+  return (
+    <div>
+      <Breadcrumb
+        items={[
+          { label: 'Sent Invoice', href: '/reporting/genrated-invoice' },
+          { label: 'Invoice Details', href: '/reporting/genrated-invoice' }
+        ]}
+      />
+
+      <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
+
+        <div className="bg-blue rounded-lg shadow-md">
+          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Invoice Detail</h2>
+          <div className="grid grid-cols-2 gap-3 p-6">
+
+            <div className='shadow-lg p-5 bg-white rounded'>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.JobId}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Title:</strong> {jobData?.job?.jobName}</div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Customer Name:</strong>
+                <div className="flex gap-3 items-center capitalize">
+
+                  {jobData?.customer?.fullName}
+                </div>
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Email:</strong>
+                <a className="hover:underline" href={`mailto:${jobData?.customer?.email}`}>
+                  {jobData?.customer?.email || 'N/A'}
+                </a>
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Customer Ph. Number:</strong>
+                <a className="hover:underline" href={`tel:${jobData?.customer?.phoneNumber}`}>
+                  {jobData?.customer?.phoneNumber || 'N/A'}
+                </a>
+              </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.job.startDate ? new Date(jobData.job.startDate).toLocaleDateString() : 'N/A'} </div>
+
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.job.endDate ? new Date(jobData.job.endDate).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+            <div className='shadow-lg p-5 bg-white rounded'>
+              {userType === 'single-technician' && (
+                <>
+                  {jobData.technicians?.map((tech: any, index: number) => (
+                    <div key={index} className="mb-6 border-b border-gray-400 pb-4">
+
+                      <div className="mb-2 flex items-start text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
+                        <div className="flex items-center gap-2">
+                          {tech.image ? (
+                            <img
+                              onClick={() => setPreviewImage(tech.image)}
+                              src={tech.image}
+                              alt={`${tech.firstName} ${tech.lastName}`}
+                              className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                              {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+                          <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
+                        </div>
+                      </div>
+
+                      <div className="mb-2 flex text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                        <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
+                      </div>
+
+                      <div className="mb-2 flex text-sm">
+                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                        <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
+                      </div>
+                      {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
+                      )}
+                      {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
+                      )}
+                      {tech.UserJob && (
+                        <>
+                          {tech.UserJob.payVehicleType && (
+                            <div className="mb-2 flex text-sm">
+                              <strong className="w-[210px] min-w-[210px] inline-block">Vehicle Type:</strong>
+                              {tech.UserJob.payVehicleType}
+                            </div>
+                          )}
+
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                <strong className='w-[210px] inline-block'>Paid Date:</strong> {jobData.paidDate ? new Date(jobData.paidDate).toLocaleDateString() : 'N/A'}
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
+                <div className="flex gap-3 items-center capitalize">
+
+                  ${jobData?.job?.estimatedCost || '0'}
+                </div>
+              </div>
+              {jobData?.estimatedBy !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Created By:</strong> {jobData?.job?.createdBy}</div>
+              )}
+              {jobData?.estimatedBy !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Estimated By:</strong> {jobData?.job?.estimatedBy}</div>
+              )}
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Manager Name:</strong>
+                  <div className="flex gap-3 items-center capitalize">
+                    {jobData?.job?.manager?.firstName} {jobData?.job?.manager?.lastName}
+                  </div>
+                </div>
+              )}
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Email:</strong>
+                  <a className="hover:underline" href={`mailto:${jobData?.job?.manager?.email}`}>
+                    {jobData?.job?.manager?.email || 'N/A'}
+                  </a>
+                </div>
+              )}
+              {userType !== 'single-technician' || isSingleTechnicianWorkOrder && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Manager Ph. Number:</strong>
+                  <a className="hover:underline" href={`tel:${jobData?.job?.manager?.phoneNumber}`}>
+                    {jobData?.job?.manager?.phoneNumber || 'N/A'}
+                  </a>
+                </div>
+              )}
+              {jobData?.notes !== null && (
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.job?.notes || 'N/A'}</div>
+              )}
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
+                <span
+                  className={`badge ${jobData.job?.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+                >
+                  {jobData.job?.jobStatus ? 'Paid' : 'Unpaid'}
+                </span>
+              </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'>
+                <strong className='w-[210px] inline-block'>Invoice Link:</strong>
+                {jobData?.pdfLink ? (
+                  <a
+                    href={jobData.pdfLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800 ml-2"
+                    title="View PDF Invoice"
+                  >
+                    <svg width="40" height="30" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16 2h24l12 12v48c0 1.1-.9 2-2 2H16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2z" fill="#fff" stroke="#000" strokeWidth="3" />
+                      <polyline points="40 2 40 14 52 14" fill="#fff" stroke="#000" strokeWidth="3" />
+                      <line x1="20" y1="28" x2="44" y2="28" stroke="#000" strokeWidth="3" strokeLinecap="round" />
+                      <line x1="20" y1="36" x2="44" y2="36" stroke="#000" strokeWidth="3" strokeLinecap="round" />
+                      <line x1="20" y1="44" x2="44" y2="44" stroke="#000" strokeWidth="3" strokeLinecap="round" />
+                      <rect x="8" y="10" width="28" height="14" rx="2" ry="2" fill="#FF0000" />
+                      <text x="22" y="21" textAnchor="middle" fontSize="10" fontWeight="bold" fill="white">PDF</text>
+                    </svg>
+                  </a>
+                ) : (
+                  <span className="text-gray-500">No invoice available</span>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="overflow-x-auto bg-white pt-3">
+            <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
+
+            <table className="table w-full table-fixed">
+              <thead className=" ">
+                <tr>
+                  <th scope="col">
+                    Name
+                  </th>
+                  {userType !== 'single-technician' && (
+                    <th scope="col">
+                      Type
+                    </th>
+                  )}
+                  <th scope="col">
+                    Email
+                  </th>
+                  <th scope="col">
+                    Phone
+                  </th>
+                  {userType !== 'single-technician' && (
+                    <th scope="col">
+                      R/I/R/R
+                    </th>
+                  )}
+                  {userType !== 'single-technician' && (
+                    <th scope="col">
+                      Flat Rate
+                    </th>
+                  )}
+                  <th scope="col">
+                    Labour Cost
+                  </th>
+                  <th scope="col">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {jobData?.job?.vehicles?.flatMap((vehicle: any) =>
+                  vehicle.assignedTechnicians?.length > 0 ?
+                    vehicle.assignedTechnicians.map((tech: any, index: number) => (
+                      <tr key={`${vehicle.id}-${tech.id}-${index}`}>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {tech.image ? (
+                              <img
+                                onClick={() => setPreviewImage(tech.image)}
+                                src={tech.image}
+                                alt={`${tech.firstName} ${tech.lastName}`}
+                                className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                                {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
+                              </div>
+                            )}
+                            <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
+                          </div>
+                        </td>
+                        {userType !== 'single-technician' && (
+                          <td className="px-6 py-4">
+                            {tech.techType || 'N/A'}
+                          </td>
+                        )}
+                        <td className="px-6 py-4">
+                          <a className="hover:underline" href={`mailto:${tech.email}`}>
+                            {tech.email}
+                          </a>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>
+                            {tech.phoneNumber || 'N/A'}
+                          </a>
+                        </td>
+                        {userType !== 'single-technician' && (
+                          <td className="px-6 py-4">
+                            {tech.VehicleTechnician?.rRate ? `$${tech.VehicleTechnician.rRate}` : 'N/A'}
+                          </td>
+                        )}
+                        {userType !== 'single-technician' && (
+                          <td className="px-6 py-4">
+                            {tech.VehicleTechnician?.techFlatRate ? `$${tech.VehicleTechnician.techFlatRate}` : 'N/A'}
+                          </td>
+                        )}
+                        <td className="px-6 py-4">
+                          {tech.VehicleTechnician?.labourCost ? `$${tech.VehicleTechnician.labourCost}` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Link href={`/technicians/view?technicianId=${tech.id}`}>
+                            <Image
+                              alt='eye'
+                              src={Eye}
+                              className='w-[16px]'
+                              data-tooltip-id="view"
+                              data-tooltip-content="View"
+                            />
+                          </Link>
+                          <Tooltip id="view" place="top" />
+                        </td>
+                      </tr>
+                    ))
+                    : []
+                )}
+
+                {/* Empty state */}
+                {jobData?.job?.vehicles?.every((v: any) => !v.assignedTechnicians?.length) && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                      No technicians assigned to any vehicle
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+
+            </table>
+          </div>
+
+
+          <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
+          <div className="overflow-x-auto bg-white">
+            <table className="table w-full table-fixed">
+              <thead className=" ">
+                <tr>
+                  <th scope="col">
+                    Technician Name
+                  </th>
+                  <th scope="col">
+                    VIN
+                  </th>
+                  <th scope="col">
+                    Make
+                  </th>
+                  <th scope="col">
+                    Model
+                  </th>
+                  <th scope="col">
+                    Model Year
+                  </th>
+                  <th scope="col">
+                    Description
+                  </th>
+                  <th scope="col">
+                    Notes
+                  </th>
+                  <th scope="col">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.isArray(jobData.job.vehicles) && jobData.job.vehicles.length > 0 ? (
+                  jobData.job.vehicles.map((vehicles: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4">
+                        <span className="capitalize">
+                          {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
+                            ? vehicles.assignedTechnicians
+                              .map((tech: any) => `${tech.firstName} ${tech.lastName}`)
+                              .join(', ')
+                            : '-'}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="capitalize">{vehicles.vin || '-'}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.make || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.model || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.modelYear || '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {Array.isArray(vehicles.jobDescription) &&
+                          vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
+                          ? vehicles.jobDescription.join(', ')
+                          : '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        {vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '-'}
+                      </td>
+                      <td>
+                        <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} >
+                          <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
+                            data-tooltip-content="View" />
+                        </Link>
+                        <Tooltip id="view" place="top" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                      No vehicle found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+
+            </table>
+          </div>
+        </div>
+        <ToastContainer />
+        {previewImage && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={() => setPreviewImage(null)} // Close on backdrop click
+          >
+            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -31,6 +31,7 @@ interface VehcileInfo {
   email: string;
   pdr: string;
   deletedStatus?: boolean;
+  generatedInvoiceDate: string;
   Role: { name: string };
 }
 const JobTable: React.FC = () => {
@@ -48,7 +49,7 @@ const JobTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
-  const [totalJobs, setTotalJobs] = useState(10);
+  const [totalJobs, setTotalJobs] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [roleType, setRoleType] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
@@ -58,6 +59,8 @@ const JobTable: React.FC = () => {
   const [customerFilter, setCustomerFilter] = useState<string>('');  // Initialize the customerFilter state
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);  // Add this state to store customer-specific jobs
   const [originalJobs, setOriginalJobs] = useState<any[]>([]);
+  const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
+  console.log(totalJobs, 'totalJobs');
 
   const handlePdrChange = (jobId: string, value: string) => {
     setPdrValues(prev => ({
@@ -83,25 +86,6 @@ const JobTable: React.FC = () => {
   };
 
 
-  const handlePageSizeChange = (size: number) => {
-    // Calculate the total number of pages based on the current totalJobs and the new pageSize
-    const newTotalPages = Math.ceil(totalJobs / size);
-
-    // If the current page is greater than the new total pages, reset it to the last page
-    let newPage = currentPage;
-    if (newPage > newTotalPages) {
-      newPage = newTotalPages;
-    }
-
-    // Ensure the page number is not less than 1
-    if (newPage < 1) {
-      newPage = 1;
-    }
-
-    // Update the state with the new page size and set the current page accordingly
-    setPageSize(size);
-    setCurrentPage(newPage); // Set the current page to the last valid page
-  };
 
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
@@ -136,12 +120,19 @@ const JobTable: React.FC = () => {
           : data.jobs.vehicles || [];
 
         const initialPdrValues: Record<string, string> = {};
+        const initialInvoiceDates: Record<string, string> = {};
         fetchedTechnicians.forEach(job => {
           if (job.pdr) { // Only set PDR value if it exists
             initialPdrValues[job.id] = job.pdr.toString();
           }
+          if (job.generatedInvoiceDate) {
+            const date = new Date(job.generatedInvoiceDate);
+            initialInvoiceDates[job.id] = date.toISOString().split('T')[0];
+          }
         });
         setPdrValues(initialPdrValues);
+        setInvoiceDates(initialInvoiceDates);
+
         // When a customer is selected, show customer-specific jobs along with existing jobs
         const updatedJobs = customerFilter ? [...fetchedTechnicians, ...customerJobs] : fetchedTechnicians;
         setOriginalJobs(updatedJobs);  // Store the original jobs
@@ -156,12 +147,12 @@ const JobTable: React.FC = () => {
         });
 
         setActiveJob(updatedJobs);
-        setDentTechTotalAmount(data.jobs?.totalDantTechCost || data.data.totalDantTechCost);
-        setRRTotalAmount(data.jobs?.totalRrCost || data.data.totalRrCost);
-        setTotalEstimateAmount(data.jobs?.totalEstimateCost || data.data.totalEstimateCost);
-        setTotalJobAmount(data.jobs?.totalJobEstimateCost || data.data.totalJobEstimateCost || '0');
+        setDentTechTotalAmount(data.jobs?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
+        setRRTotalAmount(data.jobs?.totalRrCost ?? data.data.totalRrCost ?? '0');
+        setTotalEstimateAmount(data.jobs?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
+        setTotalJobAmount(data.jobs?.totalJobEstimateCost ?? data.data.totalJobEstimateCost ?? '0');
         setTotalPages(data.jobs?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalVehicles || 0); // Ensure totalJobs is set correctly
+        setTotalJobs(data.jobs?.totalVehicles ?? data.data.totalVehicles ?? '0');
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -613,17 +604,27 @@ const JobTable: React.FC = () => {
 
   const handleSavePdr = async (vehicleId: string, pdrValue: string) => {
     const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
     try {
       // Validate if pdrValue exists and is a valid number
-      if (!pdrValue || isNaN(Number(pdrValue))) {
-        alert('Please enter a valid PDR value');
-        return;
+      if (roleType !== 'single-technician') {
+
+        if (!pdrValue || isNaN(Number(pdrValue))) {
+          alert('Please enter a valid PDR value');
+          return;
+        }
       }
+
+      const dateToUse = invoiceDates[vehicleId] || new Date().toISOString().split('T')[0];
 
       // Prepare payload according to your API requirements
       const payload = [{
         vehicleId: vehicleId,
-        pdr: Number(pdrValue) // Convert string to number
+        pdr: Number(pdrValue),
+        generatedInvoiceDate: dateToUse,
+        roleType: roleType,
+        userId: userId,
       }];
 
       // Make API call
@@ -652,7 +653,7 @@ const JobTable: React.FC = () => {
   const handleGenerateInvoice = async () => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || '';
-
+    const userId = localStorage.getItem('userID');
     // Get selected jobs
     const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
 
@@ -667,7 +668,9 @@ const JobTable: React.FC = () => {
         vehicles: selectedJobs.map(job => ({
           vehicleId: job.id,
           jobId: job.jobId || job.id, // Use jobId if available, fallback to id
-          customerId: job.customer?.id
+          customerId: job.customer?.id,
+          roleType: roleType,
+          userId: userId,
         })),
       };
 
@@ -701,14 +704,7 @@ const JobTable: React.FC = () => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
 
-    const subtotalcost = (job?.jobDescription || []).reduce((sum: number, job: any) => {
-      const parsedJob = job;
-      return sum + Number(parsedJob.cost); // Ensure cost is treated as a number
-    }, 0);
-    const simpleFlatRate = Number(job?.simpleFlatRate);
-    const totalCost = !isNaN(simpleFlatRate) && simpleFlatRate > 0
-      ? subtotalcost + simpleFlatRate
-      : subtotalcost;
+
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -733,16 +729,17 @@ const JobTable: React.FC = () => {
         <td>{job?.jobName}</td> */}
         <td>  {job?.customer?.fullName} </td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-
-        <td>
-          {job?.assignedTechnicians
-            ?.filter((tech: any) => tech.techType === 'technician')
-            ?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.firstName} {tech.lastName}
-              </div>
-            ))}
-        </td>
+        {roleType !== 'single-technician' && (
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.firstName} {tech.lastName}
+                </div>
+              ))}
+          </td>
+        )}
         {roleType !== 'single-technician' && (
           <td>
             {job?.assignedTechnicians?.map((tech: any) => (
@@ -755,16 +752,18 @@ const JobTable: React.FC = () => {
             ))}
           </td>
         )}
-        <td>
-          {job?.assignedTechnicians
-            ?.filter((tech: any) => tech.techType === 'R/I/R/R')
-            ?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.firstName} {tech.lastName}
-              </div>
-            ))}
-        </td>
+        {roleType !== 'single-technician' && (
 
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.firstName} {tech.lastName}
+                </div>
+              ))}
+          </td>
+        )}
 
         {roleType !== 'single-technician' && (
           <td>
@@ -777,12 +776,20 @@ const JobTable: React.FC = () => {
             ))}
           </td>
         )}
-        <td>${job?.totalCombined}</td>
+        {roleType === 'single-technician' && (
+          <td>
+            {job?.labourCost ? `$${job.labourCost}` : 'N/A'}
+          </td>
+        )}
+        {roleType !== 'single-technician' && (
 
+          <td>${job?.totalCombined}</td>
+        )}
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-<td>
-          <FormControl fullWidth size="small">
+        <td>
+          <div className="flex gap-2 items-center">
+
             <TextField
               label=""
               variant="outlined"
@@ -790,9 +797,21 @@ const JobTable: React.FC = () => {
               color="warning"
               size="small"
               type='date'
-              value='date'
+              value={invoiceDates[job.id] || new Date().toISOString().split('T')[0]}
+              onChange={(e) => setInvoiceDates(prev => ({
+                ...prev,
+                [job.id]: e.target.value
+              }))}
+              InputLabelProps={{
+                shrink: true,
+              }}
             />
-          </FormControl></td>
+            {roleType === 'single-technician' && (
+
+              <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
+            )}
+          </div>
+        </td>
         <td>
           {canCreate && (
 
@@ -804,23 +823,26 @@ const JobTable: React.FC = () => {
           )}
 
         </td>
-        <td>
-          <div className="flex gap-2 items-center">
-            <FormControl fullWidth size="small">
-              <TextField
-                label="PDR"
-                variant="outlined"
-                fullWidth
-                color="warning"
-                size="small"
-                type='number'
-                value={pdrValues[job.id] || ''}
-                onChange={(e) => handlePdrChange(job.id, e.target.value)}
-              />
-            </FormControl>
-            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
-          </div>
-        </td>
+        {roleType !== 'single-technician' && (
+
+          <td>
+            <div className="flex gap-2 items-center">
+              <FormControl fullWidth size="small">
+                <TextField
+                  label="PDR"
+                  variant="outlined"
+                  fullWidth
+                  color="warning"
+                  size="small"
+                  type='number'
+                  value={pdrValues[job.id] || ''}
+                  onChange={(e) => handlePdrChange(job.id, e.target.value)}
+                />
+              </FormControl>
+              <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
+            </div>
+          </td>
+        )}
         <td className='text-left'>
           <div className="flex gap-3 items-center">
             <Link href={`/vehicle/view?vehicleId=${job.id}`} >
@@ -849,11 +871,18 @@ const JobTable: React.FC = () => {
       <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} />
       <div className="flex gap-[3rem] mb-2 shadow-lg p-2">
-        <div><b>Total Work Order </b>: {totalJobs}</div>
-        <div><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
-        <div><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
+        <div><b>Total Work Order </b>: ${totalJobs}</div>
+        {roleType !== 'single-technician' && (
+          <div><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
+        )}
+        {roleType !== 'single-technician' && (
+          <div><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
+        )}
         <div><b>Total Job Estimate </b>: ${totalJobAmount}</div>
-        <div><b>Total Expense </b>: ${totalEstimateAmount}</div>
+        {roleType !== 'single-technician' && (
+          <div><b>Total Expense </b>: ${totalEstimateAmount}</div>
+        )}
+
       </div>
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -897,39 +926,49 @@ const JobTable: React.FC = () => {
               {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
-              <th className="w-[150px]" >
-                Assigned Technician
-              </th>
+              {roleType !== 'single-technician' && (
+                <th className="w-[150px]" >
+                  Assigned Technician
+                </th>
+              )}
               {roleType !== 'single-technician' && (
                 <th className="w-[100px]">Dent Tech Rate</th>
               )}
-              <th className="w-[130px]" >
-                Assigned R/I/R/R
-              </th>
+              {roleType !== 'single-technician' && (
+                <th className="w-[130px]" >
+                  Assigned R/I/R/R
+                </th>
+              )}
+
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">R/I/R/R</th>
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">Total Expense</th>
               )}
+              {roleType === 'single-technician' && (
+                <th className="w-[80px]">Labour Cost</th>
+              )}
               <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
               <th className="w-[150px]">Generated Invoice Date</th>
               <th className="w-[130px]">Status</th>
-              <th className="w-[160px]">PDR</th>
+              {roleType !== 'single-technician' && (
+                <th className="w-[160px]">PDR</th>
+              )}
               <th className="w-[80px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={12} className="text-center py-10">
+                <td colSpan={roleType !== 'single-technician' ? 12 : 9} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={12} className="text-center py-10">
+                <td colSpan={roleType !== 'single-technician' ? 12 : 9} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

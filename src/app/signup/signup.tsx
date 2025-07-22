@@ -41,11 +41,9 @@ interface registerForm {
   secondaryEmail?: string;
   password: string;
   confirmPassword: string;
-  payRate: string;
-  taxForms: File[];
+   taxForms: File[];
   image: File | null;
   businessLogo: File | null;
-  amountPercentage: string;
   role: string;
   types: string;
   agreeTerms: string;
@@ -99,12 +97,10 @@ export default function Role() {
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
-    confirmPassword: '',
-    payRate: '',
+    confirmPassword: '', 
     taxForms: [],
     image: null,
     businessLogo: null,
-    amountPercentage: '',
     role: '',
     types: '',
     agreeTerms: 'true',
@@ -441,7 +437,7 @@ export default function Role() {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`api/signup`, {
+      const response = await fetch(`${apiUrl}/register`, {
         method: 'POST',
         body: formDataObj, // Send the FormData object without setting Content-Type header
         headers,

@@ -202,8 +202,18 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         }
       });
       const data = await response.json();
-      setCustomer((prevCustomers) => [...prevCustomers, ...data.customers?.customers || []]);
-
+      setCustomer((prevCustomers) => {
+  const newCustomers = data.customers?.customers || [];
+  const uniqueCustomers = [...prevCustomers];
+  
+  newCustomers.forEach((customer:any) => {
+    if (!uniqueCustomers.some(c => c.id === customer.id)) {
+      uniqueCustomers.push(customer);
+    }
+  });
+  
+  return uniqueCustomers;
+});
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -482,13 +492,13 @@ const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
                 labelId="invoiceStatus-dropdown-label"
                 id="invoiceStatus-dropdown"
                 defaultValue=""
-                onChange={(e) => onInvoiceStatueChange?.(e.target.value as string)}
+                onChange={(e) => onInvoiceStatueChange?.(e.target.value)} 
                 label="Invoice Status"
                 color="warning"
               >
                 <MenuItem value="">Invoice Status</MenuItem> 
-                <MenuItem value="Paid">Paid</MenuItem>
-                <MenuItem value="Unpaid">Unpaid</MenuItem>
+                <MenuItem value="paid">Paid</MenuItem>
+                <MenuItem value="unPaid">Unpaid</MenuItem>
               </Select>
             </FormControl>
           )}
