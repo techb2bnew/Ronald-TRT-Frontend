@@ -214,9 +214,12 @@ export default function ViewDetails() {
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
-                  className={`badge ${jobData.job?.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+                  className={`badge w-[80px] text-center ${jobData.status === 'paid'
+                    ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+                    : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+                    }`}
                 >
-                  {jobData.job?.jobStatus ? 'Paid' : 'Unpaid'}
+                  {jobData.status === 'paid' ? 'Paid' : 'Unpaid'}
                 </span>
               </div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'>
@@ -278,9 +281,12 @@ export default function ViewDetails() {
                       Flat Rate
                     </th>
                   )}
+                  {userType === 'single-technician' && (
                   <th scope="col">
                     Labour Cost
                   </th>
+                  )}
+
                   <th scope="col">
                     Action
                   </th>
@@ -334,9 +340,12 @@ export default function ViewDetails() {
                             {tech.VehicleTechnician?.techFlatRate ? `$${tech.VehicleTechnician.techFlatRate}` : 'N/A'}
                           </td>
                         )}
+                      {userType === 'single-technician' && (
                         <td className="px-6 py-4">
                           {tech.VehicleTechnician?.labourCost ? `$${tech.VehicleTechnician.labourCost}` : 'N/A'}
                         </td>
+                        )}
+
                         <td className="px-6 py-4">
                           <Link href={`/technicians/view?technicianId=${tech.id}`}>
                             <Image

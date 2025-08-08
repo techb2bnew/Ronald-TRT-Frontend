@@ -637,8 +637,8 @@ const JobTable: React.FC = () => {
           {roleType === 'single-technician' && (
             <td>
               {job.labourCost !== null && (
-                `$${job.labourCost}`
-              )}
+                `$${job.labourCost || '-'}`
+              ) || '-'}
             </td>
           )}
           <td>

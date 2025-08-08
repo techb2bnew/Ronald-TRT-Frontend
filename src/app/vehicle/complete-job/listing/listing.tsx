@@ -627,9 +627,9 @@ const CompletedJobs: React.FC = () => {
 
           {roleType === 'single-technician' && (
             <td>
-              {completejob.labourCost !== '' && (
-                `$${completejob.labourCost}`
-              )}
+              {completejob.labourCost !== null && (
+                `$${completejob.labourCost || '-'}`
+              ) || '-'}
             </td>
           )}
           <td>

@@ -333,7 +333,7 @@ export default function ViewDetails() {
                   <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                {technician.address ? technician.address.replace(/^,|\s* \s*/g, '') : 'N/A'}
+                {technician.address ? technician.address.replace(/^,+|,+$/g, '').replace(/\s+/g, ' ').trim() : 'N/A'}
               </p>
               <p className='flex gap-2 items-center'>
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="view__detail" xmlns="http://www.w3.org/2000/svg">

@@ -60,13 +60,18 @@ const JobTable: React.FC = () => {
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);  // Add this state to store customer-specific jobs
   const [originalJobs, setOriginalJobs] = useState<any[]>([]);
   const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
-  console.log(totalJobs, 'totalJobs');
+  const [pdrErrors, setPdrErrors] = useState<{ [vehicleId: string]: string }>({});
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+
 
   const handlePdrChange = (jobId: string, value: string) => {
     setPdrValues(prev => ({
       ...prev,
       [jobId]: value
     }));
+    if (value && !isNaN(Number(value))) {
+      setPdrErrors(prev => ({ ...prev, [jobId]: '' }));
+    }
   };
   useEffect(() => {
     // Ensure this code runs only on the client-side (after the component mounts)
@@ -104,8 +109,8 @@ const JobTable: React.FC = () => {
           ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
           : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin' || roleType === 'manager'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchInVoiceVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
+          : `${apiUrl}/fetchInVoiceVehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -117,7 +122,7 @@ const JobTable: React.FC = () => {
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
-          : data.jobs.vehicles || [];
+          : data.response.vehicles || [];
 
         const initialPdrValues: Record<string, string> = {};
         const initialInvoiceDates: Record<string, string> = {};
@@ -147,12 +152,12 @@ const JobTable: React.FC = () => {
         });
 
         setActiveJob(updatedJobs);
-        setDentTechTotalAmount(data.jobs?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
-        setRRTotalAmount(data.jobs?.totalRrCost ?? data.data.totalRrCost ?? '0');
-        setTotalEstimateAmount(data.jobs?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
-        setTotalJobAmount(data.jobs?.totalJobEstimateCost ?? data.data.totalJobEstimateCost ?? '0');
-        setTotalPages(data.jobs?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalVehicles ?? data.data.totalVehicles ?? '0');
+        setDentTechTotalAmount(data.response?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
+        setRRTotalAmount(data.response?.totalRrCost ?? data.data.totalRrCost ?? '0');
+        setTotalEstimateAmount(data.response?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
+        setTotalJobAmount(data.response?.totalJobEstimateCost ?? data.data.totalJobEstimateCost ?? '0');
+        setTotalPages(data.response?.totalPages || 1);
+        setTotalJobs(data.response?.totalVehicles ?? data.data.totalVehicles ?? '0');
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -567,7 +572,70 @@ const JobTable: React.FC = () => {
     }
   };
 
+  const fetchCustomerData = async (customerId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return {
+          jobs: data.jobs || [],
+          vehicles: data.jobs?.flatMap((job: any) => job.vehicles) || [],
+          allTechnicians: data.jobs?.flatMap((job: any) => job.technicians) || []
+        };
+      } else {
+        toast.error(data.error || 'Error fetching customer data');
+        return { jobs: [], vehicles: [], allTechnicians: [] };
+      }
+    } catch (error) {
+      toast.error('An error occurred while fetching customer data');
+      return { jobs: [], vehicles: [], allTechnicians: [] };
+    }
+  };
+
   const handleNewCustomerClick = async (customerId: string) => {
+    setSelectedCustomer(customerId);
+
+    if (!customerId) {
+      // If no customer selected, reset to original jobs
+      fetchJobs(currentPage, searchTerm, pageSize);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { jobs, vehicles } = await fetchCustomerData(customerId);
+      console.log(jobs, 'sssssss');
+
+      // Store the customer-specific vehicles
+      setCustomerJobs(vehicles);
+
+      // Show both jobs and vehicles for the customer
+      setActiveJob(vehicles);
+
+    } catch (error) {
+      console.error("Error fetching customer data:", error);
+      toast.error("Failed to load customer data");
+    } finally {
+      setLoading(false);
+    }
   }
 
 
@@ -609,9 +677,8 @@ const JobTable: React.FC = () => {
     try {
       // Validate if pdrValue exists and is a valid number
       if (roleType !== 'single-technician') {
-
         if (!pdrValue || isNaN(Number(pdrValue))) {
-          alert('Please enter a valid PDR value');
+          setPdrErrors(prev => ({ ...prev, [vehicleId]: 'Required' }));
           return;
         }
       }
@@ -650,7 +717,7 @@ const JobTable: React.FC = () => {
   };
 
 
-  const handleGenerateInvoice = async () => {
+  const handleGenerateInvoice = async (isPrint = false) => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || '';
     const userId = localStorage.getItem('userID');
@@ -661,8 +728,20 @@ const JobTable: React.FC = () => {
       toast.error('Please select at least one vehicle to generate invoice');
       return;
     }
+    if (roleType !== 'single-technician') {
+      const vehiclesWithoutPdr = selectedJobs.filter(job =>
+        !job.pdr || isNaN(Number(job.pdr)));
+
+      if (vehiclesWithoutPdr.length > 0) {
+        toast.error('Please enter PDR values for all selected vehicles before generating invoice');
+        return;
+      }
+    }
 
     try {
+      if (isPrint === false) {
+        setIsGeneratingInvoice(true);
+      }
       // Prepare payload
       const payload = {
         vehicles: selectedJobs.map(job => ({
@@ -671,7 +750,11 @@ const JobTable: React.FC = () => {
           customerId: job.customer?.id,
           roleType: roleType,
           userId: userId,
+          generatedInvoiceStatus: true,
+          ...(isPrint && { print: 'print' }),
+          ...(isPrint && { generatedInvoiceStatus: false })
         })),
+
       };
 
       // Make API call
@@ -685,10 +768,13 @@ const JobTable: React.FC = () => {
       if (response.data) {
         toast.success('Invoice generated successfully!');
         const pdfLink = response.data.invoice.invoiceUrl;
-        const subject = 'Your Invoice is Ready';
-        const body = `Dear Customer,\n\nPlease find your invoice below:\n\n${pdfLink}\n\nBest regards.`;
-        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
+        if (isPrint) {
+          window.open(pdfLink, '_blank');
+        } else {
+          const subject = 'Your Invoice is Ready';
+          const body = `Dear Customer,\n\nPlease find your invoice below:\n\n${pdfLink}\n\nBest regards.`;
+          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
         fetchJobs(currentPage, searchTerm, pageSize);
       } else {
         toast.error(response.data.message || 'Failed to generate invoice');
@@ -696,9 +782,83 @@ const JobTable: React.FC = () => {
     } catch (error) {
       console.error('Error generating invoice:', error);
       toast.error('An error occurred while generating invoice');
+    } finally {
+      setIsGeneratingInvoice(false); // Stop loading regardless of success/error
     }
   };
 
+
+  const handleFillAllPdr = async () => {
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one vehicle to fill PDR");
+      return;
+    }
+
+    // Get the first non-empty PDR value from selected vehicles
+    let pdrValueToFill = '';
+    for (const id of selectedIds) {
+      if (pdrValues[id] && pdrValues[id].trim() !== '') {
+        pdrValueToFill = pdrValues[id];
+        break;
+      }
+    }
+
+    if (!pdrValueToFill) {
+      toast.error("Please enter a PDR value for at least one selected vehicle");
+      return;
+    }
+
+    // Validate the PDR value
+    if (isNaN(Number(pdrValueToFill))) {
+      toast.error("PDR value must be a number");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || "";
+      const userId = localStorage.getItem('userID');
+
+      // Prepare payload for all selected vehicles
+      const payload = selectedIds.map(vehicleId => ({
+        vehicleId: vehicleId,
+        pdr: Number(pdrValueToFill),
+        generatedInvoiceDate: invoiceDates[vehicleId] || new Date().toISOString().split('T')[0],
+        roleType: roleType,
+        userId: userId,
+      }));
+
+      // Make API call to update all selected vehicles
+      const response = await fetch(`${apiUrl}/updateVehiclePdr`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update PDR for selected vehicles');
+      }
+
+      const data = await response.json();
+      toast.success("PDR updated successfully for all selected vehicles!");
+
+      // Update local state for all selected vehicles
+      const updatedPdrValues = { ...pdrValues };
+      selectedIds.forEach(id => {
+        updatedPdrValues[id] = pdrValueToFill;
+      });
+      setPdrValues(updatedPdrValues);
+
+      // Refresh the data
+      fetchJobs(currentPage, searchTerm, pageSize);
+    } catch (error) {
+      console.error('Error updating PDR for selected vehicles:', error);
+      toast.error("Failed to update PDR for selected vehicles");
+    }
+  };
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
@@ -722,12 +882,13 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{job?.vin}</td>
+        <td><Link href={`/jobs/view?jobId=${job?.job?.id}&ActiveWorkOrder`} className='hover:underline'>{job?.jobName}</Link></td>
+        <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job?.vin}</Link></td>
 
         {/* <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job?.id}</Link> </td>
 
         <td>{job?.jobName}</td> */}
-        <td>  {job?.customer?.fullName} </td>
+        <td>  <Link href={`/client/view?customerId=${job?.customer?.id}`} className='hover:underline'>{job?.customer?.fullName} </Link></td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
         {roleType !== 'single-technician' && (
           <td>
@@ -735,7 +896,7 @@ const JobTable: React.FC = () => {
               ?.filter((tech: any) => tech.techType === 'technician')
               ?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.firstName} {tech.lastName}
+                  <Link href={`/technicians/view?technicianId=${tech?.id}`} className='hover:underline'>{tech.firstName} {tech.lastName}</Link>
                 </div>
               ))}
           </td>
@@ -797,7 +958,7 @@ const JobTable: React.FC = () => {
               color="warning"
               size="small"
               type='date'
-              value={invoiceDates[job.id] || new Date().toISOString().split('T')[0]}
+              value={invoiceDates[job.id] || ''}
               onChange={(e) => setInvoiceDates(prev => ({
                 ...prev,
                 [job.id]: e.target.value
@@ -806,11 +967,20 @@ const JobTable: React.FC = () => {
                 shrink: true,
               }}
             />
-            {roleType === 'single-technician' && (
+            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
 
-              <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
-            )}
           </div>
+        </td>
+        <td>
+          {canCreate && (
+
+            <span
+              className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+            >
+              {job.generatedInvoiceStatus ? 'Generated' : 'Pending'}
+            </span>
+          )}
+
         </td>
         <td>
           {canCreate && (
@@ -837,6 +1007,8 @@ const JobTable: React.FC = () => {
                   type='number'
                   value={pdrValues[job.id] || ''}
                   onChange={(e) => handlePdrChange(job.id, e.target.value)}
+                  error={Boolean(pdrErrors[job.id])}
+                  helperText={pdrErrors[job.id] || ''}
                 />
               </FormControl>
               <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
@@ -864,12 +1036,31 @@ const JobTable: React.FC = () => {
         ]}
       />
       <div className="flex justify-end gap-3 mb-3 items-center">
-        <button onClick={handleGenerateInvoice} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Genrate Invoice</button>
-        <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} />
-        <button className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
+        <button
+          onClick={() => handleGenerateInvoice(false)}
+          disabled={isGeneratingInvoice}
+          className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center'
+        >
+          {isGeneratingInvoice ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Generating...
+            </>
+          ) : (
+            'Generate Invoice'
+          )}
+        </button>
+
+        <button onClick={() => handleGenerateInvoice(true)} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Print</button>
+
+        {/* <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} /> */}
+        <button onClick={handleFillAllPdr} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
       </div>
       <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} />
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} />
       <div className="flex gap-[3rem] mb-2 shadow-lg p-2">
         <div><b>Total Work Order </b>: ${totalJobs}</div>
         {roleType !== 'single-technician' && (
@@ -918,6 +1109,8 @@ const JobTable: React.FC = () => {
               </th>
               <th className="w-[100px]"   >Job Title
               </th> */}
+              <th className="w-[100px]">Job Title
+              </th>
               <th className="w-[160px]">VIN</th>
 
               <th className="w-[120px]"  >
@@ -951,8 +1144,9 @@ const JobTable: React.FC = () => {
               )}
               <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
-              <th className="w-[150px]">Generated Invoice Date</th>
-              <th className="w-[130px]">Status</th>
+              <th className="w-[200px]">Generated Invoice Date</th>
+              <th className="w-[120px]">Invoice Status</th>
+              <th className="w-[130px]">W.O Status</th>
               {roleType !== 'single-technician' && (
                 <th className="w-[160px]">PDR</th>
               )}

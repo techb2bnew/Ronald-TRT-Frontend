@@ -151,21 +151,21 @@ const VehicleTable: React.FC = () => {
   };
 
   // CSV Export Functions
-  const downloadCSV = () => {
+   const downloadCSV = () => {
     const selectedJobs = activeJob.filter(c => selectedIds.includes(c.id));
 
     if (selectedJobs.length === 0) {
-      toast.error("Please select at least job group to export.");
+      toast.error("Please select at least one work order to export.");
       return;
     }
     const csvOptions = {
-      filename: 'Vehicles Info',
+      filename: 'Vehicle / Work Orders',
       fieldSeparator: ',',
       quoteStrings: '"',
       decimalSeparator: '.',
       showLabels: true,
       showTitle: true,
-      title: 'Vehicles Info',
+      title: 'Vehicle / Work Orders',
       useTextFile: false,
       useBom: true,
       useKeysAsHeaders: true, // Use object keys as headers
@@ -174,22 +174,25 @@ const VehicleTable: React.FC = () => {
     const csvExporter = new ExportToCsv(csvOptions);
 
     const formattedData = selectedJobs.map((jobData) => {
-      const subTotal = jobData.jobDescription.reduce((sum: number, item: any) => {
-        return sum + Number(item.cost || 0);
-      }, 0);
+      const firstTech = jobData.assignedTechnicians?.[0] || {};
+      const vt = firstTech.VehicleTechnician || {};
+
+      // Extract technician data including techFlatRate and rRate
+      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
+        const vt = tech.VehicleTechnician || {};
+        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+      }).join(', ');
       return {
         id: jobData.id,
         vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
-        assignCustomer: jobData.assignCustomer,
+        jobName: jobData.jobName,
+        assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass,
         color: jobData.color,
         make: jobData.make,
         model: jobData.model,
-        amountPercentage: jobData.amountPercentage,
-        payRate: jobData.payRate,
         vehicleType: jobData.vehicleType,
-        simpleFlatRate: jobData.simpleFlatRate,
         'modelYear': jobData.modelYear,
         'vehicleDescriptor': jobData.vehicleDescriptor,
         'manufacturerName': jobData.manufacturerName,
@@ -197,19 +200,15 @@ const VehicleTable: React.FC = () => {
         'plantCountry': jobData.plantCountry,
         'plantState': jobData.plantState,
         deletedStatus: jobData.deletedStatus,
-        estimatedBy: jobData.estimatedBy,
         notes: jobData.notes,
-        jobStatus: jobData.jobStatus ? 'true' : 'false',
-        technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.map((jobDescription: any) => `${jobDescription.jobDescription}`).join(', '),
-        cost: jobData.jobDescription.map((cost: any) => `${cost.cost}`).join(', '),
-        subTotal: subTotal.toFixed(2),
-
+        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
+        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
+        jobDescription: jobData.jobDescription.join(' '),
+        technicianRates: technicianRates,
       };
     });
     csvExporter.generateCsv(formattedData);
-  }
+  };
 
   const handleImportCSV = (file: File) => {
     setLoading(true);
@@ -311,7 +310,7 @@ const VehicleTable: React.FC = () => {
     const isChecked = selectedIds.includes(job.id);
     return (
       <tr key={job.id}>
-        {/* <td key="checkbox">
+        <td key="checkbox">
           <label className="flex items-center cursor-pointer relative">
             <input
               type="checkbox"
@@ -325,7 +324,7 @@ const VehicleTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>  */}
+        </td> 
         <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td>
         <td>{job.customer.fullName}</td>
         <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
@@ -371,13 +370,13 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
  
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              {/* <th className="w-[35px]">
+              <th className="w-[35px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -395,7 +394,7 @@ const VehicleTable: React.FC = () => {
                     </svg>
                   </span>
                 </label>
-              </th> */}
+              </th>
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
                 {sortBy === 'id' && (

@@ -324,8 +324,8 @@ const JobTable: React.FC = () => {
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
         estimatedCost: jobData.estimatedCost,
-        manager: `${jobData.manager.firstName} ${jobData.manager.lastName}`,
-        assignManager: `${jobData.manager.id}`
+        manager: `${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`,
+        assignManager: `${jobData?.manager?.id || ''}`
       };
 
     });

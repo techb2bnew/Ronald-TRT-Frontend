@@ -26,10 +26,12 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base U
 
 interface VehcileInfo {
   id: string;
+  invoiceNumber: string;
   jobName: string;
   name: string;
   email: string;
   deletedStatus?: boolean;
+  paidDate:string;
   Role: { name: string };
 }
 const JobTable: React.FC = () => {
@@ -50,12 +52,15 @@ const JobTable: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<string>('');
   const [originalJobs, setOriginalJobs] = useState<any[]>([]);
+  const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
+  const [pdrValues, setPdrValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Ensure this code runs only on the client-side (after the component mounts)
     const storedRoleType = localStorage.getItem('types');
     setRoleType(storedRoleType); // Set the roleType from localStorage
   }, []);
+
 
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
@@ -71,8 +76,8 @@ const JobTable: React.FC = () => {
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin' || roleType === 'manager'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchInvoice?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          : `${apiUrl}/searchInvoice?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
         : roleType === 'superadmin' || roleType === 'manager'
           ? `${apiUrl}/fetchInvoice?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchInvoice?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
@@ -81,8 +86,20 @@ const JobTable: React.FC = () => {
 
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
-          ? data.data.vehicles || []
+          ? data.invoice.invoice || []
           : data.response.invoice || [];
+ 
+        const initialInvoiceDates: Record<string, string> = {};
+        fetchedTechnicians.forEach(job => {
+          
+          if (job.paidDate) {
+            const date = new Date(job.paidDate);
+            initialInvoiceDates[job.invoiceNumber] = date.toISOString().split('T')[0];
+          }
+        }); 
+        setInvoiceDates(initialInvoiceDates);
+
+
         setOriginalJobs(fetchedTechnicians);
         const filteredJobs = fetchedTechnicians.filter((job: any) => {
           return selectedStatus === 'paid'
@@ -114,7 +131,7 @@ const JobTable: React.FC = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm, pageSize);  
+      fetchJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm, pageSize]);
@@ -171,7 +188,7 @@ const JobTable: React.FC = () => {
 
 
   const handlePageChange = (data: { selected: number }) => {
-    console.log(`Going to page number ${data.selected + 1}`);  
+    console.log(`Going to page number ${data.selected + 1}`);
     setCurrentPage(data.selected + 1);
   };
 
@@ -263,15 +280,15 @@ const JobTable: React.FC = () => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
     const userId = localStorage.getItem('userID');
- 
+
 
     // Prepare the payload dynamically
     const payload = {
-      roleType: roleType,  
-      jobId: jobId,   
+      roleType: roleType,
+      jobId: jobId,
       ...(roleType === 'single-technician' && { userId: userId }),
     };
-    
+
     console.log(payload, 'payload');
 
     try {
@@ -279,7 +296,7 @@ const JobTable: React.FC = () => {
       if (!token) {
         console.error("No token found");
         return; // Stop if the token is missing
-      } 
+      }
       const response = await fetch(`${apiUrl}/invoiceJobNameFilter`, {
         method: 'POST',
         headers: {
@@ -340,13 +357,49 @@ const JobTable: React.FC = () => {
     window.open(pdfUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const handleSavePaidDate = async (Id: string) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    try {
+      const dateToUse = invoiceDates[Id] || new Date().toISOString().split('T')[0];
+
+      const payload = {
+        invoiceNumber: Id,
+        paidDate: dateToUse,
+        roleType: roleType,
+        status: 'paid'
+      };
+
+
+      const response = await fetch(`${apiUrl}/updateInvoiceStatus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token in the headers
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update PDR');
+      }
+
+      const data = await response.json();
+      toast.success("Invoice Paid Date updated successfully!");
+      fetchJobs(currentPage, searchTerm, pageSize);
+    } catch (error) {
+      console.error('Error updating PDR:', error);
+    }
+  };
+
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
 
     return (
       <tr key={job.id}>
-        <td key="checkbox">
+        {/* <td key="checkbox">
           <label className="flex items-center cursor-pointer relative">
             <input
               type="checkbox"
@@ -360,43 +413,46 @@ const JobTable: React.FC = () => {
               </svg>
             </span>
           </label>
-        </td>
+        </td> */}
         <td> <Link href={`/reporting/view-invoice?invoiceId=${job.invoiceNumber}`} className='hover:underline'> {job?.invoiceNumber}</Link> </td>
         <td>  {job?.customer?.fullName} </td>
         <td>  {job?.job.jobName} </td>
         <td>  {job?.totalCombined ? `$${job.totalCombined}` : 'N/A'}</td>
         <td>{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</td>
         <td>
-          {canCreate && (
-
-            <div
-              className={`badge w-[80px] text-center ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-            >
-              {job.vehicleStatus ? 'Paid' : 'Unpaid'}
-            </div>
-          )}
-
+          <div
+            className={`badge w-[80px] text-center ${job.status === 'paid'
+                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+              }`}
+          >
+            {job.status === 'paid' ? 'Paid' : 'Unpaid'}
+          </div>
         </td>
+
         <td>
           <div className="flex gap-2 items-center">
-
-            <FormControl fullWidth size="small">
-              <TextField
-                label=""
-                variant="outlined"
-                fullWidth
-                color="warning"
-                size="small"
-                type='date'
-                value='date'
-              />
-            </FormControl>
-            <button type='button' className="primary-bg p-2 rounded"  >Save</button>
+            <TextField
+              label=""
+              variant="outlined"
+              fullWidth
+              color="warning"
+              size="small"
+              type='date'
+              value={invoiceDates[job.invoiceNumber] || new Date().toISOString().split('T')[0]}
+              onChange={(e) => setInvoiceDates(prev => ({
+                ...prev,
+                [job.invoiceNumber]: e.target.value
+              }))}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePaidDate(job.invoiceNumber)}>Save</button>
           </div>
         </td>
         <td className='text-left'>
           <div className="flex gap-3 items-center">
-            {/* <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} /> */}
             <button data-tooltip-id="Download" data-tooltip-content="Download Invoice"
               onClick={() => handleOpenInNewTab(job.pdfLink)}>
               <svg
@@ -435,18 +491,14 @@ const JobTable: React.FC = () => {
           { label: 'Sent Invoice', href: '/reporting/invoice' }
         ]}
       />
-      {/* <div className="flex justify-end gap-3 mb-3 items-center"> 
-         <button className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Genrate Invoice</button>
-          <InvoiceGenerator selectedJobs={activeJob.filter((job) => selectedIds.includes(job.id))} />
-       </div> */}
-      <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} />
+      <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
+        onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[50px]">
+              {/* <th className="w-[50px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -465,7 +517,7 @@ const JobTable: React.FC = () => {
                     </svg>
                   </span>
                 </label>
-              </th>
+              </th> */}
               <th onClick={() => handleSort('id')}>
                 Invoice ID
                 {sortBy === 'id' && (
@@ -474,7 +526,7 @@ const JobTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th    >
+              <th>
                 Customer Name
               </th>
               <th>
@@ -490,13 +542,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

@@ -32,6 +32,7 @@ interface CommonHeaderProps {
   onNewTechClick?: (jobId: string, roleType: string) => void;
   roleType?: string;
   onCustomerChange?: (customer: string, roleType: string) => void;
+  fetchCustomerData?: (customerId: string) => Promise<any>;
   onStatusChange?: (status: string) => void;
   onInvoiceStatueChange?: (status: string) => void;
 }
@@ -165,10 +166,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
 
     let url;
-    if (effectiveRoleType === 'superadmin') {
+    if (effectiveRoleType === 'superadmin' || effectiveRoleType === 'manager') {
       url = `/api/jobListing?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
     } else if (effectiveRoleType === 'single-technician') {
-      url = `/api/jobListing?page=${page}&roleType=single-technician`;
+      url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
     } else {
       url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
     }
@@ -179,7 +180,11 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
       if (response.ok) {
         const fetchedJobs = data.jobs?.jobs || [];
-        setJobs((prev) => [...prev, ...fetchedJobs]);
+        setJobs(prev => {
+          const existingIds = new Set(prev.map(job => job.id));
+          const newJobs = fetchedJobs.filter((job: any) => !existingIds.has(job.id));
+          return [...prev, ...newJobs];
+        });
         setHasMore(fetchedJobs.length > 0);
       } else {
         console.error('Error fetching job data:', data.error);
@@ -203,17 +208,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
       });
       const data = await response.json();
       setCustomer((prevCustomers) => {
-  const newCustomers = data.customers?.customers || [];
-  const uniqueCustomers = [...prevCustomers];
-  
-  newCustomers.forEach((customer:any) => {
-    if (!uniqueCustomers.some(c => c.id === customer.id)) {
-      uniqueCustomers.push(customer);
-    }
-  });
-  
-  return uniqueCustomers;
-});
+        const newCustomers = data.customers?.customers || [];
+        const uniqueCustomers = [...prevCustomers];
+
+        newCustomers.forEach((customer: any) => {
+          if (!uniqueCustomers.some(c => c.id === customer.id)) {
+            uniqueCustomers.push(customer);
+          }
+        });
+
+        return uniqueCustomers;
+      });
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -351,23 +356,23 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
-const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
-  const value = event.target.value;
-  setCustomerFilter(value);
-  setSelectedCustomerId(value);
+  const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    setCustomerFilter(value);
+    setSelectedCustomerId(value);
 
-  if (value) {
-    const { jobs } = await fetchCustomerData(value);
-    setCustomerJobs(jobs);
-  } else {
-    setCustomerJobs([]); // Reset customer jobs if no customer is selected
-  }
+    if (value) {
+      const { jobs } = await fetchCustomerData(value);
+      setCustomerJobs(jobs);
+    } else {
+      setCustomerJobs([]); // Reset customer jobs if no customer is selected
+    }
 
-  // Trigger the customer change event
-  if (onCustomerChange) {
-    onCustomerChange(value, 'single-technician'); // Pass the customer ID and role type
-  }
-};
+    // Trigger the customer change event
+    if (onCustomerChange) {
+      onCustomerChange(value, 'single-technician'); // Pass the customer ID and role type
+    }
+  };
 
 
 
@@ -492,11 +497,11 @@ const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
                 labelId="invoiceStatus-dropdown-label"
                 id="invoiceStatus-dropdown"
                 defaultValue=""
-                onChange={(e) => onInvoiceStatueChange?.(e.target.value)} 
+                onChange={(e) => onInvoiceStatueChange?.(e.target.value)}
                 label="Invoice Status"
                 color="warning"
               >
-                <MenuItem value="">Invoice Status</MenuItem> 
+                <MenuItem value="">Invoice Status</MenuItem>
                 <MenuItem value="paid">Paid</MenuItem>
                 <MenuItem value="unPaid">Unpaid</MenuItem>
               </Select>
