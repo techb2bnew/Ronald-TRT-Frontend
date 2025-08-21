@@ -271,7 +271,6 @@ export default function Technicians() {
       if (!form.vin?.trim()) newErrors[`vin`] = 'VIN is required';
       // if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Name is required';
       if (!form.vehicleDescriptor?.trim()) newErrors[`vehicleDescriptor`] = 'Vehicle Descriptor is required';
-      if (!form.color?.trim()) newErrors[`color`] = 'Color is required';
       if (!form.assignCustomer) newErrors[`assignCustomer`] = 'Customer is required';
     });
 
@@ -1943,7 +1942,7 @@ export default function Technicians() {
 
 
                   <FormControl fullWidth size="small">
-                    <InputLabel id="color" color="warning">Select color *</InputLabel>
+                    <InputLabel id="color" color="warning">Select color</InputLabel>
                     <Select
                       labelId="color"
                       id="select-color"
@@ -2003,11 +2002,11 @@ export default function Technicians() {
                       ))}
                     </Select>
                   </FormControl>
-                  {errors.color && (
+                  {/* {errors.color && (
                     <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                       {errors.color}
                     </div>
-                  )}
+                  )} */}
                 </div>
                 {/* Client Name and Business Name */}
 

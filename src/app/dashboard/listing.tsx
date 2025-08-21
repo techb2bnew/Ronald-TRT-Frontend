@@ -188,6 +188,21 @@ export default function Dashboard() {
                         <span className="block text-gray-500">Single Technician Jobs</span>
                     </div>
                 </div>
+                 <div className="flex items-center p-8 bg-white shadow rounded-lg">
+                    <div className="inline-flex flex-shrink-0 items-center justify-center h-16 w-16 text-blue-600 bg-blue-100 rounded-full mr-6">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 11L5 6H19L21 11V17C21 17.5523 20.5523 18 20 18H19C18.4477 18 18 17.5523 18 17V16H6V17C6 17.5523 5.55228 18 5 18H4C3.44772 18 3 17.5523 3 17V11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M7 13H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="6.5" cy="17.5" r="1.5" fill="currentColor" />
+                            <circle cx="17.5" cy="17.5" r="1.5" fill="currentColor" />
+                        </svg>
+
+                    </div>
+                    <div>
+                        <span className="block text-2xl font-bold">{count.VehicleSingleTech}</span>
+                        <span className="block text-gray-500">Single Technician Vehicle / Work Order</span>
+                    </div>
+                </div>
             </section>
         </main>
     );

@@ -326,10 +326,15 @@ export default function Technicians() {
     HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
   > = (e) => {
     const { name, value } = e.target;
+     let processedValue = value;
+    if (name === 'email' || name === 'secondaryEmail') {
+      processedValue = value.toLowerCase();
+    }
     const updatedFormData = {
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     };
+ 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (name === 'secondaryContactName') {
       const numericValue = value.replace(/\D/g, '');

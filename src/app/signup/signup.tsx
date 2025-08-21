@@ -41,7 +41,7 @@ interface registerForm {
   secondaryEmail?: string;
   password: string;
   confirmPassword: string;
-   taxForms: File[];
+  taxForms: File[];
   image: File | null;
   businessLogo: File | null;
   role: string;
@@ -97,7 +97,7 @@ export default function Role() {
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
-    confirmPassword: '', 
+    confirmPassword: '',
     taxForms: [],
     image: null,
     businessLogo: null,
@@ -187,9 +187,13 @@ export default function Role() {
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    if (name === 'email' || name === 'secondaryEmail') {
+      processedValue = value.toLowerCase();
+    }
     const updatedFormData = {
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     };
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (name === 'secondaryContactName') {
@@ -759,7 +763,9 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
+                    <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} inputProps={{
+                      style: { textTransform: 'lowercase' }
+                    }} />
                     {errors.email && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                         {errors.email}
