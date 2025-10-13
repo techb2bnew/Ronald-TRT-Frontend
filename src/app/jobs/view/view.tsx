@@ -177,7 +177,7 @@ export default function ViewDetails() {
 
         <div className="bg-blue rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Job Detail</h2>
-          <div className="grid grid-cols-2 gap-3 p-6">
+          <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>

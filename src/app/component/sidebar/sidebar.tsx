@@ -73,6 +73,33 @@ const Sidebar = () => {
 
 
   const { isCollapsed, setIsCollapsed } = useSidebar();
+
+
+
+useEffect(() => {
+  const handleAutoSidebar = () => {
+    const screenWidth = window.innerWidth;
+
+    if (screenWidth > 991) {
+      // For desktop view
+      if (isCollapsed) {
+        // expandSidebar();
+      } else {
+        collapseSidebar();
+      }
+    }
+  };
+
+  // Run once when component mounts
+  handleAutoSidebar();
+
+  // Optional: re-check if the user resizes the window
+  window.addEventListener("resize", handleAutoSidebar);
+
+  // Cleanup listener on unmount
+  return () => window.removeEventListener("resize", handleAutoSidebar);
+}, []);
+
   const collapseSidebar = () => {
     setIsCollapsed(true);
     setIsHovered(false); // remove hover effect when clicking
@@ -85,7 +112,14 @@ const Sidebar = () => {
   };
 
 
-
+const handleNavItemClick = () => {
+  // behave like the toggle icon after a click
+  if (typeof window !== "undefined" && window.innerWidth < 991) {
+    // Collapse after navigating on desktop
+    setTimeout(()=>{collapseSidebar();},500);   // this already sets isCollapsed(true) and clears hover
+  } else {
+  }
+};
 
   // Save the state to localStorage whenever it changes
   const handleDropdownToggle = () => {
@@ -230,26 +264,32 @@ const Sidebar = () => {
 
   return (
     <div className="group" onMouseEnter={() => {
-      if (isCollapsed) setIsHovered(true);
-    }}
-      onMouseLeave={() => {
-        if (isCollapsed) setIsHovered(false);
-      }}>
+    // setTimeout(()=>{ collapseSidebar();},1500);
+    if (window.innerWidth > 991 && isCollapsed) {
+      setIsHovered(true);
+      setIsCollapsed(true);
+    }
+  }}
+  onMouseLeave={() => {
+    if (window.innerWidth > 991 && isCollapsed) {
+      setIsHovered(false);
+    }
+  }}>
       <div
-        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ${isCollapsed && !isHovered ? "w-[70px]" : "w-[14%]"
+        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ${isCollapsed && !isHovered ? "w-[70px]" : "w-[300px]"
           }`}
       >
         <div className={`flex justify-end p-2 toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
 
 
           {isCollapsed ? (
-            <button onClick={expandSidebar}>
-              <CloseIcon />
+       
+             <button onClick={expandSidebar}>
+              <ChevronRightIcon />
             </button>
           ) : (
-            <button onClick={collapseSidebar}>
-              <ChevronRightIcon />
-
+                <button onClick={collapseSidebar}>
+              <CloseIcon />
             </button>
           )}
 
@@ -261,7 +301,7 @@ const Sidebar = () => {
 
         <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
           <li className='p-1 pl-4'>
-          <Link href="/dashboard"className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
+          <Link onClick={handleNavItemClick} href="/dashboard"className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
             <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
               <path fillRule="evenodd" clipRule="evenodd" d="M2.03486 13.5347C2.6676 12.9019 3.56085 12.6458 4.5835 12.6458H6.41683C7.43947 12.6458 8.33273 12.9019 8.96547 13.5347C9.5982 14.1674 9.85433 15.0607 9.85433 16.0833V17.9166C9.85433 18.9393 9.5982 19.8325 8.96547 20.4653C8.33273 21.098 7.43947 21.3541 6.41683 21.3541H4.5835C3.56085 21.3541 2.6676 21.098 2.03486 20.4653C1.40212 19.8325 1.146 18.9393 1.146 17.9166V16.0833C1.146 15.0607 1.40212 14.1674 2.03486 13.5347ZM3.00713 14.5069C2.7232 14.7909 2.521 15.2726 2.521 16.0833V17.9166C2.521 18.7273 2.7232 19.2091 3.00713 19.493C3.29106 19.7769 3.7728 19.9791 4.5835 19.9791H6.41683C7.22752 19.9791 7.70926 19.7769 7.99319 19.493C8.27712 19.2091 8.47933 18.7273 8.47933 17.9166V16.0833C8.47933 15.2726 8.27712 14.7909 7.99319 14.5069C7.70926 14.223 7.22752 14.0208 6.41683 14.0208H4.5835C3.7728 14.0208 3.29106 14.223 3.00713 14.5069Z" fill="currentColor" />
@@ -318,21 +358,22 @@ const Sidebar = () => {
             ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
 
                 {isUsersOpen && (
-                  <ul className="">
+                  <ul className="sdev_overlap_mob">
 
                     <li >
-                      <Link href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
+                      <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
                         Customers
                       </Link>
                     </li>
                     <li >
-                      <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                      <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                         Jobs
                       </Link>
                     </li>
                     {userType !== 'single-technician' && userType !== 'ifs' && (
                       <li >
                         <Link
+                         onClick={handleNavItemClick}
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                         >
@@ -342,7 +383,7 @@ const Sidebar = () => {
                     )}
 
                     {/* <li  >
-                        <Link href="/admin/listing"  className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/admin/listing' || activeLink === '/admin/create' ? 'active text-[#fff900]' : ''}`}  >
+                        <Link onClick={handleNavItemClick} href="/admin/listing"  className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/admin/listing' || activeLink === '/admin/create' ? 'active text-[#fff900]' : ''}`}  >
                           Admin 
                         </Link>
                       </li>  */}
@@ -352,24 +393,24 @@ const Sidebar = () => {
                 )}
 
                 {/* <li  >
-                  <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                     <span>Create Work Order</span>
                   </Link>
                 </li> */}
                 <li  >
-                  <Link href="/vehicle/vehicle" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/vehicle' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/vehicle/vehicle" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/vehicle' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                     Vehicle / Work Orders
                   </Link>
                 </li>
 
                 <li >
-                  <Link href="/vehicle/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+                  <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                     Completed Work Order
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li >
-                    <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
+                    <Link onClick={handleNavItemClick} href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
                       Group Work Orders
                     </Link>
                   </li>
@@ -394,17 +435,17 @@ const Sidebar = () => {
           {isUser4Open && (
             <ul className="ml-4">
               <li >
-                <Link href="/enterprice/technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/enterprice/technicians/listing' ? 'active text-[#fff900]' : ''}`} >
+                <Link onClick={handleNavItemClick} href="/enterprice/technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/enterprice/technicians/listing' ? 'active text-[#fff900]' : ''}`} >
                   <span>Technician</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'clients' ? 'active text-[#fff900]' : ''}`}  >
+                <Link onClick={handleNavItemClick} href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'clients' ? 'active text-[#fff900]' : ''}`}  >
                   <span>Customer</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'admin' ? 'active text-[#fff900]' : ''}`}  >
+                <Link onClick={handleNavItemClick} href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'admin' ? 'active text-[#fff900]' : ''}`}  >
                   <span>Admin</span>
                 </Link>
               </li>
@@ -443,17 +484,17 @@ const Sidebar = () => {
           {isUser2Open && (
             <ul className="ml-4">
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'technician' || activeLink === 'technicians/create-technician' ? 'active text-[#fff900]' : ''}`} >
+                <Link onClick={handleNavItemClick} href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'technician' || activeLink === 'technicians/create-technician' ? 'active text-[#fff900]' : ''}`} >
                   <span>Technician</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'clients' ? 'active text-[#fff900]' : ''}`}  >
+                <Link onClick={handleNavItemClick} href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'clients' ? 'active text-[#fff900]' : ''}`}  >
                   <span>Customer</span>
                 </Link>
               </li>
               <li >
-                <Link href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'admin' ? 'active text-[#fff900]' : ''}`}  >
+                <Link onClick={handleNavItemClick} href="/#" className={`flex items-center p-2 space-x-2  rounded ${activeLink === 'admin' ? 'active text-[#fff900]' : ''}`}  >
                   <span>Admin</span>
                 </Link>
               </li>
@@ -502,23 +543,23 @@ const Sidebar = () => {
               <ul className={`ml-6 space-y-1 transition-all duration-300
               ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                 <li  >
-                  <Link href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
                     <span>Create Work Order</span>
                   </Link>
                 </li>
                 <li >
-                  <Link href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#fff900]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#fff900]' : ''}`} >
                     <span>Active Work Order</span>
                   </Link>
                 </li>
                 <li >
-                  <Link href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#fff900]' : ''}`}>
+                  <Link onClick={handleNavItemClick} href="/jobs/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/complete-job/listing' ? 'active text-[#fff900]' : ''}`}>
                     <span>Completed Work Order</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li >
-                    <Link href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
+                    <Link onClick={handleNavItemClick} href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff900]' : ''}`}  >
                       <span>Group Work Orders</span>
                     </Link>
                   </li>
@@ -562,26 +603,26 @@ const Sidebar = () => {
               <ul className={`ml-6 space-y-1 transition-all duration-300
               ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                 <li  >
-                  <Link href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                     <span>Vehicles Info</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
 
                   <li >
-                    <Link href="/reporting/job-status" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/reporting/job-status" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Work Orders</span>
                     </Link>
                   </li>
                 )}
                 <li >
-                  <Link href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                     <span>Vehicles List</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li>
-                    <Link href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Accounts Report</span>
                     </Link>
                   </li>
@@ -589,7 +630,7 @@ const Sidebar = () => {
 
                 {/* {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
-                    <Link href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Genrate Custom Reports</span>
                     </Link>
                   </li>
@@ -624,12 +665,12 @@ const Sidebar = () => {
             {isUser7Open && (
               <ul className="ml-4">
                 <li  >
-                  <Link href="/ifs-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/ifs-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/ifs-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/ifs-technicians/listing' ? 'active text-[#fff900]' : ''}`} >
                     <span>Technicians</span>
                   </Link>
                 </li>
                 <li >
-                  <Link href="/ifs-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/ifs-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/ifs-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/ifs-technicians/jobs' ? 'active text-[#fff900]' : ''}`} >
                     <span>Work Orders</span>
                   </Link>
                 </li>
@@ -640,7 +681,7 @@ const Sidebar = () => {
         )} */}
           {/* {userType !== 'single-technician' && (
           <li className='p-1'>
-            <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  hover:bg-white rounded ${activeLink === '/single-technicians/listing' || activeLink === '/single-technicians/create-technician' || activeLink === '/single-technicians/view' ? 'active text-[#fff900]' : ''}`}>
+            <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  hover:bg-white rounded ${activeLink === '/single-technicians/listing' || activeLink === '/single-technicians/create-technician' || activeLink === '/single-technicians/view' ? 'active text-[#fff900]' : ''}`}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="8" r="4"/>
               <path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" />
@@ -653,7 +694,7 @@ const Sidebar = () => {
         )} */}
 
           {/* <li className='p-1'>
-          <Link href="#" className="flex items-center p-2 space-x-2 hover:bg-white  rounded">
+          <Link onClick={handleNavItemClick} href="#" className="flex items-center p-2 space-x-2 hover:bg-white  rounded">
             <svg width="18" height="18" viewBox="0 0 19 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18.2256 18.9668L17.1984 6.02411C17.1344 5.19027 16.4292 4.53706 15.593 4.53706H13.5642V4.44587C13.5642 1.9944 11.5698 0 9.11828 0C6.66681 0 4.67241 1.9944 4.67241 4.44587V4.53706H2.64365C1.80734 4.53706 1.10211 5.19023 1.03832 6.02236L0.0108676 18.9686C-0.0686441 20.0051 0.290955 21.0371 0.997397 21.7998C1.70384 22.5625 2.70528 23 3.74491 23H14.4916C15.5312 23 16.5327 22.5625 17.2392 21.7998C17.9456 21.0371 18.3052 20.0051 18.2256 18.9668ZM6.01962 4.44587C6.01962 2.73727 7.40973 1.34721 9.11828 1.34721C10.8268 1.34721 12.217 2.73731 12.217 4.44587V4.53706H6.01962V4.44587ZM16.2508 20.8844C15.7917 21.3799 15.1671 21.6528 14.4916 21.6528H3.74495C3.06951 21.6528 2.44482 21.3799 1.98581 20.8844C1.52685 20.3889 1.30251 19.7451 1.35408 19.0734L2.38144 6.12712C2.39186 5.99092 2.50704 5.88427 2.64365 5.88427H4.67241V7.54346C4.67241 7.91546 4.97402 8.21706 5.34601 8.21706C5.71801 8.21706 6.01962 7.91546 6.01962 7.54346V5.88427H12.217V7.54346C12.217 7.91546 12.5186 8.21706 12.8906 8.21706C13.2626 8.21706 13.5642 7.91546 13.5642 7.54346V5.88427H15.593C15.7295 5.88427 15.8447 5.99096 15.8553 6.12892L16.8824 19.0716C16.9341 19.7451 16.7097 20.3888 16.2508 20.8844Z" fill="currentColor" />
               <path d="M12.1555 11.4228C11.8925 11.1598 11.4659 11.1598 11.2029 11.4228L8.19514 14.4306L7.03858 13.2741C6.77556 13.011 6.34903 13.011 6.08597 13.2741C5.82291 13.5371 5.82291 13.9636 6.08597 14.2267L7.71883 15.8595C7.85037 15.9911 8.02278 16.0569 8.1951 16.0569C8.36742 16.0569 8.53987 15.9911 8.67136 15.8595L12.1554 12.3755C12.4185 12.1124 12.4185 11.6859 12.1555 11.4228Z" fill="currentColor" />
@@ -663,7 +704,7 @@ const Sidebar = () => {
           </Link>
         </li>
         <li className='p-1'>
-        <Link href="/#" className="flex items-center p-2 space-x-2 hover:bg-white  rounded" >
+        <Link onClick={handleNavItemClick} href="/#" className="flex items-center p-2 space-x-2 hover:bg-white  rounded" >
 
             <svg width="18" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11.8125 6.5625H9.1875C8.8394 6.5625 8.50556 6.70078 8.25942 6.94692C8.01328 7.19306 7.875 7.5269 7.875 7.875V17.7188C7.875 18.0668 8.01328 18.4007 8.25942 18.6468C8.50556 18.893 8.8394 19.0312 9.1875 19.0312H11.8125C12.1606 19.0312 12.4944 18.893 12.7406 18.6468C12.9867 18.4007 13.125 18.0668 13.125 17.7188V7.875C13.125 7.5269 12.9867 7.19306 12.7406 6.94692C12.4944 6.70078 12.1606 6.5625 11.8125 6.5625ZM9.1875 17.7188V7.875H11.8125V17.7188H9.1875ZM18.375 1.96875H15.75C15.4019 1.96875 15.0681 2.10703 14.8219 2.35317C14.5758 2.59931 14.4375 2.93315 14.4375 3.28125V17.7188C14.4375 18.0668 14.5758 18.4007 14.8219 18.6468C15.0681 18.893 15.4019 19.0312 15.75 19.0312H18.375C18.7231 19.0312 19.0569 18.893 19.3031 18.6468C19.5492 18.4007 19.6875 18.0668 19.6875 17.7188V3.28125C19.6875 2.93315 19.5492 2.59931 19.3031 2.35317C19.0569 2.10703 18.7231 1.96875 18.375 1.96875ZM15.75 17.7188V3.28125H18.375V17.7188H15.75ZM5.25 11.1562H2.625C2.2769 11.1562 1.94306 11.2945 1.69692 11.5407C1.45078 11.7868 1.3125 12.1207 1.3125 12.4688V17.7188C1.3125 18.0668 1.45078 18.4007 1.69692 18.6468C1.94306 18.893 2.2769 19.0312 2.625 19.0312H5.25C5.5981 19.0312 5.93194 18.893 6.17808 18.6468C6.42422 18.4007 6.5625 18.0668 6.5625 17.7188V12.4688C6.5625 12.1207 6.42422 11.7868 6.17808 11.5407C5.93194 11.2945 5.5981 11.1562 5.25 11.1562ZM2.625 17.7188V12.4688H5.25V17.7188H2.625Z" fill="currentColor" />
@@ -675,7 +716,7 @@ const Sidebar = () => {
         
             <li className='p-1 pl-4'>
 
-              <Link href="/reporting/invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+              <Link onClick={handleNavItemClick} href="/reporting/invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_217_1077)">
                     <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -698,7 +739,7 @@ const Sidebar = () => {
          
             <li className='p-1 pl-4'>
 
-              <Link href="/reporting/genrated-invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+              <Link onClick={handleNavItemClick} href="/reporting/genrated-invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_217_1077)">
                     <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -720,7 +761,7 @@ const Sidebar = () => {
 
           {/* {userType !== 'single-technician' && (
             <li className='p-1 pl-4'>
-              <Link href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+              <Link onClick={handleNavItemClick} href="/role/listing" className={`flex items-center p-2 space-x-2 rounded ${activeLink === '/role/listing' || activeLink === '/role/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                 <svg width="18" height="18" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M11.4995 22.2891H3.02618C1.35745 22.2891 0 20.9317 0 19.2629V10.3862C0 8.71743 1.35745 7.35999 3.02618 7.35999H15.1309C16.7996 7.35999 18.1571 8.71743 18.1571 10.3862V13.2106C18.1571 13.5447 17.8862 13.8158 17.5518 13.8158C17.2175 13.8158 16.9466 13.5447 16.9466 13.2106V10.3862C16.9466 9.38492 16.1321 8.57046 15.1309 8.57046H3.02618C2.02494 8.57046 1.21047 9.38492 1.21047 10.3862V19.2629C1.21047 20.2642 2.02494 21.0786 3.02618 21.0786H11.4995C11.8338 21.0786 12.1047 21.3497 12.1047 21.6839C12.1047 22.018 11.8338 22.2891 11.4995 22.2891Z" fill="currentColor" />
                   <path d="M6.25486 8.57029C5.92053 8.57029 5.64963 8.29919 5.64963 7.96505V6.14935C5.64963 4.3695 7.0977 2.92143 8.87755 2.92143C10.154 2.92143 11.3131 3.6756 11.8302 4.84313C11.9756 5.17175 12.3129 5.34985 12.6484 5.2746C12.8723 5.22534 13.0549 5.07679 13.1499 4.86795C13.2438 4.66069 13.2356 4.42782 13.1268 4.22923C12.2753 2.67595 10.647 1.71096 8.87755 1.71096C6.20777 1.71096 4.03567 3.88287 4.03567 6.55284V7.96506C4.03567 8.29919 3.76477 8.57029 3.43043 8.57029C3.09609 8.57029 2.8252 8.29919 2.8252 7.96506V6.55284C2.8252 3.21538 5.54028 0.500488 8.87755 0.500488C11.0893 0.500488 13.1242 1.70623 14.1883 3.64763C14.4819 4.18351 14.5051 4.81042 14.2522 5.36798C13.9984 5.92711 13.5092 6.3239 12.9105 6.45669C12.0186 6.65253 11.0991 6.18166 10.7234 5.3333C10.4001 4.60355 9.67546 4.1319 8.87754 4.1319C7.76519 4.1319 6.86009 5.03699 6.86009 6.14935V7.96505C6.86009 8.29919 6.5892 8.57029 6.25486 8.57029Z" fill="currentColor" />
@@ -736,7 +777,7 @@ const Sidebar = () => {
           {userType === 'superadmin' && (
             <li className='p-1 pl-4'>
 
-              <Link href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+              <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                 <div className={`flex items-center gap-1  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                   <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Staff Management </span>
@@ -745,7 +786,7 @@ const Sidebar = () => {
             </li>
           )}
           {/* <li className='p-1 pl-4'>
-            <Link href="/archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+            <Link onClick={handleNavItemClick} href="/archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
               <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -772,7 +813,7 @@ const Sidebar = () => {
           {/* {userType !== 'ifs' && (
 
             <li className='p-1 pl-4 mb-2'>
-              <Link href="/banner" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/banner' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+              <Link onClick={handleNavItemClick} href="/banner" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/banner' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                 <div className={`flex items-center gap-2  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg className='ml-[2px]' width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="2" y="4" width="16" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none" />
@@ -814,33 +855,33 @@ const Sidebar = () => {
                 <ul className={`ml-6 space-y-1 transition-all duration-300
                 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                   <li  >
-                    <Link href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Technicians</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Jobs</span>
                     </Link>
                   </li>
                   <li >
-                    <Link href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Work Orders</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>Vehicles Info</span>
                     </Link>
                   </li>
 
                   {/* <li>
-                    <Link href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/all-jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
                       <span>All Jobs</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/single-technicians/single-archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/single-archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
+                    <Link onClick={handleNavItemClick} href="/single-technicians/single-archive/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/single-archive/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                       <span>Archives</span>
                     </Link>
                   </li> */}

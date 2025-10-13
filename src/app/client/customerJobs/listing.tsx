@@ -389,7 +389,7 @@ const JobTable: React.FC = () => {
   };
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       {/* <Breadcrumb
         items={[
           { label: 'Customer Vehicles Info', href: '/jobs/active-job' }

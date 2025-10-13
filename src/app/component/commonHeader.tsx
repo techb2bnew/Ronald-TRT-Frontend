@@ -380,12 +380,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
   return (
     <div className="px-1 mb-4">
-      <div className="flex items-center justify-between  w-full">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
         <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900">{heading}</h1>
+          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
           {/* <p className='text-sm'>{title}</p> */}
         </div>
-        <div className='flex items-center gap-4'>
+        <div className='mobile_listing_item  flex items-center gap-4'>
           {onSearch && (
 
             <div className="flex w-[250px] relative search__input">
@@ -553,7 +553,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               </button>
             )}
             {showDatePickers && (
-              <div className="absolute z-40" style={{ top: '3rem', right: '0rem' }}>
+              <div className="absolute z-40 sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
                 <DateRange
                   editableDateInputs={true}
                   onChange={handleDateChange}
@@ -668,7 +668,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </button>
           )}
           {buttonLink && buttonLabel && canCreate && (
-            <Link href={buttonLink} className="primary-bg text-xs border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
+            <Link href={buttonLink} className="primary-bg text-xs justify-between border border-black-500 p-3 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2">
               {buttonLabel}
               <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

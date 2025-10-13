@@ -489,7 +489,7 @@ export default function Technicians() {
   };
 
   return (
-    <div className='w-[60%] m-auto mb-5'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
           { label: 'Customers', href: '/client/listing' },
@@ -499,8 +499,8 @@ export default function Technicians() {
 
         ]}
       />
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create IFS Customer</h1> */}
-      <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create IFS Customer</h1> */}
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
 

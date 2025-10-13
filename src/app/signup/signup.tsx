@@ -616,7 +616,7 @@ export default function Role() {
 
   return (
     <div className='main-container mb-5 bg-white'>
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create New Technician</h1> */}
       <div className="flex">
         <div className="w-1/2 md:block fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />

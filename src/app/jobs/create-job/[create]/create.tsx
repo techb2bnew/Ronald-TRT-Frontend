@@ -474,7 +474,7 @@ export default function JobForm() {
     );
 
   return (
-    <div className='w-[60%] m-auto mb-5'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
           isEdit
@@ -482,7 +482,7 @@ export default function JobForm() {
             : { label: 'Create New Job', href: '/jobs/create-job/create' },
         ]}
       />
-      <h1 className="text-lg leading-6 font-bold text-gray-900">
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
         {isEdit ? 'Edit Job' : 'Create New Job'}
       </h1>
 

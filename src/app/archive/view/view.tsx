@@ -182,7 +182,7 @@ export default function ViewDetails() {
           </div>
         )}
         {recordType == "Job" && (
-          <div className="grid grid-cols-2 gap-3 p-6">
+          <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Job Id:</strong> {technician?.id}</div>

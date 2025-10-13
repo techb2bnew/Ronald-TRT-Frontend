@@ -1006,7 +1006,7 @@ export default function Technicians() {
  
 
   return (
-    <div className='w-[60%] m-auto mb-5 m-auto'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full m-auto'>
       <Breadcrumb
         items={[
           {
@@ -1022,7 +1022,7 @@ export default function Technicians() {
         ]}
       />
 
-      <h1 className="text-lg leading-6 font-bold text-gray-900">
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
         {isEdit
           ? isTechnician
             ? 'Edit Technician'

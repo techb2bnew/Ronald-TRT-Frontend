@@ -1029,13 +1029,13 @@ const JobTable: React.FC = () => {
   };
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Invoice', href: '/reporting/invoice' }
         ]}
       />
-      <div className="flex justify-end gap-3 mb-3 items-center">
+      <div className="invoice_tab_content flex justify-end gap-3 mb-3 items-center">
         <button
           onClick={() => handleGenerateInvoice(false)}
           disabled={isGeneratingInvoice}
@@ -1061,22 +1061,22 @@ const JobTable: React.FC = () => {
       </div>
       <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} />
-      <div className="flex gap-[3rem] mb-2 shadow-lg p-2">
-        <div><b>Total Work Order </b>: ${totalJobs}</div>
-        {roleType !== 'single-technician' && (
-          <div><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
+      <div className="flex  mb-2 shadow-lg p-2flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
+        <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>
+        {roleType !== 'single-technician title_sdev' && (
+          <div className='total_dent_teach title_sdev'><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
         )}
         {roleType !== 'single-technician' && (
-          <div><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
+          <div className='total_ri_content title_sdev'><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
         )}
         <div><b>Total Job Estimate </b>: ${totalJobAmount}</div>
         {roleType !== 'single-technician' && (
-          <div><b>Total Expense </b>: ${totalEstimateAmount}</div>
+          <div className='total_expense title_sdev'><b>Total Expense </b>: ${totalEstimateAmount}</div>
         )}
 
       </div>
       <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
+        <table className="table w-full table-fixed sdev_table">
           <thead>
             <tr>
               <th className="w-[50px]">

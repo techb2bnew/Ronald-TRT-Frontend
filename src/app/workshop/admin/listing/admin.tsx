@@ -22,7 +22,7 @@ const TechnicianTable: React.FC = () => {
     <div className="container mx-auto mt-4">
       <CommonHeader heading='IFS Admin' onSearch={handleSearch} userRole='Customer' buttonLabel="Create IFS Admin" buttonLink="/workshop/admin/create" />
 
-      <div className="overflow-x-auto rounded-md">
+      <div className="overflow-x-auto rounded-md ">
         <table className="table w-full table-fixed">
           {/* Table header */}
           <thead>

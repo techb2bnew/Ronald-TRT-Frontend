@@ -240,7 +240,7 @@ export default function Technicians() {
         ]}
       />
       
-      <h1 className="text-lg leading-6 font-bold text-gray-900">Upload Mobile Banner</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Upload Mobile Banner</h1>
       <div className='bg-white p-4 mt-5 w-[80%] m-auto'>
         <form className="" onSubmit={handleSubmit}>
           <div className='mb-4 mt-4'>
