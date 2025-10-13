@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main   # jab bhi main branch pe push hoga
+      - main   
   pull_request:
     branches:
       - main
