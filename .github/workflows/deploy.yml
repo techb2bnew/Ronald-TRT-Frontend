@@ -48,10 +48,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /var/www/html/Ronald-TRT-Frontend
+            cd ~/prorevv-frontend
             git pull origin main
             npm ci --production=false --legacy-peer-deps
             npm run build
-            # Agar PM2 use kar rahe ho to ye uncomment karo
-            # pm2 restart ronald-trt-frontend || pm2 start npm --name "ronald-trt-frontend" -- start
+            pm2 restart prorevv-frontend
             echo "Deployment successful!"
