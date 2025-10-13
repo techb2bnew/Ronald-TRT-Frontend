@@ -49,7 +49,10 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/prorevv-frontend
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
+            rm -rf node_modules
+            rm -rf .next
             npm ci --production=false --legacy-peer-deps
             npm run build
             pm2 restart prorevv-frontend
