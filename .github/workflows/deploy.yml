@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build Project
         run: npm run build
@@ -50,7 +50,7 @@ jobs:
           script: |
             cd /var/www/html/Ronald-TRT-Frontend
             git pull origin main
-            npm ci --production=false
+            npm ci --production=false --legacy-peer-deps
             npm run build
             # Agar PM2 use kar rahe ho to ye uncomment karo
             # pm2 restart ronald-trt-frontend || pm2 start npm --name "ronald-trt-frontend" -- start
