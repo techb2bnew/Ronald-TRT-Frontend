@@ -48,6 +48,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            sudo yum install git -y
             cd /home/ec2-user/prorevv-frontend
             git fetch origin
             git reset --hard origin/main
