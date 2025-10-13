@@ -27,7 +27,7 @@ import "dynamsoft-barcode-reader";
 if (typeof window !== "undefined") {
   // Only run on client
   import("dynamsoft-license").then(({ LicenseManager }) => {
-    LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0MTgwNzA3LU1UQTBNVGd3TnpBM0xYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20iLCJvcmdhbml6YXRpb25JRCI6IjEwNDE4MDcwNyIsInN0YW5kYnlTZXJ2ZXJVUkwiOiJodHRwczovL3NkbHMuZHluYW1zb2Z0b25saW5lLmNvbSIsImNoZWNrQ29kZSI6MTM3MDA4ODk2MX0=", { executeNow: true });
+    LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMTA0NDYzOTE5LU1UQTBORFl6T1RFNUxYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20iLCJvcmdhbml6YXRpb25JRCI6IjEwNDQ2MzkxOSIsInN0YW5kYnlTZXJ2ZXJVUkwiOiJodHRwczovL3NkbHMuZHluYW1zb2Z0b25saW5lLmNvbSIsImNoZWNrQ29kZSI6LTE4NjcxNzkwNzJ9", { executeNow: true });
   });
 
   import("dynamsoft-core").then(({ CoreModule }) => {

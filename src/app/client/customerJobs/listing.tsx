@@ -364,28 +364,15 @@ const JobTable: React.FC = () => {
       <tr key={job.id}>
 
         <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td>{job?.jobName}</td>
         <td>{job?.vin}</td>
         <td>{job?.make}</td>
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
         <td>{job?.manufacturerName}</td>
         <td>{job?.vehicleDescriptor}</td>
-        <td>{job?.vehicleType}</td>
-
+        <td>{job?.vehicleType}</td> 
         {/* <td> 
-          {job?.jobDescription?.map((desc: any, index: any) => (
-            <div key={index} className="text-sm">
-              <p>Job: {desc.jobDescription}</p>   <p className='block'> Cost: ${desc.cost}</p>
-            </div>
-          ))}
-        </td> */}
-        <td>
-          {/* <Link href={`/reporting/view?vehicleId=${job.id}`} >
-            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-              data-tooltip-content="View" />
-          </Link>
-          <Tooltip id="view" place="top" />
-           */}
 
             <TableActions
             editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
@@ -396,20 +383,20 @@ const JobTable: React.FC = () => {
             itemId={job.id}  // Pass the technician ID
             onDeleteSuccess={() => handleDeleteSuccess(job.id)}
           />
-        </td>
+        </td> */}
       </tr>
     )
   };
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
-      <Breadcrumb
+    <div className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+      {/* <Breadcrumb
         items={[
           { label: 'Customer Vehicles Info', href: '/jobs/active-job' }
         ]}
-      />
+      /> */}
 
-      <CommonHeader heading="Customer Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Customer Vehicles Info"   onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -422,6 +409,9 @@ const JobTable: React.FC = () => {
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
+              </th>
+              <th className="w-[120px]">
+                Job Name
               </th>
               <th className="w-[120px]">
                 VIN
@@ -439,19 +429,19 @@ const JobTable: React.FC = () => {
               </th>
               <th className="w-[100px]">Vehicle Type</th>
               {/* <th className="w-[100px]">Job Description</th> */}
-              <th className="w-[60px]">Action</th>
+              {/* <th className="w-[60px]">Action</th> */}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

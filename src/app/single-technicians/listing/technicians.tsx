@@ -658,7 +658,7 @@ const TechnicianTable: React.FC = () => {
 
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
 
       <Breadcrumb
         items={[
@@ -700,7 +700,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}`}
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
             >
               {header}

@@ -462,7 +462,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
           },
         });
 
-        setActiveJob(response.data.vehicles);
+        setActiveJob(response.data.vehicles.updatedVehicles);
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -506,7 +506,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
 
       // Handle success or failure based on the API response
       if (response.ok) {
-       setActiveJob(data.vehicles);
+       setActiveJob(data.vehicles.updatedVehicles);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -630,7 +630,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
   };
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'All Work Order List', href: '/vehicle/vehicle' }
@@ -664,7 +664,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+              <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
@@ -684,7 +684,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
                 Assigned Technician
               </th>
               {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Tech Flat Rate</th>
+                <th className="w-[80px]">Tech Flat Rate</th>
               )}
               <th className="w-[130px]" >
                 Assigned R/I/R/R
@@ -693,9 +693,9 @@ const [roleType, setRoleType] = useState<string | null>(null);
                 <th className="w-[80px]">R/I/R/R</th>
               )}
               {roleType !== 'single-technician' && (
-                <th className="w-[120px]">Total Expense</th>
+                <th className="w-[80px]">Total Expense</th>
               )}
-              <th className="w-[140px]">VIN</th>
+              <th className="w-[160px]">VIN</th>
               <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
               <th className="w-[130px]">Status</th>
@@ -705,13 +705,13 @@ const [roleType, setRoleType] = useState<string | null>(null);
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={14} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={14} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

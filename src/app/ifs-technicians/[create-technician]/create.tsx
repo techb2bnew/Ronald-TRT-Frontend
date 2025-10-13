@@ -521,8 +521,8 @@ export default function Role() {
   return (
     <div className='main-container mb-5'>
       <ToastContainer position="top-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
-      <h1 className="text-lg leading-6 font-bold text-gray-900">{isEdit ? 'Edit Technician' : 'Create Single Technician'}</h1>
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create New Technician</h1> */}
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{isEdit ? 'Edit Technician' : 'Create Single Technician'}</h1>
           <div className="text-center mb-5 w-full"> 
           </div>
           <div className='bg-white p-4 mt-5 w-[60%] m-auto'>

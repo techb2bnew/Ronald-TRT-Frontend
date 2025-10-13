@@ -14,7 +14,6 @@ export default function ViewTechnicians() {
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-6 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
             <View />
-            <Customer />
         </div>
     </div>
     {/* </AuthCheck> */}

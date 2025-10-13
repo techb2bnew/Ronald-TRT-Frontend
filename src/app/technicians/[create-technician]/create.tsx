@@ -326,10 +326,15 @@ export default function Technicians() {
     HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
   > = (e) => {
     const { name, value } = e.target;
+     let processedValue = value;
+    if (name === 'email' || name === 'secondaryEmail') {
+      processedValue = value.toLowerCase();
+    }
     const updatedFormData = {
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     };
+ 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (name === 'secondaryContactName') {
       const numericValue = value.replace(/\D/g, '');
@@ -747,7 +752,9 @@ export default function Technicians() {
       } else {
         if (isSingleTechnician) {
           toast.success('Single technician added successfully');
-        } else {
+        } else if (searchParams!.has('manager')) {
+          toast.success('Manager added successfully');
+        } else { 
           toast.success('Technician added successfully');
         }
         if (searchParams!.has('singletechnician')) {
@@ -999,7 +1006,7 @@ export default function Technicians() {
  
 
   return (
-    <div className='w-[60%] m-auto mb-5 m-auto'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full m-auto'>
       <Breadcrumb
         items={[
           {
@@ -1015,7 +1022,7 @@ export default function Technicians() {
         ]}
       />
 
-      <h1 className="text-lg leading-6 font-bold text-gray-900">
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
         {isEdit
           ? isTechnician
             ? 'Edit Technician'

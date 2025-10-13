@@ -123,7 +123,7 @@ export default function ViewDetails() {
 
                 <div className="bg-blue rounded-lg shadow-md">
                     <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Account Detail</h2>
-                    <div className="grid grid-cols-2 gap-3 p-6">
+                    <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
                         {/* Left Section */}
                         <div className='shadow-lg p-5 bg-white rounded'>
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Id:</strong> {jobData?.id}</div>
@@ -233,10 +233,11 @@ export default function ViewDetails() {
                                 </>
                             )}
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
+                                    {jobData?.estimatedCost && (
                                 <div className="flex gap-3 items-center capitalize">
-
                                     ${jobData?.estimatedCost || '-'}
                                 </div>
+                                    ) || '-'}
                             </div>
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Total Flat Rate:</strong>
                                 <div className="flex gap-3 items-center capitalize">
@@ -282,7 +283,7 @@ export default function ViewDetails() {
 
                             )}
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'>
-                                <strong className='w-[210px] min-w-[210px] inline-block'>Notes:</strong>
+                                <strong className='w-[210px] min-w-[210px] inline-block'>Notes: </strong>
                                 {jobData?.notes || 'N/A'}
                             </div>
                             <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
@@ -338,10 +339,10 @@ export default function ViewDetails() {
                                                                 <img
                                                                     src={tech.image}
                                                                     alt={`${tech.firstName} ${tech.lastName}`}
-                                                                    className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                                                                    className="w-8  h-8 rounded-full object-cover cursor-pointer"
                                                                 />
                                                             ) : (
-                                                                <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
+                                                                <div className="w-8 min-w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
                                                                     {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
                                                                 </div>
                                                             )}

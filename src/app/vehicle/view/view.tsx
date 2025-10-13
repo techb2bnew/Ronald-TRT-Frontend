@@ -153,7 +153,7 @@ export default function ViewDetails() {
       <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
         <div className="bg-blue rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Vehicle Detail</h2>
-          <div className="grid grid-cols-2 gap-3 p-6">
+          <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
@@ -192,10 +192,10 @@ export default function ViewDetails() {
                 <strong className='w-[210px] inline-block'>Body Class:</strong>
                 {jobData?.bodyClass || <span className="text-black-500">N/A</span>}
               </p>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : ''} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : 'N/A'} </div>
 
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : ''}
+                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'}
               </div>
             </div>
 
@@ -208,15 +208,28 @@ export default function ViewDetails() {
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Country:</strong>
+                {jobData?.plantCountry !== 'undefined' &&(
+                  <>
                 {jobData?.plantCountry || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'} 
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Company:</strong>
+                {jobData?.plantCompanyName !== 'undefined' &&(
+                  <>
                 {jobData?.plantCompanyName || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant State:</strong>
+                 {jobData?.plantState !== 'undefined' &&(
+                  <>
                 {jobData?.plantState || <span className="text-black-500">N/A</span>}
+                </>
+                ) || 'N/A'}
+ 
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Created By:</strong>
@@ -312,7 +325,7 @@ export default function ViewDetails() {
                           ${tech.VehicleTechnician.techFlatRate}</p>
                       )}
 
-                      {tech.VehicleTechnician.techType !== '' || tech.VehicleTechnician.techType !== 'null' && (
+                      {tech.VehicleTechnician.techType !== '' || roleType !== 'single-technician' && (
                         <p className="mb-1"><strong className='w-[210px] inline-block'>Tech Type:</strong>
                           {tech?.techType}</p>
                       )}

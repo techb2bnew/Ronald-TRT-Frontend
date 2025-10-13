@@ -41,11 +41,9 @@ interface registerForm {
   secondaryEmail?: string;
   password: string;
   confirmPassword: string;
-  payRate: string;
   taxForms: File[];
   image: File | null;
   businessLogo: File | null;
-  amountPercentage: string;
   role: string;
   types: string;
   agreeTerms: string;
@@ -100,11 +98,9 @@ export default function Role() {
     secondaryEmail: '',
     password: '',
     confirmPassword: '',
-    payRate: '',
     taxForms: [],
     image: null,
     businessLogo: null,
-    amountPercentage: '',
     role: '',
     types: '',
     agreeTerms: 'true',
@@ -191,9 +187,13 @@ export default function Role() {
 
   const handleChange: React.ChangeEventHandler<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement> = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    if (name === 'email' || name === 'secondaryEmail') {
+      processedValue = value.toLowerCase();
+    }
     const updatedFormData = {
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     };
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (name === 'secondaryContactName') {
@@ -441,7 +441,7 @@ export default function Role() {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`api/signup`, {
+      const response = await fetch(`${apiUrl}/register`, {
         method: 'POST',
         body: formDataObj, // Send the FormData object without setting Content-Type header
         headers,
@@ -616,7 +616,7 @@ export default function Role() {
 
   return (
     <div className='main-container mb-5 bg-white'>
-      {/* <h1 className="text-lg leading-6 font-bold text-gray-900">Create New Technician</h1> */}
+      {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create New Technician</h1> */}
       <div className="flex">
         <div className="w-1/2 md:block fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
@@ -763,7 +763,9 @@ export default function Role() {
                       <path d="M2.5 4.5L8 8.5L13.5 4.5" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {/* <p className='text-sm mb-2'>Email <span className='text-red-500'>*</span></p> */}
-                    <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} />
+                    <TextField fullWidth name="email" id="outlined-basic" color="warning" label="Email *" size="small" value={formData.email} onChange={handleChange} inputProps={{
+                      style: { textTransform: 'lowercase' }
+                    }} />
                     {errors.email && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                         {errors.email}

@@ -582,7 +582,7 @@ const TechnicianTable: React.FC = () => {
 
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'IFS Technicians', href: '/technicians/listing' }
@@ -600,7 +600,7 @@ const TechnicianTable: React.FC = () => {
         renderHeaderCell={(header, index) => {
           if (index === 0) {
             return (
-              <th key={index} className='w-[40px]'>
+              <th key={index} className='w-[50px]'>
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"

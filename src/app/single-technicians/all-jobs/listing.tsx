@@ -506,7 +506,7 @@ const JobTable: React.FC = () => {
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td>
-        <td>({job.vehicleCount || 0}) Work Order</td>
+        <td>{job.vehicleCount || 0}</td>
         
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
@@ -546,7 +546,7 @@ const JobTable: React.FC = () => {
 
   const handleDateChange = async (dateRange: [Date, Date] | null) => {
     const token = localStorage.getItem('token');
-    const roleType = localStorage.getItem('types') || "";
+    const roleType = "single-technician";
     const userId = localStorage.getItem('userID');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -571,7 +571,7 @@ const JobTable: React.FC = () => {
           endDate: endDate,
           roleType: roleType
         };
-        if (roleType !== 'superadmin' && roleType !== 'manager') {
+        if (roleType !== 'single-technician') {
           requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
         }
 
@@ -634,7 +634,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
 
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Jobs List', href: '/jobs/active-job' }

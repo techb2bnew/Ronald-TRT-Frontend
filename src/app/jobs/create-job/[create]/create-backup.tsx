@@ -1442,7 +1442,7 @@ export default function Technicians() {
   
 
   return (
-    <div className='w-[60%] m-auto mb-5'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
           isEdit
@@ -1450,7 +1450,7 @@ export default function Technicians() {
             : { label: 'Create New Work Order', href: '/jobs/create-job/create' },
         ]}
       />
-      <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0"> {isEdit ? 'Edit Work Order' : 'Create New Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
         <form className="" onSubmit={handleSubmit}>

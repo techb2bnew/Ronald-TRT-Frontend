@@ -34,6 +34,7 @@ const JobTable: React.FC = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalExpense, setTotalExpense] = useState('0');
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
@@ -110,7 +111,8 @@ const JobTable: React.FC = () => {
           : data.response.vehicles || [];
         setActiveJob(fetchedTechnicians);
         setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+        setTotalJobs(data.jobs?.totalJobs || 0);
+        setTotalExpense(data.response?.totalEstimateCost || data.data.totalEstimateCost);
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -183,7 +185,7 @@ const JobTable: React.FC = () => {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-        const technicianData = localStorage.getItem('technicianData'); 
+        const technicianData = localStorage.getItem('technicianData');
         let completedBy = '';
         if (technicianData) {
           try {
@@ -208,6 +210,8 @@ const JobTable: React.FC = () => {
 
         if (response.data.status) {
           // Optimistically update the local state
+          fetchJobs(currentPage, searchTerm);
+
           setActiveJob(prev => prev.map(job => {
             if (job.id === vehicleId) {
               return { ...job, jobStatus: !job.jobStatus };
@@ -527,7 +531,9 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.vehicles);
+        setActiveJob(response.data.vehicles.updatedVehicles);
+        setTotalExpense(response.data.vehicles?.totalEstimateCost || 0);
+
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -541,122 +547,125 @@ const JobTable: React.FC = () => {
     const roleType = localStorage.getItem('types') || "";
 
     return (
-      <tr key={job.id}>
-        <td key="checkbox">
-          <label className="flex items-center cursor-pointer relative">
-            <input
-              type="checkbox"
-              className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
-              checked={isChecked}
-              onChange={() => handleCheckboxChange(job.id)}
-            />
-            <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-              </svg>
-            </span>
-          </label>
-        </td>
-        <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job.id}</Link> </td>
+      <>
+        <tr key={job.id}>
+          <td key="checkbox">
+            <label className="flex items-center cursor-pointer relative">
+              <input
+                type="checkbox"
+                className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[var(--foreground)]"
+                checked={isChecked}
+                onChange={() => handleCheckboxChange(job.id)}
+              />
+              <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                </svg>
+              </span>
+            </label>
+          </td>
+          <td> <Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'> {job.id}</Link> </td>
 
 
-        <td>{job?.jobName}</td>
-        <td>  {job?.customer?.fullName} </td>
+          <td>{job?.jobName}</td>
+          <td>  {job?.customer?.fullName} </td>
 
-        {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
-        {roleType !== 'single-technician' && (
-          <td>
-            {job?.assignedTechnicians
-              ?.filter((tech: any) => tech.techType === 'technician')
-              ?.map((tech: any) => (
+          {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
+          {roleType !== 'single-technician' && (
+            <td>
+              {job?.assignedTechnicians
+                ?.filter((tech: any) => tech.techType === 'technician')
+                ?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.firstName} {tech.lastName}
+                  </div>
+                ))}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
+            <td>
+              {job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.firstName} {tech.lastName}
+                  {tech.VehicleTechnician?.techFlatRate !== '' && (
+                    `$${tech.VehicleTechnician?.techFlatRate}`
+                  )}
+
                 </div>
               ))}
-          </td>
-        )}
-        {roleType !== 'single-technician' && (
-          <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.techFlatRate !== '' && (
-                  `$${tech.VehicleTechnician?.techFlatRate}`
-                )}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
 
-              </div>
-            ))}
-          </td>
-        )}
-        {roleType !== 'single-technician' && (
+            <td>
+              {job?.assignedTechnicians
+                ?.filter((tech: any) => tech.techType === 'R/I/R/R')
+                ?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.firstName} {tech.lastName}
+                  </div>
+                ))}
+            </td>
+          )}
 
-          <td>
-            {job?.assignedTechnicians
-              ?.filter((tech: any) => tech.techType === 'R/I/R/R')
-              ?.map((tech: any) => (
+
+          {roleType !== 'single-technician' && (
+            <td>
+              {job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.firstName} {tech.lastName}
+                  {tech.VehicleTechnician?.rRate !== '' && (
+                    `$${tech.VehicleTechnician?.rRate}`
+                  )}
                 </div>
               ))}
-          </td>
-        )}
+            </td>
+          )}
+          {roleType !== 'single-technician' && (
+            <td>${job?.totalCombined}</td>
+          )}
 
-
-        {roleType !== 'single-technician' && (
-          <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.rRate !== '' && (
-                  `$${tech.VehicleTechnician?.rRate}`
-                )}
-              </div>
-            ))}
-          </td>
-        )}
-        {roleType !== 'single-technician' && (
-          <td>${job?.totalCombined}</td>
-        )}
-
-        {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
+          {/* <td>{job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id}>
             <a className="hover:underline" href={`tel:${tech.technicians}`}>
               {tech.phoneNumber}
             </a>
           </div>
         ))}</td> */}
-        <td>{job?.vin}</td>
-        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+          <td>{job?.vin}</td>
+          <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+          <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
 
-        {roleType === 'single-technician' && (
-          <td>
-            {job.labourCost !== '' && (
-              `$${job.labourCost}`
-            )}
-          </td>
-        )}
-        <td>
-          {canCreate && (
-
-            <span onClick={() => toggleApproval(job.id, job.vehicleStatus)} style={{ cursor: 'pointer' }}
-              className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-            >
-              {job.vehicleStatus ? 'Completed' : 'In Progress'}
-            </span>
+          {roleType === 'single-technician' && (
+            <td>
+              {job.labourCost !== null && (
+                `$${job.labourCost || '-'}`
+              ) || '-'}
+            </td>
           )}
+          <td>
+            {canCreate && (
 
-        </td>
-        <td>
-          <TableActions
-            editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
-            deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
-            viewRoute={`/vehicle/view?vehicleId=${job.id}`}
-            idKey="vehicleId"
-            userRole='Activejobs'
-            itemId={job.id}  // Pass the technician ID
-            onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-          />
-        </td>
-      </tr>
+              <span onClick={() => toggleApproval(job.id, job.vehicleStatus)} style={{ cursor: 'pointer' }}
+                className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+              >
+                {job.vehicleStatus ? 'Completed' : 'In Progress'}
+              </span>
+            )}
+
+          </td>
+          <td>
+            <TableActions
+              editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
+              deleteRoute={`/api/deleteVehicle`}  // Pass the correct endpoint
+              viewRoute={`/vehicle/view?vehicleId=${job.id}`}
+              idKey="vehicleId"
+              userRole='Activejobs'
+              itemId={job.id}  // Pass the technician ID
+              onDeleteSuccess={() => handleDeleteSuccess(job.id)}
+            />
+          </td>
+        </tr>
+
+      </>
     )
   };
   const handleNewJobClick = async (jobId: string) => {
@@ -694,7 +703,9 @@ const JobTable: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.vehicles);
+        setActiveJob(data.vehicles.updatedVehicles);
+        setTotalExpense(data.vehicles?.totalEstimateCost || 0);
+
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -706,7 +717,7 @@ const JobTable: React.FC = () => {
 
 
   return (
-    <div className={` mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Work Order List', href: '/vehicle/vehicle' }
@@ -720,7 +731,7 @@ const JobTable: React.FC = () => {
         <table className="table w-full table-fixed">
           <thead>
             <tr>
-              <th className="w-[35px]">
+              <th className="w-[50px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -793,19 +804,29 @@ const JobTable: React.FC = () => {
                   <Loader />
                 </td>
               </tr>
-            ) : activeJob.length === 0 ? (
+            ) : activeJob?.length === 0 ? (
               <tr>
                 <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob.map((job) => renderRow(job))
+              activeJob?.map((job) => renderRow(job))
+            )}
+            {roleType !== 'single-technician' && (
+
+              <tr>
+                <td colSpan={9} className='text-right font-semibold'>
+                  <span className='pr-6'>
+                    Total: ${totalExpense}
+                  </span>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
-      {activeJob.length > 0 && (
+      {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>

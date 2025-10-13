@@ -271,7 +271,6 @@ export default function Technicians() {
       if (!form.vin?.trim()) newErrors[`vin`] = 'VIN is required';
       // if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Name is required';
       if (!form.vehicleDescriptor?.trim()) newErrors[`vehicleDescriptor`] = 'Vehicle Descriptor is required';
-      if (!form.color?.trim()) newErrors[`color`] = 'Color is required';
       if (!form.assignCustomer) newErrors[`assignCustomer`] = 'Customer is required';
     });
 
@@ -460,58 +459,58 @@ export default function Technicians() {
         ]);
 
       }
-    else {  
-      if (result.error) {
-       
-        const swalResult = await Swal.fire({
-          title: 'Are you sure you want to proceed and add this vehicle with the same VIN to the job?',
-          text: result.details.error,  // Show the message from the API response
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#383d71',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'Yes',
-          cancelButtonText: 'Re-enter',
-          customClass: {
-            title: 'swal-title',  // Custom class for title
-            popup: 'swal-text'    // Custom class for content
-          }
-        });
+      else {
+        if (result.error) {
 
-        // Check if the user clicked "Yes"
-        if (swalResult.isConfirmed) {
-          const vinDetailsEndpoint = `${apiUrl}/createVinDetails`;
-          // Call the createVinDetails API
-          try {
-            const response = await fetch(vinDetailsEndpoint, {
-              method: 'POST',
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
-              body: formDataObj,
-            });
-            const data = await response.json();
+          const swalResult = await Swal.fire({
+            title: 'Are you sure you want to proceed and add this vehicle with the same VIN to the job?',
+            text: result.details.error,  // Show the message from the API response
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#383d71',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Re-enter',
+            customClass: {
+              title: 'swal-title',  // Custom class for title
+              popup: 'swal-text'    // Custom class for content
+            }
+          });
 
-            if (response.ok) {
-              toast.success('VIN details created successfully.');
-              router.push('/vehicle/vehicle');
-            } else {
+          // Check if the user clicked "Yes"
+          if (swalResult.isConfirmed) {
+            const vinDetailsEndpoint = `${apiUrl}/createVinDetails`;
+            // Call the createVinDetails API
+            try {
+              const response = await fetch(vinDetailsEndpoint, {
+                method: 'POST',
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                },
+                body: formDataObj,
+              });
+              const data = await response.json();
+
+              if (response.ok) {
+                toast.success('VIN details created successfully.');
+                router.push('/vehicle/vehicle');
+              } else {
+                toast.error('Failed to create VIN details.');
+              }
+            } catch (error) {
+              console.error('Error creating VIN details:', error);
               toast.error('Failed to create VIN details.');
             }
-          } catch (error) {
-            console.error('Error creating VIN details:', error);
-            toast.error('Failed to create VIN details.');
           }
         }
-      } 
+      }
+    } catch (error) {
+      console.error('Error creating job:', error);
+      toast.error('An error occurred while creating the job.');
+    } finally {
+      setSubmitting(false);
+    }
   }
-} catch (error) {
-  console.error('Error creating job:', error);
-  toast.error('An error occurred while creating the job.');
-} finally {
-  setSubmitting(false);
-}
-}
 
 
 
@@ -547,8 +546,11 @@ export default function Technicians() {
           }
           return value;
         };
-        setStartDate(dayjs(new Date(vehicleData.startDate)));
-        setEndDate(dayjs(new Date(vehicleData.endDate)));
+        const validDate = (date: any) => {
+          return date && date !== 'null' && date !== '';
+        };
+        setStartDate(validDate(vehicleData.startDate) ? dayjs(new Date(vehicleData.startDate)) : null);
+        setEndDate(validDate(vehicleData.endDate) ? dayjs(new Date(vehicleData.endDate)) : null);
 
         // Process job descriptions
         const jobDescriptionsArray = vehicleData.jobDescription?.map((job: any) => ({
@@ -1499,7 +1501,7 @@ export default function Technicians() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-
+ 
       const response = await fetch(
         `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
         {
@@ -1618,7 +1620,7 @@ export default function Technicians() {
   };
 
   return (
-    <div className='w-[60%] m-auto mb-5'>
+    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
           isEdit
@@ -1626,7 +1628,7 @@ export default function Technicians() {
             : { label: 'Add New Vehicle / Work Order', href: '/jobs/create-job/create' },
         ]}
       />
-      <h1 className="text-lg leading-6 font-bold text-gray-900"> {isEdit ? 'Edit Vehicle / Work Order' : 'Add New Vehicle / Work Order'}</h1>
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0"> {isEdit ? 'Edit Vehicle / Work Order' : 'Add New Vehicle / Work Order'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
       <div className='bg-white p-4 mt-5 '>
         <form className=""  >
@@ -1940,7 +1942,7 @@ export default function Technicians() {
 
 
                   <FormControl fullWidth size="small">
-                    <InputLabel id="color" color="warning">Select color *</InputLabel>
+                    <InputLabel id="color" color="warning">Select color</InputLabel>
                     <Select
                       labelId="color"
                       id="select-color"
@@ -2000,11 +2002,11 @@ export default function Technicians() {
                       ))}
                     </Select>
                   </FormControl>
-                  {errors.color && (
+                  {/* {errors.color && (
                     <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                       {errors.color}
                     </div>
-                  )}
+                  )} */}
                 </div>
                 {/* Client Name and Business Name */}
 

@@ -101,22 +101,19 @@ export default function Login() {
         //   localStorage.removeItem('rememberedEmail');
         //   localStorage.removeItem('rememberedPassword');
         // }
-            if (data.user.types === 'ifs') {
+            if (data.user.types === 'ifs' || data.user.types === 'single-technician') {
         // If the role is 'ifs', show SweetAlert instead of redirecting
-        if (data.user.types === 'ifs') {
+        if (data.user.types === 'ifs' || data.user.types === 'single-technician') {
           Swal.fire({
             icon: 'info',
             title: 'Access Restricted',
-            text: 'Your account is under the "IFS" role, and you do not have access to admin.',
+            text: 'You do not have access to admin.',
             confirmButtonText: 'OK',
           }).then(() => {
             // You can handle any additional logic here if needed
           });
         }
-      } else if (data.user.types === 'single-technician') {
-        // If role is not 'ifs', redirect accordingly
-        router.push('/client/listing');
-        } else {
+      } else {
           router.push('/vehicle/vehicle');
         }  
       }
