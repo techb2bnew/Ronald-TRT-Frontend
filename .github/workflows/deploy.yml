@@ -50,6 +50,15 @@ jobs:
           script: |
             sudo yum install git -y 2>/dev/null || sudo dnf install git -y 2>/dev/null || true
             export PATH=$PATH:/usr/bin
+            
+            # Check if directory is a valid git repo
+            if [ ! -d ~/prorevv-frontend/.git ]; then
+              echo "Not a git repository, cleaning and cloning fresh..."
+              rm -rf ~/prorevv-frontend
+              cd ~
+              /usr/bin/git clone https://github.com/${{ github.repository }}.git prorevv-frontend
+            fi
+            
             cd ~/prorevv-frontend
             /usr/bin/git fetch origin
             /usr/bin/git reset --hard origin/main
