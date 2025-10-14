@@ -143,7 +143,7 @@ export default function Login() {
         <div className="bg-white flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">
-            <img src='https://ronaldo-trt.s3.ap-south-1.amazonaws.com/login.png' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
+            <img src='https://ronaldo-prorevv.s3.eu-north-1.amazonaws.com/uploads/db0cced40f70665fa2d40c63825c1e1423c5955e.png' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
           </div>
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
