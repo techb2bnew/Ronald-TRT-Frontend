@@ -49,12 +49,41 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             sudo yum install git -y
-            cd ~/prorevv-frontend
-            git fetch origin
+            
+            # Setup deployment directory
+            DEPLOY_DIR=~/prorevv-frontend
+            
+            # Use authenticated HTTPS URL with token
+            REPO_URL="https://${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git"
+            
+            # Check if valid git repository exists
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              echo "Setting up fresh repository..."
+              rm -rf $DEPLOY_DIR
+              git clone $REPO_URL $DEPLOY_DIR
+            else
+              # Ensure remote is configured correctly
+              cd $DEPLOY_DIR
+              git remote set-url origin $REPO_URL || git remote add origin $REPO_URL
+              
+              # Fetch and reset
+              git fetch origin || {
+                echo "Fetch failed, re-cloning repository..."
+                cd ~
+                rm -rf $DEPLOY_DIR
+                git clone $REPO_URL $DEPLOY_DIR
+              }
+            fi
+            
+            # Navigate and pull latest
+            cd $DEPLOY_DIR
             git reset --hard origin/main
-            rm -rf node_modules
-            rm -rf .next
-            npm ci --production=false --legacy-peer-deps
+            
+            # Clean build
+            rm -rf node_modules .next
+            npm ci --legacy-peer-deps
             npm run build
-            pm2 restart prorevv-frontend
+            
+            # Restart app
+            pm2 restart prorevv-frontend || pm2 start npm --name "prorevv-frontend" -- start
             echo "Deployment successful!"
