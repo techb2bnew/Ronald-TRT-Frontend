@@ -48,13 +48,14 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            sudo yum install git -y
-            cd /home/ec2-user/prorevv-frontend
-            git fetch origin
-            git reset --hard origin/main
+            sudo yum install git -y 2>/dev/null || sudo dnf install git -y 2>/dev/null || true
+            export PATH=$PATH:/usr/bin
+            cd ~/prorevv-frontend
+            /usr/bin/git fetch origin
+            /usr/bin/git reset --hard origin/main
             rm -rf node_modules
             rm -rf .next
-            npm ci --production=false --legacy-peer-deps
+            npm ci --omit=dev --legacy-peer-deps
             npm run build
             pm2 restart prorevv-frontend
             echo "Deployment successful!"
