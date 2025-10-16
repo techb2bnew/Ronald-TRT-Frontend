@@ -148,7 +148,7 @@ export default function Login() {
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">
               <Image src={Logo} className="m-auto rounded object-cover" width='100' height='50' alt="page img" />
-              <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Prorevvvvvv!</h2>
+              <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Prorevv!</h2>
               <p className="text-[#161616] mt-3">Please enter your login details to securely access your repair tracker.</p>
             </div>
             <form className="mt-6" onSubmit={handleSubmit}>
