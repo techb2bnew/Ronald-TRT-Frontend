@@ -7,7 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    env:
+      FRONTEND_DIR: ${{ github.workspace }}/prorevv-frontend
 
     steps:
       # 1️⃣ Checkout code
@@ -24,7 +26,7 @@ jobs:
       # 3️⃣ Install dependencies (bypass postinstall)
       - name: Install dependencies (prorevv-frontend)
         run: |
-          cd prorevv-frontend
+          cd $FRONTEND_DIR
           npm ci --ignore-scripts
           npm install --save-dev @types/node
           echo "Dependencies installed without postinstall scripts"
@@ -34,7 +36,7 @@ jobs:
       # 4️⃣ Build application
       - name: Build application (prorevv-frontend)
         run: |
-          cd prorevv-frontend
+          cd $FRONTEND_DIR
           npx next build
         env:
           NODE_ENV: production
@@ -44,7 +46,7 @@ jobs:
       # 5️⃣ Prepare deployment files
       - name: Prepare deployment files
         run: |
-          cd prorevv-frontend
+          cd $FRONTEND_DIR
           rm -rf .git .next/cache node_modules
           echo "Deployment files ready"
 
@@ -66,7 +68,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SERVER_HOST }}
           REMOTE_USER: ${{ secrets.SERVER_USER }}
-          SOURCE: ./prorevv-frontend
+          SOURCE: $FRONTEND_DIR
           TARGET: /home/ec2-user/prorevv-frontend/
           ARGS: "-rlgoDzvc --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r --no-perms --no-owner --no-group --exclude=.next/cache --exclude=node_modules --exclude=.git --exclude=src"
 
