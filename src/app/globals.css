@@ -655,9 +655,9 @@ span.badge.badge-success, span.badge.badge-error  {
   .mobile_listing {
     max-width: 1450px;
   }
-  table.table.w-full.table-fixed {
+  /* table.table.w-full.table-fixed {
     width: unset;
-}
+} */
 }
 @media screen and (max-width:1440px){
   .mobile_listing {
