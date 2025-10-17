@@ -48,7 +48,7 @@ const CompletedJobs: React.FC = () => {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
   const fetchCompleteJobs = async (page = 1, query = '', limit = pageSize) => {
-    setLoading(true);
+    setLoading(true); 
     try {
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || "";
