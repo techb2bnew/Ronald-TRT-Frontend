@@ -481,9 +481,7 @@ export default function ViewDetails() {
                 <th scope="col">
                   Job Name
                 </th>
-                <th scope="col">
-                  Vehicle Price	
-                </th>
+              
 
                 {/* <th scope="col">
                   Tech Rate
@@ -501,6 +499,9 @@ export default function ViewDetails() {
                   End Date
                 </th>
                 <th scope="col">
+                  Vehicle Price	
+                </th>
+                <th scope="col">
                   Action
                 </th>
               </tr>
@@ -515,9 +516,7 @@ export default function ViewDetails() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="capitalize">{jobs.jobName || '-'}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
-                    </td>
+                 
                     {/* <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.UserJob?.techFlatRate ? `$${jobs.UserJob.techFlatRate}` : '-'}
                     </td>
@@ -532,6 +531,9 @@ export default function ViewDetails() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
                     </td>
                     <td>
                       <Link href={`/jobs/view?jobId=${jobs.id}`} >

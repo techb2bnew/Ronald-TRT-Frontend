@@ -214,6 +214,12 @@ export default function ViewDetails() {
                 </>
                 ) || 'N/A'} 
               </p>
+                        {jobData.labourCost !== null  && (
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                          <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
+                            ${jobData.labourCost}</p>
+                      </p>
+                        )}
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Company:</strong>
                 {jobData?.plantCompanyName !== 'undefined' &&(
@@ -330,12 +336,7 @@ export default function ViewDetails() {
                           {tech?.techType}</p>
                       )}
 
-                      <>
-                        {jobData.labourCost !== null  && (
-                          <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
-                            ${jobData.labourCost}</p>
-                        )}
-                      </>
+                     
                     </div>
                   );
                 })}

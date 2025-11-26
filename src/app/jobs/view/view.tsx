@@ -436,15 +436,18 @@ export default function ViewDetails() {
                   <th scope="col">
                     Model
                   </th>
+                    <th scope="col">
+                      Model Year
+                    </th>
                   <th scope="col">
-                    Model Year
+                    Vehicle Override Price
                   </th>
-                  <th scope="col">
+                  {/* <th scope="col">
                     Description
                   </th>
                   <th scope="col">
                     Notes
-                  </th>
+                  </th> */}
                   <th scope="col">
                     Action
                   </th>
@@ -477,6 +480,9 @@ export default function ViewDetails() {
                         {vehicles.modelYear || '-'}
                       </td>
                       <td className="px-6 py-4">
+                        ${vehicles.labourCost || '-'}
+                      </td>
+                      {/* <td className="px-6 py-4">
                         {Array.isArray(vehicles.jobDescription) &&
                           vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
                           ? vehicles.jobDescription.join(', ')
@@ -484,7 +490,7 @@ export default function ViewDetails() {
                       </td>
                       <td className="px-6 py-4">
                         {vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '-'}
-                      </td>
+                      </td> */}
                       <td>
                         <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} >
                           <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
