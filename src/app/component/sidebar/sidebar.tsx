@@ -113,17 +113,14 @@ useEffect(() => {
 
 
 const handleNavItemClick = () => {
-  // behave like the toggle icon after a click
-  if (typeof window !== "undefined") {
-    if (window.innerWidth < 1200) {
-      // Collapse after navigating on mobile and tablets
-      setTimeout(()=>{collapseSidebar();},500);   // this already sets isCollapsed(true) and clears hover
-    } else {
-      // Collapse after navigating on desktop (MacBook Pro, etc.)
-      if (!isCollapsed) {
-        setTimeout(()=>{collapseSidebar();},500);
-      }
-    }
+  // behave like the toggle icon after a click 
+  // First fade out text smoothly, then collapse sidebar
+  if (typeof window !== "undefined" && !isCollapsed) {
+    // Start collapsing immediately for smooth animation
+    collapseSidebar();
+  } else {
+    // If already collapsed, just ensure it stays collapsed
+    setTimeout(()=>{collapseSidebar();},300);
   }
 };
 
@@ -282,7 +279,7 @@ const handleNavItemClick = () => {
     }
   }}>
       <div
-        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ${isCollapsed && !isHovered ? "w-[70px]" : "w-[300px]"
+        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed && !isHovered ? "w-[70px]" : "w-[300px]"
           }`}
       >
         <div className={`flex justify-end p-2 toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
@@ -305,7 +302,7 @@ const handleNavItemClick = () => {
             }`} />
         </div>
 
-        <ul className="flex flex-col py-4 laptop_size" style={{ lineHeight: '1' }}>
+        <ul className="flex flex-col py-4 laptop_size overflow-hidden" style={{ lineHeight: '1' }}>
           <li className='p-1 pl-4'>
           <Link onClick={handleNavItemClick} href="/dashboard"className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
             <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -314,7 +311,7 @@ const handleNavItemClick = () => {
               <path fillRule="evenodd" clipRule="evenodd" d="M5.50016 3.02081C3.85481 3.02081 2.521 4.35463 2.521 5.99998C2.521 7.64533 3.85481 8.97915 5.50016 8.97915C7.14551 8.97915 8.47933 7.64533 8.47933 5.99998C8.47933 4.35463 7.14551 3.02081 5.50016 3.02081ZM1.146 5.99998C1.146 3.59524 3.09542 1.64581 5.50016 1.64581C7.9049 1.64581 9.85433 3.59524 9.85433 5.99998C9.85433 8.40472 7.9049 10.3541 5.50016 10.3541C3.09542 10.3541 1.146 8.40472 1.146 5.99998Z" fill="currentColor" />
               <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
             </svg>
-            <span>Dashboard</span>
+            <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Dashboard</span>
           </Link>
         </li>
 
@@ -346,7 +343,7 @@ const handleNavItemClick = () => {
                   </svg>
                 </div>
                 {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin' || userType == 'manager') && (
-                  <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>
+                  <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>
 
                     {userType === 'single-technician' ? 'Users' : 'IFS'}
                   </span>
@@ -368,12 +365,12 @@ const handleNavItemClick = () => {
 
                     <li >
                       <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-                        Customers
+                        <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Customers</span>
                       </Link>
                     </li>
                     <li >
                       <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                        Jobs
+                        <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Jobs</span>
                       </Link>
                     </li>
                     {userType !== 'single-technician' && userType !== 'ifs' && (
@@ -383,7 +380,7 @@ const handleNavItemClick = () => {
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                         >
-                          Technicians
+                          <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Technicians</span>
                         </Link>
                       </li>
                     )}
@@ -405,19 +402,19 @@ const handleNavItemClick = () => {
                 </li> */}
                 <li  >
                   <Link onClick={handleNavItemClick} href="/vehicle/vehicle" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/vehicle' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    Vehicle / Work Orders
+                    <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Vehicle / Work Orders</span>
                   </Link>
                 </li>
 
                 <li >
                   <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
-                    Completed Work Order
+                    <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Completed Work Order</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li >
                     <Link onClick={handleNavItemClick} href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
-                      Group Work Orders
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Group Work Orders</span>
                     </Link>
                   </li>
                 )}
@@ -595,7 +592,7 @@ const handleNavItemClick = () => {
                   <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                   <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
                 </svg>
-                <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>Other Reports</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Other Reports</span>
               </div>
               <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -610,26 +607,26 @@ const handleNavItemClick = () => {
               ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                 <li  >
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span>Vehicles Info</span>
+                    <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Vehicles Info</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
 
                   <li >
                     <Link onClick={handleNavItemClick} href="/reporting/job-status" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>All Work Orders</span>
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>All Work Orders</span>
                     </Link>
                   </li>
                 )}
                 <li >
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span>Vehicles List</span>
+                    <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Vehicles List</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
                   <li>
                     <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>Accounts Report</span>
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Accounts Report</span>
                     </Link>
                   </li>
                 )}
@@ -737,7 +734,7 @@ const handleNavItemClick = () => {
                   </defs>
                 </svg>
 
-                <span>Create Invoice</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Create Invoice</span>
               </Link>
             </li>
            
@@ -760,7 +757,7 @@ const handleNavItemClick = () => {
                   </defs>
                 </svg>
 
-                <span>Sent Invoice</span>
+                <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Sent Invoice</span>
               </Link>
             </li>
            
@@ -786,7 +783,7 @@ const handleNavItemClick = () => {
               <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                 <div className={`flex items-center gap-1  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
-                  <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Staff Management </span>
+                  <span className={`pl-2 transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'} ${isCollapsed ? 'hidden group-hover:block group-hover:opacity-100' : 'block'}`}>Staff Management </span>
                 </div>
               </Link>
             </li>
@@ -847,7 +844,7 @@ const handleNavItemClick = () => {
 
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
 
-                  <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>Single Technician</span>
+                  <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Single Technician</span>
                 </div>
                 <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -862,7 +859,7 @@ const handleNavItemClick = () => {
                 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
                   <li  >
                     <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>Technicians</span>
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Technicians</span>
                     </Link>
                   </li>
                   <li>
@@ -872,12 +869,12 @@ const handleNavItemClick = () => {
                   </li>
                   <li >
                     <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>All Work Orders</span>
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>All Work Orders</span>
                     </Link>
                   </li>
                   <li>
                     <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span>Vehicles Info</span>
+                      <span className={`transition-opacity duration-300 ${isCollapsed && !isHovered ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>Vehicles Info</span>
                     </Link>
                   </li>
 
