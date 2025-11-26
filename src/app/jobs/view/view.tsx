@@ -266,7 +266,7 @@ export default function ViewDetails() {
                   ))}
                 </>
               )}
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Vehicle Price:</strong>
                 <div className="flex gap-3 items-center capitalize">
 
                   ${jobData?.estimatedCost || '0'}
@@ -301,7 +301,7 @@ export default function ViewDetails() {
               )}
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <strong className='w-[210px] inline-block'>Labour Cost:</strong>
+                  <strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
                   {userType === 'single-technician' || isSingleTechnicianWorkOrder
                     ? `$${Number(jobData?.labourCost ?? 0).toFixed(2)}`
                     : '$0.00'}
@@ -309,7 +309,7 @@ export default function ViewDetails() {
 
               )}
               {jobData?.notes !== null && (
-                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
+                <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 word-break'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
               )}
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Job Status:</strong>
                 <span
@@ -341,12 +341,12 @@ export default function ViewDetails() {
                     <th scope="col">
                       Phone
                     </th>
-                    <th scope="col">
+                    {/* <th scope="col">
                       R/I/R/R
                     </th>
                     <th scope="col">
                       Flat Rate
-                    </th>
+                    </th> */}
                     <th scope="col">
                       Action
                     </th>
@@ -390,13 +390,13 @@ export default function ViewDetails() {
                           </a>
                         </td>
 
-                        <td className="px-6 py-4">
+                        {/* <td className="px-6 py-4">
                           {tech.UserJob?.rRate ? `$${tech.UserJob.rRate}` : 'N/A'}
                         </td>
 
                         <td className="px-6 py-4">
                           {tech.UserJob?.techFlatRate ? `$${tech.UserJob.techFlatRate}` : 'N/A'}
-                        </td>
+                        </td> */}
                         <td>
                           <Link href={`/technicians/view?technicianId=${tech.id}`} >
                             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"

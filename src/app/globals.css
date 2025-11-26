@@ -614,6 +614,9 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 .swal-title {
   font-size: 18px;  
 }
+.word-break{
+  word-break: break-all;
+}
 @media screen and (max-width: 1536px) {
  .container {
         max-width: 1200px !important;
@@ -640,7 +643,7 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody tr td {
   padding: 10px;
   font-size: 12px;
-  text-wrap-mode: nowrap;
+  text-wrap-mode: wrap;
 }
 .laptop__icon img {
   max-width: 16px;

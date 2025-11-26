@@ -110,8 +110,8 @@ const JobTable: React.FC = () => {
           ? data.data.vehicles || []
           : data.jobs.vehicles || [];
         setActiveJob(fetchedTechnicians);
-        setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+        setTotalPages(data.jobs.totalPages || 1);
+        setTotalJobs(data.jobs.totalVehicles || 0); // Ensure totalJobs is set correctly
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -586,7 +586,7 @@ const JobTable: React.FC = () => {
               <th className="w-[80px]">Make</th>
               <th className="w-[80px]">Model</th>
               <th className="w-[80px]">Year</th>
-              <th className="w-[120px]">Labour Cost</th>
+              <th className="w-[120px]">Vehicle Override Price</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>

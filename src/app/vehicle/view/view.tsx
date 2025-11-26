@@ -332,7 +332,7 @@ export default function ViewDetails() {
 
                       <>
                         {jobData.labourCost !== null  && (
-                          <p className="mb-1"><strong className='w-[210px] inline-block'>Labour Cost:</strong>
+                          <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
                             ${jobData.labourCost}</p>
                         )}
                       </>

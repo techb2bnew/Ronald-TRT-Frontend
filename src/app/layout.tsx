@@ -51,13 +51,13 @@ export default function RootLayout({
       <body
         className={` antialiased`}
       >
-        <div className="flex">
+        <div className=" ">
         
-          <main className="flex-1"> 
+          <main className=" "> 
             {shouldShowSidebar ? (
               <TechnicianProvider>
                 <SidebarProvider>
-                <div className="flex">
+                <div className=" ">
                   <Sidebar /> {/* ✅ Sidebar bhi TechnicianProvider ke andar hai */}
                   <div className="flex-1">{children}</div>
                 </div>

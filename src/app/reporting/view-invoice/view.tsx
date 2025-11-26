@@ -176,7 +176,7 @@ export default function ViewDetails() {
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Paid Date:</strong> {jobData.paidDate ? new Date(jobData.paidDate).toLocaleDateString() : 'N/A'}
               </div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Job Estimate:</strong>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Vehicle Price:</strong>
                 <div className="flex gap-3 items-center capitalize">
 
                   ${jobData?.job?.estimatedCost || '0'}

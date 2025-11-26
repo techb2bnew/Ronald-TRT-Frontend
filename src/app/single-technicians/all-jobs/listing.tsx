@@ -696,7 +696,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
               {/* <th className="w-[100px]">Sub Total Cost</th>*/}
               <th className="w-[120px]">Start Date</th>
               <th className="w-[120px]">End Date</th>
-              <th className="w-[120px]">Job Estimate</th>
+              <th className="w-[120px]">Vehicle Price</th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>
