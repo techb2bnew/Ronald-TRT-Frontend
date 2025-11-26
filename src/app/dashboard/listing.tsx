@@ -126,9 +126,7 @@ export default function Dashboard() {
                         <span className="block text-gray-500">Technician</span>
                     </div>
                 </div>
-
-            </section>
-            <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+ 
                 <div className="flex items-center p-8 bg-white shadow rounded-lg">
                     <div className="inline-flex flex-shrink-0 items-center justify-center h-16 w-16 text-blue-600 bg-blue-100 rounded-full mr-0 sm:mr-6">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

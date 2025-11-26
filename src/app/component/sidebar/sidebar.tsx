@@ -117,7 +117,7 @@ const handleNavItemClick = () => {
   if (typeof window !== "undefined") {
     if (!isCollapsed) {
       // Collapse sidebar immediately
-      collapseSidebar();
+      collapseSidebar(); 
     }
   }
 };
