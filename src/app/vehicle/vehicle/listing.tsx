@@ -817,9 +817,12 @@ const JobTable: React.FC = () => {
 
               <tr>
                 <td colSpan={9} className='text-right font-semibold'>
-                  <span className='pr-6'>
+                  <span className='pr-7'>
                     Total: ${totalExpense}
                   </span>
+                </td>
+                 <td colSpan={5} className='text-right font-semibold'>
+                  
                 </td>
               </tr>
             )}

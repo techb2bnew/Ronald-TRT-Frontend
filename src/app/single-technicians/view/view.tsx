@@ -482,15 +482,15 @@ export default function ViewDetails() {
                   Job Name
                 </th>
                 <th scope="col">
-                  Estimated Cost
+                  Vehicle Price	
                 </th>
 
-                <th scope="col">
+                {/* <th scope="col">
                   Tech Rate
                 </th>
                 <th scope="col">
                   R/I/R/R
-                </th>
+                </th> */}
                 <th scope="col">
                   Notes
                 </th>
@@ -518,12 +518,12 @@ export default function ViewDetails() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.UserJob?.techFlatRate ? `$${jobs.UserJob.techFlatRate}` : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.UserJob?.rRate ? `$${jobs.UserJob.rRate}` : '-'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4">
                       {jobs.notes || '-'}
                     </td>
@@ -575,12 +575,15 @@ export default function ViewDetails() {
                 <th scope="col">
                   Model Year
                 </th>
-                <th scope="col">
+                <th scope='col'>
+                  Vehicle Override Price
+                </th>
+                {/* <th scope="col">
                   Description
                 </th>
                 <th scope="col">
                   Notes
-                </th>
+                </th> */}
                 <th scope="col">
                   Action
                 </th>
@@ -606,7 +609,10 @@ export default function ViewDetails() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {vehicle.modelYear || '-'}
                       </td>
-                      <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                        ${vehicle.labourCost || '-'}
+                      </td> 
+                      {/* <td className="px-6 py-4">
                         {Array.isArray(vehicle.jobDescription) &&
                           vehicle.jobDescription.some((desc: string) => desc.trim() !== '')
                           ? vehicle.jobDescription.join(', ')
@@ -614,7 +620,7 @@ export default function ViewDetails() {
                       </td>
                       <td className="px-6 py-4">
                         {vehicle.notes && vehicle.notes.trim() !== '' ? vehicle.notes : '-'}
-                      </td>
+                      </td> */}
                       <td>
                         <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} >
                           <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"

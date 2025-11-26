@@ -345,7 +345,7 @@ export default function ClientListing() {
   };
 
   return (
-    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full' : 'container'}`} style={{paddingLeft:'0px'}}>
 
       {/* <CommonHeader heading='All Customer' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" /> */}
       <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>All Customer</h3>

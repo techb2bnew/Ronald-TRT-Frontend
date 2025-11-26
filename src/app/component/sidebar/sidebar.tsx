@@ -114,8 +114,8 @@ useEffect(() => {
 
 const handleNavItemClick = () => {
   // behave like the toggle icon after a click
-  if (typeof window !== "undefined" && window.innerWidth < 991) {
-    // Collapse after navigating on desktop
+  if (typeof window !== "undefined" && window.innerWidth < 1200) {
+    // Collapse after navigating on mobile and tablets
     setTimeout(()=>{collapseSidebar();},500);   // this already sets isCollapsed(true) and clears hover
   } else {
   }
