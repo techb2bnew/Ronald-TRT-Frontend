@@ -491,9 +491,9 @@ export default function ViewDetails() {
                 <th scope="col">
                   R/I/R/R
                 </th> */}
-                <th scope="col">
+                {/* <th scope="col">
                   Notes
-                </th>
+                </th> */}
                 <th scope="col">
                   Start Date
                 </th>
@@ -524,9 +524,9 @@ export default function ViewDetails() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.UserJob?.rRate ? `$${jobs.UserJob.rRate}` : '-'}
                     </td> */}
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       {jobs.notes || '-'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}
                     </td>
@@ -544,7 +544,7 @@ export default function ViewDetails() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="text-center py-4 text-gray-500">
+                  <td colSpan={6} className="text-center py-4 text-gray-500">
                     No job found
                   </td>
                 </tr>
@@ -633,7 +633,7 @@ export default function ViewDetails() {
                 )
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-4 text-gray-500">
+                  <td colSpan={7} className="text-center py-4 text-gray-500">
                     No vehicle found
                   </td>
                 </tr>
