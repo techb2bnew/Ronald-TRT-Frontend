@@ -7,12 +7,12 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 
 export default function ViewDetails() {
-    const searchParams = useSearchParams(); 
+  const searchParams = useSearchParams();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [roleType, setUserType] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
- const isSingleTechnicianWorkOrder = searchParams!.has('singleWorkOrder');
+  const isSingleTechnicianWorkOrder = searchParams!.has('singleWorkOrder');
   const fetchCustomerData = async (vehicleId: string) => {
     try {
       const token = localStorage.getItem('token');
@@ -204,38 +204,42 @@ export default function ViewDetails() {
 
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Color:</strong>
-                {jobData?.color || <span className="text-black-500">N/A</span>}
+                {jobData?.color !== 'undefined' && (
+                  <>
+                    {jobData?.color || <span className="text-black-500">No Color selected</span>}
+                  </>
+                ) || 'No Color selected'}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Country:</strong>
-                {jobData?.plantCountry !== 'undefined' &&(
+                {jobData?.plantCountry !== 'undefined' && (
                   <>
-                {jobData?.plantCountry || <span className="text-black-500">N/A</span>}
-                </>
-                ) || 'N/A'} 
+                    {jobData?.plantCountry || <span className="text-black-500">N/A</span>}
+                  </>
+                ) || 'N/A'}
               </p>
-                        {jobData.labourCost !== null  && (
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                          <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
-                            ${jobData.labourCost}</p>
-                      </p>
-                        )}
+              {jobData.labourCost !== null && (
+                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+                  <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
+                    ${jobData.labourCost}</p>
+                </p>
+              )}
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Company:</strong>
-                {jobData?.plantCompanyName !== 'undefined' &&(
+                {jobData?.plantCompanyName !== 'undefined' && (
                   <>
-                {jobData?.plantCompanyName || <span className="text-black-500">N/A</span>}
-                </>
+                    {jobData?.plantCompanyName || <span className="text-black-500">N/A</span>}
+                  </>
                 ) || 'N/A'}
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant State:</strong>
-                 {jobData?.plantState !== 'undefined' &&(
+                {jobData?.plantState !== 'undefined' && (
                   <>
-                {jobData?.plantState || <span className="text-black-500">N/A</span>}
-                </>
+                    {jobData?.plantState || <span className="text-black-500">N/A</span>}
+                  </>
                 ) || 'N/A'}
- 
+
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Created By:</strong>
@@ -263,12 +267,12 @@ export default function ViewDetails() {
               </p>
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Status:</strong>
-               <span   
-              className={`badge ${jobData.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-            >
-              {jobData.vehicleStatus ? 'Completed' : 'In Progress'}
-            </span>
-            </p>
+                <span
+                  className={`badge ${jobData.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
+                >
+                  {jobData.vehicleStatus ? 'Completed' : 'In Progress'}
+                </span>
+              </p>
               {roleType !== 'single-technician' || isSingleTechnicianWorkOrder && (
                 <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>Manager:</strong>
@@ -336,7 +340,7 @@ export default function ViewDetails() {
                           {tech?.techType}</p>
                       )}
 
-                     
+
                     </div>
                   );
                 })}
