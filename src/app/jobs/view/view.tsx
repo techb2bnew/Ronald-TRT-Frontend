@@ -322,7 +322,7 @@ export default function ViewDetails() {
             </div>
 
           </div>
-          {userType !== 'single-technician' && (
+          {/* {userType !== 'single-technician' && (
             <div className="overflow-x-auto bg-white pt-3">
               <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
 
@@ -346,7 +346,7 @@ export default function ViewDetails() {
                     </th>
                     <th scope="col">
                       Flat Rate
-                    </th> */}
+                    </th>  
                     <th scope="col">
                       Action
                     </th>
@@ -396,7 +396,7 @@ export default function ViewDetails() {
 
                         <td className="px-6 py-4">
                           {tech.UserJob?.techFlatRate ? `$${tech.UserJob.techFlatRate}` : 'N/A'}
-                        </td> */}
+                        </td>  
                         <td>
                           <Link href={`/technicians/view?technicianId=${tech.id}`} >
                             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
@@ -417,7 +417,7 @@ export default function ViewDetails() {
 
               </table>
             </div>
-          )}
+          )} */}
 
           <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
           <div className="overflow-x-auto bg-white">

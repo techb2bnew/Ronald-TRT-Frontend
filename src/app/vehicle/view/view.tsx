@@ -146,7 +146,7 @@ export default function ViewDetails() {
     <>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '/vehicle/vehicle' },
+          { label: 'Vehicles Info', href: '' },
           { label: 'View Detail', href: '/vehicle/vehicle' }
         ]}
       />
@@ -249,10 +249,10 @@ export default function ViewDetails() {
                 <strong className='w-[210px] inline-block'>Estimated By:</strong>
                 {jobData?.estimatedBy || <span className="text-black-500">N/A</span>}
               </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+              {/* <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Completed By:</strong>
                 {jobData?.completedBy || <span className="text-black-500">N/A</span>}
-              </p>
+              </p> */}
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Customer:</strong>
                 {jobData?.customer?.fullName || <span className="text-black-500">N/A</span>}

@@ -393,7 +393,11 @@ export default function ViewDetails() {
 
             {/* Right Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2 flex'><strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong>{technician.address || 'N/A'} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2 flex'>
+                <strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong>
+                {(technician.address || 'N/A').replace(/^,\s*,\s*/g, '')}
+              </p>
+
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
@@ -481,7 +485,7 @@ export default function ViewDetails() {
                 <th scope="col">
                   Job Name
                 </th>
-              
+
 
                 {/* <th scope="col">
                   Tech Rate
@@ -499,7 +503,7 @@ export default function ViewDetails() {
                   End Date
                 </th>
                 <th scope="col">
-                  Vehicle Price	
+                  Vehicle Price
                 </th>
                 <th scope="col">
                   Action
@@ -516,7 +520,7 @@ export default function ViewDetails() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="capitalize">{jobs.jobName || '-'}</span>
                     </td>
-                 
+
                     {/* <td className="px-6 py-4 whitespace-nowrap">
                       {jobs.UserJob?.techFlatRate ? `$${jobs.UserJob.techFlatRate}` : '-'}
                     </td>
@@ -611,9 +615,9 @@ export default function ViewDetails() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {vehicle.modelYear || '-'}
                       </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         ${vehicle.labourCost || '-'}
-                      </td> 
+                      </td>
                       {/* <td className="px-6 py-4">
                         {Array.isArray(vehicle.jobDescription) &&
                           vehicle.jobDescription.some((desc: string) => desc.trim() !== '')
