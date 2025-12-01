@@ -435,7 +435,18 @@ export default function ViewDetails() {
             <div className='shadow-lg p-5 bg-white rounded'>
 
 
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.createdAt).toLocaleDateString('en-GB')} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] inline-block'>Date:</strong>
+                {(() => {
+                  const date = new Date(technician.updatedAt);
+
+                  const formattedDate = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+                    date.getDate()
+                  ).padStart(2, '0')}-${date.getFullYear()}`;
+
+                  return formattedDate;
+                })()}
+              </p>
               <div className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
                 <div
                   onClick={() => {

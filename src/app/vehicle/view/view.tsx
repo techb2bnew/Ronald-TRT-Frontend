@@ -298,7 +298,7 @@ export default function ViewDetails() {
               <div className="grid grid-cols-1 gap-4">
                 {jobData.jobDescription.map((jobDescription: string, index: number) => (
                   <div key={index} className="bg-gray-50 p-4 rounded shadow">
-                    <p className="mb-2"><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'N/A'}</p>
+                    <p className="mb-2" style={{wordBreak: 'break-all'}}><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'N/A'}</p>
                   </div>
                 ))}
               </div>

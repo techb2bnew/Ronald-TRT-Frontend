@@ -134,7 +134,7 @@ const totalVehicles = allVehicles.length;
               </p>
               <p className='mb-4 border-b border-gray-500 mb-3 pb-4 flex'><strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong> {CustomerData.address ? CustomerData.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}  </p>
               <p className="mb-4 border-b border-gray-500 pb-4">
-                <strong className='w-[200px] inline-block'>Vehicles / Work Orders:</strong> {completedVehicles} /  {totalVehicles}
+                <strong className='w-[200px] inline-block'>Work Orders:</strong> {completedVehicles} /  {totalVehicles}
               </p>
  
 

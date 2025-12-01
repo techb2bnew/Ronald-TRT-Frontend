@@ -398,7 +398,17 @@ export default function ViewDetails() {
                 {(technician.address || 'N/A').replace(/^,\s*,\s*/g, '')}
               </p>
 
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong>{new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
+                <strong className='w-[200px] inline-block'>Date:</strong>
+                {(() => {
+                  const d = new Date(technician.updatedAt);
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const day = String(d.getDate()).padStart(2, '0');
+                  const year = d.getFullYear();
+                  return `${month}-${day}-${year}`;
+                })()}
+              </p>
+
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
                 <strong className='w-[200px] inline-block'>Business Logo:</strong>
