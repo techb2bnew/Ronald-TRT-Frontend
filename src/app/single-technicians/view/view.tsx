@@ -435,12 +435,12 @@ export default function ViewDetails() {
               </div>
               {technician?.taxForms?.length > 0 && (
                 <div className="mt-1 m-auto block mb-2 flex flex-wrap gap-4 items-center">
+                  <strong className='w-[200px] inline-block'>Tax Form:</strong>
                   {technician.taxForms.map((form: string, index: number) => {
                     const isPDF = form.toLowerCase().endsWith(".pdf"); // Ensure case-insensitivity
 
                     return (
                       <div key={index} className="relative flex items-center gap-2">
-                        <strong className='w-[200px] inline-block'>Tax Form:</strong>
                         {isPDF ? (
                           // PDF Button
                           <button
