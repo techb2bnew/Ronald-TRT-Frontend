@@ -211,7 +211,7 @@ const totalVehicles = allVehicles.length;
 
           </table>
         </div>
-        {userType !== 'single-technician' && (
+        {/* {userType !== 'single-technician' && (
           <div className="overflow-x-auto bg-white pt-3">
             <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
 
@@ -318,7 +318,7 @@ const totalVehicles = allVehicles.length;
 
             </table>
           </div>
-        )}
+        )} */}
         <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
         <div className="overflow-x-auto bg-white">
           <table className="table w-full table-fixed">
