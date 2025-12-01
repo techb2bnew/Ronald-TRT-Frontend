@@ -323,7 +323,7 @@ const JobTable: React.FC = () => {
         jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
-        estimatedCost: jobData.estimatedCost
+        vehiclePrice: jobData.estimatedCost
       };
 
     });
@@ -391,7 +391,7 @@ const JobTable: React.FC = () => {
 
       const manualHeaders = [
         'id', 'customer', 'assignCustomer', 'jobTitle',
-        'technicians', 'assignTechnicians', 'estimatedCost',
+        'technicians', 'assignTechnicians', 'vehiclePrice',
       ];
 
       Papa.parse(text, {
@@ -434,6 +434,7 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
+                estimatedCost: row.vehiclePrice,
                 technicians: technicians,
                 assignTechnicians: undefined,
                 jobName: undefined,
