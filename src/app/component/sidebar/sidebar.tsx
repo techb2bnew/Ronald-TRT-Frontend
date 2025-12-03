@@ -258,6 +258,14 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
     const handleTouchStart = (e: Event) => {
       const touchEvent = e as TouchEvent;
+      const target = touchEvent.target as HTMLElement;
+      
+      // Only handle touch events inside sidebar
+      const sidebarContainer = document.querySelector('.bg-color');
+      if (!sidebarContainer || !sidebarContainer.contains(target)) {
+        return;
+      }
+      
       if (touchEvent.touches && touchEvent.touches.length > 0) {
         touchStartX = touchEvent.touches[0].clientX;
         touchStartY = touchEvent.touches[0].clientY;
@@ -267,6 +275,14 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
     const handleTouchMove = (e: Event) => {
       const touchEvent = e as TouchEvent;
+      const target = touchEvent.target as HTMLElement;
+      
+      // Only handle touch events inside sidebar
+      const sidebarContainer = document.querySelector('.bg-color');
+      if (!sidebarContainer || !sidebarContainer.contains(target)) {
+        return;
+      }
+      
       if (touchEvent.touches && touchEvent.touches.length > 0) {
         const touchEndX = touchEvent.touches[0].clientX;
         const touchEndY = touchEvent.touches[0].clientY;
@@ -284,15 +300,30 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
       const touchEvent = e as TouchEvent;
       const target = touchEvent.target as HTMLElement;
       
-      // Only close sidebar if it was a tap (not a scroll)
-      if (!touchMoved) {
-        // Check if touch is on a Link element or its child
-        const linkElement = target.closest('a');
-        if (linkElement && linkElement.getAttribute('href') && linkElement.getAttribute('href') !== '#') {
-          // Close sidebar immediately when link is tapped (for iPad)
-          if (!isCollapsed) {
-            collapseSidebar();
-          }
+      // Only handle touch events inside sidebar
+      const sidebarContainer = document.querySelector('.bg-color');
+      if (!sidebarContainer || !sidebarContainer.contains(target)) {
+        touchMoved = false;
+        return;
+      }
+      
+      // Don't do anything if touch moved (it was a scroll, not a tap)
+      if (touchMoved) {
+        touchMoved = false;
+        return;
+      }
+      
+      // Only close sidebar if it was a tap (not a scroll) and on a link
+      // Check if touch is on a Link element or its child (not on button or dropdown)
+      const linkElement = target.closest('a');
+      const buttonElement = target.closest('button');
+      
+      // Only close sidebar when actual link is tapped, not buttons or dropdowns
+      if (linkElement && !buttonElement && linkElement.getAttribute('href') && linkElement.getAttribute('href') !== '#') {
+        // Close sidebar immediately when link is tapped (for iPad)
+        // But don't close dropdowns - they should stay open
+        if (!isCollapsed) {
+          collapseSidebar();
         }
       }
       
@@ -300,19 +331,16 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
       touchMoved = false;
     };
 
-    // Add touch event listeners to sidebar container
-    const sidebarContainer = document.querySelector('.bg-color');
-    if (sidebarContainer) {
-      sidebarContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-      sidebarContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
-      sidebarContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
-      
-      return () => {
-        sidebarContainer.removeEventListener('touchstart', handleTouchStart);
-        sidebarContainer.removeEventListener('touchmove', handleTouchMove);
-        sidebarContainer.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
+    // Add touch event listeners to document (but only handle sidebar events)
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
   }, [isCollapsed]);
 
 
