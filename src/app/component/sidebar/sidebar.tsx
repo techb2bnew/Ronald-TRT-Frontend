@@ -252,26 +252,65 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
   // Add touch event listeners to all sidebar links for iPad support
   useEffect(() => {
-    const handleLinkTouch = (e: Event) => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchMoved = false;
+
+    const handleTouchStart = (e: Event) => {
       const touchEvent = e as TouchEvent;
-      const target = touchEvent.target as HTMLElement;
-      // Check if touch is on a Link element or its child
-      const linkElement = target.closest('a');
-      if (linkElement && linkElement.getAttribute('href') && linkElement.getAttribute('href') !== '#') {
-        // Close sidebar immediately when link is touched (for iPad)
-        if (!isCollapsed) {
-          collapseSidebar();
+      if (touchEvent.touches && touchEvent.touches.length > 0) {
+        touchStartX = touchEvent.touches[0].clientX;
+        touchStartY = touchEvent.touches[0].clientY;
+        touchMoved = false;
+      }
+    };
+
+    const handleTouchMove = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.touches && touchEvent.touches.length > 0) {
+        const touchEndX = touchEvent.touches[0].clientX;
+        const touchEndY = touchEvent.touches[0].clientY;
+        const deltaX = Math.abs(touchEndX - touchStartX);
+        const deltaY = Math.abs(touchEndY - touchStartY);
+        
+        // If moved more than 10px, consider it a scroll/pan gesture
+        if (deltaX > 10 || deltaY > 10) {
+          touchMoved = true;
         }
       }
     };
 
-    // Add touchstart listener to sidebar container
+    const handleTouchEnd = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      const target = touchEvent.target as HTMLElement;
+      
+      // Only close sidebar if it was a tap (not a scroll)
+      if (!touchMoved) {
+        // Check if touch is on a Link element or its child
+        const linkElement = target.closest('a');
+        if (linkElement && linkElement.getAttribute('href') && linkElement.getAttribute('href') !== '#') {
+          // Close sidebar immediately when link is tapped (for iPad)
+          if (!isCollapsed) {
+            collapseSidebar();
+          }
+        }
+      }
+      
+      // Reset
+      touchMoved = false;
+    };
+
+    // Add touch event listeners to sidebar container
     const sidebarContainer = document.querySelector('.bg-color');
     if (sidebarContainer) {
-      sidebarContainer.addEventListener('touchstart', handleLinkTouch, { passive: true });
+      sidebarContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+      sidebarContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+      sidebarContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
       
       return () => {
-        sidebarContainer.removeEventListener('touchstart', handleLinkTouch);
+        sidebarContainer.removeEventListener('touchstart', handleTouchStart);
+        sidebarContainer.removeEventListener('touchmove', handleTouchMove);
+        sidebarContainer.removeEventListener('touchend', handleTouchEnd);
       };
     }
   }, [isCollapsed]);
