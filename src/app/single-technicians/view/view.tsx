@@ -14,6 +14,7 @@ import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import Empty from '@/app/component/empty';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -561,7 +562,7 @@ export default function ViewDetails() {
               ) : (
                 <tr>
                   <td colSpan={6} className="text-center py-4 text-gray-500">
-                    No job found
+                    <Empty />
                   </td>
                 </tr>
               )}
@@ -650,7 +651,7 @@ export default function ViewDetails() {
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center py-4 text-gray-500">
-                    No vehicle found
+                                       <Empty />
                   </td>
                 </tr>
               )}

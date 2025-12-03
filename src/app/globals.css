@@ -651,9 +651,9 @@ table.table.w-full.table-fixed thead tr th, table.table.w-full.table-fixed tbody
 .laptop__icon button img {
   width:12px;
 }
-span.badge.badge-success, span.badge.badge-error  {
+span.badge.badge-success, span.badge.badge-error {
   padding: 5px;
-  width: 80px;
+  width: 70px;
 }
   .mobile_listing {
     max-width: 1450px;

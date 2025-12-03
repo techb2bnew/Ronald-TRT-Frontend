@@ -10,6 +10,8 @@ import 'react-tooltip/dist/react-tooltip.css';
 import { Link } from '@mui/material';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import Empty from '@/app/component/empty';
+
 export default function ViewDetails() {
   const [jobData, setJobsData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -301,9 +303,9 @@ export default function ViewDetails() {
               )}
               {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
+                  <strong className='w-[210px] inline-block'>Vehicle Price:</strong>
                   {userType === 'single-technician' || isSingleTechnicianWorkOrder
-                    ? `$${Number(jobData?.labourCost ?? 0).toFixed(2)}`
+                    ? `$${Number(jobData?.estimatedCost ?? 0).toFixed(2)}`
                     : '$0.00'}
                 </div>
 
@@ -503,7 +505,7 @@ export default function ViewDetails() {
                 ) : (
                   <tr>
                     <td colSpan={7} className="text-center py-4 text-gray-500">
-                      No vehicle found
+                     <Empty />
                     </td>
                   </tr>
                 )}

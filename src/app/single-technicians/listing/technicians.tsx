@@ -700,7 +700,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}  ${index === 8 ? 'w-[170px]' : ''}`}
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
             >
               {header}
