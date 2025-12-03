@@ -245,6 +245,46 @@ const handleNavItemClick = () => {
     setUserType(type);
   }, [pathname]);
 
+  // Close sidebar on scroll/touch in main content area (for iPad Pro)
+  useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      // Only close sidebar if it's open (not collapsed)
+      if (!isCollapsed && typeof window !== "undefined") {
+        // Clear previous timeout
+        clearTimeout(scrollTimeout);
+        // Add small delay to avoid closing on every tiny scroll
+        scrollTimeout = setTimeout(() => {
+          collapseSidebar();
+        }, 100);
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Check if touch starts on main content area (not on sidebar)
+      const target = e.target as HTMLElement;
+      const sidebarElement = document.querySelector('.bg-color') as HTMLElement;
+      
+      if (sidebarElement && !sidebarElement.contains(target) && !isCollapsed) {
+        // Close sidebar when user starts touching main content area
+        collapseSidebar();
+      }
+    };
+
+    // Add scroll listener to window
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Add touchstart listener for iPad touch scrolling
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+    // Cleanup
+    return () => {
+      clearTimeout(scrollTimeout);
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, [isCollapsed]);
+
   const CloseIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none">
       <path
