@@ -348,7 +348,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2   rounded w-full 
     ${isUsersOpen ? 'text-[#fff900]' : ''}
     ${!isUsersOpen && (
                 activeLink === '/technicians/listing' ||
@@ -605,7 +605,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full 
+            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2   rounded w-full 
             ${isUser5Open ? 'text-[#fff900]' : ''}
             ${!isUser5Open && (
                 activeLink === '/reporting/vehicle-info' ||
@@ -869,7 +869,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group mt-3'>
               <button onClick={handleDropdownTogglesSingleTechnician}
-                className={`flex items-center justify-between p-2 space-x-2 hover:bg-white hover:text-[#000] rounded w-full ${isUser6Open ? 'text-[#fff900]' : ''}
+                className={`flex items-center justify-between p-2 space-x-2  rounded w-full ${isUser6Open ? 'text-[#fff900]' : ''}
                ${!isUser6Open && (
                     activeLink === '/single-technicians/listing' ||
                     activeLink === '/single-technicians/jobs'
