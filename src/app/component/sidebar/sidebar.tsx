@@ -112,11 +112,16 @@ useEffect(() => {
   };
 
 
-const handleNavItemClick = () => {
-  // Close sidebar on any nav item click
+const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
+  // Close sidebar on any nav item click (works for both mouse and touch)
   if (typeof window !== "undefined") {
+    // Prevent event bubbling if needed
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    // Close sidebar immediately on click/touch
     if (!isCollapsed) {
-      // Collapse sidebar immediately
       collapseSidebar(); 
     }
   }
@@ -245,45 +250,32 @@ const handleNavItemClick = () => {
     setUserType(type);
   }, [pathname]);
 
-  // Close sidebar on scroll/touch in main content area (for iPad Pro)
+  // Add touch event listeners to all sidebar links for iPad support
   useEffect(() => {
-    let scrollTimeout: NodeJS.Timeout;
-    
-    const handleScroll = () => {
-      // Only close sidebar if it's open (not collapsed)
-      if (!isCollapsed && typeof window !== "undefined") {
-        // Clear previous timeout
-        clearTimeout(scrollTimeout);
-        // Add small delay to avoid closing on every tiny scroll
-        scrollTimeout = setTimeout(() => {
+    const handleLinkTouch = (e: Event) => {
+      const touchEvent = e as TouchEvent;
+      const target = touchEvent.target as HTMLElement;
+      // Check if touch is on a Link element or its child
+      const linkElement = target.closest('a');
+      if (linkElement && linkElement.getAttribute('href') && linkElement.getAttribute('href') !== '#') {
+        // Close sidebar immediately when link is touched (for iPad)
+        if (!isCollapsed) {
           collapseSidebar();
-        }, 100);
+        }
       }
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      // Check if touch starts on main content area (not on sidebar)
-      const target = e.target as HTMLElement;
-      const sidebarElement = document.querySelector('.bg-color') as HTMLElement;
+    // Add touchstart listener to sidebar container
+    const sidebarContainer = document.querySelector('.bg-color');
+    if (sidebarContainer) {
+      sidebarContainer.addEventListener('touchstart', handleLinkTouch, { passive: true });
       
-      if (sidebarElement && !sidebarElement.contains(target) && !isCollapsed) {
-        // Close sidebar when user starts touching main content area
-        collapseSidebar();
-      }
-    };
-
-    // Add scroll listener to window
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Add touchstart listener for iPad touch scrolling
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-
-    // Cleanup
-    return () => {
-      clearTimeout(scrollTimeout);
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('touchstart', handleTouchStart);
-    };
+      return () => {
+        sidebarContainer.removeEventListener('touchstart', handleLinkTouch);
+      };
+    }
   }, [isCollapsed]);
+
 
   const CloseIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none">
