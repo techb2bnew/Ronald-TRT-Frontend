@@ -381,7 +381,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
                 )}
               </div>
-              <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
@@ -627,7 +627,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
                 {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Other Reports</span> */}
                 <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Other Reports</span>
               </div>
-              <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
@@ -882,7 +882,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
                   {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Single Technician</span> */}
                   <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Single Technician</span>
                 </div>
-                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
 
