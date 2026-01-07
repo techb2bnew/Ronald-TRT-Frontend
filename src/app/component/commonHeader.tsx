@@ -184,7 +184,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           const existingIds = new Set(prev.map(job => job.id));
           const newJobs = fetchedJobs.filter((job: any) => !existingIds.has(job.id));
           return [...prev, ...newJobs];
-        });
+        }); 
         setHasMore(fetchedJobs.length > 0);
       } else {
         console.error('Error fetching job data:', data.error);
