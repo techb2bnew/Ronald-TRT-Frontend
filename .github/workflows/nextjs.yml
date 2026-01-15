@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.15.1'
+          node-version: '18'
           cache: ${{ steps.detect-package-manager.outputs.manager }}
 
       - name: Restore cache
@@ -94,5 +94,5 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /home/ec2-user/prorevv-frontend/
-            pm2 reload prorevv-frontend || pm2 start "npm run start" --name prorevv-frontend
+            PORT=3003 pm2 reload prorevv-frontend || PORT=3003 pm2 start "npm run start" --name prorevv-frontend
             pm2 save
