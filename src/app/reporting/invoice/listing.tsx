@@ -1156,13 +1156,13 @@ const JobTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType !== 'single-technician' ? 12 : 9} className="text-center py-10">
+                <td colSpan={roleType !== 'single-technician' ? 15 : 9} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={roleType !== 'single-technician' ? 12 : 9} className="text-center py-10">
+                <td colSpan={roleType !== 'single-technician' ? 15 : 9} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

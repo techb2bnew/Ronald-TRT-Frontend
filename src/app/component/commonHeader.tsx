@@ -35,11 +35,13 @@ interface CommonHeaderProps {
   fetchCustomerData?: (customerId: string) => Promise<any>;
   onStatusChange?: (status: string) => void;
   onInvoiceStatueChange?: (status: string) => void;
+  onClearFilters?: () => void;
+  showClearFilters?: boolean;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -57,6 +59,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [effectiveRoleType, setEffectiveRoleType] = useState(roleType || '');
   const [customer, setCustomer] = useState<any[]>([]);
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);
+  const [workOrderStatus, setWorkOrderStatus] = useState<string>("");
+  const [invoiceStatus, setInvoiceStatus] = useState<string>("");
+  const [searchValue, setSearchValue] = useState("");
+
   const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
     startDate: null,
     endDate: null
@@ -169,7 +175,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     if (effectiveRoleType === 'superadmin' || effectiveRoleType === 'manager') {
       url = `/api/jobListing?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
     } else if (effectiveRoleType === 'single-technician') {
-      url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
+      url = `/api/jobListing?page=${page}&roleType=single-technician`;
     } else {
       url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
     }
@@ -184,7 +190,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           const existingIds = new Set(prev.map(job => job.id));
           const newJobs = fetchedJobs.filter((job: any) => !existingIds.has(job.id));
           return [...prev, ...newJobs];
-        }); 
+        });
         setHasMore(fetchedJobs.length > 0);
       } else {
         console.error('Error fetching job data:', data.error);
@@ -374,6 +380,33 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
+  const handleClearFilters = async () => { 
+    setJobsFilter("");
+    setCustomerFilter("");
+    settechFilter("");
+    setSelectedJobId("");
+    setSelectedCustomerId("");
+    setSelectedTechId("");
+    setSearchValue("");    
+    onSearch?.("");
+    setWorkOrderStatus("");
+    setInvoiceStatus("");
+
+    setDates({ startDate: null, endDate: null });
+    setShowDatePicker(false);
+
+    setActiveFilter("all"); 
+    setCustomerJobs([]); 
+    onSearch?.("");  
+    onDateChange?.([null, null]);  
+    onAllJobsClick?.();  
+    onNewJobClick?.("", "single-technician");  
+    onNewTechClick?.("", "single-technician");  
+    onCustomerChange?.("", "single-technician");  
+    onStatusChange?.("");  
+    onInvoiceStatueChange?.("");   
+    onClearFilters?.();
+  };
 
 
 
@@ -393,7 +426,11 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" variant="filled" onChange={(e) => onSearch(e.target.value)} />
+              <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" value={searchValue} variant="filled" onChange={(e) => {
+                const val = e.target.value;
+                setSearchValue(val);
+                onSearch(val);
+              }} />
             </div>
           )}
 
@@ -574,7 +611,18 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           </div>
 
 
-
+          {showClearFilters && (
+            <button
+              type="button"
+              className="text-xs border border-gray-300 p-3 pl-5 pr-5 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
+              onClick={() => {
+                handleClearFilters();
+                onClearFilters?.();
+              }}
+            >
+              Clear Filters
+            </button>
+          )}
 
           {onPageSizeChange && (
 

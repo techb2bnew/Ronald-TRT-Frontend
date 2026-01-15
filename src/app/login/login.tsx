@@ -114,7 +114,7 @@ export default function Login() {
           });
         }
       } else {
-          router.push('/vehicle/vehicle');
+          router.push('/vehicle/listing');
         }  
       }
     } catch (error) {

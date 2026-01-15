@@ -469,11 +469,11 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline'>{job.jobId}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline'>{job.id}</Link></td>
         <td>{job?.jobName}</td>
 
 
-        <td> <Link href={`/jobs/view?jobId=${job.id}&singleWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
+        <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline capitalize'>{job?.customer?.fullName}</Link></td>
         {/* <td><a className="hover:underline" href={`tel:${job?.customer?.phoneNumber}`}>{job?.customer?.phoneNumber}</a></td> */}
         <td>  {job?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id} className="capitalize">
@@ -521,7 +521,7 @@ const JobTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'All Work Order List', href: '/vehicle/vehicle' }
+          { label: 'All Work Order List', href: '/vehicle/listing' }
         ]}
       />
 
@@ -552,7 +552,7 @@ const JobTable: React.FC = () => {
                 </label>
               </th>
               <th className="w-[100px]" onClick={() => handleSort('id')}>
-                Job ID
+                  ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}

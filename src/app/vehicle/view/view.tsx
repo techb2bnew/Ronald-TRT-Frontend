@@ -147,7 +147,7 @@ export default function ViewDetails() {
       <Breadcrumb
         items={[
           { label: 'Vehicles Info', href: '' },
-          { label: 'View Detail', href: '/vehicle/vehicle' }
+          { label: 'View Detail', href: '/vehicle/listing' }
         ]}
       />
       <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>

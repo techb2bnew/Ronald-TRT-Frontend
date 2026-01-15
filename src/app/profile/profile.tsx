@@ -556,7 +556,7 @@ export default function ProfileCard() {
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className='mb-4 relative z-10'>
             <GooglePlacesAutocomplete
-              apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+              apiKey="AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE"
               selectProps={{
                 placeholder: 'Search for an address...',
                 value: address,

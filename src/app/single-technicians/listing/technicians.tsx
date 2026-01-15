@@ -600,7 +600,7 @@ const TechnicianTable: React.FC = () => {
               // Step 2: Show "Accepted", clicking sends 'cancel'
               <span
                 onClick={() => handleChangeBothStatuses(tech)}
-                className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                className="badge bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px] cursor-pointer"
               >
                 Accepted
               </span>
@@ -608,7 +608,7 @@ const TechnicianTable: React.FC = () => {
               // Step 3: Show "Rejected", clicking sends 'accept'
               <span
                 onClick={() => handleChangeBothStatuses(tech)}
-                className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                className="badge bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px] cursor-pointer"
               >
                 Rejected
               </span>
@@ -617,7 +617,7 @@ const TechnicianTable: React.FC = () => {
               <>
                 <span
                   onClick={() => handleChangeBothStatuses(tech)}
-                  className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[80px] cursor-pointer"
+                  className="badge bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px] cursor-pointer"
                 >
                   Accept
                 </span>
@@ -626,7 +626,7 @@ const TechnicianTable: React.FC = () => {
                     setSelectedTechId(tech.id);
                     setShowRejectModal(true);
                   }}
-                  className="text-sm px-3 py-1 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[80px]"
+                  className="text-sm p-2 pl-4 pr-4 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[100px]"
                 >
                   Reject
                 </button>

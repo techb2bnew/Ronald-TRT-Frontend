@@ -56,7 +56,7 @@ const TableActions: React.FC<TableActionsProps> = ({
 
   // ✅ Permission Checks
   const canEdit = hasPermission("edit");
-  const canDelete = hasPermission("delete"); 
+  const canDelete = hasPermission("delete");
 
   // ✅ Delete Handler
   const handleDelete = async () => {
@@ -94,18 +94,25 @@ const TableActions: React.FC<TableActionsProps> = ({
       const data = await response.json();
 
       if (response.ok) {
-        await Swal.fire("Deleted!", "Your item has been deleted.", "success");
+        await Swal.fire({
+          title: "Deleted!",
+          text: "Your item has been deleted.",
+          icon: "success",
+          timer: 2000,   
+          showConfirmButton: false,   
+          timerProgressBar: true,
+        });
         if (onDeleteSuccess) {
           onDeleteSuccess();
         }
-      }else {
-      // If the error message is about associated jobs, show a specific alert
-      if (data.error) {
-        Swal.fire("Error!", data.error, "error");
-      } else   {
-        Swal.fire("Error!", data.message || "Failed to delete the item.", "error");
+      } else {
+        // If the error message is about associated jobs, show a specific alert
+        if (data.error) {
+          Swal.fire("Error!", data.error, "error");
+        } else {
+          Swal.fire("Error!", data.message || "Failed to delete the item.", "error");
+        }
       }
-    }
     } catch (error) {
       Swal.fire("Error!", "An error occurred while deleting the item.", "error");
     }
@@ -113,22 +120,22 @@ const TableActions: React.FC<TableActionsProps> = ({
 
   return (
     <div className="flex items-center space-x-1 laptop__icon">
-      
-        <Link className="p-1" href={viewRoute} data-tooltip-id="view"
+
+      <Link className="p-1" href={viewRoute} data-tooltip-id="view"
         data-tooltip-content="View">
-          <Image alt="eye" src={Eye} className="w-[16px]" />
-        </Link>
-        <Tooltip id="view" place="top" />
+        <Image alt="eye" src={Eye} className="w-[16px]" />
+      </Link>
+      <Tooltip id="view" place="top" />
       {canEdit && (
         <Link className="p-1" href={editRoute} data-tooltip-id="edit"
-        data-tooltip-content="Edit">
+          data-tooltip-content="Edit">
           <Image alt="edit" src={Edit} className="w-[14px]" />
         </Link>
       )}
       <Tooltip id="edit" place="top" />
       {canDelete && (
         <button className="p-2" onClick={handleDelete} data-tooltip-id="delete"
-        data-tooltip-content="Delete">
+          data-tooltip-content="Delete">
           <Image alt="delete" src={Delete} className="w-[12px]" />
         </button>
       )}

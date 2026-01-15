@@ -417,10 +417,10 @@ export default function Technicians() {
       if (response.ok) {
         toast.success('Vehicle added successfully.');
         if (submit) {
-          router.push('/vehicle/vehicle');
+          router.push('/vehicle/listing');
         }
         if (isEdit) {
-          router.push('/vehicle/vehicle');
+          router.push('/vehicle/listing');
         }
         setJobForms([{
           jobName: jobForms[0].jobName, // Keep the existing jobName
@@ -493,7 +493,7 @@ export default function Technicians() {
 
               if (response.ok) {
                 toast.success('VIN details created successfully.');
-                router.push('/vehicle/vehicle');
+                router.push('/vehicle/listing');
               } else {
                 toast.error('Failed to create VIN details.');
               }

@@ -35,14 +35,14 @@ interface TechnicianForm {
   address: string;
   secondaryEmail: string;
   password: string;
-  confirmPassword: string; 
+  confirmPassword: string;
   techType: string;
   taxForms: File[];
   image: File | null;
-  businessLogo: File | null; 
+  businessLogo: File | null;
   role: string;
   types: string;
-  agreeTerms: string; 
+  agreeTerms: string;
 
 }
 
@@ -90,6 +90,8 @@ export default function Technicians() {
   const [simpleFlatRateAll, setSimpleFlatRateAll] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
   const [formData, setFormData] = useState<TechnicianForm>({
     firstName: '',
     lastName: '',
@@ -99,12 +101,12 @@ export default function Technicians() {
     secondaryContactName: '',
     secondaryEmail: '',
     password: '',
-    confirmPassword: '', 
-    techType: 'technician', 
+    confirmPassword: '',
+    techType: 'technician',
     taxForms: [],
     image: null,
     businessLogo: null,
-    businessName: '', 
+    businessName: '',
     role: '',
     types: '',
     agreeTerms: 'true',
@@ -198,7 +200,7 @@ export default function Technicians() {
       }
 
       // Construct the full address for display
-      const fullAddress = addressParts.join(', '); 
+      const fullAddress = addressParts.join(', ');
       // const matchedRole = roles.find(role => role.id === data.technician.roleId);
       // const roleName = matchedRole?.name || '';
 
@@ -223,7 +225,7 @@ export default function Technicians() {
           address: fullAddress,
           role: data.technician.Role.name || '',
           techType: data.technician.techType || '',
-          types: data.technician.types || '', 
+          types: data.technician.types || '',
         }));
       }
     } catch (error) {
@@ -251,7 +253,7 @@ export default function Technicians() {
   ) => {
     const name = event.target.name;
     const value = event.target.value;
-    
+
     if (name === "role") {
       const selectedRole = roles.find((role) => role.name === value);
       setSelectedRole(selectedRole);
@@ -326,7 +328,7 @@ export default function Technicians() {
     HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
   > = (e) => {
     const { name, value } = e.target;
-     let processedValue = value;
+    let processedValue = value;
     if (name === 'email' || name === 'secondaryEmail') {
       processedValue = value.toLowerCase();
     }
@@ -334,7 +336,7 @@ export default function Technicians() {
       ...formData,
       [name]: processedValue,
     };
- 
+
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (name === 'secondaryContactName') {
       const numericValue = value.replace(/\D/g, '');
@@ -619,7 +621,7 @@ export default function Technicians() {
     }
   };
 
- 
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -628,7 +630,14 @@ export default function Technicians() {
 
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
+    const digitsOnly = (formData.phoneNumber || "").replace(/\D/g, "");
+    const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber || "");
+
+    if (!formData.phoneNumber?.trim()) {
+      newErrors.phoneNumber = "Phone Number is required";
+    } else if (nationalNumber.length !== 10) {
+      newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+    }
     if (!formData.email?.trim()) newErrors.email = 'Email is required';
     if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!isEdit) {
@@ -665,7 +674,7 @@ export default function Technicians() {
         formData[key].forEach(file => {
           formDataObj.append('taxForms', file); // Append each file to FormData
         });
-      }  
+      }
 
 
 
@@ -700,12 +709,12 @@ export default function Technicians() {
         headers['Authorization'] = `Bearer ${token}`;
       }
     }
-    formDataObj.append("createdBy", "admin"); 
+    formDataObj.append("createdBy", "admin");
     console.log('techType before appending:', formData.techType);
 
 
     try {
-      setSubmitting(true); 
+      setSubmitting(true);
 
       const response = await fetch(`${isEdit ? `${apiUrl}/updateTechnician` : `${apiUrl}/register`}`, {
         method: 'POST',
@@ -754,7 +763,7 @@ export default function Technicians() {
           toast.success('Single technician added successfully');
         } else if (searchParams!.has('manager')) {
           toast.success('Manager added successfully');
-        } else { 
+        } else {
           toast.success('Technician added successfully');
         }
         if (searchParams!.has('singletechnician')) {
@@ -827,44 +836,24 @@ export default function Technicians() {
     }
   };
 
-  const handlePhoneChange = (value: string | undefined) => {
-    if (!value) {
-      setFormData(prev => ({
-        ...prev,
-        phoneNumber: ''
-      }));
-      setErrors(prev => ({ ...prev, phoneNumber: 'Phone number is required' }));
-      return;
-    }
+ const handlePhoneChange = (value: string | undefined) => {
+  const v = value || "";
+  setFormData(prev => ({ ...prev, phoneNumber: v }));
 
-    const digitsOnly = value.replace(/\D/g, '');
-    const nationalNumber = getNationalNumber(digitsOnly, value);
+  if (!submitAttempted) return;
 
-    // Stop if national number exceeds 10 digits
-    if (nationalNumber.length > 10) {
-      return;
-    }
+  const digitsOnly = v.replace(/\D/g, "");
+  const nationalNumber = getNationalNumber(digitsOnly, v);
 
-    // Set error if not exactly 10 digits
-    if (nationalNumber.length !== 10) {
-      setErrors(prev => ({
-        ...prev,
-        phoneNumber: 'Phone number must be exactly 10 digits'
-      }));
-    } else {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.phoneNumber;
-        return newErrors;
-      });
-    }
+  if (nationalNumber.length === 10) {
+    setErrors(prev => {
+      const ne = { ...prev };
+      delete ne.phoneNumber;
+      return ne;
+    });
+  }
+};
 
-    // Update form data
-    setFormData(prev => ({
-      ...prev,
-      phoneNumber: value
-    }));
-  };
 
 
 
@@ -1003,7 +992,7 @@ export default function Technicians() {
     }
   }, [isEdit]);
 
- 
+
 
   return (
     <div className='w-[60%] m-auto mb-5 max-md:w-full m-auto'>
@@ -1041,59 +1030,59 @@ export default function Technicians() {
 
         <form onSubmit={handleSubmit}>
           {!isManager && !isSingleTechnician && (
-          <div className="flex items-center mb-4 gap-4"> 
-            <div className="inline-flex items-center">
-              <label className="flex items-center cursor-pointer relative">
-                <input
-                  type="radio"
-                  name="techType" // Ensure both radio buttons have the same 'name' to group them
-                  checked={formData.techType === "technician"} // This would be the other option
-                  onChange={(e) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      techType: e.target.checked ? "technician" : "", // Set or unset the value based on selection
-                    }));
-                  }}
-                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
-                  id="check2" // Ensure unique ID for each input
-                />
-                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                  </svg>
-                </span>
-              </label>
-              <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check2">
-                Technician 
-              </label>
-            </div> 
-            <div className="inline-flex items-center">
-              <label className="flex items-center cursor-pointer relative">
-                <input
-                  type="radio"
-                  name="techType" // Ensure both radio buttons have the same 'name' to group them
-                  checked={formData.techType === "R/I/R/R"}
-                  onChange={(e) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      techType: e.target.checked ? "R/I/R/R" : "", // Set or unset the value based on selection
-                    }));
-                  }}
-                  className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
-                  id="check1" // Ensure unique ID for each input
-                />
-                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                  </svg>
-                </span>
-              </label>
-              <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check1">
-                R/I/R/R
-              </label>
-            </div> 
-          </div>
-            )}
+            <div className="flex items-center mb-4 gap-4">
+              <div className="inline-flex items-center">
+                <label className="flex items-center cursor-pointer relative">
+                  <input
+                    type="radio"
+                    name="techType" // Ensure both radio buttons have the same 'name' to group them
+                    checked={formData.techType === "technician"} // This would be the other option
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        techType: e.target.checked ? "technician" : "", // Set or unset the value based on selection
+                      }));
+                    }}
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
+                    id="check2" // Ensure unique ID for each input
+                  />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check2">
+                  Technician
+                </label>
+              </div>
+              <div className="inline-flex items-center">
+                <label className="flex items-center cursor-pointer relative">
+                  <input
+                    type="radio"
+                    name="techType" // Ensure both radio buttons have the same 'name' to group them
+                    checked={formData.techType === "R/I/R/R"}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        techType: e.target.checked ? "R/I/R/R" : "", // Set or unset the value based on selection
+                      }));
+                    }}
+                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
+                    id="check1" // Ensure unique ID for each input
+                  />
+                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+                <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check1">
+                  R/I/R/R
+                </label>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4" style={{ display: 'none' }}>
 
             <div className='mb-4 relative'>
@@ -1307,7 +1296,7 @@ export default function Technicians() {
 
           <div className='mb-4 relative z-10'>
             <GooglePlacesAutocomplete
-              apiKey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+              apiKey="AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE"
               selectProps={{
                 placeholder: 'Search for an address... *',
                 value: address,
@@ -1315,13 +1304,13 @@ export default function Technicians() {
                   if (newValue) {
                     handleAddressSelect(newValue);
                   } else if (actionMeta.action === 'clear') {
-                      // Handle clear action
-                      setAddressValue(null); // Make sure you have this state setter
-                      setFormData(prev => ({
-                        ...prev,
-                        address: '',
-                      }));
-                    }
+                    // Handle clear action
+                    setAddressValue(null); // Make sure you have this state setter
+                    setFormData(prev => ({
+                      ...prev,
+                      address: '',
+                    }));
+                  }
                 },
                 isClearable: true,
                 styles: {
@@ -1480,7 +1469,7 @@ export default function Technicians() {
                 </div>
               )}
             </div>
-          </div> 
+          </div>
 
 
 

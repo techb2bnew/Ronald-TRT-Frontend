@@ -743,13 +743,13 @@ const CompletedJobs: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

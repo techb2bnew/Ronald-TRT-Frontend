@@ -323,7 +323,9 @@ const JobTable: React.FC = () => {
         jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
-        vehiclePrice: jobData.estimatedCost
+        vehiclePrice: jobData.estimatedCost,
+       jobStatus: jobData.jobStatus ? "Completed" : "In Progress",
+
       };
 
     });
@@ -643,7 +645,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
       />
 
       <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"/>
+        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician" showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
