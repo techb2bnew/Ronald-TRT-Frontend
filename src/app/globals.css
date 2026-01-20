@@ -112,7 +112,7 @@ tr:nth-child(even) {background: #383d7114;}
   border: 4px solid #f7f7fd;
 }
 .MuiPickersSectionList-root.MuiPickersInputBase-sectionsContainer{
-    padding: 12px 0 !important;
+    /* padding: 12px 0 !important; */
     font-size: 12px !important;
 }
 /* Add this in your pagination styles.css */

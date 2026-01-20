@@ -811,7 +811,7 @@ const JobTable: React.FC = () => {
               </th> */}
               {roleType !== 'single-technician' && (
                 <th className="w-[150px]" >
-                  Assigned Technician
+                  Assigned Dent Tech
                 </th>
               )}
               {roleType !== 'single-technician' && (

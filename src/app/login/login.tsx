@@ -22,7 +22,30 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '', form: '' });
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   // const [rememberMe, setRememberMe] = useState(false);
+
+  // Check if user is already logged in and redirect to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userID = localStorage.getItem("userID");
+    
+    if (token && userID) {
+      // User is already logged in, redirect to dashboard
+      router.replace("/dashboard");
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
+
+  // Don't render the login form while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin h-8 w-8 border-4 border-[#383d71] border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   const validateForm = () => {
     const newErrors = { email: '', password: '', form: '' };

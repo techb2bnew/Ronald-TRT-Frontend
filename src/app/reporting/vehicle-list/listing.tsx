@@ -433,7 +433,7 @@ const handleImportCSV = (file: File) => {
               <th className="w-[120px]">
                 Customer Name 
               </th>
-              <th className="w-[160px]">Assigned Technician</th>
+              <th className="w-[160px]">Assigned Dent Tech</th>
 
               <th className="w-[120px]" >
                 VIN

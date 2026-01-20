@@ -711,7 +711,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
                 Customer Number
               </th> */}
               <th className="w-[150px]" >
-                Assigned Technician
+                Assigned Dent Tech
               </th>
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">Tech Flat Rate</th>

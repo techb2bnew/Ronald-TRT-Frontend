@@ -76,29 +76,29 @@ const Sidebar = () => {
 
 
 
-useEffect(() => {
-  const handleAutoSidebar = () => {
-    const screenWidth = window.innerWidth;
+  useEffect(() => {
+    const handleAutoSidebar = () => {
+      const screenWidth = window.innerWidth;
 
-    if (screenWidth > 991) {
-      // For desktop view
-      if (isCollapsed) {
-        // expandSidebar();
-      } else {
-        collapseSidebar();
+      if (screenWidth > 991) {
+        // For desktop view
+        if (isCollapsed) {
+          // expandSidebar();
+        } else {
+          collapseSidebar();
+        }
       }
-    }
-  };
+    };
 
-  // Run once when component mounts
-  handleAutoSidebar();
+    // Run once when component mounts
+    handleAutoSidebar();
 
-  // Optional: re-check if the user resizes the window
-  window.addEventListener("resize", handleAutoSidebar);
+    // Optional: re-check if the user resizes the window
+    window.addEventListener("resize", handleAutoSidebar);
 
-  // Cleanup listener on unmount
-  return () => window.removeEventListener("resize", handleAutoSidebar);
-}, []);
+    // Cleanup listener on unmount
+    return () => window.removeEventListener("resize", handleAutoSidebar);
+  }, []);
 
   const collapseSidebar = () => {
     setIsCollapsed(true);
@@ -112,20 +112,20 @@ useEffect(() => {
   };
 
 
-const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
-  // Close sidebar on any nav item click (works for both mouse and touch)
-  if (typeof window !== "undefined") {
-    // Prevent event bubbling if needed
-    if (e) {
-      e.stopPropagation();
+  const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
+    // Close sidebar on any nav item click (works for both mouse and touch)
+    if (typeof window !== "undefined") {
+      // Prevent event bubbling if needed
+      if (e) {
+        e.stopPropagation();
+      }
+
+      // Close sidebar immediately on click/touch
+      if (!isCollapsed) {
+        collapseSidebar();
+      }
     }
-    
-    // Close sidebar immediately on click/touch
-    if (!isCollapsed) {
-      collapseSidebar(); 
-    }
-  }
-};
+  };
 
   // Save the state to localStorage whenever it changes
   const handleDropdownToggle = () => {
@@ -272,17 +272,17 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
   return (
     <div className="group" onMouseEnter={() => {
-    // setTimeout(()=>{ collapseSidebar();},1500);
-    if (window.innerWidth > 991 && isCollapsed) {
-      setIsHovered(true);
-      setIsCollapsed(true);
-    }
-  }}
-  onMouseLeave={() => {
-    if (window.innerWidth > 991 && isCollapsed) {
-      setIsHovered(false);
-    }
-  }}>
+      // setTimeout(()=>{ collapseSidebar();},1500);
+      if (window.innerWidth > 991 && isCollapsed) {
+        setIsHovered(true);
+        setIsCollapsed(true);
+      }
+    }}
+      onMouseLeave={() => {
+        if (window.innerWidth > 991 && isCollapsed) {
+          setIsHovered(false);
+        }
+      }}>
       <div
         className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden ${isCollapsed && !isHovered ? "w-[70px]" : "w-[300px]"
           }`}
@@ -291,12 +291,12 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
 
           {isCollapsed ? (
-       
-             <button onClick={expandSidebar}>
+
+            <button onClick={expandSidebar}>
               <ChevronRightIcon />
             </button>
           ) : (
-                <button onClick={collapseSidebar}>
+            <button onClick={collapseSidebar}>
               <CloseIcon />
             </button>
           )}
@@ -309,16 +309,16 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
 
         <ul className="flex flex-col py-4 laptop_size overflow-visible" style={{ lineHeight: '1' }}>
           <li className='p-1 pl-4'>
-          <Link onClick={handleNavItemClick} href="/dashboard"className={`flex items-center p-2 space-x-2 rounded overflow-hidden ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-            <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
-              <path fillRule="evenodd" clipRule="evenodd" d="M2.03486 13.5347C2.6676 12.9019 3.56085 12.6458 4.5835 12.6458H6.41683C7.43947 12.6458 8.33273 12.9019 8.96547 13.5347C9.5982 14.1674 9.85433 15.0607 9.85433 16.0833V17.9166C9.85433 18.9393 9.5982 19.8325 8.96547 20.4653C8.33273 21.098 7.43947 21.3541 6.41683 21.3541H4.5835C3.56085 21.3541 2.6676 21.098 2.03486 20.4653C1.40212 19.8325 1.146 18.9393 1.146 17.9166V16.0833C1.146 15.0607 1.40212 14.1674 2.03486 13.5347ZM3.00713 14.5069C2.7232 14.7909 2.521 15.2726 2.521 16.0833V17.9166C2.521 18.7273 2.7232 19.2091 3.00713 19.493C3.29106 19.7769 3.7728 19.9791 4.5835 19.9791H6.41683C7.22752 19.9791 7.70926 19.7769 7.99319 19.493C8.27712 19.2091 8.47933 18.7273 8.47933 17.9166V16.0833C8.47933 15.2726 8.27712 14.7909 7.99319 14.5069C7.70926 14.223 7.22752 14.0208 6.41683 14.0208H4.5835C3.7728 14.0208 3.29106 14.223 3.00713 14.5069Z" fill="currentColor" />
-              <path fillRule="evenodd" clipRule="evenodd" d="M5.50016 3.02081C3.85481 3.02081 2.521 4.35463 2.521 5.99998C2.521 7.64533 3.85481 8.97915 5.50016 8.97915C7.14551 8.97915 8.47933 7.64533 8.47933 5.99998C8.47933 4.35463 7.14551 3.02081 5.50016 3.02081ZM1.146 5.99998C1.146 3.59524 3.09542 1.64581 5.50016 1.64581C7.9049 1.64581 9.85433 3.59524 9.85433 5.99998C9.85433 8.40472 7.9049 10.3541 5.50016 10.3541C3.09542 10.3541 1.146 8.40472 1.146 5.99998Z" fill="currentColor" />
-              <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
-            </svg>
-            <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dashboard</span>
-          </Link>
-        </li>
+            <Link onClick={handleNavItemClick} href="/dashboard" className={`flex items-center p-2 space-x-2 rounded overflow-hidden ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
+              <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M2.03486 13.5347C2.6676 12.9019 3.56085 12.6458 4.5835 12.6458H6.41683C7.43947 12.6458 8.33273 12.9019 8.96547 13.5347C9.5982 14.1674 9.85433 15.0607 9.85433 16.0833V17.9166C9.85433 18.9393 9.5982 19.8325 8.96547 20.4653C8.33273 21.098 7.43947 21.3541 6.41683 21.3541H4.5835C3.56085 21.3541 2.6676 21.098 2.03486 20.4653C1.40212 19.8325 1.146 18.9393 1.146 17.9166V16.0833C1.146 15.0607 1.40212 14.1674 2.03486 13.5347ZM3.00713 14.5069C2.7232 14.7909 2.521 15.2726 2.521 16.0833V17.9166C2.521 18.7273 2.7232 19.2091 3.00713 19.493C3.29106 19.7769 3.7728 19.9791 4.5835 19.9791H6.41683C7.22752 19.9791 7.70926 19.7769 7.99319 19.493C8.27712 19.2091 8.47933 18.7273 8.47933 17.9166V16.0833C8.47933 15.2726 8.27712 14.7909 7.99319 14.5069C7.70926 14.223 7.22752 14.0208 6.41683 14.0208H4.5835C3.7728 14.0208 3.29106 14.223 3.00713 14.5069Z" fill="currentColor" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M5.50016 3.02081C3.85481 3.02081 2.521 4.35463 2.521 5.99998C2.521 7.64533 3.85481 8.97915 5.50016 8.97915C7.14551 8.97915 8.47933 7.64533 8.47933 5.99998C8.47933 4.35463 7.14551 3.02081 5.50016 3.02081ZM1.146 5.99998C1.146 3.59524 3.09542 1.64581 5.50016 1.64581C7.9049 1.64581 9.85433 3.59524 9.85433 5.99998C9.85433 8.40472 7.9049 10.3541 5.50016 10.3541C3.09542 10.3541 1.146 8.40472 1.146 5.99998Z" fill="currentColor" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
+              </svg>
+              <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dashboard</span>
+            </Link>
+          </li>
 
 
 
@@ -383,7 +383,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
                     {userType !== 'single-technician' && userType !== 'ifs' && (
                       <li >
                         <Link
-                         onClick={handleNavItemClick}
+                          onClick={handleNavItemClick}
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                         >
@@ -724,7 +724,7 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
             <span>Subscribers</span>
           </Link>
         </li> */}
-        
+          {userType !== 'manager' && (
             <li className='p-1 pl-4'>
 
               <Link onClick={handleNavItemClick} href="/reporting/invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -745,9 +745,9 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
                 <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Create Invoice</span>
               </Link>
             </li>
-           
+          )}
 
-         
+          {userType !== 'manager' && (
             <li className='p-1 pl-4'>
 
               <Link onClick={handleNavItemClick} href="/reporting/genrated-invoice" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
@@ -768,7 +768,8 @@ const handleNavItemClick = (e?: React.MouseEvent | React.TouchEvent) => {
                 <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Sent Invoice</span>
               </Link>
             </li>
-           
+          )}
+
 
           {/* {userType !== 'single-technician' && (
             <li className='p-1 pl-4'>

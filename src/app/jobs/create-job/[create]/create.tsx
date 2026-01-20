@@ -24,7 +24,7 @@ import Breadcrumb from '@/app/component/breadcrumb';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 interface SelectedTechnician {
@@ -613,7 +613,7 @@ export default function JobForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="R/I/R/R ($)"
+                label="R/I/R/R Flat Rate ($)"
                 size="small"
                 color="warning"
                 value={rirValue}
@@ -628,7 +628,7 @@ export default function JobForm() {
           )}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="grid grid-cols-2 gap-4">
-              <DateTimePicker
+              <DatePicker
                 label="Start Date"
                 value={startDate}
                 readOnly
@@ -644,7 +644,7 @@ export default function JobForm() {
                   },
                 }}
               />
-              <DateTimePicker
+              <DatePicker
                 label="End Date"
                 value={endDate}
                 onChange={(newValue) => {
@@ -699,34 +699,40 @@ export default function JobForm() {
                 />
                 <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                   <List dense>
-                    <div className='grid grid-cols-3'>
-                      {regularTechnicians.map((tech) => {
-                        const value = String(tech.id);
-                        return (
-                          <ListItem
-                            key={value}
-                            component="div"
-                            onClick={() => handleTechnicianChange(tech.id, "technician")}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': {
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                              }
-                            }}
-                          >
-                            <Checkbox
-                              edge="start"
-                              color="warning"
-                              checked={selectedNormalTechnicians.some(t => String(t.id) === String(tech.id))}
+                    {regularTechnicians.length > 0 ? (
+                      <div className='grid grid-cols-3'>
+                        {regularTechnicians.map((tech) => {
+                          const value = String(tech.id);
+                          return (
+                            <ListItem
+                              key={value}
+                              component="div"
+                              onClick={() => handleTechnicianChange(tech.id, "technician")}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              <Checkbox
+                                edge="start"
+                                color="warning"
+                                checked={selectedNormalTechnicians.some(t => String(t.id) === String(tech.id))}
 
-                              tabIndex={-1}
-                              disableRipple
-                            />
-                            <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
-                          </ListItem>
-                        );
-                      })}
-                    </div>
+                                tabIndex={-1}
+                                disableRipple
+                              />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                            </ListItem>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No Dent Tech Available
+                      </div>
+                    )}
                   </List>
                 </Paper>
               </FormControl>
@@ -756,33 +762,39 @@ export default function JobForm() {
                 />
                 <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                   <List dense>
-                    <div className='grid grid-cols-3'>
-                      {rirrTechnicians.map((tech) => {
-                        const value = String(tech.id);
-                        return (
-                          <ListItem
-                            key={value}
-                            component="div"
-                            onClick={() => handleTechnicianChange(tech.id, "R/I/R/R")}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': {
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                              }
-                            }}
-                          >
-                            <Checkbox
-                              edge="start"
-                              color="warning"
-                              checked={selectedRrTechnicians.some(t => String(t.id) === String(tech.id))}
-                              tabIndex={-1}
-                              disableRipple
-                            />
-                            <ListItemText primary={`${tech.firstName} ${tech.lastName} (R/I/R/R)`} />
-                          </ListItem>
-                        );
-                      })}
-                    </div>
+                    {rirrTechnicians.length > 0 ? (
+                      <div className='grid grid-cols-3'>
+                        {rirrTechnicians.map((tech) => {
+                          const value = String(tech.id);
+                          return (
+                            <ListItem
+                              key={value}
+                              component="div"
+                              onClick={() => handleTechnicianChange(tech.id, "R/I/R/R")}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              <Checkbox
+                                edge="start"
+                                color="warning"
+                                checked={selectedRrTechnicians.some(t => String(t.id) === String(tech.id))}
+                                tabIndex={-1}
+                                disableRipple
+                              />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (R/I/R/R)`} />
+                            </ListItem>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No Dent Tech Available
+                      </div>
+                    )}
                   </List>
                 </Paper>
               </FormControl>

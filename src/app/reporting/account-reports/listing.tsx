@@ -652,7 +652,7 @@ const JobTable: React.FC = () => {
               </th>
               <th className="w-[120px]">Total Vehicle</th>
               <th className="w-[120px]" >
-                No. Of Technician
+                No. Of Dent Tech
               </th>
               <th className="w-[120px]">Work Order Completed </th>
               <th className="w-[100px]">Job Estimate</th>

@@ -630,6 +630,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
 
           {showClearFilters && (
+            selectedJobId || 
+            selectedCustomerId || 
+            selectedTechId || 
+            dates.startDate || 
+            dates.endDate || 
+            searchValue || 
+            workOrderStatus || 
+            invoiceStatus
+          ) && (
             <button
               type="button"
               className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
@@ -638,7 +647,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                 onClearFilters?.();
               }}
             >
-              Clear Filters
+              Clear
             </button>
           )}
 

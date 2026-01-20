@@ -156,7 +156,7 @@ export default function ViewDetails() {
           <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
             {/* Left Section */}
             <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'>
                 <strong className='w-[210px] inline-block'>Job Title:</strong>
                 {jobData?.jobName || <span className="text-black-500">N/A</span>}
               </p>
@@ -243,7 +243,7 @@ export default function ViewDetails() {
                 ) || 'N/A'}
 
               </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'>
                 <strong className='w-[210px] inline-block'>Created By:</strong>
                 {jobData?.createdBy || <span className="text-black-500">N/A</span>}
               </p>
@@ -312,7 +312,7 @@ export default function ViewDetails() {
 
           {/* Assigned Technicians Section */}
           <div className="p-6">
-          <h3 className="text-lg font-semibold mb-3 text-white">Assigned Technicians</h3>
+          <h3 className="text-lg font-semibold mb-3 text-white">Assigned Dent Tech</h3>
             {jobData?.assignedTechnicians?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {jobData.assignedTechnicians.map((tech: any) => {

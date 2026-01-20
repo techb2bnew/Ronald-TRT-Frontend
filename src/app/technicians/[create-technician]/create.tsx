@@ -102,7 +102,7 @@ export default function Technicians() {
     secondaryEmail: '',
     password: '',
     confirmPassword: '',
-    techType: 'technician',
+    techType: 'dent tech',
     taxForms: [],
     image: null,
     businessLogo: null,
@@ -854,6 +854,11 @@ export default function Technicians() {
   }
 };
 
+const handleSecondaryPhoneChange = (value: string | undefined) => {
+  const v = value || "";
+  setFormData(prev => ({ ...prev, secondaryContactName: v }));
+};
+
 
 
 
@@ -1036,11 +1041,11 @@ export default function Technicians() {
                   <input
                     type="radio"
                     name="techType" // Ensure both radio buttons have the same 'name' to group them
-                    checked={formData.techType === "technician"} // This would be the other option
+                    checked={formData.techType === "dent tech"} // This would be the other option
                     onChange={(e) => {
                       setFormData((prev) => ({
                         ...prev,
-                        techType: e.target.checked ? "technician" : "", // Set or unset the value based on selection
+                        techType: e.target.checked ? "dent tech" : "", // Set or unset the value based on selection
                       }));
                     }}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"
@@ -1053,7 +1058,7 @@ export default function Technicians() {
                   </span>
                 </label>
                 <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check2">
-                  Technician
+                Dent Tech
                 </label>
               </div>
               <div className="inline-flex items-center">
@@ -1376,9 +1381,25 @@ export default function Technicians() {
                 <circle cx="13" cy="13" r="0.8" fill="#5B5B99" />
               </svg>
 
-              <TextField fullWidth type='number' name="secondaryContactName" id="outlined-basic" color="warning" label="Secondary phone number" size="small" value={formData.secondaryContactName} onChange={handleChange} inputProps={{
-                maxLength: 10,
-              }} />
+              <PhoneInput
+                international
+                defaultCountry="US"
+                value={formData.secondaryContactName}
+                onChange={handleSecondaryPhoneChange}
+                onKeyDown={(e: any) => {
+                  const digitsOnly = (formData.secondaryContactName || '').replace(/\D/g, '');
+                  const nationalNumber = getNationalNumber(digitsOnly, formData.secondaryContactName || '');
+                  if (nationalNumber.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e: any) => {
+                  const pasted = e.clipboardData.getData('Text').replace(/\D/g, '');
+                  if (pasted.length > 10) e.preventDefault();
+                }}
+                placeholder="Secondary phone number"
+                className={`input text-xs input-bordered w-full p-2 rounded`}
+              />
 
               {/* <input
                 type="number"
@@ -1421,7 +1442,7 @@ export default function Technicians() {
               </svg> */}
 
               {/* <p className='text-sm mb-2'>Password <span className='text-red-500'>*</span></p> */}
-              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password" size="small" value={formData.password} onChange={handleChange} />
+              <TextField fullWidth type={showPassword ? "text" : "password"} name="password" id="outlined-basic" color="warning" label="Password *" size="small" value={formData.password} onChange={handleChange} />
               <button
                 type="button"
                 style={{ position: 'absolute', right: '10px', top: '10px' }}
@@ -1449,7 +1470,7 @@ export default function Technicians() {
                 name="confirmPassword"
                 id="confirmPassword"
                 color="warning"
-                label="Confirm password"
+                label="Confirm password *"
                 size="small"
                 value={formData.confirmPassword}
                 onChange={handleConfirmPasswordChange}

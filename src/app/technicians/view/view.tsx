@@ -389,7 +389,7 @@ export default function ViewDetails() {
 
               <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
                 <strong className='w-[200px] inline-block'>Type:</strong>
-                {technician.techType}
+                <span className='capitalize'>{technician.techType}</span>
               </p>
 
 
