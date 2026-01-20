@@ -21,7 +21,7 @@ import Scanner from '../../jobs/create-job/[create]/scanner'
 import VehicleTable from '../../jobs/create-job/[create]/vehicleTable';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
@@ -2060,7 +2060,7 @@ export default function Technicians() {
 
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <div className="grid grid-cols-2 gap-4">
-                  <DateTimePicker
+                  <DatePicker
                     label="Start Date"
                     value={startDate}
                     readOnly
@@ -2076,7 +2076,7 @@ export default function Technicians() {
                       },
                     }}
                   />
-                  <DateTimePicker
+                  <DatePicker
                     label="End Date"
                     value={endDate}
                     onChange={(newValue) => {
