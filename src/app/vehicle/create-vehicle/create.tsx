@@ -25,7 +25,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
-// import { CKEditor } from '@ckeditor/ckeditor5-react';
+// import { CKEditor } from '@ckeditor/ckeditor5-react'; 
 // import type { Editor } from '@ckeditor/ckeditor5-core';
 // import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 // import type { EditorConfig } from '@ckeditor/ckeditor5-core';
