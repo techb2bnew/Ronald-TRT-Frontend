@@ -648,6 +648,15 @@ export default function Technicians() {
       newErrors.secondaryEmail = 'Please enter a valid email address';
     }
 
+    // Check if secondary phone matches primary phone
+    if (formData.secondaryContactName && formData.phoneNumber) {
+      const primaryDigits = formData.phoneNumber.replace(/\D/g, '');
+      const secondaryDigits = formData.secondaryContactName.replace(/\D/g, '');
+      if (primaryDigits === secondaryDigits && primaryDigits.length >= 10) {
+        newErrors.secondaryContactName = 'Secondary phone number cannot be same as primary phone number';
+      }
+    }
+
     // if (!formData.simpleFlatRate?.trim()) newErrors.simpleFlatRate = 'Simple Flat Rate is required';
     // if (!formData.payVehicleType?.trim()) newErrors.payVehicleType = 'Pay Vehicle Type is required';
     // if (!formData.amountPercentage?.trim()) newErrors.amountPercentage = 'Amount Percentage is required';
@@ -856,6 +865,26 @@ export default function Technicians() {
 
 const handleSecondaryPhoneChange = (value: string | undefined) => {
   const v = value || "";
+  
+  // Check if secondary phone matches primary phone
+  if (v && formData.phoneNumber) {
+    const primaryDigits = formData.phoneNumber.replace(/\D/g, '');
+    const secondaryDigits = v.replace(/\D/g, '');
+    
+    if (primaryDigits === secondaryDigits && primaryDigits.length >= 10) {
+      setErrors(prev => ({
+        ...prev,
+        secondaryContactName: 'Secondary phone number cannot be same as primary phone number'
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.secondaryContactName;
+        return newErrors;
+      });
+    }
+  }
+  
   setFormData(prev => ({ ...prev, secondaryContactName: v }));
 };
 
@@ -1400,6 +1429,11 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                 placeholder="Secondary phone number"
                 className={`input text-xs input-bordered w-full p-2 rounded`}
               />
+              {errors.secondaryContactName && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.secondaryContactName}
+                </div>
+              )}
 
               {/* <input
                 type="number"

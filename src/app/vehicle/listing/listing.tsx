@@ -632,12 +632,12 @@ const JobTable: React.FC = () => {
                   <div key={tech.id} className="capitalize">
                     {tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== '' 
                       ? `$${tech.VehicleTechnician?.techFlatRate}`
-                      : <span className="text-gray-500 text-sm">No price added</span>
+                      : <span className="text-gray-500 text-sm"></span>
                     }
                   </div>
                 ))
               ) : (
-                <span className="text-gray-500 text-sm">No price added</span>
+                <span className="text-gray-500 text-sm"></span>
               )}
             </td>
           )}
@@ -662,12 +662,12 @@ const JobTable: React.FC = () => {
                   <div key={tech.id} className="capitalize">
                     {tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== '' 
                       ? `$${tech.VehicleTechnician?.rRate}`
-                      : <span className="text-gray-500 text-sm">No price added</span>
+                      : <span className="text-gray-500 text-sm"></span>
                     }
                   </div>
                 ))
               ) : (
-                <span className="text-gray-500 text-sm">No price added</span>
+                <span className="text-gray-500 text-sm"></span>
               )}
             </td>
           )}
@@ -675,7 +675,7 @@ const JobTable: React.FC = () => {
             <td>
               {job?.totalCombined && job?.totalCombined !== '' 
                 ? `$${job?.totalCombined}`
-                : <span className="text-gray-500 text-sm">No price added</span>
+                : <span className="text-gray-500 text-sm"></span>
               }
             </td>
           )}
