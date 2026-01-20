@@ -102,7 +102,7 @@ export default function Technicians() {
     secondaryEmail: '',
     password: '',
     confirmPassword: '',
-    techType: 'dent tech',
+    techType: 'technician',
     taxForms: [],
     image: null,
     businessLogo: null,
@@ -1041,11 +1041,11 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                   <input
                     type="radio"
                     name="techType" // Ensure both radio buttons have the same 'name' to group them
-                    checked={formData.techType === "dent tech"} // This would be the other option
+                    checked={formData.techType === "technician"} // This would be the other option
                     onChange={(e) => {
                       setFormData((prev) => ({
                         ...prev,
-                        techType: e.target.checked ? "dent tech" : "", // Set or unset the value based on selection
+                        techType: e.target.checked ? "technician" : "", // Set or unset the value based on selection
                       }));
                     }}
                     className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded-full shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[#383d71] checked:border-[#383d71]"

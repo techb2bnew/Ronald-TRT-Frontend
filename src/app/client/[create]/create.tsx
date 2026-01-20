@@ -150,7 +150,7 @@ export default function Technicians() {
 
     if (name === 'phoneNumber') {
       const numericValue = value.replace(/\D/g, '');
-      if (numericValue.length > 10) return;
+      if (numericValue.length > 14) return;
     }
 
     if (name === "email") {
@@ -278,9 +278,7 @@ export default function Technicians() {
     }
     if (formData.phoneNumber) {
       const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
-      if (digitsOnly.length !== 11) {
-        newErrors.phoneNumber = 'Phone number must be 10 digits';
-      }
+      
     }
 
     if (Object.keys(newErrors).length > 0) {

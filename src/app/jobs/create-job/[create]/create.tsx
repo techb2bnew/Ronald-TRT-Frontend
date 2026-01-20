@@ -131,7 +131,7 @@ export default function JobForm() {
       // Ensure we only get technicians (both regular and R/I/R/R)
       const allTechs = data.technician?.technicians || [];
       setTechnicians(allTechs.filter((tech: any) =>
-        tech.techType === "dent tech" || tech.techType === "R/I/R/R"
+        tech.techType === "technician" || tech.techType === "R/I/R/R"
       ));
     } catch (error) {
       console.error('Error fetching technicians:', error);
@@ -187,7 +187,7 @@ export default function JobForm() {
         const technicians = jobData.technicians || [];
 
         // Separate normal techs and R/I/R/R techs
-        const normalTechs = technicians.filter((tech: any) => tech.techType === "dent tech");
+        const normalTechs = technicians.filter((tech: any) => tech.techType === "technician");
         const rirrTechs = technicians.filter((tech: any) => tech.techType === "R/I/R/R");
 
         // Set selected technicians
@@ -238,7 +238,7 @@ export default function JobForm() {
     const tech = technicians.find(t => String(t.id) === String(techId));
     if (!tech) return;
 
-    if (techType === "dent tech") {
+    if (techType === "technician") {
       setSelectedNormalTechnicians(prev =>
         prev.some(t => String(t.id) === String(techId))
           ? prev.filter(t => String(t.id) !== String(techId))
@@ -462,7 +462,7 @@ export default function JobForm() {
   }, [currentPage, searchTerm, pageSize]);
 
   const regularTechnicians = technicians
-    .filter(tech => tech.techType === "dent tech")
+    .filter(tech => tech.techType === "technician")
     .filter(tech =>
       `${tech.firstName} ${tech.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -679,7 +679,7 @@ export default function JobForm() {
           {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start relative mt-3'>
               <FormControl fullWidth size="small">
-                <FormLabel color="warning" className='mb-4'>Assign Technician(s) to this vehicle</FormLabel>
+                <FormLabel color="warning" className='mb-4'>Assign Dent Tech to this vehicle</FormLabel>
                 <TextField
                   label="Search Dent Tech"
                   variant="outlined"
@@ -730,7 +730,7 @@ export default function JobForm() {
                       </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
-                        No dent tech available
+                        No Dent Tech available
                       </div>
                     )}
                   </List>
@@ -792,7 +792,7 @@ export default function JobForm() {
                       </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
-                        No R/IR/R dent tech available
+                        No R/IR/R Dent Tech Available
                       </div>
                     )}
                   </List>
