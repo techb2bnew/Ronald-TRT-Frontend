@@ -491,7 +491,12 @@ const JobTable: React.FC = () => {
         <td>{job?.make}</td>
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
-        <td> {`${job.labourCost ? '$' + job.labourCost : '-'}`}</td>
+        <td>
+            {job.labourCost && job.labourCost !== '' 
+              ? `$${job.labourCost}`
+              : <span className="text-gray-400 text-sm">No price added</span>
+            }
+          </td>
 
         <td>
           {canCreate && (

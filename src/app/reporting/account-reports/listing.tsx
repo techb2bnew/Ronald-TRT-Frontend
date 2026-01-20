@@ -485,6 +485,13 @@ const JobTable: React.FC = () => {
     }
   };
 
+  // Clear all filters handler
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchJobs(1, '', pageSize);
+  };
+
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
@@ -597,7 +604,7 @@ const JobTable: React.FC = () => {
       />
 
       <CommonHeader heading="Account Reports" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick}/>
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

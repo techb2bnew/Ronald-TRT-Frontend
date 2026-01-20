@@ -533,6 +533,13 @@ const CompletedJobs: React.FC = () => {
     }
   };
 
+  // Clear all filters handler
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchCompleteJobs(1, '', pageSize);
+  };
+
   const renderRow = (completejob: any) => {
     const isChecked = selectedIds.includes(completejob.id);
     const roleType = localStorage.getItem('types') || "";
@@ -575,14 +582,18 @@ const CompletedJobs: React.FC = () => {
           )}
           {roleType !== 'single-technician' && (
             <td>
-              {completejob?.assignedTechnicians?.map((tech: any) => (
-                <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.techFlatRate !== '' && (
-                    `$${tech.VehicleTechnician?.techFlatRate}`
-                  )}
-
-                </div>
-              ))}
+              {completejob?.assignedTechnicians?.length > 0 ? (
+                completejob?.assignedTechnicians?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== '' 
+                      ? `$${tech.VehicleTechnician?.techFlatRate}`
+                      : <span className="text-gray-500 text-xs">No price added</span>
+                    }
+                  </div>
+                ))
+              ) : (
+                <span className="text-gray-500 text-xs">No price added</span>
+              )}
             </td>
           )}
           {roleType !== 'single-technician' && (
@@ -601,17 +612,27 @@ const CompletedJobs: React.FC = () => {
 
           {roleType !== 'single-technician' && (
             <td>
-              {completejob?.assignedTechnicians?.map((tech: any) => (
-                <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.rRate !== '' && (
-                    `$${tech.VehicleTechnician?.rRate}`
-                  )}
-                </div>
-              ))}
+              {completejob?.assignedTechnicians?.length > 0 ? (
+                completejob?.assignedTechnicians?.map((tech: any) => (
+                  <div key={tech.id} className="capitalize">
+                    {tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== '' 
+                      ? `$${tech.VehicleTechnician?.rRate}`
+                      : <span className="text-gray-500 text-xs">No price added</span>
+                    }
+                  </div>
+                ))
+              ) : (
+                <span className="text-gray-500 text-xs">No price added</span>
+              )}
             </td>
           )}
           {roleType !== 'single-technician' && (
-            <td>${completejob?.totalCombined}</td>
+            <td>
+              {completejob?.totalCombined && completejob?.totalCombined !== '' 
+                ? `$${completejob?.totalCombined}`
+                : <span className="text-gray-500 text-xs">No price added</span>
+              }
+            </td>
           )}
 
           {/* <td>{completejob?.assignedTechnicians?.map((tech: any) => (
@@ -668,7 +689,7 @@ const CompletedJobs: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} />
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

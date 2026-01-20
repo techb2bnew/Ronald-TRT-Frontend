@@ -301,7 +301,7 @@ export default function ViewDetails() {
                   </a>
                 </div>
               )}
-              {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
+              {/* {userType === 'single-technician' || isSingleTechnicianWorkOrder && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <strong className='w-[210px] inline-block'>Vehicle Price:</strong>
                   {userType === 'single-technician' || isSingleTechnicianWorkOrder
@@ -309,7 +309,7 @@ export default function ViewDetails() {
                     : '$0.00'}
                 </div>
 
-              )}
+              )} */}
               {jobData?.notes !== null && (
                 <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 word-break'><strong className='w-[210px] inline-block'>Notes:</strong> {jobData?.notes}</div>
               )}
@@ -482,7 +482,10 @@ export default function ViewDetails() {
                         {vehicles.modelYear || '-'}
                       </td>
                       <td className="px-6 py-4">
-                        ${vehicles.labourCost || '-'}
+                        {vehicles.labourCost && vehicles.labourCost !== '' 
+                          ? `$${vehicles.labourCost}`
+                          : <span className="text-gray-400 text-sm">No price added</span>
+                        }
                       </td>
                       {/* <td className="px-6 py-4">
                         {Array.isArray(vehicles.jobDescription) &&

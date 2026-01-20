@@ -170,7 +170,7 @@ export default function Technicians() {
   const [jobId, setJobId] = useState<string | number | null>(null);
   const [selectedJobName, setSelectedJobName] = useState<string>("");
   const [confirmChange, setConfirmChange] = useState<{ [techId: string]: boolean }>({});
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -1386,6 +1386,21 @@ export default function Technicians() {
     }
   };
 
+  const handleRemoveDescription = (index: number) => {
+    if (descriptionCostFields.length > 1) {
+      const updatedFields = descriptionCostFields.filter((_, i) => i !== index);
+      setDescriptionCostFields(updatedFields);
+      
+      // Also update formData
+      setFormData((prev) => ({
+        ...prev,
+        jobDescription: updatedFields.filter(item => item.jobDescription.trim() !== '')
+      }));
+    } else {
+      toast.error("At least one description field is required.");
+    }
+  };
+
 
   // Delete the Correct Field by ID
   const handleDeleteField = (id: string) => {
@@ -2016,14 +2031,24 @@ export default function Technicians() {
               <h2 className='text-md font-bold'>Work Description</h2>
               {descriptionCostFields.map((field, index) => (
                 <div key={field.id} id={field.id} className="grid grid-cols-1 gap-4">
-                  <div className='mb-2'>
+                  <div className='mb-2 relative'>
                     <textarea name="jobDescription" rows={3} id="" value={field.jobDescription}
                       onChange={(e) =>
                         handleDescriptionCostChange(index, "jobDescription", e.target.value)
                       }
-
-                      placeholder='Enter Description' className="input text-[#3a3a3a] text-xs mt-1 input-bordered w-full p-3 rounded border" ></textarea>
-
+                      placeholder='Enter Description' className="input text-[#3a3a3a] text-xs mt-1 input-bordered w-full p-3 pr-10 rounded border" ></textarea>
+                    {descriptionCostFields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDescription(index)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full p-1 transition-colors"
+                        title="Remove description"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -2038,6 +2063,7 @@ export default function Technicians() {
                   <DateTimePicker
                     label="Start Date"
                     value={startDate}
+                    readOnly
                     onChange={(newValue) => {
                       setStartDate(newValue);
                     }}

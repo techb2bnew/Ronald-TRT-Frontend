@@ -206,7 +206,7 @@ export default function ViewDetails() {
                 <strong className='w-[210px] inline-block'>Color:</strong>
                 {jobData?.color !== 'undefined' && (
                   <>
-                    {jobData?.color || <span className="text-black-500">No Color selected</span>}
+                    {jobData?.color || <span className="text-gray-400 text-sm">No Color selected</span>}
                   </>
                 ) || 'No Color selected'}
               </p>
@@ -218,12 +218,14 @@ export default function ViewDetails() {
                   </>
                 ) || 'N/A'}
               </p>
-              {jobData.labourCost !== null && (
-                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
+              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                   <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
-                    ${jobData.labourCost}</p>
+                    {jobData.labourCost && jobData.labourCost !== '' 
+                      ? `$${jobData.labourCost}`
+                      : <span className="text-gray-400 text-sm">No price added</span>
+                    }
+                  </p>
                 </p>
-              )}
               <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
                 <strong className='w-[210px] inline-block'>Plant Company:</strong>
                 {jobData?.plantCompanyName !== 'undefined' && (
@@ -298,7 +300,7 @@ export default function ViewDetails() {
               <div className="grid grid-cols-1 gap-4">
                 {jobData.jobDescription.map((jobDescription: string, index: number) => (
                   <div key={index} className="bg-gray-50 p-4 rounded shadow">
-                    <p className="mb-2" style={{wordBreak: 'break-all'}}><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'N/A'}</p>
+                    <p className="mb-2" style={{wordBreak: 'break-all'}}><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'No description found'}</p>
                   </div>
                 ))}
               </div>
@@ -310,7 +312,7 @@ export default function ViewDetails() {
 
           {/* Assigned Technicians Section */}
           <div className="p-6">
-
+          <h3 className="text-lg font-semibold mb-3 text-white">Assigned Technicians</h3>
             {jobData?.assignedTechnicians?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {jobData.assignedTechnicians.map((tech: any) => {

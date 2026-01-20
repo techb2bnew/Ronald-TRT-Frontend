@@ -93,7 +93,7 @@ export default function JobForm() {
   const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [selectedNormalTechnicians, setSelectedNormalTechnicians] = useState<any[]>([]);
   const [selectedRrTechnicians, setSelectedRrTechnicians] = useState<any[]>([]);
@@ -631,6 +631,7 @@ export default function JobForm() {
               <DateTimePicker
                 label="Start Date"
                 value={startDate}
+                readOnly
                 onChange={(newValue) => {
                   setStartDate(newValue);
                 }}

@@ -513,7 +513,12 @@ const JobTable: React.FC = () => {
         
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-          <td> {`${job.estimatedCost ? '$' + job.estimatedCost : '-'}`}</td>
+          <td>
+            {job.estimatedCost && job.estimatedCost !== '' 
+              ? `$${job.estimatedCost}`
+              : <span className="text-gray-400 text-sm">No price added</span>
+            }
+          </td>
 
         <td>
           {canCreate && (

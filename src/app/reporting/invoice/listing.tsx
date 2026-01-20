@@ -709,7 +709,7 @@ const JobTable: React.FC = () => {
       }
 
       const data = await response.json();
-      toast.success("PDR updated successfully!");
+      toast.success("vehicles updated successfully!");
       fetchJobs(currentPage, searchTerm, pageSize);
     } catch (error) {
       console.error('Error updating PDR:', error);
@@ -903,14 +903,18 @@ const JobTable: React.FC = () => {
         )}
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.techFlatRate !== '' && (
-                  `$${tech.VehicleTechnician?.techFlatRate}`
-                )}
-
-              </div>
-            ))}
+            {job?.assignedTechnicians?.length > 0 ? (
+              job?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== '' 
+                    ? `$${tech.VehicleTechnician?.techFlatRate}`
+                    : <span className="text-gray-400 text-sm">No price added</span>
+                  }
+                </div>
+              ))
+            ) : (
+              <span className="text-gray-400 text-sm">No price added</span>
+            )}
           </td>
         )}
         {roleType !== 'single-technician' && (
@@ -928,13 +932,18 @@ const JobTable: React.FC = () => {
 
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.rRate !== '' && (
-                  `$${tech.VehicleTechnician?.rRate}`
-                )}
-              </div>
-            ))}
+            {job?.assignedTechnicians?.length > 0 ? (
+              job?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== '' 
+                    ? `$${tech.VehicleTechnician?.rRate}`
+                    : <span className="text-gray-400 text-sm">No price added</span>
+                  }
+                </div>
+              ))
+            ) : (
+              <span className="text-gray-400 text-sm">No price added</span>
+            )}
           </td>
         )}
         {roleType === 'single-technician' && (
@@ -943,8 +952,12 @@ const JobTable: React.FC = () => {
           </td>
         )}
         {roleType !== 'single-technician' && (
-
-          <td>${job?.totalCombined}</td>
+          <td>
+            {job?.totalCombined && job?.totalCombined !== '' 
+              ? `$${job?.totalCombined}`
+              : <span className="text-gray-400 text-sm">No price added</span>
+            }
+          </td>
         )}
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>

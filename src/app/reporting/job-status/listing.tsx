@@ -426,94 +426,124 @@ const [roleType, setRoleType] = useState<string | null>(null);
     );
   };
 
-  const handleDateChange = async (dateRange: [Date, Date] | null) => {
-    const token = localStorage.getItem('token');
-    const roleType = localStorage.getItem('types') || "";
-    const userId = localStorage.getItem('userID');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  // Store selected job ID and dates for combined filter
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [selectedDates, setSelectedDates] = useState<{ startDate: string | null, endDate: string | null }>({
+    startDate: null,
+    endDate: null
+  });
 
-    // Function to format the date as DD-MM-YYYY
-    const formatDate = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    };
-
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const startDate = formatDate(dateRange[0]);
-      const endDate = formatDate(dateRange[1]);
-
-      try {
-        setLoading(true);
-        let apiPoint = `${apiUrl}/vehicleFilter?roleType=${encodeURIComponent(roleType)}`;
-        const requestBody: { [key: string]: any } = {
-          startDate: startDate,
-          endDate: endDate,
-          roleType:roleType,
-          vehicleStatus: 'false'
-        };
-        if (roleType !== 'superadmin' && roleType !== 'manager') {
-          requestBody.technicianId = userId; // Add technicianId for non-admin and non-manager roles
-        }
-        const response = await axios.post(apiPoint, requestBody, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        setActiveJob(response.data.vehicles.updatedVehicles);
-      } catch (error) {
-        console.error("Error fetching filtered jobs:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  // Function to format the date as DD-MM-YYYY
+  const formatDate = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
-
-    const handleNewJobClick = async (jobId: string) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  // Combined filter function for jobId and date
+  const fetchVehicleWithFilters = async (jobId?: string, startDate?: string | null, endDate?: string | null) => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
-    console.log(jobId, 'jobId');
-    
-    // Prepare the payload dynamically
-    const payload = {
-      roleType: roleType,  // Dynamic roleType from localStorage
-      jobId: jobId,        // Dynamic jobId passed from the selected job 
-    };
-    console.log(payload, 'payload');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
     try {
-      // Check if the token is available
       if (!token) {
         console.error("No token found");
-        return; // Stop if the token is missing
+        return;
       }
 
-      // Make the POST request to the vehicleJobNameFilter API endpoint
-      const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
+      setLoading(true);
+
+      const payload: { [key: string]: any } = {
+        roleType: roleType,
+      };
+
+      // Add jobId if available
+      if (jobId) {
+        payload.jobId = jobId;
+      }
+
+      // Add dates if available
+      if (startDate && endDate) {
+        payload.startDate = startDate;
+        payload.endDate = endDate;
+      }
+
+      console.log('Filter payload:', payload);
+
+      const response = await fetch(`${apiUrl}/vehicleJobNameAndDateFilter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Include token in the headers
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload), // Send the payload as JSON
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json(); // Parse the JSON response
+      const data = await response.json();
 
-      // Handle success or failure based on the API response
-      if (response.ok) {
-       setActiveJob(data.vehicles.updatedVehicles);
-        // You can update state or perform further operations based on the response
+      if (response.ok && data.status) {
+        setActiveJob(data.vehicles.updatedVehicles || []);
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
       }
     } catch (error) {
       console.error("Error during API request:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleDateChange = async (dateRange: [Date | null, Date | null] | null) => {
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const startDate = formatDate(dateRange[0]);
+      const endDate = formatDate(dateRange[1]);
+      
+      setSelectedDates({ startDate, endDate });
+      
+      // Call combined filter with current jobId and new dates
+      await fetchVehicleWithFilters(selectedJobId || undefined, startDate, endDate);
+    } else {
+      // Reset dates
+      setSelectedDates({ startDate: null, endDate: null });
+      
+      // If jobId is selected, filter by jobId only, otherwise fetch all
+      if (selectedJobId) {
+        await fetchVehicleWithFilters(selectedJobId, null, null);
+      } else {
+        fetchJobs(currentPage, searchTerm, pageSize);
+      }
+    }
+  };
+
+  const handleNewJobClick = async (jobId: string) => {
+    console.log(jobId, 'jobId');
+    
+    // Update selected job ID
+    setSelectedJobId(jobId);
+    
+    if (jobId) {
+      // Call combined filter with jobId and current dates
+      await fetchVehicleWithFilters(jobId, selectedDates.startDate, selectedDates.endDate);
+    } else {
+      // If no jobId, check if dates are selected
+      if (selectedDates.startDate && selectedDates.endDate) {
+        await fetchVehicleWithFilters(undefined, selectedDates.startDate, selectedDates.endDate);
+      } else {
+        // Fetch all if no filters
+        fetchJobs(currentPage, searchTerm, pageSize);
+      }
+    }
+  };
+
+  // Clear all filters handler
+  const handleClearFilters = () => {
+    setSelectedJobId('');
+    setSelectedDates({ startDate: null, endDate: null });
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchJobs(1, '', pageSize);
   };
 
 
@@ -638,7 +668,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
       />
 
       <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick}/>
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

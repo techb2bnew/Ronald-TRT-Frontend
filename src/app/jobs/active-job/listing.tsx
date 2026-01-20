@@ -585,6 +585,13 @@ const JobTable: React.FC = () => {
     }
   };
 
+  // Clear all filters handler
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchJobs(1, '', pageSize);
+  };
+
 
 
 
@@ -597,7 +604,7 @@ const JobTable: React.FC = () => {
       />
 
       <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
-        onDateChange={handleDateChange} />
+        onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
