@@ -295,7 +295,7 @@ function JobTListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[150px]">Technician Name</th>
+              <th className="w-[150px]">Dent Tech Name</th>
               <th className="w-[150px]" onClick={() => handleSort('vin')}>
                 VIN
                 {sortBy === 'vin' && (

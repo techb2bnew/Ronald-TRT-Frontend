@@ -325,7 +325,7 @@ const totalVehicles = allVehicles.length;
             <thead className=" ">
               <tr>
                 <th scope="col">
-                  Technician Name
+                  Dent Tech Name
                 </th>
                 <th scope="col">
                   VIN

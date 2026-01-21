@@ -107,7 +107,7 @@ export default function ViewDetails() {
 
             <div className='shadow-lg p-5 bg-white rounded'>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong> {technician?.id}</div>
-              <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'><strong className='w-[200px] inline-block'>Technician Name:</strong> {technician?.image ? (
+              <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'><strong className='w-[200px] inline-block'>Dent Tech Name:</strong> {technician?.image ? (
                 <img
                   onClick={() => setPreviewImage(technician.image)}
                   src={technician.image}

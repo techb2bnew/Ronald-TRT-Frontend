@@ -176,6 +176,9 @@ export default function Technicians() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [allTechnicians, setAllTechnicians] = useState<Technicians[]>([]);
 
+  const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+
   const [technicianPayRates, setTechnicianPayRates] = useState<{
     [techId: string]: { rRate?: string; techFlatRate?: string };
   }>({});
@@ -729,12 +732,56 @@ export default function Technicians() {
 
   const handleScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
-    if (bottom && hasMore) {
+    if (bottom && hasMore && !isSearching) {
       setPage(prev => prev + 1);
     }
   };
 
+  const searchCustomers = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsSearching(false);
+      setCustomer([]);
+      setPage(1);
+      const roleType = localStorage.getItem('types') || '';
+      const userId = localStorage.getItem('userID');
+      if (userId && roleType) {
+        fetchData('/api/fetchJobCustomerTechnician', setCustomer, {
+          endpoint: 'fetchCustomer',
+          userId,
+          page: '1',
+          limit: '10',
+          roleType: roleType,
+        }, false);
+      }
+      return;
+    }
 
+    try {
+      setIsSearching(true);
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(searchValue)}&roleType=${roleType}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      const data = await response.json();
+      if (data.status && data.customers) {
+        setCustomer(data.customers);
+      }
+    } catch (error) {
+      console.error('Error searching customers:', error);
+    }
+  };
+
+  const handleCustomerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomerSearchTerm(value);
+    searchCustomers(value);
+  };
 
 
 
@@ -1671,15 +1718,40 @@ export default function Technicians() {
                         PaperProps: {
                           onScroll: handleScroll,
                           style: {
-                            maxHeight: 200,
+                            maxHeight: 300,
                             overflowY: 'auto',
                           },
                         },
+                        autoFocus: false
+                      }}
+                      onOpen={() => {
+                        setCustomerSearchTerm('');
                       }}
                     >
-                      {customer.map((customer: any) => (
-                        <MenuItem key={customer.id} value={customer.id}>{customer.fullName}</MenuItem>
-                      ))}
+                      <div 
+                        style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <TextField
+                          size="small"
+                          fullWidth
+                          color="warning"
+                          placeholder="Search customer..."
+                          value={customerSearchTerm}
+                          onChange={handleCustomerSearchChange}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      </div>
+                      {customer.length > 0 ? (
+                        customer.map((cust: any) => (
+                          <MenuItem key={cust.id} value={cust.id}>{cust.fullName}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>
+                          <span className="text-gray-500 text-sm">No customer found</span>
+                        </MenuItem>
+                      )}
                     </Select>
                     {errors.assignCustomer && (
                       <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -2177,74 +2249,80 @@ export default function Technicians() {
                     onClick={fetchTechniciansOnClick}
                     className="primary-bg pl-5 pr-5 p-2 rounded block text-sm  ml-auto gap-2 min-w-[100px]"
                   >
-                    Add More Technician?
+                    Add More Dent Tech?
                   </button>
 
 
                   <div className='mb-4 flex items-start gap-3 relative mt-3'>
                     <FormControl fullWidth size="small">
-                      <FormLabel color="warning" className="mb-1">Assign Technicians(s) to this vehicle*</FormLabel>
+                      <FormLabel color="warning" className="mb-1">Assign Dent Tech to this vehicle*</FormLabel>
                       <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                         <List dense>
-                          {technicians.map((tech) => {
-                            const value = String(tech.id);
-                            const isChecked = jobForms[index]?.assignTechnicians?.includes(value) || false;
-                            const techDetails = jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === value) || tech;
+                          {technicians.length > 0 ? (
+                            technicians.map((tech) => {
+                              const value = String(tech.id);
+                              const isChecked = jobForms[index]?.assignTechnicians?.includes(value) || false;
+                              const techDetails = jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === value) || tech;
 
-                            // Determine which rate type to use based on technician type
-                            const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
-                            const rateValue = technicianPayRates[tech.id]?.[rateType] ||
-                              techDetails[rateType] || '';
+                              // Determine which rate type to use based on technician type
+                              const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
+                              const rateValue = technicianPayRates[tech.id]?.[rateType] ||
+                                techDetails[rateType] || '';
 
-                            return (
-                              <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-3 w-full">
-                                  <Checkbox
-                                    edge="start"
-                                    color="warning"
-                                    checked={isChecked}
-                                    onChange={() => handleTechnicianChange(String(tech.id), index)}
-                                    tabIndex={-1}
-                                    disableRipple
-                                  />
-                                  <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
-                                </div>
-                                {tech.techType === 'technician' ? (
-                                  <TextField
-                                    size="small"
-                                    type="number"
-                                    name="techFlatRate"
-                                    label="Flat Rate ($)"
-                                    color="warning"
-                                    value={rateValue}
-                                    onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'techFlatRate')}
-                                    onClick={() => setActiveInput(tech.id)}
-                                    style={{ maxWidth: '200px' }}
-                                  />
-                                ) : (
-                                  <TextField
-                                    size="small"
-                                    type="number"
-                                    label="R Rate ($)"
-                                    name="rRate"
-                                    color="warning"
-                                    value={rateValue}
-                                    onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'rRate')}
-                                    onClick={() => setActiveInput(tech.id)}
-                                    style={{ maxWidth: '200px' }}
-                                  />
-                                )}
-                                {activeInput === tech.id && buttonVisible[tech.id] !== false && (
-                                  <div
-                                    onClick={() => handlePayRateCheckbox(tech.id)}
-                                    className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
-                                  >
-                                    Save
+                              return (
+                                <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-3 w-full">
+                                    <Checkbox
+                                      edge="start"
+                                      color="warning"
+                                      checked={isChecked}
+                                      onChange={() => handleTechnicianChange(String(tech.id), index)}
+                                      tabIndex={-1}
+                                      disableRipple
+                                    />
+                                    <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
                                   </div>
-                                )}
-                              </ListItem>
-                            );
-                          })}
+                                  {tech.techType === 'technician' ? (
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      name="techFlatRate"
+                                      label="Flat Rate ($)"
+                                      color="warning"
+                                      value={rateValue}
+                                      onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'techFlatRate')}
+                                      onClick={() => setActiveInput(tech.id)}
+                                      style={{ maxWidth: '200px' }}
+                                    />
+                                  ) : (
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      label="R Rate ($)"
+                                      name="rRate"
+                                      color="warning"
+                                      value={rateValue}
+                                      onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'rRate')}
+                                      onClick={() => setActiveInput(tech.id)}
+                                      style={{ maxWidth: '200px' }}
+                                    />
+                                  )}
+                                  {activeInput === tech.id && buttonVisible[tech.id] !== false && (
+                                    <div
+                                      onClick={() => handlePayRateCheckbox(tech.id)}
+                                      className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
+                                    >
+                                      Save
+                                    </div>
+                                  )}
+                                </ListItem>
+                              );
+                            })
+                          ) : (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              No dent tech available
+                            </div>
+                          )}
                         </List>
                       </Paper>
                     </FormControl>

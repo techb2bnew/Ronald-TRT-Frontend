@@ -125,7 +125,7 @@ export default function ViewDetails() {
                     <div key={index} className="mb-6 border-b border-gray-400 pb-4">
 
                       <div className="mb-2 flex items-start text-sm">
-                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
+                        <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Name:</strong>
                         <div className="flex items-center gap-2">
                           {tech.image ? (
                             <img
@@ -144,19 +144,19 @@ export default function ViewDetails() {
                       </div>
 
                       <div className="mb-2 flex text-sm">
-                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                        <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Email:</strong>
                         <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
                       </div>
 
                       <div className="mb-2 flex text-sm">
-                        <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                        <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Ph. Number:</strong>
                         <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
                       </div>
                       {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
                         <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
                       )}
                       {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Dent Tech Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
                       )}
                       {tech.UserJob && (
                         <>
@@ -252,7 +252,7 @@ export default function ViewDetails() {
           </div>
 
           <div className="overflow-x-auto bg-white pt-3">
-            <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
+            <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Dent Tech</h3>
 
             <table className="table w-full table-fixed">
               <thead className=" ">
@@ -383,7 +383,7 @@ export default function ViewDetails() {
               <thead className=" ">
                 <tr>
                   <th scope="col">
-                    Technician Name
+                    Dent Tech Name
                   </th>
                   <th scope="col">
                     VIN

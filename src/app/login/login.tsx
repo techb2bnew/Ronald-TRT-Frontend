@@ -253,7 +253,7 @@ export default function Login() {
                 </div>
                 </div> */}
               <div className="pt-4 text-right">
-                <Link href="/forgot" className="text-sm primary-text">Forgot Password?</Link>
+                <Link href="/forgot" className="text-sm primary-text underline">Forgot Password?</Link>
               </div>
               <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6"
@@ -291,7 +291,7 @@ export default function Login() {
             </form>
             <div className="text-sm text-center mt-5">
               <p>Don&apos;t have an account?
-                <Link href='/signup' className="primary-text font-bold"> Sign Up</Link> </p>
+                <Link href='/signup' className="primary-text font-bold underline"> Sign Up</Link> </p>
             </div>
             {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />

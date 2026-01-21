@@ -1107,13 +1107,13 @@ export default function ViewDetails() {
                           {tech.firstName || 'N/A'} {tech.lastName || 'N/A'}
                         </h1>
 
-                        <p className="text-[14px]">Technician</p>
+                        <p className="text-[14px]">Dent Tech</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 pl-6 pr-2 pb-3 pt-4 bg-white">
                       <div className="pl-2 pr-2">
                         <div className="mb-2 text-sm items-center flex">
-                          <strong className="mr-3 inline-block w-[180px]">Technician Email: </strong>
+                          <strong className="mr-3 inline-block w-[180px]">Dent Tech Email: </strong>
                           <a key={index} href={`mailto:${tech.email}`} className="hover:underline">
                             {tech.email}
                           </a>
@@ -1121,7 +1121,7 @@ export default function ViewDetails() {
                         </div>
 
                         <div className="mb-2 text-sm items-center flex">
-                          <strong className="mr-3 inline-block w-[180px]">Technician Number: </strong>
+                          <strong className="mr-3 inline-block w-[180px]">Dent Tech Number: </strong>
                           <a key={index} href={`tel:${tech.phoneNumber}`} className="hover:underline">
                             {tech.phoneNumber}
                           </a>

@@ -821,7 +821,7 @@ export default function ClientListing() {
                     className="w-[150px]"
                     onClick={() => handleSort("Techician Name")}
                   >
-                    Technician Name
+                    Dent Tech Name
                   </th>
                 )}
                 {selectedColumn.includes("Techician Id") && (

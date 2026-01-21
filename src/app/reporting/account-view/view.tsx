@@ -181,7 +181,7 @@ export default function ViewDetails() {
 
                                             {/* Technician Image and Name */}
                                             <div className="mb-2 flex items-start text-sm">
-                                                <strong className="w-[210px] min-w-[210px] inline-block">Technician Name:</strong>
+                                                <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Name:</strong>
                                                 <div className="flex items-center gap-2">
                                                     {tech.image ? (
                                                         <img
@@ -201,20 +201,20 @@ export default function ViewDetails() {
 
                                             {/* Email */}
                                             <div className="mb-2 flex text-sm">
-                                                <strong className="w-[210px] min-w-[210px] inline-block">Technician Email:</strong>
+                                                <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Email:</strong>
                                                 <a className="hover:underline" href={`mailto:${tech.email}`}>{tech.email}</a>
                                             </div>
 
                                             {/* Phone Number */}
                                             <div className="mb-2 flex text-sm">
-                                                <strong className="w-[210px] min-w-[210px] inline-block">Technician Ph. Number:</strong>
+                                                <strong className="w-[210px] min-w-[210px] inline-block">Dent Tech Ph. Number:</strong>
                                                 <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
                                             </div>
                                             {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
                                                 <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
                                             )}
                                             {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
-                                                <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Technician Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
+                                                <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Dent Tech Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
                                             )}
                                             {/* Pay Details */}
                                             {tech.UserJob && (

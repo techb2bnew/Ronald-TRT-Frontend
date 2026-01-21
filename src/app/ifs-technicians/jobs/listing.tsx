@@ -264,7 +264,7 @@ const [permissions, setPermissions] = useState<any[]>([]);
                 Customer Number 
               </th>
               <th className="w-[120px]" >
-                Technician Name 
+                Dent Tech Name 
               </th> 
               <th className="w-[100px]">Tech. Number</th> 
               <th className="w-[160px]">Total Cost</th> 

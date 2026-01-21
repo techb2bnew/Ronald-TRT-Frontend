@@ -100,6 +100,10 @@ export default function JobForm() {
   const [simpleFlatRate, setSimpleFlatRate] = useState<string>(''); // For normal technicians
   const [rirValue, setRirValue] = useState<string>(''); // For R/I/R/R technicians
   const [page, setPage] = useState(1);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [managerSearchTerm, setManagerSearchTerm] = useState<string>('');
+  const [isManagerSearching, setIsManagerSearching] = useState<boolean>(false);
 
   useEffect(() => {
     const type = localStorage.getItem('types');
@@ -161,13 +165,49 @@ export default function JobForm() {
     console.log(e, 'eeeeeeeeeee');
 
     const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
-    if (bottom) {
+    if (bottom && !isSearching) {
       setPage((prevPage) => {
         const newPage = prevPage + 1;
         fetchCustomers(newPage);
         return newPage;
       });
     }
+  };
+
+  const searchCustomers = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsSearching(false);
+      setCustomer([]);
+      setPage(1);
+      fetchCustomers(1);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(searchValue)}&roleType=${roleType}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      const data = await response.json();
+      if (data.status && data.customers) {
+        setCustomer(data.customers);
+      }
+    } catch (error) {
+      console.error('Error searching customers:', error);
+    }
+  };
+
+  const handleCustomerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomerSearchTerm(value);
+    searchCustomers(value);
   };
 
 
@@ -402,13 +442,48 @@ export default function JobForm() {
     console.log(e, 'eeeeeeeeeee');
 
     const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
-    if (bottom) {
+    if (bottom && !isManagerSearching) {
       setPage((prevPage) => {
         const newPage = prevPage + 1;
         fetchManager(newPage);
         return newPage;
       });
     }
+  };
+
+  const searchManagers = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsManagerSearching(false);
+      setManager([]);
+      setPage(1);
+      fetchManager(1);
+      return;
+    }
+
+    try {
+      setIsManagerSearching(true);
+      const token = localStorage.getItem('token');
+      const roleType = 'manager';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchValue)}&roleType=${encodeURIComponent(roleType)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      const data = await response.json();
+      if (data.status && data.technicians) {
+        setManager(data.technicians);
+      }
+    } catch (error) {
+      console.error('Error searching managers:', error);
+    }
+  };
+
+  const handleManagerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setManagerSearchTerm(value);
+    searchManagers(value);
   };
 
   const fetchManager = async (page = 1, query = '', limit = pageSize) => {
@@ -500,21 +575,48 @@ export default function JobForm() {
                   label="Select customer"
                   name="assignCustomer"
                   onChange={handleAssignCustomerChange}
-
                   MenuProps={{
                     PaperProps: {
                       onScroll: handleCustomerScroll,
                       style: {
-                        maxHeight: 200, // Adjust the height of the dropdown menu if needed
+                        maxHeight: 300,
                       }
+                    },
+                    autoFocus: false
+                  }}
+                  onOpen={() => {
+                    setCustomerSearchTerm('');
+                    if (customer.length === 0) {
+                      fetchCustomers(1);
                     }
                   }}
                 >
-                  {customer.map((customer) => (
-                    <MenuItem key={customer.id} value={customer.id}>
-                      {customer.fullName}
+                  <div 
+                    style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <TextField
+                      size="small"
+                      fullWidth
+                      color="warning"
+                      placeholder="Search customer..."
+                      value={customerSearchTerm}
+                      onChange={handleCustomerSearchChange}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
+                  {customer.length > 0 ? (
+                    customer.map((cust) => (
+                      <MenuItem key={cust.id + Math.random().toString(36).substr(2, 5)} value={cust.id}>
+                        {cust.fullName}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <span className="text-gray-500 text-sm">No customer found</span>
                     </MenuItem>
-                  ))}
+                  )}
                 </Select>
                 {errors.assignCustomer && (
                   <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
@@ -552,24 +654,51 @@ export default function JobForm() {
                     id="select-assignManager"
                     color="warning"
                     value={formData.assignManager}
-                    label="Select customer"
+                    label="Select manager"
                     name="assignManager"
                     onChange={handleAssignManagerChange}
                     MenuProps={{
                       PaperProps: {
                         onScroll: handleManagercroll,
                         style: {
-                          maxHeight: 100, // Adjust the height of the dropdown menu if needed
+                          maxHeight: 300,
                         }
+                      },
+                      autoFocus: false
+                    }}
+                    onOpen={() => {
+                      setManagerSearchTerm('');
+                      if (manager.length === 0) {
+                        fetchManager(1);
                       }
                     }}
                   >
-                    {manager?.map((manager) => (
-                      <MenuItem key={manager.id} value={manager.id}>
-                        {manager?.firstName}
-                        {manager?.lastName}
+                    <div 
+                      style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <TextField
+                        size="small"
+                        fullWidth
+                        color="warning"
+                        placeholder="Search manager..."
+                        value={managerSearchTerm}
+                        onChange={handleManagerSearchChange}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    </div>
+                    {manager?.length > 0 ? (
+                      manager.map((mgr) => (
+                        <MenuItem key={mgr.id + Math.random().toString(36).substr(2, 5)} value={mgr.id}>
+                          {mgr?.firstName} {mgr?.lastName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <span className="text-gray-500 text-sm">No manager found</span>
                       </MenuItem>
-                    ))}
+                    )}
                   </Select>
                 </FormControl>
               </div>
@@ -597,7 +726,7 @@ export default function JobForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="Technician Flat Rate ($)"
+                label="Dent Tech Flat Rate ($)"
                 size="small"
                 color="warning"
                 value={simpleFlatRate}

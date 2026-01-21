@@ -587,12 +587,12 @@ const CompletedJobs: React.FC = () => {
                   <div key={tech.id} className="capitalize">
                     {tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== '' 
                       ? `$${tech.VehicleTechnician?.techFlatRate}`
-                      : <span className="text-gray-500 text-xs">No price added</span>
+                      : <span className="text-gray-500 text-xs"></span>
                     }
                   </div>
                 ))
               ) : (
-                <span className="text-gray-500 text-xs">No price added</span>
+                <span className="text-gray-500 text-xs"></span>
               )}
             </td>
           )}
@@ -617,12 +617,12 @@ const CompletedJobs: React.FC = () => {
                   <div key={tech.id} className="capitalize">
                     {tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== '' 
                       ? `$${tech.VehicleTechnician?.rRate}`
-                      : <span className="text-gray-500 text-xs">No price added</span>
+                      : <span className="text-gray-500 text-xs"></span>
                     }
                   </div>
                 ))
               ) : (
-                <span className="text-gray-500 text-xs">No price added</span>
+                <span className="text-gray-500 text-xs"></span>
               )}
             </td>
           )}
@@ -630,7 +630,7 @@ const CompletedJobs: React.FC = () => {
             <td>
               {completejob?.totalCombined && completejob?.totalCombined !== '' 
                 ? `$${completejob?.totalCombined}`
-                : <span className="text-gray-500 text-xs">No price added</span>
+                : <span className="text-gray-500 text-xs"></span>
               }
             </td>
           )}
@@ -733,7 +733,7 @@ const CompletedJobs: React.FC = () => {
                     </th> */}
               {roleType !== 'single-technician' && (
                 <th className="w-[150px]" >
-                  Assigned Technician
+                  Assigned Dent Tech
                 </th>
               )}
               {roleType !== 'single-technician' && (
@@ -779,7 +779,7 @@ const CompletedJobs: React.FC = () => {
             )}
             {roleType !== 'single-technician' && (
               <tr>
-                <td colSpan={9} className='text-right font-semibold'>
+                <td colSpan={9} className='text-right font-semibold bg-white'>
                   <span className='pr-6'>
                     Total: ${totalExpense}
                   </span>

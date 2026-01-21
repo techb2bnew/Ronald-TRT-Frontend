@@ -39,7 +39,7 @@ const CompletedJobs: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleDeleteSuccess = (deletedId: string) => {
-    toast.success('Technician deleted successfully');
+    toast.success('Dent Tech deleted successfully');
 
     // ✅ Remove the deleted technician from the table
     setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
@@ -577,7 +577,7 @@ const CompletedJobs: React.FC = () => {
                 )}
               </th>
               <th className="w-[160px]" onClick={() => handleSort('technicianName')}>
-                Technician Name
+                Dent Tech Name
                 {sortBy === 'technicianName' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}

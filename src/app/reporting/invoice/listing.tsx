@@ -55,6 +55,7 @@ const JobTable: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<string>('');
+  const [selectedJobFilter, setSelectedJobFilter] = useState<string>('');
   const [pdrValues, setPdrValues] = useState<Record<string, string>>({});
   const [customerFilter, setCustomerFilter] = useState<string>('');  // Initialize the customerFilter state
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);  // Add this state to store customer-specific jobs
@@ -514,10 +515,19 @@ const JobTable: React.FC = () => {
 
 
   const handleNewJobClick = async (jobId: string) => {
+    setSelectedJobFilter(jobId); // Store the selected job filter
+    setSelectedCustomer(''); // Clear customer filter when job is selected
+    
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
     console.log(jobId, 'jobId');
+
+    if (!jobId) {
+      // If no job selected, reset to original fetch
+      fetchJobs(currentPage, searchTerm, pageSize);
+      return;
+    }
 
     // Prepare the payload dynamically
     const payload = {
@@ -611,6 +621,7 @@ const JobTable: React.FC = () => {
 
   const handleNewCustomerClick = async (customerId: string) => {
     setSelectedCustomer(customerId);
+    setSelectedJobFilter(''); // Clear job filter when customer is selected
 
     if (!customerId) {
       // If no customer selected, reset to original jobs
@@ -644,6 +655,15 @@ const JobTable: React.FC = () => {
     setSelectedStatus(status);
   };
 
+  const handleClearFilters = () => {
+    setSelectedJobFilter('');
+    setSelectedCustomer('');
+    setSelectedStatus('');
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchJobs(1, '', pageSize);
+  };
+
   useEffect(() => {
     if (selectedStatus === '') {
       // When no status is selected, show all original jobs
@@ -675,20 +695,12 @@ const JobTable: React.FC = () => {
     const roleType = localStorage.getItem('types') || "";
     const userId = localStorage.getItem('userID');
     try {
-      // Validate if pdrValue exists and is a valid number
-      if (roleType !== 'single-technician') {
-        if (!pdrValue || isNaN(Number(pdrValue))) {
-          setPdrErrors(prev => ({ ...prev, [vehicleId]: 'Required' }));
-          return;
-        }
-      }
-
       const dateToUse = invoiceDates[vehicleId] || new Date().toISOString().split('T')[0];
 
       // Prepare payload according to your API requirements
       const payload = [{
         vehicleId: vehicleId,
-        pdr: Number(pdrValue),
+        pdr: pdrValue ? Number(pdrValue) : null,
         generatedInvoiceDate: dateToUse,
         roleType: roleType,
         userId: userId,
@@ -710,9 +722,68 @@ const JobTable: React.FC = () => {
 
       const data = await response.json();
       toast.success("vehicles updated successfully!");
-      fetchJobs(currentPage, searchTerm, pageSize);
+      
+      // Re-apply filters instead of resetting
+      if (selectedJobFilter) {
+        handleNewJobClick(selectedJobFilter);
+      } else if (selectedCustomer) {
+        handleNewCustomerClick(selectedCustomer);
+      } else {
+        fetchJobs(currentPage, searchTerm, pageSize);
+      }
     } catch (error) {
       console.error('Error updating PDR:', error);
+    }
+  };
+
+  const handleDateAutoSave = async (vehicleId: string, dateValue: string) => {
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || "";
+    const userId = localStorage.getItem('userID');
+    
+    // Update state first
+    setInvoiceDates(prev => ({
+      ...prev,
+      [vehicleId]: dateValue
+    }));
+
+    try {
+      // Prepare payload
+      const payload = [{
+        vehicleId: vehicleId,
+        pdr: pdrValues[vehicleId] ? Number(pdrValues[vehicleId]) : null,
+        generatedInvoiceDate: dateValue,
+        roleType: roleType,
+        userId: userId,
+      }];
+
+      // Make API call
+      const response = await fetch(`${apiUrl}/updateVehiclePdr`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update date');
+      }
+
+      toast.success("Date updated successfully!");
+      
+      // Re-apply filters instead of resetting
+      if (selectedJobFilter) {
+        handleNewJobClick(selectedJobFilter);
+      } else if (selectedCustomer) {
+        handleNewCustomerClick(selectedCustomer);
+      } else {
+        fetchJobs(currentPage, searchTerm, pageSize);
+      }
+    } catch (error) {
+      console.error('Error updating date:', error);
+      toast.error('Failed to update date');
     }
   };
 
@@ -962,9 +1033,7 @@ const JobTable: React.FC = () => {
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
         <td>
-          <div className="flex gap-2 items-center">
-
-            <TextField
+          <TextField
               label=""
               variant="outlined"
               fullWidth
@@ -972,17 +1041,11 @@ const JobTable: React.FC = () => {
               size="small"
               type='date'
               value={invoiceDates[job.id] || ''}
-              onChange={(e) => setInvoiceDates(prev => ({
-                ...prev,
-                [job.id]: e.target.value
-              }))}
+              onChange={(e) => handleDateAutoSave(job.id, e.target.value)}
               InputLabelProps={{
                 shrink: true,
               }}
             />
-            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
-
-          </div>
         </td>
         <td>
           {canCreate && (
@@ -1020,8 +1083,6 @@ const JobTable: React.FC = () => {
                   type='number'
                   value={pdrValues[job.id] || ''}
                   onChange={(e) => handlePdrChange(job.id, e.target.value)}
-                  error={Boolean(pdrErrors[job.id])}
-                  helperText={pdrErrors[job.id] || ''}
                 />
               </FormControl>
               <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
@@ -1073,7 +1134,8 @@ const JobTable: React.FC = () => {
         <button onClick={handleFillAllPdr} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
       </div>
       <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} />
+        onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} />
+     
       <div className="flex  mb-2 shadow-lg p-2flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
         <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>
         {roleType !== 'single-technician title_sdev' && (

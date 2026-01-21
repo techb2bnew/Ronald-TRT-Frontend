@@ -345,10 +345,25 @@ export default function Technicians() {
 
     if (name === "secondaryEmail") {
       const isValidEmail = emailPattern.test(value);
-      setErrors((prev) => ({
-        ...prev,
-        emailError: isValidEmail ? '' : 'Please enter a valid email address',
-      }));
+      const isSameAsPrimary = value.toLowerCase() === formData.email.toLowerCase();
+      
+      if (isSameAsPrimary && value.trim() !== '') {
+        setErrors((prev) => ({
+          ...prev,
+          secondaryEmail: 'Secondary email cannot be same as primary email',
+        }));
+      } else if (!isValidEmail && value.trim() !== '') {
+        setErrors((prev) => ({
+          ...prev,
+          secondaryEmail: 'Please enter a valid email address',
+        }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.secondaryEmail;
+          return newErrors;
+        });
+      }
     }
 
     let shouldUpdate = true;
@@ -646,6 +661,13 @@ export default function Technicians() {
 
     if (formData.secondaryEmail && !emailPattern.test(formData.secondaryEmail)) {
       newErrors.secondaryEmail = 'Please enter a valid email address';
+    }
+
+    // Check if secondary email matches primary email
+    if (formData.secondaryEmail && formData.email) {
+      if (formData.secondaryEmail.toLowerCase() === formData.email.toLowerCase()) {
+        newErrors.secondaryEmail = 'Secondary email cannot be same as primary email';
+      }
     }
 
     // Check if secondary phone matches primary phone
@@ -1033,13 +1055,13 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
       <Breadcrumb
         items={[
           {
-            label: isSingleTechnician ? 'Single Technician' : 'IFS Technicians',
+            label: isSingleTechnician ? 'Single Technician' : 'IFS Dent Tech',
             href: isSingleTechnician ? '/single-technicians/listing' : '/technicians/listing',
           },
           isEdit
-            ? { label: isTechnician ? 'Edit Technician' : isManager ? 'Edit Manager' : 'Edit Job' }
+            ? { label: isTechnician ? 'Edit Dent Tech' : isManager ? 'Edit Manager' : 'Edit Job' }
             : {
-              label: isTechnician ? 'Create Technician' : isManager ? 'Create Manager' : 'Create Single Technician',
+              label: isTechnician ? 'Create Dent Tech' : isManager ? 'Create Manager' : 'Create Single Technician',
               href: '/technicians/create-technician',
             },
         ]}
@@ -1048,12 +1070,12 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
       <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
         {isEdit
           ? isTechnician
-            ? 'Edit Technician'
+            ? 'Edit Dent Tech'
             : isManager
               ? 'Edit Manager'
               : 'Edit Single Technician'
           : isTechnician
-            ? 'Create Technician'
+            ? 'Create Dent Tech'
             : isManager
               ? 'Create Manager'
               : 'Create Single Technician'}
@@ -1332,7 +1354,7 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
             <GooglePlacesAutocomplete
               apiKey="AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE"
               selectProps={{
-                placeholder: 'Search for an address... *',
+                placeholder: 'Search for an address*',
                 value: address,
                 onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                   if (newValue) {
@@ -1451,19 +1473,11 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
               </svg>
               <TextField fullWidth name="secondaryEmail" id="outlined-basic" color="warning" label="Secondary email address" size="small" value={formData.secondaryEmail} onChange={handleChange}
               />
-              {errors.emailError && (
+              {errors.secondaryEmail && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                  {errors.emailError}
+                  {errors.secondaryEmail}
                 </div>
-              )}
-              {/* <input
-                type="email"
-                name="secondaryEmail" 
-                placeholder="Enter secondary email address"
-                value={formData.secondaryEmail}
-                onChange={handleChange}
-                className="input text-xs mt-1 input-bordered w-full p-3 rounded border border-gray-400"
-              /> */}
+              )} 
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

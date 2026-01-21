@@ -585,10 +585,10 @@ const TechnicianTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'IFS Technicians', href: '/technicians/listing' }
+          { label: 'IFS Dent Techs', href: '/technicians/listing' }
         ]}
       />
-      <CommonHeader heading="IFS Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?technician" />
+      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}

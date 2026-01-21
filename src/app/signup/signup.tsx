@@ -1107,7 +1107,7 @@ export default function Role() {
                 </div>
                 <div className="text-sm text-center mt-5">
                   <p>Already have an account?
-                    <Link href='/' className="primary-text font-bold"> Login</Link> </p>
+                    <Link href='/' className="primary-text font-bold underline"> Login</Link> </p>
                 </div>
               </form>
             )}

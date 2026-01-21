@@ -329,6 +329,14 @@ const JobTable: React.FC = () => {
     setSelectedStatus(status);
   };
 
+  const handleClearFilters = () => {
+    setSelectedCustomer('');
+    setSelectedStatus('');
+    setSearchTerm('');
+    setCurrentPage(1);
+    fetchJobs(1, '', pageSize);
+  };
+
   useEffect(() => {
     if (selectedStatus === '') {
       setActiveJob(originalJobs);
@@ -492,7 +500,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
-        onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} />
+        onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
