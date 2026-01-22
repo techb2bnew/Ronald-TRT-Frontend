@@ -21,13 +21,30 @@ interface DashboardResponse {
   count?: DashboardCounts;
   error?: string;
 }
+interface Job {
+    id: string;
+    jobName: string;
+    customer?: { fullName: string };
+    manager?: { firstName: string; lastName: string };
+    vehicleCount?: number;
+    startDate?: string;
+    endDate?: string;
+    estimatedCost?: string;
+    jobStatus?: boolean;
+    vehicles?: any[];
+}
+
 export default function Dashboard() {
     const [count, setCount] = useState<DashboardCounts>({});
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState(1); 
     const [loading, setLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pageSize, setPageSize] = useState(10); 
+    const [pageSize, setPageSize] = useState(10);
+    const [userName, setUserName] = useState<string>('User');
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [jobsLoading, setJobsLoading] = useState<boolean>(false);
+    const [roleType, setRoleType] = useState<string | null>(null); 
 
     const fetchDashboardData = async (page = 1, query = '', limit = pageSize) => {
   setLoading(true);
@@ -78,19 +95,106 @@ export default function Dashboard() {
   }
 };
     useEffect(() => {
+        const storedRoleType = localStorage.getItem('types');
+        setRoleType(storedRoleType);
+    }, []);
+
+    const fetchJobs = async () => {
+        setJobsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const roleType = localStorage.getItem('types') || "";
+            const userId = localStorage.getItem('userID');
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const endpoint = roleType === 'superadmin'
+                ? `/api/jobListing?page=1&roleType=${encodeURIComponent(roleType)}&limit=10`
+                : `/api/jobListing?userId=${userId}&page=1&roleType=${encodeURIComponent(roleType)}&limit=10`;
+
+            const response = await fetch(endpoint, { method: 'GET', headers });
+            const data = await response.json();
+
+            if (response.ok) {
+                const fetchedJobs: Job[] = data.jobs?.jobs || [];
+                const jobsWithVehicleCount = fetchedJobs.map(job => ({
+                    ...job,
+                    vehicleCount: job.vehicles ? job.vehicles.length : 0
+                }));
+                setJobs(jobsWithVehicleCount);
+            }
+        } catch (error) {
+            console.error('Error fetching jobs:', error);
+        } finally {
+            setJobsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchDashboardData(currentPage, searchTerm, pageSize);
         }, 500);
         return () => clearTimeout(timeoutId);
     }, [currentPage, searchTerm, pageSize]);
 
+    useEffect(() => {
+        fetchJobs();
+    }, []);
+
+    // Get user name from localStorage or set default
+    useEffect(() => {
+        let name = 'User';
+        
+        // Try to get from technicianData first
+        const technicianData = localStorage.getItem('technicianData');
+        if (technicianData) {
+            try {
+                const parsed = JSON.parse(technicianData);
+                if (parsed.firstName && parsed.lastName) {
+                    name = `${parsed.firstName} ${parsed.lastName}`;
+                } else if (parsed.firstName) {
+                    name = parsed.firstName;
+                } else if (parsed.fullName) {
+                    name = parsed.fullName;
+                }
+            } catch (e) {
+                console.error('Error parsing technicianData:', e);
+            }
+        }
+        
+        // Fallback to direct userName or fullName
+        if (name === 'User') {
+            name = localStorage.getItem('userName') || localStorage.getItem('fullName') || 'User';
+        }
+        
+        setUserName(name);
+    }, []);
+
+    // Format current date
+    const getCurrentDate = () => {
+        const now = new Date();
+        const day = now.getDate();
+        const month = now.toLocaleDateString('en-US', { month: 'short' });
+        return { day, month };
+    };
+
+    const currentDate = getCurrentDate();
+
     return (
         <main className="p-6 pt-[0px] space-y-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-            {/* Header */}
-            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row justify-between items-start md:items-center">
-                <div>
-                    <h1 className="text-4xl font-bold text-black bg-clip-text">Dashboard</h1>
-                    <p className="text-gray-500 mt-1">Welcome back! Here's your overview</p>
+            {/* Welcome Banner */}
+            <div className="bg-[#383d71] rounded-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                        Welcome back, {userName}! 👋
+                    </h1>
+                    <p className="text-white text-sm md:text-base opacity-90">
+                        Here's what's happening with your business today.
+                    </p>
+                </div>
+                <div className="flex flex-col items-end text-white">
+                    <span className="text-3xl md:text-4xl font-bold">{currentDate.day}</span>
+                    <span className="text-sm md:text-base uppercase">{currentDate.month}</span>
                 </div>
             </div>
 
@@ -368,6 +472,85 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </section>
+            </div>
+
+            {/* Jobs Table Section */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-1.5 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
+                    <h2 className="text-2xl font-bold text-gray-800">IFS - Recent Jobs</h2>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    {jobsLoading ? (
+                        <div className="p-8 text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <p className="mt-2 text-gray-500">Loading jobs...</p>
+                        </div>
+                    ) : jobs.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                            <p>No jobs found</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                        {roleType !== 'single-technician' && (
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                                        )}
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicles</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Cost</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {jobs.map((job) => (
+                                        <tr key={job.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="text-blue-600 hover:underline">
+                                                    {job.id}
+                                                </Link>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{job.jobName || '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{job.customer?.fullName || '-'}</td>
+                                            {roleType !== 'single-technician' && (
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    {job.manager ? `${job.manager.firstName} ${job.manager.lastName}` : '-'}
+                                                </td>
+                                            )}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{job.vehicleCount || 0}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {job.startDate ? new Date(job.startDate).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {job.endDate ? new Date(job.endDate).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                ${job.estimatedCost || '0'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        job.jobStatus
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-yellow-100 text-yellow-800'
+                                                    }`}
+                                                >
+                                                    {job.jobStatus ? 'Completed' : 'In Progress'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </main>
     );

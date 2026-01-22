@@ -155,9 +155,9 @@ const totalVehicles = allVehicles.length;
                 <th scope="col">
                   Estimated Cost
                 </th>
-                <th scope="col">
+                {/* <th scope="col">
                   Notes
-                </th>
+                </th> */}
                 <th scope="col">
                   Start Date
                 </th>
@@ -182,9 +182,9 @@ const totalVehicles = allVehicles.length;
                     <td className="px-6 py-4 ">
                       {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
                     </td>
-                    <td className="px-6 py-4 ">
+                    {/* <td className="px-6 py-4 ">
                       {jobs.notes || '-'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 ">
                       {jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}
                     </td>
@@ -339,12 +339,12 @@ const totalVehicles = allVehicles.length;
                 <th scope="col">
                   Model Year
                 </th>
-                <th scope="col">
+                {/* <th scope="col">
                   Description
                 </th>
                 <th scope="col">
                   Notes
-                </th>
+                </th> */}
                 <th scope='col'>
                   Action
                 </th>
@@ -376,7 +376,7 @@ const totalVehicles = allVehicles.length;
                     <td className="px-6 py-4 ">
                       {vehicles.modelYear || '-'}
                     </td>
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       {Array.isArray(vehicles.jobDescription) &&
                         vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
                         ? vehicles.jobDescription.join(', ')
@@ -384,7 +384,7 @@ const totalVehicles = allVehicles.length;
                     </td>
                     <td className="px-6 py-4">
                       {vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '-'}
-                    </td>
+                    </td> */}
                     <td>
                       <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} >
                         <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"

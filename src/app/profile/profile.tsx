@@ -64,10 +64,10 @@ export default function ProfileCard() {
   const { updateProfileImage } = useTechnician();
   const { updateTechnicianProfile } = useTechnician();
 
-  const handleAddressSelect = async (selectedAddress: AddressValue) => {
+  const handleAddressSelect = async (selectedAddress: GooglePlacesOption | AddressValue) => {
     if (!selectedAddress) return;
 
-    setAddressValue(selectedAddress);
+    setAddressValue(selectedAddress as AddressValue);
 
     try {
       const results = await geocodeByAddress(selectedAddress.label);
@@ -160,7 +160,7 @@ export default function ProfileCard() {
           firstName: data.technician.firstName,
           lastName: data.technician.lastName,
           phoneNumber: data.technician.phoneNumber,
-          address: data.fullAddress,
+          address: fullAddress || data.technician.address || '',
         });
       } else {
         toast.error(data.error || "Error fetching technician data");
@@ -207,11 +207,19 @@ export default function ProfileCard() {
       toast.error("Technician ID not found!");
       return;
     }
+    
+    // Ensure address is synced from GooglePlacesAutocomplete if formData.address is empty but address state has value
+    let finalAddress = formData.address;
+    if (!finalAddress?.trim() && address?.label) {
+      finalAddress = address.label;
+      setFormData(prev => ({ ...prev, address: address.label }));
+    }
+    
     const newErrors: { [key: string]: string } = {};
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.phoneNumber?.trim()) newErrors.phoneNumber = 'Phone Number is required';
-    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!finalAddress?.trim()) newErrors.address = 'Address is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
