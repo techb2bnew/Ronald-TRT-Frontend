@@ -19,7 +19,6 @@ const Sidebar = () => {
   const [isUser6Open, setIsUser6Open] = useState(false);
   const [isUser7Open, setIsUser7Open] = useState(false);
   const [activeLink, setActiveLink] = useState('');
-  const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -102,13 +101,12 @@ const Sidebar = () => {
 
   const collapseSidebar = () => {
     setIsCollapsed(true);
-    setIsHovered(false); // remove hover effect when clicking
+ // remove hover effect when clicking
   };
 
   // Expand sidebar
   const expandSidebar = () => {
     setIsCollapsed(false);
-    setIsHovered(false);
   };
 
 
@@ -120,10 +118,8 @@ const Sidebar = () => {
         e.stopPropagation();
       }
 
-      // Close sidebar immediately on click/touch
-      if (!isCollapsed) {
-        collapseSidebar();
-      }
+      // Always collapse sidebar when any link is clicked
+      collapseSidebar();
     }
   };
 
@@ -253,61 +249,52 @@ const Sidebar = () => {
 
 
   const CloseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M6 6L18 18M6 18L18 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-panel-left-close"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg>
   );
 
 
   const ChevronRightIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--ri fs-20" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M18 18v2H6v-2zm3-7v2H3v-2zm-3-7v2H6V4z"></path></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-panel-left-open"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg>
   );
 
 
   return (
-    <div className="group" onMouseEnter={() => {
-      // setTimeout(()=>{ collapseSidebar();},1500);
-      if (window.innerWidth > 991 && isCollapsed) {
-        setIsHovered(true);
-        setIsCollapsed(true);
-      }
-    }}
-      onMouseLeave={() => {
-        if (window.innerWidth > 991 && isCollapsed) {
-          setIsHovered(false);
-        }
-      }}>
+    <div className="group">
       <div
-        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden ${isCollapsed && !isHovered ? "w-[70px]" : "w-[300px]"
+        className={`bg-color text-white fixed top-0 h-full transition-all duration-300 ease-in-out ${isCollapsed ? "w-[70px]" : "w-[300px]"
           }`}
       >
-        <div className={`flex justify-end p-2 toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
+        <div className={`flex justify-end toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
 
 
           {isCollapsed ? (
 
-            <button onClick={expandSidebar}>
+            <button 
+              onClick={expandSidebar}
+              className="rounded p-1 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+              aria-label="Expand sidebar"
+            >
               <ChevronRightIcon />
             </button>
           ) : (
-            <button onClick={collapseSidebar}>
+            <button 
+              onClick={collapseSidebar}
+              className="text-white hover:text-yellow-300 transition-colors cursor-pointer p-1"
+              aria-label="Collapse sidebar"
+            >
               <CloseIcon />
             </button>
           )}
 
         </div>
+
+
         <div className="flex items-center justify-center h-16 mb-3 pt-3  mt-5">
-          <Image src={logo} alt="logo" className={`object-cover border-[2px] border-white rounded-full shadow-xl ${isCollapsed && !isHovered ? "w-[40px]" : "w-[80px]"
+          <Image src={logo} alt="logo" className={`object-cover border-[2px] border-white rounded-full shadow-xl ${isCollapsed ? "w-[40px]" : "w-[80px]"
             }`} />
         </div>
 
-        <ul className="flex flex-col py-4 laptop_size overflow-visible" style={{ lineHeight: '1' }}>
+        <ul className="flex flex-col py-4 laptop_size overflow-auto h-[80vh]" style={{ lineHeight: '1' }}>
           <li className='p-1 pl-4'>
             <Link onClick={handleNavItemClick} href="/dashboard" className={`flex items-center p-2 space-x-2 rounded overflow-hidden ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
               <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -316,7 +303,7 @@ const Sidebar = () => {
                 <path fillRule="evenodd" clipRule="evenodd" d="M5.50016 3.02081C3.85481 3.02081 2.521 4.35463 2.521 5.99998C2.521 7.64533 3.85481 8.97915 5.50016 8.97915C7.14551 8.97915 8.47933 7.64533 8.47933 5.99998C8.47933 4.35463 7.14551 3.02081 5.50016 3.02081ZM1.146 5.99998C1.146 3.59524 3.09542 1.64581 5.50016 1.64581C7.9049 1.64581 9.85433 3.59524 9.85433 5.99998C9.85433 8.40472 7.9049 10.3541 5.50016 10.3541C3.09542 10.3541 1.146 8.40472 1.146 5.99998Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
               </svg>
-              <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dashboard</span>
+              <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dashboard</span>
             </Link>
           </li>
 
@@ -340,8 +327,8 @@ const Sidebar = () => {
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-1 transition-all duration-300 
-            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
-                <div className={`m-auto p-1 rounded ${isCollapsed && !isHovered && (
+            ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
+                <div className={`m-auto p-1 rounded ${isCollapsed && (
                   activeLink === '/technicians/listing' ||
                   activeLink === '/technicians/create-technician' ||
                   activeLink === '/client/listing' ||
@@ -363,15 +350,15 @@ const Sidebar = () => {
                   </svg>
                 </div>
                 {(userType == 'single-technician' || userType == 'ifs' || userType == 'superadmin' || userType == 'manager') && (
-                  // <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>
+                  // <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>
 
                   //   {userType === 'single-technician' ? 'Users' : 'IFS'}
                   // </span>
-                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>{userType === 'single-technician' ? 'Users' : 'IFS'}</span>
+                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>{userType === 'single-technician' ? 'Users' : 'IFS'}</span>
 
                 )}
               </div>
-              <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUsersOpen ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
@@ -380,19 +367,19 @@ const Sidebar = () => {
 
             {isUsersOpen && (
               <ul className={`ml-6 space-y-1 transition-all duration-300
-            ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
+            ${isCollapsed ? 'hidden' : 'block'}`}>
 
                 {isUsersOpen && (
                   <ul className="sdev_overlap_mob">
 
                     <li >
                       <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}   >
-                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Customers</span>
+                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Customers</span>
                       </Link>
                     </li>
                     <li >
                       <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Jobs</span>
+                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Jobs</span>
                       </Link>
                     </li>
                     {userType !== 'single-technician' && userType !== 'ifs' && (
@@ -402,7 +389,7 @@ const Sidebar = () => {
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                         >
-                          <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
+                          <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
                         </Link>
                       </li>
                     )}
@@ -424,19 +411,19 @@ const Sidebar = () => {
                 </li> */}
                 <li  >
                   <Link onClick={handleNavItemClick} href="/vehicle/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/listing' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicle / Work Orders</span>
+                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicle / Work Orders</span>
                   </Link>
                 </li>
 
                 <li >
                   <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Completed Work Order</span>
+                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Completed Work Order</span>
                   </Link>
                 </li>
                 {/* {userType !== 'single-technician' && (
                   <li >
                     <Link onClick={handleNavItemClick} href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}  >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Group Work Orders</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Group Work Orders</span>
                     </Link>
                   </li>
                 )} */}
@@ -538,7 +525,7 @@ const Sidebar = () => {
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-2 transition-all duration-300 
-            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
+            ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
                 <svg width="18" height="18" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_690_1656)">
                     <path d="M5.84375 22H18.7344C19.0903 22 19.3789 21.7114 19.3789 21.3555V3.26562C19.3789 2.90967 19.0903 2.62109 18.7344 2.62109H16.8008V0.644531C16.8008 0.288578 16.5122 0 16.1562 0H3.26562C2.90967 0 2.62109 0.288578 2.62109 0.644531V18.7773C2.62109 19.1333 2.90967 19.4219 3.26562 19.4219H5.19922V21.3555C5.19922 21.7114 5.4878 22 5.84375 22ZM16.8008 18.7773V3.91016H18.0898V20.7109H6.48828V19.4219H16.1562C16.5122 19.4219 16.8008 19.1333 16.8008 18.7773ZM3.91016 18.1328V1.28906H15.5117V18.1328H3.91016Z" fill="currentColor" />
@@ -556,7 +543,7 @@ const Sidebar = () => {
                 </svg>
                 <span className={`${isCollapsed ? 'hidden group-hover:inline' : 'inline'}`}>All  {userType !== 'single-technician' && ('IFS')} Jobs</span>
               </div>
-              <svg className={`transform transition-transform ${isUser3Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'} ${isCollapsed ? 'hidden group-hover:block' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUser3Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'hidden' : 'block'} ${isCollapsed ? 'hidden' : 'block'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
@@ -566,7 +553,7 @@ const Sidebar = () => {
 
             {isUser3Open && (
               <ul className={`ml-6 space-y-1 transition-all duration-300
-              ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
+              ${isCollapsed ? 'hidden' : 'block'}`}>
                 <li  >
                   <Link onClick={handleNavItemClick} href="/jobs/create-job/create" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/create-job/create' ? 'active text-[#fff900]' : ''}`} >
                     <span>Create Work Order</span>
@@ -606,8 +593,8 @@ const Sidebar = () => {
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-1 transition-all duration-300 
-            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
-                <div className={`p-1 rounded ${isCollapsed && !isHovered && (
+            ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
+                <div className={`p-1 rounded ${isCollapsed && (
                   activeLink === '/reporting/vehicle-info' ||
                   activeLink === '/reporting/job-status' ||
                   activeLink === '/reporting/vehicle-list' ||
@@ -623,10 +610,10 @@ const Sidebar = () => {
                   <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
                 </svg>
                 </div>
-                {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Other Reports</span> */}
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Other Reports</span>
+                {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>Other Reports</span> */}
+                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Other Reports</span>
               </div>
-              <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
 
@@ -636,29 +623,29 @@ const Sidebar = () => {
 
             {isUser5Open && (
               <ul className={`ml-6 space-y-1 transition-all duration-300
-              ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
+              ${isCollapsed ? 'hidden' : 'block'}`}>
                 <li  >
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles Info</span>
+                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles Info</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
 
                   <li >
                     <Link onClick={handleNavItemClick} href="/reporting/job-status" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>All Work Orders</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>All Work Orders</span>
                     </Link>
                   </li>
                 )}
                 <li >
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles List</span>
+                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles List</span>
                   </Link>
                 </li>
                 {userType !== 'manager' && (
                   <li>
                     <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Accounts Report</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Accounts Report</span>
                     </Link>
                   </li>
                 )}
@@ -766,7 +753,7 @@ const Sidebar = () => {
                   </defs>
                 </svg>
 
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Create Invoice</span>
+                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Create Invoice</span>
               </Link>
             </li>
           )}
@@ -789,7 +776,7 @@ const Sidebar = () => {
                   </defs>
                 </svg>
 
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Sent Invoice</span>
+                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Sent Invoice</span>
               </Link>
             </li>
           )}
@@ -816,8 +803,8 @@ const Sidebar = () => {
               <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/manager/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}>
                 <div className={`flex items-center gap-1  ${isCollapsed ? 'auto' : 'flex'}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
-                  {/* <span className={`pl-2 transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:block group-hover:opacity-100' : 'block'}`}>Staff Management </span> */}
-                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Staff Management </span>
+                  {/* <span className={`pl-2 transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:opacity-100' : 'block'}`}>Staff Management </span> */}
+                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Staff Management </span>
 
                 </div>
               </Link>
@@ -844,7 +831,7 @@ const Sidebar = () => {
 
 
 
-                <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Archives</span>
+                <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>Archives</span>
               </div>
             </Link>
           </li> */}
@@ -858,7 +845,7 @@ const Sidebar = () => {
                     <circle cx="8" cy="10" r="2" stroke="currentColor" strokeWidth="2" fill="none" />
                     <path d="M21 18L16 13L10 18" stroke="currentColor" strokeWidth="2" fill="none" />
                   </svg>
-                  <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>Mobile Banner</span>
+                  <span className={`pl-2  transition-all duration-200 ${isCollapsed ? 'hidden' : 'block'}`}>Mobile Banner</span>
                 </div>
               </Link>
             </li>
@@ -877,9 +864,9 @@ const Sidebar = () => {
                     activeLink === '/single-technicians/vehicle-info'
                   ) ? 'text-[#fff900]' : 'text-[#fff]'}`}>
                 <div className={`flex items-center gap-1 transition-all duration-300 
-            ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
+            ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
 
-                  <div className={`p-1 rounded ${isCollapsed && !isHovered && (
+                  <div className={`p-1 rounded ${isCollapsed && (
                     activeLink === '/single-technicians/listing' ||
                     activeLink === '/single-technicians/jobs' ||
                     activeLink === '/single-technicians/all-jobs' ||
@@ -888,10 +875,10 @@ const Sidebar = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                   </div>
 
-                  {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Single Technician</span> */}
-                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Single Technician</span>
+                  {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>Single Technician</span> */}
+                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Single Technician</span>
                 </div>
-                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
 
@@ -901,10 +888,10 @@ const Sidebar = () => {
 
               {isUser6Open && (
                 <ul className={`ml-6 space-y-1 transition-all duration-300
-                ${isCollapsed ? 'hidden group-hover:block' : 'block'}`}>
+                ${isCollapsed ? 'hidden' : 'block'}`}>
                   <li  >
                     <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
                     </Link>
                   </li>
                   <li>
@@ -914,12 +901,12 @@ const Sidebar = () => {
                   </li>
                   <li >
                     <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>All Work Orders</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>All Work Orders</span>
                     </Link>
                   </li>
                   <li>
                     <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`} >
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles Info</span>
+                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles Info</span>
                     </Link>
                   </li>
 

@@ -109,6 +109,17 @@ export default function JobForm() {
     const type = localStorage.getItem('types');
     setUserType(type);
 
+    // If manager is logged in, automatically set their ID
+    if (type === 'manager') {
+      const managerId = localStorage.getItem('userID');
+      if (managerId) {
+        setFormData(prev => ({
+          ...prev,
+          assignManager: managerId
+        }));
+      }
+    }
+
     if (searchParams) {
       const jobId = searchParams.get('jobId') || '';
       if (jobId) {
@@ -245,11 +256,17 @@ export default function JobForm() {
         const startDateValue = jobData.startDate ? dayjs(jobData.startDate) : null;
         const endDateValue = jobData.endDate ? dayjs(jobData.endDate) : null;
 
+        // If manager is logged in, use their ID; otherwise use the fetched manager ID
+        const roleType = localStorage.getItem('types');
+        const managerId = roleType === 'manager' 
+          ? localStorage.getItem('userID') || ''
+          : jobData.assignManager || '';
+
         setFormData({
           ...formData,
           assignCustomer: String(jobData.customer?.id || jobData.assignCustomer || ''),
           jobName: jobData.jobName || '',
-          assignManager: jobData.assignManager || '',
+          assignManager: managerId,
           labourCost: jobData.labourCost || '',
           estimatedCost: jobData.estimatedCost || '',
           notes: jobData.notes || '',
@@ -360,11 +377,18 @@ export default function JobForm() {
       console.log(currentUserId, 'currentUserId');
       console.log(selectedTechnicians, 'selectedTechnicians');
       // Prepare the request body
+      // If manager is logged in, use their ID; if single-technician, use null; otherwise use formData
+      const managerId = roleType === 'manager' 
+        ? localStorage.getItem('userID') 
+        : roleType === 'single-technician' 
+          ? null 
+          : formData.assignManager;
+
       const requestBody = {
         jobName: formData.jobName,
         assignCustomer: formData.assignCustomer,
         assignTechnician: roleType === 'single-technician' ? assignTechnician : formData.technicianId,
-        assignManager: roleType === 'single-technician' ? null : formData.assignManager,
+        assignManager: managerId,
         createdBy: formData.createdBy,
         notes: formData.notes,
         roleType: roleType,
@@ -644,8 +668,8 @@ export default function JobForm() {
               )}
             </div>
           </div>
-          <div className={`grid ${userType === 'single-technician' ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-2`}>
-            {userType !== 'single-technician' && (
+          <div className={`grid ${userType === 'single-technician' || userType === 'manager' ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-2`}>
+            {userType !== 'single-technician' && userType !== 'manager' && (
               <div className='mb-2 items-start gap-3 relative'>
                 <FormControl fullWidth size="small">
                   <InputLabel id="assignManager" color="warning">Select manager</InputLabel>

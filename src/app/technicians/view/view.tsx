@@ -611,7 +611,7 @@ export default function ViewDetails() {
                   )
                 ) : (
                   <tr>
-                    <td colSpan={7} className="text-center py-4 text-gray-500">
+                    <td colSpan={6} className="text-center py-4 text-gray-500">
                       No vehicle found
                     </td>
                   </tr>
