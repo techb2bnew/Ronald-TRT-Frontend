@@ -482,11 +482,9 @@ export default function ViewDetails() {
                     Tech Rate
                   </th>
                   <th scope="col">
-                    R/I/R/R
+                  RR/I/R
                   </th>
-                  <th scope="col">
-                    Notes
-                  </th>
+               
                   <th scope="col">
                     Start Date
                   </th>
@@ -513,7 +511,7 @@ export default function ViewDetails() {
                       <td className="px-6 py-4">
                         {jobs.UserJob?.rRate ? `$${jobs.UserJob.rRate}` : '-'}
                       </td>
-                      <td className="px-6 py-4">{jobs.notes || '-'}</td>
+                      
                       <td className="px-6 py-4">
                         {jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}
                       </td>
@@ -561,12 +559,12 @@ export default function ViewDetails() {
                   <th scope="col">
                     Model Year
                   </th>
-                  <th scope="col">
+                  {/* <th scope="col">
                     Description
                   </th>
                   <th scope="col">
                     Notes
-                  </th>
+                  </th> */}
                   <th scope="col">
                     Action
                   </th>
@@ -592,7 +590,7 @@ export default function ViewDetails() {
                         <td className="px-6 py-4">
                           {vehicle.modelYear || '-'}
                         </td>
-                        <td className="px-6 py-4">
+                        {/* <td className="px-6 py-4">
                           {Array.isArray(vehicle.jobDescription) &&
                             vehicle.jobDescription.some((desc: string) => desc.trim() !== '')
                             ? vehicle.jobDescription.join(', ')
@@ -600,7 +598,7 @@ export default function ViewDetails() {
                         </td>
                         <td className="px-6 py-4">
                           {vehicle.notes && vehicle.notes.trim() !== '' ? vehicle.notes : '-'}
-                        </td>
+                        </td> */}
                         <td>
                           <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} >
                             <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"

@@ -742,7 +742,7 @@ export default function JobForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="R/I/R/R Flat Rate ($)"
+                label="RR/I/R Flat Rate ($)"
                 size="small"
                 color="warning"
                 value={rirValue}
@@ -871,7 +871,7 @@ export default function JobForm() {
           {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start gap-3 relative mt-3'>
               <FormControl fullWidth size="small">
-                <FormLabel color="warning" className='mb-4'>Assign R/IR/R to this vehicle</FormLabel>
+                <FormLabel color="warning" className='mb-4'>Assign RR/I/R to this vehicle</FormLabel>
                 <TextField
                   label="Search Dent Tech"
                   variant="outlined"
@@ -921,7 +921,7 @@ export default function JobForm() {
                       </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
-                        No R/IR/R Dent Tech Available
+                        No RR/I/R Dent Tech Available
                       </div>
                     )}
                   </List>

@@ -1142,7 +1142,7 @@ const JobTable: React.FC = () => {
           <div className='total_dent_teach title_sdev'><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>
         )}
         {roleType !== 'single-technician' && (
-          <div className='total_ri_content title_sdev'><b>Total R/I/R/R  </b>: ${rRTotalAmount}</div>
+          <div className='total_ri_content title_sdev'><b>Total RR/I/R  </b>: ${rRTotalAmount}</div>
         )}
         <div><b>Total Job Estimate </b>: ${totalJobAmount}</div>
         {roleType !== 'single-technician' && (
@@ -1204,12 +1204,12 @@ const JobTable: React.FC = () => {
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[130px]" >
-                  Assigned R/I/R/R
+                  Assigned RR/I/R
                 </th>
               )}
 
               {roleType !== 'single-technician' && (
-                <th className="w-[80px]">R/I/R/R</th>
+                <th className="w-[80px]">RR/I/R</th>
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">Total Expense</th>

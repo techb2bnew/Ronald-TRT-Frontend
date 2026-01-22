@@ -1134,7 +1134,7 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                   </span>
                 </label>
                 <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check1">
-                  R/I/R/R
+                RR/I/R
                 </label>
               </div>
             </div>

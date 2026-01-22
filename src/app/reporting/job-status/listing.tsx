@@ -717,10 +717,10 @@ const [roleType, setRoleType] = useState<string | null>(null);
                 <th className="w-[80px]">Tech Flat Rate</th>
               )}
               <th className="w-[130px]" >
-                Assigned R/I/R/R
+                Assigned RR/I/R
               </th>
               {roleType !== 'single-technician' && (
-                <th className="w-[80px]">R/I/R/R</th>
+                <th className="w-[80px]">RR/I/R</th>
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">Total Expense</th>

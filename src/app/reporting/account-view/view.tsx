@@ -211,7 +211,7 @@ export default function ViewDetails() {
                                                 <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
                                             </div>
                                             {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
-                                                <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
+                                                <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>RR/I/R:</strong> ${tech.UserJob.rRate}</p>
                                             )}
                                             {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
                                                 <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Dent Tech Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
@@ -244,7 +244,7 @@ export default function ViewDetails() {
                                     ${jobData?.totalFlatRate || '-'}
                                 </div>
                             </div>
-                            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Total R/I/R/R:</strong>
+                            <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 flex items-center'><strong className='w-[210px] inline-block'>Total RR/I/R:</strong>
                                 <div className="flex gap-3 items-center capitalize">
                                     ${jobData?.totalRRate || '-'}
                                 </div>
@@ -306,7 +306,7 @@ export default function ViewDetails() {
                                         <th scope="col">Vehicle Type</th>
                                         <th scope="col">Email</th>
                                         <th scope="col">Phone</th>
-                                        <th scope="col">R/I/R/R</th>
+                                        <th scope="col">RR/I/R</th>
                                         <th scope="col">Flat Rate</th>
                                         <th scope="col">VIN</th>
                                     </tr>

@@ -2249,13 +2249,13 @@ export default function Technicians() {
                     onClick={fetchTechniciansOnClick}
                     className="primary-bg pl-5 pr-5 p-2 rounded block text-sm  ml-auto gap-2 min-w-[100px]"
                   >
-                    Add More Dent Tech?
+                    Add More Technicians?
                   </button>
 
 
                   <div className='mb-4 flex items-start gap-3 relative mt-3'>
                     <FormControl fullWidth size="small">
-                      <FormLabel color="warning" className="mb-1">Assign Dent Tech to this vehicle*</FormLabel>
+                      <FormLabel color="warning" className="mb-1">Assign Technicians to this vehicle*</FormLabel>
                       <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                         <List dense>
                           {technicians.length > 0 ? (
@@ -2320,7 +2320,7 @@ export default function Technicians() {
                             })
                           ) : (
                             <div className="p-4 text-center text-gray-500 text-sm">
-                              No dent tech available
+                              No technicians available
                             </div>
                           )}
                         </List>

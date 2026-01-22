@@ -402,7 +402,7 @@ const Sidebar = () => {
                           href="/technicians/listing"
                           className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#000] bg-[#fff] hover:text-[#000]' : ''}`}
                         >
-                          <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dent Techs</span>
+                          <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
                         </Link>
                       </li>
                     )}

@@ -153,7 +153,7 @@ export default function ViewDetails() {
                         <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>
                       </div>
                       {tech.UserJob.rRate !== null && tech.UserJob.rRate !== '' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>R/I/R/R:</strong> ${tech.UserJob.rRate}</p>
+                        <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>RR/I/R:</strong> ${tech.UserJob.rRate}</p>
                       )}
                       {tech.UserJob.techFlatRate !== null && tech.UserJob.techFlatRate !== '' && (
                         <p className="mb-1"><strong className='w-[210px] inline-block text-sm'>Dent Tech Flat Rate:</strong> ${tech.UserJob.techFlatRate}</p>
@@ -273,7 +273,7 @@ export default function ViewDetails() {
                   </th>
                   {userType !== 'single-technician' && (
                     <th scope="col">
-                      R/I/R/R
+                      RR/I/R
                     </th>
                   )}
                   {userType !== 'single-technician' && (

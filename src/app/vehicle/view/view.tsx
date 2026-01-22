@@ -329,7 +329,7 @@ export default function ViewDetails() {
                         <a className="hover:underline" href={`tel:${tech.email}`}>
                           {tech.phoneNumber}</a></p>
                       {tech.VehicleTechnician.rRate !== '' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block'>R/I/R/R:</strong>
+                        <p className="mb-1"><strong className='w-[210px] inline-block'>RR/I/R:</strong>
                           ${tech.VehicleTechnician.rRate}</p>
                       )}
                       {tech.VehicleTechnician.techFlatRate !== '' && (
