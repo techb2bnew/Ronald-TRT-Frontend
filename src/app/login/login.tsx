@@ -289,10 +289,10 @@ export default function Login() {
               </button>
 
             </form>
-            <div className="text-sm text-center mt-5">
+            {/* <div className="text-sm text-center mt-5">
               <p>Don&apos;t have an account?
                 <Link href='/signup' className="primary-text font-bold underline"> Sign Up</Link> </p>
-            </div>
+            </div> */}
             {/* <div className="mt-7 grid grid-cols-3 items-center text-gray-500">
               <hr className="border-black" />
               <p className="text-center text-black text-sm">OR</p>

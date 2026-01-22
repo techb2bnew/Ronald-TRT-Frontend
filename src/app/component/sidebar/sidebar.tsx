@@ -323,7 +323,7 @@ const Sidebar = () => {
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-2 space-x-2   rounded w-full 
+            <button onClick={handleDropdownToggle} className={`flex items-center justify-between p-1 space-x-2   rounded w-full 
     ${isUsersOpen ? 'text-[#fff900]' : ''}
     ${!isUsersOpen && (
                 activeLink === '/technicians/listing' ||
@@ -333,12 +333,27 @@ const Sidebar = () => {
                 activeLink === '/jobs/create-job/create' ||
                 activeLink === '/jobs/active-job' ||
                 activeLink === '/jobs/complete-job/listing' ||
-                activeLink === '/jobs/job-group/listing'
+                activeLink === '/jobs/job-group/listing' ||
+                activeLink === '/vehicle/listing' ||
+                activeLink === '/vehicle/create-vehicle' ||
+                activeLink === '/vehicle/complete-job/listing'
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-1 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
-                <div className='m-auto'>
+                <div className={`m-auto p-1 rounded ${isCollapsed && !isHovered && (
+                  activeLink === '/technicians/listing' ||
+                  activeLink === '/technicians/create-technician' ||
+                  activeLink === '/client/listing' ||
+                  activeLink === '/client/create' ||
+                  activeLink === '/jobs/create-job/create' ||
+                  activeLink === '/jobs/active-job' ||
+                  activeLink === '/jobs/complete-job/listing' ||
+                  activeLink === '/jobs/job-group/listing' ||
+                  activeLink === '/vehicle/listing' ||
+                  activeLink === '/vehicle/create-vehicle' ||
+                  activeLink === '/vehicle/complete-job/listing'
+                ) ? 'bg-white text-[#383d71]' : ''}`}>
                   <svg width="18" height="18" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" clipRule="evenodd" d="M3.05877 6.24913C3.8704 5.28419 5.26191 4.8125 7.29969 4.8125H16.4664C18.5041 4.8125 19.8957 5.28419 20.7073 6.24913C21.511 7.20469 21.5875 8.46006 21.4587 9.63061L20.7708 16.9674C20.6699 17.9098 20.4333 18.943 19.5918 19.7117C18.7566 20.4748 17.4626 20.8542 15.5497 20.8542H8.21636C6.30341 20.8542 5.00943 20.4748 4.17421 19.7117C3.33277 18.943 3.09624 17.9098 2.99527 16.9674L2.9943 16.9583L2.30739 9.63063C2.17857 8.46008 2.25502 7.2047 3.05877 6.24913ZM4.11103 7.13421C3.67861 7.6483 3.5569 8.42076 3.67469 9.48522L3.67595 9.49665L4.36292 16.8254C4.45463 17.6773 4.64449 18.279 5.10163 18.6966C5.56579 19.1206 6.4443 19.4792 8.21636 19.4792H15.5497C17.3217 19.4792 18.2003 19.1206 18.6644 18.6966C19.1216 18.279 19.3114 17.6773 19.4031 16.8254L20.0913 9.48521C20.2091 8.42075 20.0874 7.6483 19.655 7.13421C19.2291 6.62789 18.3427 6.1875 16.4664 6.1875H7.29969C5.42331 6.1875 4.5369 6.62789 4.11103 7.13421Z" fill="currentColor" />
                     <path fillRule="evenodd" clipRule="evenodd" d="M8.94386 3.71282C8.90492 4.0111 8.90381 4.35006 8.90381 4.76665V5.49998C8.90381 5.87968 8.59601 6.18748 8.21631 6.18748C7.83661 6.18748 7.52881 5.87968 7.52881 5.49998L7.52881 4.74282C7.52879 4.35459 7.52876 3.93054 7.58043 3.53482C7.63396 3.12479 7.74867 2.68949 8.01741 2.30065C8.58275 1.48268 9.61836 1.14581 11.1496 1.14581H12.6163C14.1476 1.14581 15.1832 1.48268 15.7485 2.30065C16.0173 2.68949 16.132 3.12479 16.1855 3.53482C16.2372 3.93054 16.2372 4.35459 16.2371 4.74283L16.2371 5.49998C16.2371 5.87968 15.9293 6.18748 15.5496 6.18748C15.1699 6.18748 14.8621 5.87968 14.8621 5.49998V4.76665C14.8621 4.35006 14.861 4.0111 14.8221 3.71282C14.784 3.42074 14.7153 3.22412 14.6174 3.08243C14.4494 2.83936 14.0184 2.52081 12.6163 2.52081H11.1496C9.74759 2.52081 9.31654 2.83936 9.14854 3.08243C9.05061 3.22412 8.98199 3.42074 8.94386 3.71282Z" fill="currentColor" />
@@ -580,17 +595,25 @@ const Sidebar = () => {
 
 
           <li className='p-1 pl-4 relative group'>
-            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-2 space-x-2   rounded w-full 
+            <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between p-1 space-x-2   rounded w-full 
             ${isUser5Open ? 'text-[#fff900]' : ''}
             ${!isUser5Open && (
                 activeLink === '/reporting/vehicle-info' ||
                 activeLink === '/reporting/job-status' ||
                 activeLink === '/reporting/vehicle-list' ||
+                activeLink === '/reporting/account-reports' ||
                 activeLink === '/all-customer/listing'
               ) ? 'text-[#fff900]' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center gap-1 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
+                <div className={`p-1 rounded ${isCollapsed && !isHovered && (
+                  activeLink === '/reporting/vehicle-info' ||
+                  activeLink === '/reporting/job-status' ||
+                  activeLink === '/reporting/vehicle-list' ||
+                  activeLink === '/reporting/account-reports' ||
+                  activeLink === '/all-customer/listing'
+                ) ? 'bg-white text-[#383d71]' : ''}`}>
                 <svg width="18" height="18" viewBox="0 0 25 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M7.61623 7.10532H15.429C15.6986 7.10532 15.9173 6.88671 15.9173 6.61702C15.9173 6.34733 15.6986 6.12872 15.429 6.12872H7.61623C7.34654 6.12872 7.12793 6.34733 7.12793 6.61702C7.12793 6.88671 7.34654 7.10532 7.61623 7.10532Z" fill="currentColor" />
                   <path d="M17.8705 9.05849C17.8705 8.7888 17.6518 8.57019 17.3822 8.57019H7.61623C7.34654 8.57019 7.12793 8.7888 7.12793 9.05849C7.12793 9.32818 7.34654 9.54679 7.61623 9.54679H17.3822C17.6518 9.54679 17.8705 9.32818 17.8705 9.05849Z" fill="currentColor" />
@@ -599,6 +622,7 @@ const Sidebar = () => {
                   <path d="M19.6289 14.1856C19.2244 14.1856 18.8965 14.5135 18.8965 14.9181V17.3595C18.8965 17.7641 19.2244 18.092 19.6289 18.092C20.0334 18.092 20.3614 17.7641 20.3614 17.3595V14.9181C20.3614 14.5135 20.0334 14.1856 19.6289 14.1856Z" fill="currentColor" />
                   <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
                 </svg>
+                </div>
                 {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Other Reports</span> */}
                 <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Other Reports</span>
               </div>
@@ -845,15 +869,24 @@ const Sidebar = () => {
           {userType !== 'single-technician' && userType !== 'ifs' && (
             <li className='p-1 pl-4 relative group mt-3'>
               <button onClick={handleDropdownTogglesSingleTechnician}
-                className={`flex items-center justify-between p-2 space-x-2  rounded w-full ${isUser6Open ? 'text-[#fff900]' : ''}
+                className={`flex items-center justify-between p-1 space-x-2  rounded w-full ${isUser6Open ? 'text-[#fff900]' : ''}
                ${!isUser6Open && (
                     activeLink === '/single-technicians/listing' ||
-                    activeLink === '/single-technicians/jobs'
+                    activeLink === '/single-technicians/jobs' ||
+                    activeLink === '/single-technicians/all-jobs' ||
+                    activeLink === '/single-technicians/vehicle-info'
                   ) ? 'text-[#fff900]' : 'text-[#fff]'}`}>
                 <div className={`flex items-center gap-1 transition-all duration-300 
             ${isCollapsed ? 'opacity-1 group-hover:opacity-100' : 'opacity-100'}`}>
 
+                  <div className={`p-1 rounded ${isCollapsed && !isHovered && (
+                    activeLink === '/single-technicians/listing' ||
+                    activeLink === '/single-technicians/jobs' ||
+                    activeLink === '/single-technicians/all-jobs' ||
+                    activeLink === '/single-technicians/vehicle-info'
+                  ) ? 'bg-white text-[#383d71]' : ''}`}>
                   <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
+                  </div>
 
                   {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:inline group-hover:opacity-100' : 'inline'}`}>Single Technician</span> */}
                   <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed && !isHovered ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Single Technician</span>

@@ -381,7 +381,7 @@ const ManagerTable: React.FC = () => {
 
         <td>
           <TableActions
-            editRoute={`/technicians/create-technician?technicianId=${tech.id}&manager`}
+            editRoute={`/manager/create-manager?technicianId=${tech.id}&manager`}
             viewRoute={`/manager/view?technicianId=${tech.id}`}
             deleteRoute={`/api/deleteTechnician`}  // Pass the correct endpoint
             itemId={tech.id}  // Pass the technician ID
@@ -574,7 +574,7 @@ const ManagerTable: React.FC = () => {
           { label: 'Manager Listing', href: '/technicians/listing' }
         ]}
       />
-      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/technicians/create-technician?manager" />
+      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}

@@ -1055,8 +1055,8 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
       <Breadcrumb
         items={[
           {
-            label: isSingleTechnician ? 'Single Technician' : 'IFS Dent Tech',
-            href: isSingleTechnician ? '/single-technicians/listing' : '/technicians/listing',
+            label: isSingleTechnician ? 'Single Technician' : isManager ? 'Manager' : 'IFS Dent Tech',
+            href: isSingleTechnician ? '/single-technicians/listing' : isManager ? '/manager/listing' : '/technicians/listing',
           },
           isEdit
             ? { label: isTechnician ? 'Edit Dent Tech' : isManager ? 'Edit Manager' : 'Edit Job' }

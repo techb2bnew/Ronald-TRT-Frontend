@@ -46,6 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <title>Prorevv</title>
       <link rel="icon" href="/fav.ico" sizes="any" />
       </head>
       <body
