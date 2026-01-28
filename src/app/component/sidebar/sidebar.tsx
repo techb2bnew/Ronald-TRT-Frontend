@@ -270,7 +270,7 @@ const Sidebar = () => {
   return (
     <div className="group">
       <div
-        className={`bg-color text-white fixed top-0 h-full transition-all duration-500 ease-in-out ${isCollapsed ? "w-[70px]" : "w-[250px] "
+        className={`bg-color text-white fixed top-0 h-full transition-all duration-500 ease-in-out ${isCollapsed ? "w-[70px]" : "w-[15%] "
           }`}
       >
         <div className={`flex justify-end toggle__icon ${isCollapsed ? 'toggle_right__icon' : ''}`}>
@@ -303,16 +303,16 @@ const Sidebar = () => {
             }`} />
         </div>
 
-        <ul className="flex flex-col py-4 laptop_size overflow-auto h-[80vh]" style={{ lineHeight: '1' }}>
+        <ul className="flex flex-col py-4 laptop_size overflow-auto h-[90vh]" style={{ lineHeight: '1' }}>
           <li className='p-1 pl-3'>
-            <Link onClick={handleNavItemClick} href="/dashboard" className={`flex items-center p-3 space-x-3 rounded overflow-hidden ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
+            <Link onClick={handleNavItemClick} href="/dashboard" className={`flex items-center p-3 space-x-3 rounded overflow-hidden hover:bg-[#f54a00] ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
               <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fillRule="evenodd" clipRule="evenodd" d="M13.0349 2.53468C13.6676 1.90194 14.5609 1.64581 15.5835 1.64581H17.4168C18.4395 1.64581 19.3327 1.90194 19.9655 2.53468C20.5982 3.16742 20.8543 4.06067 20.8543 5.08331V6.91665C20.8543 7.93929 20.5982 8.83254 19.9655 9.46528C19.3327 10.098 18.4395 10.3541 17.4168 10.3541H15.5835C14.5609 10.3541 13.6676 10.098 13.0349 9.46528C12.4021 8.83254 12.146 7.93929 12.146 6.91665V5.08331C12.146 4.06067 12.4021 3.16742 13.0349 2.53468ZM14.0071 3.50695C13.7232 3.79088 13.521 4.27262 13.521 5.08331V6.91665C13.521 7.72734 13.7232 8.20908 14.0071 8.49301C14.2911 8.77694 14.7728 8.97915 15.5835 8.97915H17.4168C18.2275 8.97915 18.7093 8.77694 18.9932 8.49301C19.2771 8.20908 19.4793 7.72734 19.4793 6.91665V5.08331C19.4793 4.27262 19.2771 3.79088 18.9932 3.50695C18.7093 3.22302 18.2275 3.02081 17.4168 3.02081H15.5835C14.7728 3.02081 14.2911 3.22302 14.0071 3.50695Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M2.03486 13.5347C2.6676 12.9019 3.56085 12.6458 4.5835 12.6458H6.41683C7.43947 12.6458 8.33273 12.9019 8.96547 13.5347C9.5982 14.1674 9.85433 15.0607 9.85433 16.0833V17.9166C9.85433 18.9393 9.5982 19.8325 8.96547 20.4653C8.33273 21.098 7.43947 21.3541 6.41683 21.3541H4.5835C3.56085 21.3541 2.6676 21.098 2.03486 20.4653C1.40212 19.8325 1.146 18.9393 1.146 17.9166V16.0833C1.146 15.0607 1.40212 14.1674 2.03486 13.5347ZM3.00713 14.5069C2.7232 14.7909 2.521 15.2726 2.521 16.0833V17.9166C2.521 18.7273 2.7232 19.2091 3.00713 19.493C3.29106 19.7769 3.7728 19.9791 4.5835 19.9791H6.41683C7.22752 19.9791 7.70926 19.7769 7.99319 19.493C8.27712 19.2091 8.47933 18.7273 8.47933 17.9166V16.0833C8.47933 15.2726 8.27712 14.7909 7.99319 14.5069C7.70926 14.223 7.22752 14.0208 6.41683 14.0208H4.5835C3.7728 14.0208 3.29106 14.223 3.00713 14.5069Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M5.50016 3.02081C3.85481 3.02081 2.521 4.35463 2.521 5.99998C2.521 7.64533 3.85481 8.97915 5.50016 8.97915C7.14551 8.97915 8.47933 7.64533 8.47933 5.99998C8.47933 4.35463 7.14551 3.02081 5.50016 3.02081ZM1.146 5.99998C1.146 3.59524 3.09542 1.64581 5.50016 1.64581C7.9049 1.64581 9.85433 3.59524 9.85433 5.99998C9.85433 8.40472 7.9049 10.3541 5.50016 10.3541C3.09542 10.3541 1.146 8.40472 1.146 5.99998Z" fill="currentColor" />
                 <path fillRule="evenodd" clipRule="evenodd" d="M16.5002 14.0208C14.8548 14.0208 13.521 15.3546 13.521 17C13.521 18.6453 14.8548 19.9791 16.5002 19.9791C18.1455 19.9791 19.4793 18.6453 19.4793 17C19.4793 15.3546 18.1455 14.0208 16.5002 14.0208ZM12.146 17C12.146 14.5952 14.0954 12.6458 16.5002 12.6458C18.9049 12.6458 20.8543 14.5952 20.8543 17C20.8543 19.4047 18.9049 21.3541 16.5002 21.3541C14.0954 21.3541 12.146 19.4047 12.146 17Z" fill="currentColor" />
               </svg>
-              <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Dashboard</span>
+              <span className="sidebar-text">Dashboard</span>
             </Link>
           </li>
 
@@ -320,7 +320,7 @@ const Sidebar = () => {
 
           <li className='p-1 relative group'>
             <button onClick={handleDropdownToggle} className={`flex items-center justify-between pl-2 space-x-2   rounded w-full 
-    ${isUsersOpen ? 'text-[#fff900]' : ''}
+    ${isUsersOpen ? 'text-[#fff]' : ''}
     ${!isUsersOpen && (
                 activeLink === '/technicians/listing' ||
                 activeLink === '/technicians/create-technician' ||
@@ -333,11 +333,11 @@ const Sidebar = () => {
                 activeLink === '/vehicle/listing' ||
                 activeLink === '/vehicle/create-vehicle' ||
                 activeLink === '/vehicle/complete-job/listing'
-              ) ? 'text-[#fff900] rounded' : 'text-[#fff] '}
+              ) ? 'text-[#fff] rounded' : 'text-[#fff] '}
   `}>
               <div className={`flex items-center transition-all duration-300 
             ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
-                <div className={`m-auto p-3 rounded ${isCollapsed && (
+                <div className={`m-auto p-3 rounded  ${isCollapsed && (
                   activeLink === '/technicians/listing' ||
                   activeLink === '/technicians/create-technician' ||
                   activeLink === '/client/listing' ||
@@ -363,7 +363,7 @@ const Sidebar = () => {
 
                   //   {userType === 'single-technician' ? 'Users' : 'IFS'}
                   // </span>
-                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>{userType === 'single-technician' ? 'Users' : 'IFS'}</span>
+                  <span className="sidebar-text">{userType === 'single-technician' ? 'Users' : 'IFS'}</span>
 
                 )}
               </div>
@@ -382,13 +382,13 @@ const Sidebar = () => {
                   <ul className="sdev_overlap_mob">
 
                     <li >
-                      <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
+                      <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
                         <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
-                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Customers</span>
+                        <span className="sidebar-text">Customers</span>
                       </Link>
                     </li>
                     <li >
-                      <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/jobs/active-job' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                      <Link onClick={handleNavItemClick} href="/jobs/active-job" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/jobs/active-job' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                         <svg
                           width="20"
                           height="24"
@@ -404,7 +404,7 @@ const Sidebar = () => {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Jobs</span>
+                        <span className="sidebar-text">Jobs</span>
                       </Link>
                     </li>
                     {userType !== 'single-technician' && userType !== 'ifs' && (
@@ -412,11 +412,11 @@ const Sidebar = () => {
                         <Link
                           onClick={handleNavItemClick}
                           href="/technicians/listing"
-                          className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/technicians/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}
+                          className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/technicians/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
 
-                          <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
+                          <span className="sidebar-text">Technicians</span>
                         </Link>
                       </li>
                     )}
@@ -437,7 +437,7 @@ const Sidebar = () => {
                   </Link>
                 </li> */}
                 <li  >
-                  <Link onClick={handleNavItemClick} href="/vehicle/listing" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/vehicle/listing' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/vehicle/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/vehicle/listing' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
@@ -445,12 +445,12 @@ const Sidebar = () => {
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
 
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicle / Work Orders</span>
+                    <span className="sidebar-text">Vehicle / Work Orders</span>
                   </Link>
                 </li>
 
                 <li >
-                  <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
+                  <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none"
                       xmlns="http://www.w3.org/2000/svg">
                       <circle cx="12" cy="12" r="9" stroke="#FFFFFF" strokeWidth="2" />
@@ -461,7 +461,7 @@ const Sidebar = () => {
                         strokeLinejoin="round" />
                     </svg>
 
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Completed Work Order</span>
+                    <span className="sidebar-text">Completed Work Order</span>
                   </Link>
                 </li>
                 {/* {userType !== 'single-technician' && (
@@ -634,7 +634,7 @@ const Sidebar = () => {
                 activeLink === '/reporting/vehicle-list' ||
                 activeLink === '/reporting/account-reports' ||
                 activeLink === '/all-customer/listing'
-              ) ? 'text-[#fff900] rounded' : 'text-[#fff]'}
+              ) ? 'text-[#fff] rounded' : 'text-[#fff]'}
   `}>
               <div className={`flex items-center transition-all duration-300 
             ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
@@ -655,7 +655,7 @@ const Sidebar = () => {
                   </svg>
                 </div>
                 {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>Other Reports</span> */}
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Other Reports</span>
+                <span className="sidebar-text">Other Reports</span>
               </div>
               <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -669,20 +669,20 @@ const Sidebar = () => {
               <ul className={`ml-6 space-y-1 transition-all duration-300
               ${isCollapsed ? 'hidden' : 'block'}`}>
                 <li  >
-                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/reporting/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/reporting/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
                       <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles Info</span>
+                    <span className="sidebar-text">Vehicles Info</span>
                   </Link>
                 </li>
                 {userType !== 'single-technician' && (
 
                   <li >
-                    <Link onClick={handleNavItemClick} href="/reporting/job-status" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/reporting/job-status' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/reporting/job-status" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/reporting/job-status' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_217_1077)">
                           <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -696,24 +696,24 @@ const Sidebar = () => {
                           </clipPath>
                         </defs>
                       </svg>
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>All Work Orders</span>
+                      <span className="sidebar-text">All Work Orders</span>
                     </Link>
                   </li>
                 )}
                 <li >
-                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                  <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
                       <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
-                    <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Vehicles List</span>
+                    <span className="sidebar-text">Vehicles List</span>
                   </Link>
                 </li>
                 {userType !== 'manager' && (
                   <li>
-                    <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-4 space-x-2   rounded ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-4 space-x-2   rounded hover:bg-[#f54a00] ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_217_1077)">
                           <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -727,7 +727,7 @@ const Sidebar = () => {
                           </clipPath>
                         </defs>
                       </svg>
-                      <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Accounts Report</span>
+                      <span className="sidebar-text">Accounts Report</span>
                     </Link>
                   </li>
                 )}
@@ -820,7 +820,7 @@ const Sidebar = () => {
           {userType !== 'manager' && (
             <li className='p-1 pl-3'>
 
-              <Link onClick={handleNavItemClick} href="/reporting/invoice" className={`flex items-center p-3 space-x-4   rounded ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+              <Link onClick={handleNavItemClick} href="/reporting/invoice" className={`flex items-center p-3 space-x-4   rounded hover:bg-[#f54a00] ${activeLink === '/reporting/invoice' || activeLink === '/reporting/invoice' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_217_1077)">
                     <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -835,7 +835,7 @@ const Sidebar = () => {
                   </defs>
                 </svg>
 
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Create Invoice</span>
+                <span className="sidebar-text">Create Invoice</span>
               </Link>
             </li>
           )}
@@ -843,7 +843,7 @@ const Sidebar = () => {
           {userType !== 'manager' && (
             <li className='p-1 pl-3'>
 
-              <Link onClick={handleNavItemClick} href="/reporting/genrated-invoice" className={`flex items-center p-3 space-x-4   rounded ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+              <Link onClick={handleNavItemClick} href="/reporting/genrated-invoice" className={`flex items-center p-3 space-x-4   rounded hover:bg-[#f54a00] ${activeLink === '/reporting/genrated-invoice' || activeLink === '/reporting/genrated-invoice' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_217_1077)">
                     <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -858,7 +858,7 @@ const Sidebar = () => {
                   </defs>
                 </svg>
 
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Sent Invoice</span>
+                <span className="sidebar-text">Sent Invoice</span>
               </Link>
             </li>
           )}
@@ -882,11 +882,11 @@ const Sidebar = () => {
           {userType === 'superadmin' && (
             <li className='p-1 pl-3'>
 
-              <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center p-3 space-x-3  rounded ${activeLink === '/manager/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
+              <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center p-3 space-x-3  rounded hover:bg-[#f54a00] ${activeLink === '/manager/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
 
                 <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                 {/* <span className={`pl-2 transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:opacity-100' : 'block'}`}>Staff Management </span> */}
-                <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Staff Management </span>
+                <span className="sidebar-text">Staff Management </span>
 
               </Link>
             </li>
@@ -943,7 +943,7 @@ const Sidebar = () => {
                     activeLink === '/single-technicians/jobs' ||
                     activeLink === '/single-technicians/all-jobs' ||
                     activeLink === '/single-technicians/vehicle-info'
-                  ) ? 'text-[#fff900]' : 'text-[#fff]'}`}>
+                  ) ? 'text-[#fff]' : 'text-[#fff]'}`}>
                 <div className={`flex items-center gap-1 transition-all duration-300 
             ${isCollapsed ? 'opacity-100' : 'opacity-100'}`}>
 
@@ -957,7 +957,7 @@ const Sidebar = () => {
                   </div>
 
                   {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>Single Technician</span> */}
-                  <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Single Technician</span>
+                  <span className="sidebar-text">Single Technician</span>
                 </div>
                 <svg className={`transform transition-transform ${isUser6Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -971,14 +971,14 @@ const Sidebar = () => {
                 <ul className={`ml-6 mt-3 space-y-1 transition-all duration-300
                 ${isCollapsed ? 'hidden' : 'block'}`}>
                   <li  >
-                    <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/single-technicians/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
 
                       <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100 max-w-full'}`}>Technicians</span>
                     </Link>
                   </li>
                   <li>
-                    <Link onClick={handleNavItemClick} href="/single-technicians/all-jobs" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/all-jobs" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/all-jobs' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg
                         width="20"
                         height="24"
@@ -999,7 +999,7 @@ const Sidebar = () => {
                     </Link>
                   </li>
                   <li >
-                    <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_217_1077)">
                           <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
@@ -1017,7 +1017,7 @@ const Sidebar = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-4 space-x-2  rounded ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
+                    <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
                         <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />

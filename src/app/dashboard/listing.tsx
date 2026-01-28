@@ -190,7 +190,7 @@ export default function Dashboard() {
             <div className="bg-[#383d71] rounded-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex-1">
                     <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
-                        Welcome back, {userName}! 👋
+                        Welcome back, {userName}!
                     </h1>
                     <p className="text-white text-sm md:text-base opacity-90">
                         Here's what's happening with your business today.

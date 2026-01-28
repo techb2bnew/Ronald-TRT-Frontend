@@ -27,8 +27,7 @@ header h1 {
 .mobile_listing {
     max-width: 1800px;
     margin: 0 auto;
-    width: 100%;
-    padding-left: 50px;
+    width: 100%; 
 }
 body {
   color: var(--foreground);
@@ -37,13 +36,33 @@ body {
   overflow: auto !important;
   padding-right: 0px !important;
 }
-.bg-color.w-\[70px\] span {
-    display: none;
+.sidebar-text {
+  display: inline-block;
+  white-space: nowrap;
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.6s ease, opacity 0.6s ease;
 }
 
-.bg-color.w-\[70px\] .laptop_size li a,.bg-color.w-\[70px\]  .laptop_size li span {
-    width: fit-content;
+.bg-color.w-\[70px\] .sidebar-text {
+  transform: translateX(40px);
+  opacity: 0;
 }
+
+.bg-color.w-\[70px\] .laptop_size li a,
+.bg-color.w-\[70px\] .laptop_size li span {
+  width: fit-content;
+}
+
+/* When sidebar is collapsed, remove full-row hover/active background
+   and apply it only around the icon */
+.bg-color.w-\[70px\] .laptop_size li a {
+  background-color: transparent !important;
+}
+
+ 
+
+ 
 
 .primary-text{
   color: var(--primaryColor);
@@ -634,8 +653,7 @@ p.MuiFormHelperText-root.Mui-error.MuiFormHelperText-sizeSmall.MuiFormHelperText
 }
 @media screen and (max-width: 1536px) {
  .container {
-        max-width: 1200px !important;
-        margin-left: 0;
+        max-width: 1200px !important; 
     }
     }
 @media (min-width: 1200px) and (max-width: 1600px) {
