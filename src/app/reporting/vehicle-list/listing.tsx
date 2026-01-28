@@ -417,7 +417,7 @@ const handleImportCSV = (file: File) => {
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
@@ -425,7 +425,7 @@ const handleImportCSV = (file: File) => {
               <th className="w-[80px]" onClick={() => handleSort('jobName')}>
                 Job Title
                 {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}

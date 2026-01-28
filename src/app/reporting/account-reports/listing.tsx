@@ -633,7 +633,7 @@ const JobTable: React.FC = () => {
               <th className="w-[120px]" onClick={() => handleSort('id')}>
                 Customer Name
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}

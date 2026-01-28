@@ -679,7 +679,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
               <th className="w-[100px]" onClick={() => handleSort('id')}>
                 Job Id
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
@@ -687,7 +687,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
               <th className="w-[100px]" onClick={() => handleSort('jobName')}>
                 Job Title
                 {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}

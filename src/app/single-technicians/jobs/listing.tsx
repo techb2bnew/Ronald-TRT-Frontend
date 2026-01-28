@@ -559,7 +559,7 @@ const JobTable: React.FC = () => {
               <th className="w-[100px]" onClick={() => handleSort('id')}>
                   ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
@@ -567,7 +567,7 @@ const JobTable: React.FC = () => {
               <th className="w-[140px]" onClick={() => handleSort('jobName')}>
                 Job Title
                 {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
@@ -576,7 +576,7 @@ const JobTable: React.FC = () => {
               <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Customer Name
                 {sortBy === 'fullName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}

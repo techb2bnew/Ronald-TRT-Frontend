@@ -615,7 +615,7 @@ const ManagerTable: React.FC = () => {
             >
               {header}
               {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
+                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                   {sortDirection === 'asc' ? '▲' : '▼'}
                 </span>
               )}

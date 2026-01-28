@@ -2,24 +2,26 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from "next/navigation";
-import Link from "next/link"; 
+import Link from "next/link";
 import 'react-tooltip/dist/react-tooltip.css';
+import { useSidebar } from "@/app/component/SidebarContext";
+
 interface DashboardCounts {
-  jobsuperadmin?: number;
-  jobSingleTech?: number;
-  CustomerSingleTech?: number;
-  Customersuperadmin?: number;
-  SingleTech?: number;
-  VehicleSingleTech?: number;
-  Vehiclesuperadmin?: number;
-  manager?: number;
-  technician?: number;
+    jobsuperadmin?: number;
+    jobSingleTech?: number;
+    CustomerSingleTech?: number;
+    Customersuperadmin?: number;
+    SingleTech?: number;
+    VehicleSingleTech?: number;
+    Vehiclesuperadmin?: number;
+    manager?: number;
+    technician?: number;
 }
 
 interface DashboardResponse {
-  status: boolean;
-  count?: DashboardCounts;
-  error?: string;
+    status: boolean;
+    count?: DashboardCounts;
+    error?: string;
 }
 interface Job {
     id: string;
@@ -37,63 +39,65 @@ interface Job {
 export default function Dashboard() {
     const [count, setCount] = useState<DashboardCounts>({});
     const router = useRouter();
-    const [currentPage, setCurrentPage] = useState(1); 
+    const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [userName, setUserName] = useState<string>('User');
     const [jobs, setJobs] = useState<Job[]>([]);
     const [jobsLoading, setJobsLoading] = useState<boolean>(false);
-    const [roleType, setRoleType] = useState<string | null>(null); 
+    const [roleType, setRoleType] = useState<string | null>(null);
+     const { isCollapsed } = useSidebar();
+
 
     const fetchDashboardData = async (page = 1, query = '', limit = pageSize) => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem('token');
-    const roleType = localStorage.getItem('types') || "";
-    const userId = localStorage.getItem('userID');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    
-    const headers: Record<string, string> = { 
-      'Content-Type': 'application/json' 
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const roleType = localStorage.getItem('types') || "";
+            const userId = localStorage.getItem('userID');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json'
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const endpoint = `${apiUrl}/deshboradCount?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ query }) // Send query in body for POST
+            });
+
+            const data: DashboardResponse = await response.json();
+            console.log('API response data:', data);
+
+            if (response.ok && data.status) {
+                const counts = data.count || {};
+                setCount(counts);
+
+                // Return the counts if you need to use them elsewhere
+                return counts;
+            } else {
+                if (data.error === 'Invalid Token') {
+                    router.push('/');
+                } else {
+                    console.error('Error fetching dashboard data:', data.error);
+                    throw new Error(data.error || 'Failed to fetch dashboard data');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            // Optionally show error to user
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const endpoint = `${apiUrl}/deshboradCount?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-    const response = await fetch(endpoint, { 
-      method: 'POST', 
-      headers,
-      body: JSON.stringify({ query }) // Send query in body for POST
-    });
-
-    const data: DashboardResponse = await response.json();
-    console.log('API response data:', data);
-
-    if (response.ok && data.status) {
-      const counts = data.count || {};
-      setCount(counts);  
-      
-      // Return the counts if you need to use them elsewhere
-      return counts;
-    } else {
-      if (data.error === 'Invalid Token') {
-        router.push('/');
-      } else {
-        console.error('Error fetching dashboard data:', data.error);
-        throw new Error(data.error || 'Failed to fetch dashboard data');
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    // Optionally show error to user
-    throw error;
-  } finally {
-    setLoading(false);
-  }
-};
     useEffect(() => {
         const storedRoleType = localStorage.getItem('types');
         setRoleType(storedRoleType);
@@ -144,7 +148,7 @@ export default function Dashboard() {
     // Get user name from localStorage or set default
     useEffect(() => {
         let name = 'User';
-        
+
         // Try to get from technicianData first
         const technicianData = localStorage.getItem('technicianData');
         if (technicianData) {
@@ -161,12 +165,12 @@ export default function Dashboard() {
                 console.error('Error parsing technicianData:', e);
             }
         }
-        
+
         // Fallback to direct userName or fullName
         if (name === 'User') {
             name = localStorage.getItem('userName') || localStorage.getItem('fullName') || 'User';
         }
-        
+
         setUserName(name);
     }, []);
 
@@ -181,7 +185,7 @@ export default function Dashboard() {
     const currentDate = getCurrentDate();
 
     return (
-        <main className="p-6 pt-[0px] space-y-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+        <main  className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[2rem]' : 'container'}`}>
             {/* Welcome Banner */}
             <div className="bg-[#383d71] rounded-lg p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex-1">
@@ -199,12 +203,12 @@ export default function Dashboard() {
             </div>
 
             {/* IFS Section */}
-            <div className="space-y-6">
+            <div className="space-y-6 mt-4">
                 <div className="flex items-center gap-3">
                     <div className="h-10 w-1.5 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
                     <h2 className="text-2xl font-bold text-gray-800">IFS</h2>
                 </div>
-                <section className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <section className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                     {/* Customer Card */}
                     <div className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -217,7 +221,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Customer</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Customer</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.Customersuperadmin || 0}</p>
                                     </div>
                                 </div>
@@ -245,7 +249,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Jobs</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Jobs</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.jobsuperadmin || 0}</p>
                                     </div>
                                 </div>
@@ -273,7 +277,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Technician</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Technician</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.technician || 0}</p>
                                     </div>
                                 </div>
@@ -304,7 +308,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Vehicle / Work Order</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Vehicle / Work Order</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.Vehiclesuperadmin || 0}</p>
                                     </div>
                                 </div>
@@ -332,7 +336,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Staff Management</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Staff Management</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.manager || 0}</p>
                                     </div>
                                 </div>
@@ -351,10 +355,10 @@ export default function Dashboard() {
             </div>
 
             {/* Single Technician Section */}
-            <div className="space-y-6">
+            <div className="space-y-6 mt-4 shadow-lg p-5 bg-white rounded-lg">
                 <div className="flex items-center gap-3">
                     <div className="h-10 w-1.5 bg-gradient-to-b from-teal-500 to-teal-700 rounded-full"></div>
-                    <h2 className="text-2xl font-bold text-gray-800">Single Technician</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">Single Technician Overview</h2>
                 </div>
                 <section className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
                     {/* Single Technician Card */}
@@ -369,7 +373,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Technicians</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Technicians</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.SingleTech || 0}</p>
                                     </div>
                                 </div>
@@ -397,7 +401,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Customer</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Customer</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.CustomerSingleTech || 0}</p>
                                     </div>
                                 </div>
@@ -425,7 +429,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Jobs</p>
+                                        <p className="text-sm font-medium text-gray-500   tracking-wider">Jobs</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.jobSingleTech || 0}</p>
                                     </div>
                                 </div>
@@ -456,7 +460,7 @@ export default function Dashboard() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Vehicle / Work Order</p>
+                                        <p className="text-sm font-medium text-gray-500 tracking-wider">Vehicle / Work Order</p>
                                         <p className="text-3xl font-bold text-gray-800 mt-1">{count.VehicleSingleTech || 0}</p>
                                     </div>
                                 </div>
@@ -475,7 +479,7 @@ export default function Dashboard() {
             </div>
 
             {/* Jobs Table Section */}
-            <div className="space-y-6">
+            <div className="space-y-6 mt-4 shadow-lg p-5 bg-white rounded-lg mb-5">
                 <div className="flex items-center gap-3">
                     <div className="h-10 w-1.5 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
                     <h2 className="text-2xl font-bold text-gray-800">IFS - Recent Jobs</h2>
@@ -493,7 +497,7 @@ export default function Dashboard() {
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                                <thead className="bg-gray-100 border-b-2 border-gray-300">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Name</th>
@@ -535,11 +539,10 @@ export default function Dashboard() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span
-                                                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        job.jobStatus
+                                                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${job.jobStatus
                                                             ? 'bg-green-100 text-green-800'
                                                             : 'bg-yellow-100 text-yellow-800'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {job.jobStatus ? 'Completed' : 'In Progress'}
                                                 </span>

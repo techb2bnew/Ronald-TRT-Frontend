@@ -13,7 +13,7 @@ const { isCollapsed } = useSidebar();
         {/* <Sidebar /> */}
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
-        } pl-6 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
+        } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>
             <CustomerJoblisting />
         </div>
     </div>

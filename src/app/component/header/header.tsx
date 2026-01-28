@@ -33,60 +33,60 @@ export default function Header() {
   //     }
   //   });
   // };
- 
- const logOut = async () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const token = localStorage.getItem("token");
-  const technicianData = localStorage.getItem("technicianData");
 
-  if (!token || !technicianData) {
-    localStorage.clear();
-    router.push("/");
-    return;
-  }
+  const logOut = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const token = localStorage.getItem("token");
+    const technicianData = localStorage.getItem("technicianData");
 
-  const parsedTechnician = JSON.parse(technicianData);
-  const email = parsedTechnician.email;
+    if (!token || !technicianData) {
+      localStorage.clear();
+      router.push("/");
+      return;
+    }
 
-  // Show confirmation and wait for user response
-  const result = await Swal.fire({
-    icon: "warning",
-    title: "Are you sure?",
-    text: "You will be logged out!",
-    showCancelButton: true,
-    confirmButtonColor: "#383d71",
-    cancelButtonColor: "#d33",
-    confirmButtonText: "Yes, logout",
-  });
+    const parsedTechnician = JSON.parse(technicianData);
+    const email = parsedTechnician.email;
 
-  // If user cancels, do nothing
-  if (!result.isConfirmed) return;
-
-  try {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-
-    const response = await fetch(`/api/logout`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ email }),
+    // Show confirmation and wait for user response
+    const result = await Swal.fire({
+      icon: "warning",
+      title: "Are you sure?",
+      text: "You will be logged out!",
+      showCancelButton: true,
+      confirmButtonColor: "#383d71",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
     });
 
-    const data = await response.json(); // optional: check `data.success` or `response.ok`
+    // If user cancels, do nothing
+    if (!result.isConfirmed) return;
 
-    // Clear localStorage and redirect
-    localStorage.clear();
-    router.push("/");
-  } catch (error) {
-    console.error("Error in logOut:", error);
-    localStorage.clear();
-    router.push("/");
-  }
-};
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
 
- 
+      const response = await fetch(`/api/logout`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json(); // optional: check `data.success` or `response.ok`
+
+      // Clear localStorage and redirect
+      localStorage.clear();
+      router.push("/");
+    } catch (error) {
+      console.error("Error in logOut:", error);
+      localStorage.clear();
+      router.push("/");
+    }
+  };
+
+
 
 
 
@@ -109,11 +109,39 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white shadow-md py-4 px-6 flex justify-between items-center border-[#383d71] border-b-[2px]">
+    <header className="bg-white shadow-md   flex justify-between items-center border-[#383d71] border-b-[1px]">
       {/* <h1 className={`text-xl font-bold transition-all duration-300 capitalize ${isCollapsed ? '' : ''}`}> <i>Hi, {technician?.firstName} {technician?.lastName} </i>
       </h1> */}
       <div className="w-100 ml-auto flex items-center">
-        <div className="relative" ref={dropdownRef}>
+        <div className="cursor-pointer  border-l border-[#383d71] p-5 hover:bg-[#383d71] hover:text-white" onClick={() => router.push('/profile')}>
+          <p className="text-sm p-[2px]">
+            {technician?.firstName} {technician?.lastName}
+          </p>
+        </div>
+        <div className="cursor-pointer  border-l border-[#383d71] p-5 hover:bg-[#383d71] hover:text-white" onClick={logOut}>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 2v10"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M6.22 5.22a8 8 0 1 0 11.56 0"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+
+        </div>
+        {/* <div className="relative" ref={dropdownRef}>
           <button
             onClick={toggleDropdown}
             className="flex gap-2 items-center bg-[#fff] shadow-lg hover:bg-[#f2f2f2] focus:outline-none focus:bg-gray-200 rounded-md border border-[#383d71] text-sm pl-2 pr-2 pt-1 pb-1"
@@ -173,7 +201,7 @@ export default function Header() {
               </p>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </header>
   );

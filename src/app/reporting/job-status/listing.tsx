@@ -697,7 +697,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
                 {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
