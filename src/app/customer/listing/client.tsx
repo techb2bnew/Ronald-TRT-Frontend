@@ -179,7 +179,6 @@ export default function ClientListing() {
       Id: customerData.id,
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
-      Phone: customerData.phoneNumber || 'N/A',
       Address: customerData.address || 'N/A',
     }));
 
@@ -209,23 +208,29 @@ export default function ClientListing() {
 
       text = lines.join('\n');
 
-      const manualHeaders = [
-        'Id', 'Name', 'Email', 'Address'
-      ];
+      // CSV columns: Id, Name, Email, Phone, Address (5 cols; 4th = Phone, 5th = Address)
+      // Id, Name, Email, Address (4 cols) or Id, Name, Email, Phone, Address (5 cols)
+      const manualHeaders = ['Id', 'Name', 'Email', 'Address'];
 
       Papa.parse(text, {
-        header: false, // Don't use auto headers
+        header: false,
         skipEmptyLines: true,
         complete: async (result) => {
-          const rows = result.data as string[][];
+          const rawRows = (result.data as string[][]).filter((row) => Array.isArray(row) && row.length > 0);
 
-          const cleanedData = rows
-            .slice(1) // Skip CSV's own header row
+          const cleanedData = rawRows
+            .filter((row) => {
+              const firstCell = String(row[0] ?? '').trim().toLowerCase();
+              if (firstCell === 'id') return false;
+              return true;
+            })
             .map((row) => {
               const obj: any = {};
               manualHeaders.forEach((key, idx) => {
                 let value: any = row[idx];
-                if (typeof value === 'string') {
+                if (value === undefined || value === null) {
+                  value = null;
+                } else if (typeof value === 'string') {
                   value = value.trim();
                   const lower = value.toLowerCase();
                   if (lower === 'true') value = true;
@@ -237,21 +242,26 @@ export default function ClientListing() {
               return obj;
             })
             .filter((row) => {
-              // ✅ Skip row if all keys === values like { Id: "id", Name: "name", ... }
-              const isHeaderRow = Object.entries(row).every(
-                ([key, val]) =>
-                  typeof val === 'string' &&
-                  val.trim().toLowerCase() === key.trim().toLowerCase()
-              );
-
               const hasRealData = Object.values(row).some(
                 (val) =>
-                  (typeof val === 'string' && val.trim() !== '') ||
+                  (typeof val === 'string' && String(val).trim() !== '') ||
                   (typeof val === 'number' && !isNaN(val)) ||
                   typeof val === 'boolean'
               );
-
-              return !isHeaderRow && hasRealData;
+              return hasRealData;
+            })
+            .map((row) => {
+              const idVal = row.Id;
+              const numId = idVal != null && idVal !== '' && !isNaN(Number(idVal)) ? Number(idVal) : null;
+              const { Id, ...rest } = row;
+              return numId !== null ? { ...rest, Id: numId } : rest;
+            })
+            .filter((row) => {
+              if (Object.keys(row).length === 0) return false;
+              const hasAnyValue = Object.values(row).some(
+                (v) => v != null && v !== '' && (typeof v !== 'string' || String(v).trim() !== '')
+              );
+              return hasAnyValue;
             });
 
           console.log("✅ Final Cleaned Data:", cleanedData);
