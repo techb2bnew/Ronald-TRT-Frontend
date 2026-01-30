@@ -20,6 +20,7 @@
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
+    "date-fns": "^2.30.0",
     "dayjs": "^1.11.13",
     "dynamsoft-barcode-reader": "^10.4.31",
     "dynamsoft-capture-vision-router": "^2.4.33",
