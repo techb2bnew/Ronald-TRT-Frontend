@@ -107,11 +107,6 @@ input.PhoneInputInput {
         color: #5B5B99
 }
 table.table.w-full.table-fixed thead {
-  /* background: var(--foreground);
-  color: #fff;
-  text-align: left;
-  border-radius: 10px; */
-
   background: #f3f4f6;
   color: #3a3a3a;
   text-align: left;
