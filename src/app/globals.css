@@ -60,7 +60,9 @@ body {
   background-color: transparent !important;
 }
 
- 
+.PhoneInput.PhoneInput--disabled input.PhoneInputInput {
+  color: #9d9d9d;
+}
 
  
 
@@ -110,7 +112,7 @@ table.table.w-full.table-fixed thead {
   text-align: left;
   border-radius: 10px; */
 
-  background: #f6f3f4;
+  background: #e7e9f3;
   color: #3a3a3a;
   text-align: left;
   border-radius: 10px;
@@ -124,7 +126,7 @@ table.table.w-full.table-fixed tbody tr {
   /* background: #fff; */
   border-bottom: 1px solid #ccc;
 }
-tr:nth-child(even) {background: #383d7114;}
+tr:nth-child(even) {background: #f6f7ff;}
 /* .toggle__icon {
   position: absolute;
   right: -70px;

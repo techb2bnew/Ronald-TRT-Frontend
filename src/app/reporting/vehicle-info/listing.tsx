@@ -222,6 +222,8 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
+
       <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
@@ -314,6 +316,7 @@ const VehicleTable: React.FC = () => {
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

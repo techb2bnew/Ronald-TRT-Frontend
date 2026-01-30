@@ -687,7 +687,8 @@ const CompletedJobs: React.FC = () => {
         items={[
           { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' }
         ]}
-      />
+      /> 
+      <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Completed Work Orders" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel=" " buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
@@ -792,6 +793,7 @@ const CompletedJobs: React.FC = () => {
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

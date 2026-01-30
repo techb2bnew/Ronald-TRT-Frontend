@@ -477,184 +477,129 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         <div className='mobile_listing_item  flex items-center gap-4'>
           {onSearch && (
 
-            <div className="flex w-[220px] relative search__input">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ position: 'absolute', right: '10px', top: '12px', zIndex: '1' }} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex w-[220px] relative search__input border border-gray-300 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="absolute right-3 top-1/2 -translate-y-1/2 z-[1] pointer-events-none text-gray-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <TextField fullWidth size="small" type='text' id="outlined-basic" color="warning" label="Search" value={searchValue} variant="filled" onChange={(e) => {
-                const val = e.target.value;
-                setSearchValue(val);
-                onSearch(val);
-              }} />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchValue(val);
+                  onSearch(val);
+                }}
+                className="w-full p-[11px] pl-3 pr-9 text-sm border-0 rounded-lg bg-transparent outline-none focus:ring-0"
+              />
             </div>
           )}
 
           {onCustomerChange && (
-            <FormControl variant="outlined" size="small" className="w-[150px]">
-              <InputLabel id="assignCustomer" color="warning">Select customer</InputLabel>
-              <Select
-                labelId="assignCustomer"
-                id="select-assignCustomer"
-                color="warning"
-                value={customerFilter}
-                label="Select customer"
-                name="assignCustomer"
-                onChange={handleCustomerFilterChange}
-                MenuProps={{
-                  PaperProps: {
-                    onScroll: handleScroll,
-                    style: {
-                      maxHeight: 300,
-                    }
-                  },
-                  autoFocus: false
-                }}
-                onOpen={() => {
-                  setCustomerSearchTerm('');
-                  if (customer.length === 0) {
-                    fetchCustomer(1, effectiveRoleType);
-                  }
-                }}
-              >
-                <div 
-                  style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
-                  <TextField
-                    size="small"
-                    fullWidth
-                    color="warning"
-                    placeholder="Search customer..."
-                    value={customerSearchTerm}
-                    onChange={handleCustomerSearchChange}
-                    onClick={(e) => e.stopPropagation()}
-                    autoFocus
-                  />
-                </div>
-                {customer.length > 0 ? (
-                  customer.map((cust) => (
-                    <MenuItem key={`${cust.id}-${cust.fullName}-${Math.random().toString(36).substr(2, 5)}`} value={cust.id}>
-                      {cust.fullName}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>
-                    <span className="text-gray-500 text-sm">No customer found</span>
-                  </MenuItem>
-                )}
-              </Select>
-            </FormControl>
+            <select
+              id="select-assignCustomer"
+              name="assignCustomer"
+              value={customerFilter}
+              onChange={(e) => handleCustomerFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
+              onFocus={() => {
+                if (customer.length === 0) {
+                  fetchCustomer(1, effectiveRoleType);
+                }
+              }}
+              className="w-[150px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">Select customer</option>
+              {customer.length > 0 ? (
+                customer.map((cust) => (
+                  <option key={`${cust.id}-${cust.fullName}`} value={cust.id}>
+                    {cust.fullName}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No customer found</option>
+              )}
+            </select>
           )}
 
 
 
           {onNewJobClick && (
-            <FormControl size="small" variant="outlined" className="w-[130px]">
-              <InputLabel id="job-dropdown-label" color="warning">Jobs</InputLabel>
-              <Select
-                labelId="job-dropdown-label"
-                id="job-dropdown"
-                value={jobsFilter}
-                onChange={handleJobFilterChange}
-                label="Jobs"
-                color="warning"
-                MenuProps={{
-                  PaperProps: {
-                    onScroll: handleScroll,
-                    style: {
-                      maxHeight: 300,
-                    },
-                  },
-                }}
-              >
-                {customerFilter ? (
-                  customerJobs.length > 0 ? (
-                    customerJobs.map((job) => (
-                      <MenuItem key={`${job.id}-${job.jobName}`} value={job.id} className="text-xs">
-                        {job.jobName}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem value="">No jobs for this customer</MenuItem>
-                  )
-                ) : (
-                  /* When no customer is selected, show all jobs from fetchJobs */
-                  jobs.length > 0 ? (
-                    jobs.map((job) => (
-                      <MenuItem key={`${job.id}-${job.jobName}`} value={job.id} className="text-xs"> 
-                        {job.jobName}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem value="">No jobs available</MenuItem>
-                  )
-                )}
-              </Select>
-            </FormControl>
-          )}
-          {onStatusChange && (
-            <FormControl size="small" variant="outlined" className="w-[140px]">
-              <InputLabel id="status-dropdown-label" color="warning">Work Order Status</InputLabel>
-              <Select
-                labelId="status-dropdown-label"
-                id="status-dropdown"
-                defaultValue=""
-                onChange={(e) => onStatusChange?.(e.target.value)}
-                label="Work Order Status"
-                color="warning"
-              >
-                <MenuItem value="">All Status</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-                <MenuItem value="inProgress">In Progress</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-          {onInvoiceStatueChange && (
-            <FormControl size="small" variant="outlined" className="w-[120px]">
-              <InputLabel id="invoiceStatus-dropdown-label" color="warning">Invoice Status</InputLabel>
-              <Select
-                labelId="invoiceStatus-dropdown-label"
-                id="invoiceStatus-dropdown"
-                defaultValue=""
-                onChange={(e) => onInvoiceStatueChange?.(e.target.value)}
-                label="Invoice Status"
-                color="warning"
-              >
-                <MenuItem value="">Invoice Status</MenuItem>
-                <MenuItem value="paid">Paid</MenuItem>
-                <MenuItem value="unPaid">Unpaid</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-          {onNewTechClick && (
-            <FormControl size="small" variant="outlined" className="w-[180px]">
-              <InputLabel id="tech-dropdown-label" color="warning">Technician</InputLabel>
-              <Select
-                labelId="tech-dropdown-label"
-                id="tech-dropdown"
-                value={techFilter}
-                onChange={handleTechFilterChange}
-                label="Technician"
-                color="warning"
-                MenuProps={{
-                  PaperProps: {
-                    onScroll: handleTechScroll,
-                    style: {
-                      maxHeight: 300,
-                    },
-                  },
-                }}
-              >
-                {tech?.length > 0 ? (
-                  tech?.map((tech) => (
-                    <MenuItem key={`tech-${tech.id}-${tech.firstName}-${tech.lastName}-${Math.random().toString(36).substr(2, 9)}`} value={tech.id}>{tech.firstName} {tech.lastName}</MenuItem>
+            <select
+              id="job-dropdown"
+              value={jobsFilter}
+              onChange={(e) => handleJobFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
+              className="w-[130px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">All Jobs</option>
+              {customerFilter ? (
+                customerJobs.length > 0 ? (
+                  customerJobs.map((job) => (
+                    <option key={`${job.id}-${job.jobName}`} value={job.id}>
+                      {job.jobName}
+                    </option>
                   ))
                 ) : (
-                  <MenuItem value="">No Technician Available</MenuItem>
-                )}
-              </Select>
-            </FormControl>
+                  <option value="">No jobs for this customer</option>
+                )
+              ) : (
+                jobs.length > 0 ? (
+                  jobs.map((job) => (
+                    <option key={`${job.id}-${job.jobName}`} value={job.id}>
+                      {job.jobName}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No jobs available</option>
+                )
+              )}
+            </select>
+          )}
+          {onStatusChange && (
+            <select
+              id="status-dropdown"
+              defaultValue=""
+              onChange={(e) => onStatusChange?.(e.target.value)}
+              className="w-[140px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="inProgress">In Progress</option>
+            </select>
+          )}
+          {onInvoiceStatueChange && (
+            <select
+              id="invoiceStatus-dropdown"
+              defaultValue=""
+              onChange={(e) => onInvoiceStatueChange?.(e.target.value)}
+              className="w-[120px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">Invoice Status</option>
+              <option value="paid">Paid</option>
+              <option value="unPaid">Unpaid</option>
+            </select>
+          )}
+          {onNewTechClick && (
+            <select
+              id="tech-dropdown"
+              value={techFilter}
+              onChange={(e) => handleTechFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
+              className="w-[180px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">Technician</option>
+              {tech?.length > 0 ? (
+                tech?.map((t) => (
+                  <option key={`tech-${t.id}-${t.firstName}-${t.lastName}`} value={t.id}>{t.firstName} {t.lastName}</option>
+                ))
+              ) : (
+                <option value="">No Technician Available</option>
+              )}
+            </select>
           )}
 
           {additionalComponents && (
@@ -662,16 +607,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               {additionalComponents}
             </div>
           )}
-          <div className="relative" ref={datePickerRef}>
 
             {showDatePicker && (
+          <div className="relative" ref={datePickerRef}>
               <button
-                className="p-3 bg-white text-[12px] rounded w-[100px]"
+                className="p-3 bg-white text-[12px] rounded-lg w-[100px] border border-gray-300"
                 onClick={handleDateFilterClick}
               >
                 Date Filter
               </button>
-            )}
             {showDatePickers && (
               <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
                 <DateRange
@@ -695,6 +639,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               </div>
             )}
           </div>
+            )}
 
 
           {showClearFilters && (
@@ -719,9 +664,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </button>
           )}
 
-          {onPageSizeChange && (
-
-            <select name="" id="" className=' p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+          {onPageSizeChange && ( 
+            <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
               <option value="">Show 10</option>
               <option value="10">10</option>
               <option value="20">20</option>
@@ -732,21 +676,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </select>
           )}
           {(onCompletedJobClick || onInProgressJobClick) && (
-            <FormControl size="small" variant="outlined" className="w-[180px]">
-              <InputLabel id="job-status-label" color="warning">Job Status</InputLabel>
-              <Select
-                labelId="job-status-label"
-                id="job-status-select"
-                value={activeFilter}
-                onChange={handleFilterChange}
-                label="Job Status"
-                color="warning"
-              >
-                <MenuItem value="all">All Jobs</MenuItem>
-                <MenuItem value="completed">Completed Jobs</MenuItem>
-                <MenuItem value="inProgress">In Progress Jobs</MenuItem>
-              </Select>
-            </FormControl>
+            <select
+              id="job-status-select"
+              value={activeFilter}
+              onChange={(e) => handleFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
+              className="w-[180px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="all">All Jobs</option>
+              <option value="completed">Completed Jobs</option>
+              <option value="inProgress">In Progress Jobs</option>
+            </select>
           )}
           {onCompletedClick && (
             <button

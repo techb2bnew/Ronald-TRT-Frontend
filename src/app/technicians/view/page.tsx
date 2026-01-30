@@ -9,7 +9,7 @@ export default function ViewTechnicians() {
   return (
     <>
     {/* <AuthCheck> */}
-    <div className='container m-auto'>
+    <div className='main-container'>
         {/* <Sidebar /> */}
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"

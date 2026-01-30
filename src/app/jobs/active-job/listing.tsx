@@ -111,7 +111,7 @@ const JobTable: React.FC = () => {
         setActiveJob(jobsWithVehicleCount);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
-        setTotalExpense(data.jobs?.totalEstimateCost || data.totalEstimateCost);  
+        setTotalExpense(data.jobs?.totalEstimateCost || data.totalEstimateCost);
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -602,95 +602,96 @@ const JobTable: React.FC = () => {
           { label: 'Jobs List', href: '/jobs/active-job' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
+        <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
+          onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
-      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
-        onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters} />
+        <div className="overflow-auto rounded-md">
+          <table className="table w-full table-fixed">
+            <thead>
+              <tr>
+                <th className="w-[55px]">
+                  <label className="flex items-center cursor-pointer relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === activeJob.length}
+                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
-      <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
-          <thead>
-            <tr>
-              <th className="w-[55px]">
-                <label className="flex items-center cursor-pointer relative">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === activeJob.length}
-                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
-
-                    onChange={() =>
-                      setSelectedIds(
-                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
-                      )
-                    }
-                  />
-                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </span>
-                </label>
-              </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
-                Job Id
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]" onClick={() => handleSort('jobName')}>
-                Job Title
-                {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[150px]">
-                Customer Name
-
-              </th>
-              {roleType !== 'single-technician' && (
-                <th className="w-[150px]" >
-                  Manager Name
+                      onChange={() =>
+                        setSelectedIds(
+                          selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                        )
+                      }
+                    />
+                    <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                      </svg>
+                    </span>
+                  </label>
                 </th>
+                <th className="w-[100px]" onClick={() => handleSort('id')}>
+                  Job Id
+                  {sortBy === 'id' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[150px]" onClick={() => handleSort('jobName')}>
+                  Job Title
+                  {sortBy === 'jobName' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[150px]">
+                  Customer Name
+
+                </th>
+                {roleType !== 'single-technician' && (
+                  <th className="w-[150px]" >
+                    Manager Name
+                  </th>
+                )}
+                <th className="w-[150px]">Vehicle / Work Order</th>
+                {/* <th className="w-[100px]">Sub Total Cost</th>*/}
+                <th className="w-[120px]">Start Date</th>
+                <th className="w-[120px]">End Date</th>
+                <th className="w-[120px]">Job Estimate</th>
+                <th className="w-[120px]">Status</th>
+                <th className="w-[100px]">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : activeJob.length === 0 ? (
+                <tr>
+                  <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
+                    <Empty />
+                  </td>
+                </tr>
+              ) : (
+                activeJob.map((job) => renderRow(job))
               )}
-              <th className="w-[150px]">Vehicle / Work Order</th>
-              {/* <th className="w-[100px]">Sub Total Cost</th>*/}
-              <th className="w-[120px]">Start Date</th>
-              <th className="w-[120px]">End Date</th>
-              <th className="w-[120px]">Job Estimate</th>
-              <th className="w-[120px]">Status</th>
-              <th className="w-[100px]">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
-                  <Loader />
-                </td>
-              </tr>
-            ) : activeJob.length === 0 ? (
-              <tr>
-                 <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
-                  <Empty />
-                </td>
-              </tr>
-            ) : (
-              activeJob.map((job) => renderRow(job))
-            )}
-            <td colSpan={roleType === 'single-technician' ? 8 : 9} className='text-right font-semibold'>
-          <span className={roleType === 'single-technician' ? 'pr-[50px]' : 'pr-6'}>
-           Total: ${totalExpense}
-          </span>
-        </td>
-          </tbody>
-        </table>
+              <td colSpan={roleType === 'single-technician' ? 8 : 9} className='text-right font-semibold'>
+                <span className={roleType === 'single-technician' ? 'pr-[50px]' : 'pr-[50px]'}>
+                  Total: ${totalExpense}
+                </span>
+              </td>
+            </tbody>
+          </table>
+        </div>
+        {activeJob.length > 0 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
       </div>
-      {activeJob.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )}
     </div>
   );
 };

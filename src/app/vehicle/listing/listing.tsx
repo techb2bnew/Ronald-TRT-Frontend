@@ -765,6 +765,7 @@ const JobTable: React.FC = () => {
           { label: 'Work Order List', href: '/vehicle/listing' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
 
       <CommonHeader heading="Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Vehicle / Work Order" buttonLink="/vehicle/create-vehicle" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
@@ -859,7 +860,7 @@ const JobTable: React.FC = () => {
 
               <tr>
                 <td colSpan={9} className='text-right font-semibold'>
-                  <span className='pr-7'>
+                  <span className='pr-[50px]'>
                     Total: ${totalExpense}
                   </span>
                 </td>
@@ -874,6 +875,7 @@ const JobTable: React.FC = () => {
       {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

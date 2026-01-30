@@ -179,7 +179,8 @@ export default function ClientListing() {
       Id: customerData.id,
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
-      Address: customerData.address || 'N/A'
+      Phone: customerData.phoneNumber || 'N/A',
+      Address: customerData.address || 'N/A',
     }));
 
     csvExporter.generateCsv(formattedData);
@@ -331,7 +332,7 @@ export default function ClientListing() {
         <td>
           <div className="flex items-center gap-2">
 
-            <Link href={`/client/view?customerId=${cust.id}`} className='hover:underline capitalize'>
+            <Link href={`/customer/view?customerId=${cust.id}`} className='hover:underline capitalize'>
               {cust?.fullName}
             </Link>
           </div>
@@ -346,13 +347,13 @@ export default function ClientListing() {
             {cust.phoneNumber || 'N/A'}
           </a>
         </td>
-       <td>{cust.address ? cust.address.replace(/^,|\s*,\s*/g, '') : 'N/A'}</td>
+       <td>{cust.address ? cust.address.replace(/^,\s*/g, '').replace(/\s*,\s*/g, ', ') : 'N/A'}</td>
 
         <td>
           <TableActions
-            editRoute={`/client/create?customerId=${cust.id}`}
+            editRoute={`/customer/create?customerId=${cust.id}`}
             deleteRoute={`/api/deleteCustomer`}
-            viewRoute={`/client/view?customerId=${cust.id}`}
+            viewRoute={`/customer/view?customerId=${cust.id}`}
             idKey="customerId"
             userRole="Customer"
             itemId={cust.id}  // Pass the technician ID
@@ -366,11 +367,13 @@ export default function ClientListing() {
     <div className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Customers', href: '/client/listing' }
+          { label: 'Customers', href: '/customer/listing' }
         ]}
       />
-
-      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/client/create" />
+      
+      <div className="shadow-lg p-4 bg-white rounded-lg">
+      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create" />
+      
 
       <div className="overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -460,6 +463,7 @@ export default function ClientListing() {
       {customer.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 }

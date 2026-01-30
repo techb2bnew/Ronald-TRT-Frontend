@@ -499,6 +499,7 @@ const JobTable: React.FC = () => {
           { label: 'Sent Invoice', href: '/reporting/invoice' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg"> 
       <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
         onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
@@ -572,6 +573,7 @@ const JobTable: React.FC = () => {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
         )}
       </div>
+    </div>
     </div>
   );
 };

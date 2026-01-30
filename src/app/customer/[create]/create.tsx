@@ -122,8 +122,8 @@ export default function Technicians() {
         }
       });
 
-      // Clean up the formatted address
-      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`.replace(/^,|\s*,\s*/g, '').trim();
+      // Clean up: only remove leading comma if street is empty; keep ", " between parts
+      const fullAddress = `${street.trim()}, ${city}, ${state}, ${country}, ${zip}`.replace(/^,\s*/, '').trim();
 
       // Update formData with the cleaned full address
       setFormData(prev => ({
@@ -330,7 +330,7 @@ export default function Technicians() {
           roleType: ''
         });
 
-        router.push('/client/listing');
+        router.push('/customer/listing');
       } else {
         const apiErrors: { [key: string]: string } = {};
 
@@ -490,10 +490,10 @@ export default function Technicians() {
     <div className='w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
-          { label: 'Customers', href: '/client/listing' },
+          { label: 'Customers', href: '/customer/listing' },
           isEdit
             ? { label: 'Edit Customer' }
-            : { label: 'Create Customer', href: '/client/create' },
+            : { label: 'Create Customer', href: '/customer/create' },
 
         ]}
       />

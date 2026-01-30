@@ -574,6 +574,7 @@ const ManagerTable: React.FC = () => {
           { label: 'Manager Listing', href: '/technicians/listing' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg"> 
       <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
@@ -628,7 +629,7 @@ const ManagerTable: React.FC = () => {
       {technicians.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
-
+    </div>
 
       <RejectReasonModal
         isOpen={showRejectModal}

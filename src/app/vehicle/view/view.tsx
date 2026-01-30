@@ -4,9 +4,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useSidebar } from '@/app/component/SidebarContext';
 
 export default function ViewDetails() {
+  const { isCollapsed } = useSidebar();
   const searchParams = useSearchParams();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -142,249 +145,174 @@ export default function ViewDetails() {
     return technicianTotal;
   };
 
+  const backHref = '/vehicle/listing';
+
+  const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
+    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <div className="text-gray-900">{value}</div>
+      </div>
+    </div>
+  );
+
+  /** Show 'N/A' when value is null, undefined, or empty/whitespace string */
+  const na = (v: any) => (v != null && String(v).trim() !== '' ? v : 'N/A');
+
+  const getDescriptionText = (item: any): string => {
+    if (item == null) return 'No description found';
+    if (typeof item === 'string') {
+      try {
+        const parsed = JSON.parse(item);
+        return parsed?.description ?? parsed?.name ?? String(item);
+      } catch {
+        return item;
+      }
+    }
+    return (item as any)?.description ?? (item as any)?.name ?? String(item);
+  };
+
   return (
-    <>
+    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '' },
-          { label: 'View Detail', href: '/vehicle/listing' }
+          { label: 'Vehicles Info', href: '/vehicle/listing' },
+          { label: 'View Detail', href: '' }
         ]}
       />
-      <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>
-        <div className="bg-blue rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Vehicle Detail</h2>
-          <div className="view_inner_content grid grid-cols-2 gap-3 p-6">
-            {/* Left Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'>
-                <strong className='w-[210px] inline-block'>Job Title:</strong>
-                {jobData?.jobName || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>VIN:</strong>
-                {jobData?.vin || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Descriptor:</strong>
-                {jobData?.vehicleDescriptor || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Make:</strong>
-                {jobData?.make || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model:</strong>
-                {jobData?.model || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Model Year:</strong>
-                {jobData?.modelYear || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Manufacturer Name:</strong>
-                {jobData?.manufacturerName || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Vehicle Type:</strong>
-                {jobData?.vehicleType || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Body Class:</strong>
-                {jobData?.bodyClass || <span className="text-black-500">N/A</span>}
-              </p>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[210px] inline-block'>Start Date:</strong> {jobData.startDate ? new Date(jobData.startDate).toLocaleDateString() : 'N/A'} </div>
 
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>End Date:</strong> {jobData.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'}
-              </div>
-            </div>
+      <div className="mx-auto">
+        {/* <div className="flex items-center gap-3 mb-4">
+          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <svg className="w-8 h-8 bg-[#1e3e6f] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <span className="font-semibold text-lg">Vehicle Detail</span>
+          </Link>
+        </div> */}
 
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Color:</strong>
-                {jobData?.color !== 'undefined' && (
-                  <>
-                    {jobData?.color || <span className="text-gray-400 text-sm">No Color selected</span>}
-                  </>
-                ) || 'No Color selected'}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Plant Country:</strong>
-                {jobData?.plantCountry !== 'undefined' && (
-                  <>
-                    {jobData?.plantCountry || <span className="text-black-500">N/A</span>}
-                  </>
-                ) || 'N/A'}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <p className="mb-1"><strong className='w-[210px] inline-block'>Vehicle Override Price:</strong>
-                    {jobData.labourCost && jobData.labourCost !== '' 
-                      ? `$${jobData.labourCost}`
-                      : <span className="text-gray-400 text-sm">No price added</span>
-                    }
-                  </p>
-                </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Plant Company:</strong>
-                {jobData?.plantCompanyName !== 'undefined' && (
-                  <>
-                    {jobData?.plantCompanyName || <span className="text-black-500">N/A</span>}
-                  </>
-                ) || 'N/A'}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Plant State:</strong>
-                {jobData?.plantState !== 'undefined' && (
-                  <>
-                    {jobData?.plantState || <span className="text-black-500">N/A</span>}
-                  </>
-                ) || 'N/A'}
-
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4 capitalize'>
-                <strong className='w-[210px] inline-block'>Created By:</strong>
-                {jobData?.createdBy || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Estimated By:</strong>
-                {jobData?.estimatedBy || <span className="text-black-500">N/A</span>}
-              </p>
-              {/* <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Completed By:</strong>
-                {jobData?.completedBy || <span className="text-black-500">N/A</span>}
-              </p> */}
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Customer:</strong>
-                {jobData?.customer?.fullName || <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Customer Email:</strong>
-                {jobData?.customer?.email ? (
-                  <a className="hover:underline" href={`mailto:${jobData.customer.email}`}>
-                    {jobData.customer.email}
-                  </a>
-                ) : <span className="text-black-500">N/A</span>}
-              </p>
-              <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                <strong className='w-[210px] inline-block'>Status:</strong>
-                <span
-                  className={`badge ${jobData.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
-                >
-                  {jobData.vehicleStatus ? 'Completed' : 'In Progress'}
-                </span>
-              </p>
-              {roleType !== 'single-technician' || isSingleTechnicianWorkOrder && (
-                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <strong className='w-[210px] inline-block'>Manager:</strong>
-                  {jobData?.job?.manager?.firstName || <span className="text-black-500">N/A</span>} {jobData?.job?.manager?.lastName || <span className="text-black-500">N/A</span>}
-                </p>
-              )}
-              {roleType !== 'single-technician' || isSingleTechnicianWorkOrder && (
-                <p className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'>
-                  <strong className='w-[210px] inline-block'>Manager Email:</strong>
-                  <a className="hover:underline" href={`mailto:${jobData?.job?.manager?.email}`}>
-                    {jobData?.job?.manager?.email || <span className="text-black-500">N/A</span>}
-                  </a>
-                </p>
-              )}
-
-            </div>
+        {/* Vehicle Detail section */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="flex items-center gap-2 bg-[#1e3e6f] text-white px-6 py-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" />
+              <circle cx="5.5" cy="18.5" r="2.5" />
+              <circle cx="18.5" cy="18.5" r="2.5" />
+            </svg>
+            <span className="font-bold text-base">Vehicle Detail</span>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6  ">
+            {/* Column 1 */}
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label="Job Title" value={na(jobData?.jobName)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Make" value={na(jobData?.make)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Manufacturer Name" value={na(jobData?.manufacturerName)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="Start Date" value={jobData?.startDate ? new Date(jobData.startDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant Country" value={na(jobData?.plantCountry)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant State" value={na(jobData?.plantState)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Customer" value={<span className="capitalize">{na(jobData?.customer?.fullName)}</span>} />
+            {/* Column 2 */}
+            <InfoCard icon={<span className="text-sm font-bold">#</span>} label="VIN" value={na(jobData?.vin)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Model" value={na(jobData?.model)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Vehicle Type" value={na(jobData?.vehicleType)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="End Date" value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Vehicle Override Price" value={jobData?.labourCost && String(jobData.labourCost).trim() !== '' ? `$${jobData.labourCost}` : <span className="text-gray-500">No price added</span>} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Created By" value={na(jobData?.createdBy)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label="Customer Email" value={jobData?.customer?.email && String(jobData.customer.email).trim() !== '' ? <a className="hover:underline text-[#383d71]" href={`mailto:${jobData.customer.email}`}>{jobData.customer.email}</a> : 'N/A'} />
+            {/* Column 3 */}
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>} label="Vehicle Descriptor" value={na(jobData?.vehicleDescriptor)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="Model Year" value={na(jobData?.modelYear)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>} label="Body Class" value={na(jobData?.bodyClass)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>} label="Color" value={jobData?.color && String(jobData.color).trim() !== '' ? jobData.color : <span className="text-gray-500">No Color selected</span>} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>} label="Plant Company" value={na(jobData?.plantCompanyName)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Estimated By" value={na(jobData?.estimatedBy)} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Status" value={<span className={jobData?.vehicleStatus ? 'bg-[#E6F9DD] text-[#1A932E] px-3 py-1 rounded font-medium' : 'bg-[#FFE4E1] text-[#FF0000] px-3 py-1 rounded font-medium'}>{jobData?.vehicleStatus ? 'Completed' : 'In Progress'}</span>} />
+          </div>
+        </div>
 
-          {/* Job Description Section */}
+        {/* Work Order Description */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4">
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200">
+            <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span className="font-bold">Work Order Description</span>
+          </div>
           <div className="p-6">
-            <h3 className="text-lg font-semibold mb-3 text-white">Work Order Description</h3>
-            {jobData?.jobDescription?.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {jobData.jobDescription.map((jobDescription: string, index: number) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded shadow">
-                    <p className="mb-2" style={{wordBreak: 'break-all'}}><strong className='w-[210px] inline-block'>Description:</strong> {jobDescription || 'No description found'}</p>
+            {(() => {
+              const desc = jobData?.jobDescription;
+              const hasDescriptions = Array.isArray(desc) && desc.some((item: any) => (getDescriptionText(item) || '').trim() !== '');
+              if (!hasDescriptions) {
+                return <p className="text-gray-500">No work order descriptions available</p>;
+              }
+              const validItems = desc!.filter((item: any) => (getDescriptionText(item) || '').trim() !== '');
+              return (
+                <div className="divide-y divide-gray-200">
+                  {validItems.map((item: any, index: number) => (
+                    <p key={index} className="py-3 text-gray-700 first:pt-0 last:pb-0" style={{ wordBreak: 'break-all' }}>{getDescriptionText(item)}</p>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+        {/* Work Order Description */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4">
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200">
+            <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span className="font-bold">Notes</span>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-500">{jobData?.notes || 'N/A'}</p>
+          </div>
+        </div>
+        {/* Assigned Dent Tech */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4">
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200">
+            <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            <span className="font-bold">Assigned Dent Tech</span>
+          </div>
+          <div className="p-6">
+            {jobData?.assignedTechnicians?.length > 0 ? (
+              <div className="divide-y divide-gray-200">
+                {jobData.assignedTechnicians.map((tech: any) => (
+                  <div key={tech.id} className="py-4 first:pt-0">
+                    <p className="font-semibold text-gray-900">{tech.firstName} {tech.lastName}</p>
+                    <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
+                    <p className="text-sm text-gray-600">Specialty: {tech?.techType ?? 'N/A'}</p>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No work order descriptions available</p>
-            )}
-          </div>
-
-
-          {/* Assigned Technicians Section */}
-          <div className="p-6">
-          <h3 className="text-lg font-semibold mb-3 text-white">Assigned Dent Tech</h3>
-            {jobData?.assignedTechnicians?.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {jobData.assignedTechnicians.map((tech: any) => {
-
-
-                  return (
-                    <div key={tech.id} className="bg-gray-50 p-4 rounded shadow">
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Name:</strong>
-                        {tech.firstName} {tech.lastName}</p>
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Email:</strong>
-                        <a className="hover:underline" href={`mailto:${tech.email}`}>
-                          {tech.email}</a></p>
-                      <p className="mb-1"><strong className='w-[210px] inline-block'>Phone:</strong>
-                        <a className="hover:underline" href={`tel:${tech.email}`}>
-                          {tech.phoneNumber}</a></p>
-                      {tech.VehicleTechnician.rRate !== '' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block'>RR/I/R:</strong>
-                          ${tech.VehicleTechnician.rRate}</p>
-                      )}
-                      {tech.VehicleTechnician.techFlatRate !== '' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block'>Flat Rate:</strong>
-                          ${tech.VehicleTechnician.techFlatRate}</p>
-                      )}
-
-                      {tech.VehicleTechnician.techType !== '' || roleType !== 'single-technician' && (
-                        <p className="mb-1"><strong className='w-[210px] inline-block'>Tech Type:</strong>
-                          {tech?.techType}</p>
-                      )}
-
-
-                    </div>
-                  );
-                })}
               </div>
             ) : (
               <p className="text-gray-500">No technicians assigned</p>
             )}
           </div>
+        </div>
 
-
-
-
-          {/* Images Section */}
+        {/* Images */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 mb-4">
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <span className="font-bold text-gray-800">Images</span>
+          </div>
           <div className="p-6">
-            <h3 className="text-lg font-semibold mb-3 text-white">Images</h3>
-            <div className="flex flex-wrap gap-4">
-              {jobData?.images?.length > 0 ? (
-                jobData.images.map((img: string, index: number) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Vehicle image ${index + 1}`}
-                    className="w-32 h-32 object-cover rounded cursor-pointer"
-                    onClick={() => setPreviewImage(img)}
-                  />
-                ))
-              ) : (
-                <p className="text-white">No images available</p>
-              )}
-            </div>
+            {jobData?.images?.length > 0 ? (
+              <div className="flex flex-wrap gap-4">
+                {jobData.images.map((img: string, index: number) => (
+                  <img key={index} src={img} alt={`Vehicle image ${index + 1}`} className="w-32 h-32 object-cover rounded-lg cursor-pointer shadow-sm hover:opacity-90 transition-opacity" onClick={() => setPreviewImage(img)} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No images available</p>
+            )}
           </div>
         </div>
-        <ToastContainer />
-        {previewImage && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            onClick={() => setPreviewImage(null)}
-          >
-            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
-          </div>
-        )}
       </div>
-    </>
+
+      <ToastContainer />
+      {previewImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setPreviewImage(null)}>
+          <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+        </div>
+      )}
+    </div>
   );
 }

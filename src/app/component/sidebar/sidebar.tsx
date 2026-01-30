@@ -137,9 +137,9 @@ const Sidebar = () => {
         setIsUser5Open(false);
         localStorage.setItem('isUser5Open', JSON.stringify(false));
         if (userType == 'superadmin') {
-          router.push('/client/listing');
+          router.push('/customer/listing');
         } else {
-          router.push('/client/listing');
+          router.push('/customer/listing');
 
         }
 
@@ -324,8 +324,8 @@ const Sidebar = () => {
     ${!isUsersOpen && (
                 activeLink === '/technicians/listing' ||
                 activeLink === '/technicians/create-technician' ||
-                activeLink === '/client/listing' ||
-                activeLink === '/client/create' ||
+                activeLink === '/customer/listing' ||
+                activeLink === '/customer/create' ||
                 activeLink === '/jobs/create-job/create' ||
                 activeLink === '/jobs/active-job' ||
                 activeLink === '/jobs/complete-job/listing' ||
@@ -340,8 +340,8 @@ const Sidebar = () => {
                 <div className={`m-auto p-3 rounded  ${isCollapsed && (
                   activeLink === '/technicians/listing' ||
                   activeLink === '/technicians/create-technician' ||
-                  activeLink === '/client/listing' ||
-                  activeLink === '/client/create' ||
+                  activeLink === '/customer/listing' ||
+                  activeLink === '/customer/create' ||
                   activeLink === '/jobs/create-job/create' ||
                   activeLink === '/jobs/active-job' ||
                   activeLink === '/jobs/complete-job/listing' ||
@@ -382,7 +382,7 @@ const Sidebar = () => {
                   <ul className="sdev_overlap_mob">
 
                     <li >
-                      <Link onClick={handleNavItemClick} href="/client/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/client/listing' || activeLink === '/client/create' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
+                      <Link onClick={handleNavItemClick} href="/customer/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/customer/listing' || activeLink === '/customer/create' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
                         <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                         <span className="sidebar-text">Customers</span>
                       </Link>

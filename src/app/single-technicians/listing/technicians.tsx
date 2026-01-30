@@ -665,6 +665,7 @@ const TechnicianTable: React.FC = () => {
           { label: 'Single Technicians', href: '/single-technicians/listing' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
       <SortableTable
         headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
@@ -717,7 +718,7 @@ const TechnicianTable: React.FC = () => {
       {technicians.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
-
+    </div>
         <RejectReasonModal
         isOpen={showRejectModal}
         onClose={() => setShowRejectModal(false)}

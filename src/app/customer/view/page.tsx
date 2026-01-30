@@ -12,7 +12,7 @@ export default function ViewCustomer() {
      const { isCollapsed } = useSidebar();
   return (
     <>
-    <div className='container m-auto'> 
+    <div className='main-container'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>

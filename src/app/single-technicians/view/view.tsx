@@ -9,16 +9,18 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
 import Customer from '../customer/listing';
-import { Link } from '@mui/material';
+import Link from 'next/link';
 import Image from 'next/image';
-import Eye from '../../../../public/eye.svg'
+import Eye from '../../../../public/eye.svg';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import Empty from '@/app/component/empty';
+import { useSidebar } from '@/app/component/SidebarContext';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export default function ViewDetails() {
+  const { isCollapsed } = useSidebar();
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -280,8 +282,40 @@ export default function ViewDetails() {
     return <div><Loading /></div>;
   }
 
+  const displayAddress = technician?.address ? technician.address.replace(/^,\s*/g, '').replace(/\s*,\s*/g, ', ').trim() : 'N/A';
+
+  const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
+    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <div className="text-gray-900">{value}</div>
+      </div>
+    </div>
+  );
+
+  const formattedDate = (() => {
+    const d = new Date(technician.updatedAt);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${month}-${day}-${year}`;
+  })();
+
+  const PhoneIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+  const MailIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
+  const DocIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+  const CalendarIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+  const CheckIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+  const HashIcon = () => <span className="text-sm font-bold">#</span>;
+  const LocationIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+  const BuildingIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>;
+  const UserIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
+
   return (
-    <>
+    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Single Technicians', href: '/single-technicians/listing' },
@@ -289,395 +323,246 @@ export default function ViewDetails() {
         ]}
       />
 
-      <div className='mx-auto p-4 rounded-lg shadow bg-white'>
-        <div className="bg-blue rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-2 pt-4 pl-6 border-b border-[#ccc] pb-3">Single Technician Details</h2>
-
-          <div className="grid grid-cols-2 gap-6 p-6">
-            {/* Left Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Id:</strong>{technician?.id}</p>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Technician Name:</strong>{technician?.firstName} {technician?.lastName}</p>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Email:</strong>
-                <a className="hover:underline" href={`mailto:${technician?.email}`}>
-
-                  {technician?.email}</a></p>
-              <p className=' border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Ph. Number:</strong>
-                <a className="hover:underline" href={`tel:${technician?.phoneNumber}`}>
-                  {technician?.phoneNumber}</a></p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Secondary Number:</strong>
-                {technician?.secondaryContactName ? (
-                  <a className="hover:underline" href={`mailto:${technician.secondaryContactName}`}>
-                    <span>{technician.secondaryContactName}</span>
-                  </a>
-                ) : (
-                  <span className="text-gray-400 text-sm">N/A</span>
-                )}
+      <div className="mx-auto">
+        {/* Profile banner - dark blue with avatar + contact */}
+        <div className="bg-[#1e3e6f] rounded-lg shadow-md overflow-hidden">
+          <div className="flex gap-6 p-6 items-center">
+            {technician?.image ? (
+              <img
+                onClick={() => setPreviewImage(technician.image)}
+                src={technician.image}
+                alt="Technician"
+                className="w-24 h-24 rounded-full object-cover bg-white shadow-lg cursor-pointer flex-shrink-0"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center text-gray-700 font-bold text-3xl shadow-lg flex-shrink-0">
+                {technician?.firstName?.charAt(0)?.toUpperCase() || 'T'}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 text-white space-y-2">
+              <h2 className="text-xl font-bold capitalize truncate">{technician?.firstName} {technician?.lastName}</h2>
+              <p className="flex items-center gap-2 flex-wrap">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                <a href={`mailto:${technician?.email}`} className="hover:underline truncate">{technician?.email || 'N/A'}</a>
               </p>
-              <p className='border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Secondary Email:</strong>
-                {technician?.secondaryEmail ? (
-                  <a className="hover:underline" href={`mailto:${technician.secondaryEmail}`}>
-                    <span>{technician.secondaryEmail}</span>
-                  </a>
-                ) : (
-                  <span className="text-gray-400 text-sm">N/A</span>
-                )}
+              <p className="flex items-center gap-2 flex-wrap">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span className="truncate">{displayAddress}</span>
               </p>
+              <p className="flex items-center gap-2 flex-wrap">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                <a href={`tel:${technician?.phoneNumber}`} className="hover:underline">{technician?.phoneNumber || 'N/A'}</a>
+              </p>
+            </div>
+          </div>
+        </div>
 
-              <p className='mb-2 flex border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Account Status:</strong>
-                <td
-                  onClick={() => {
-                    if (technician.isApproved === 'accept') {
-                      handleAccountStatusChanges(technician.id, !technician.accountStatus);
-                    }
-                  }} // Corrected here
-                  style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}
-                >
-                  <span
-                    className={`badge ${technician.accountStatus
-                      ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                      : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
-                      }`}
-                  >
-                    {technician.accountStatus ? 'Active' : 'Inactive'}
+        {/* Single Technician Details - InfoCard grid */}
+        <div className="overflow-hidden mt-4">
+          <h3 className="font-bold text-lg mb-4">Technician Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100">
+            <InfoCard icon={<HashIcon />} label="Technician Id" value={technician?.id ?? 'N/A'} />
+            <InfoCard icon={<UserIcon />} label="Technician Name" value={<span className="capitalize">{technician?.firstName} {technician?.lastName}</span>} />
+            <InfoCard icon={<MailIcon />} label="Email" value={technician?.email ? <a href={`mailto:${technician.email}`} className="hover:underline text-[#383d71]">{technician.email}</a> : 'N/A'} />
+            <InfoCard icon={<PhoneIcon />} label="Ph. Number" value={technician?.phoneNumber ? <a href={`tel:${technician.phoneNumber}`} className="hover:underline text-[#383d71]">{technician.phoneNumber}</a> : 'N/A'} />
+            <InfoCard
+              icon={<PhoneIcon />}
+              label="Secondary Number"
+              value={technician?.secondaryContactName ? <a href={`tel:${technician.secondaryContactName}`} className="hover:underline text-[#383d71]">{technician.secondaryContactName}</a> : 'N/A'}
+            />
+            <InfoCard
+              icon={<MailIcon />}
+              label="Secondary Email"
+              value={technician?.secondaryEmail ? <a href={`mailto:${technician.secondaryEmail}`} className="hover:underline text-[#383d71]">{technician.secondaryEmail}</a> : 'N/A'}
+            />
+            {(technician?.techType != null && technician.techType !== '') && (
+              <InfoCard icon={<DocIcon />} label="Type" value={<span className="capitalize">{technician.techType === 'technician' ? 'Dent Tech' : technician.techType}</span>} />
+            )}
+            <InfoCard icon={<CalendarIcon />} label="Date" value={formattedDate} />
+            <InfoCard icon={<LocationIcon />} label="Address" value={(technician?.address || 'N/A').replace(/^,\s*,\s*/g, '')} />
+            <InfoCard icon={<BuildingIcon />} label="Business Name" value={technician?.businessName || 'N/A'} />
+            <InfoCard
+              icon={<BuildingIcon />}
+              label="Business Logo"
+              value={
+                technician?.businessLogo ? (
+                  <img onClick={() => setPreviewImage(technician.businessLogo)} src={technician.businessLogo} alt="Business Logo" className="w-10 h-10 rounded-full object-cover cursor-pointer" />
+                ) : (
+                  <span className="text-gray-500">N/A</span>
+                )
+              }
+            />
+            <InfoCard
+              icon={<UserIcon />}
+              label="Profile Image"
+              value={
+                technician?.image ? (
+                  <img onClick={() => setPreviewImage(technician.image)} src={technician.image} alt="Profile" className="w-10 h-10 rounded-full object-cover cursor-pointer" />
+                ) : (
+                  <span className="text-gray-500">N/A</span>
+                )
+              }
+            />
+            <InfoCard
+              icon={<CheckIcon />}
+              label="Account Status"
+              value={
+                <div onClick={() => { if (technician.isApproved === 'accept') { handleAccountStatusChanges(technician.id, !technician.accountStatus); } }} style={{ cursor: technician.isApproved || technician.accountStatus ? 'pointer' : 'not-allowed' }}>
+                  <span className={technician?.accountStatus ? 'bg-[#E6F9DD] text-[#1A932E] px-3 py-1 rounded font-medium inline-block' : 'bg-[#FFE4E1] text-[#FF0000] px-3 py-1 rounded font-medium inline-block'}>
+                    {technician?.accountStatus ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-              </p>
-              <div className='flex mb-2 border-b border-gray-500 mb-3 pb-3 items-center'><strong className='w-[200px] inline-block'>Approval  Status:</strong>
-
-                <div className='flex gap-4 items-center'>
+                </div>
+              }
+            />
+            <InfoCard
+              icon={<CheckIcon />}
+              label="Approval Status"
+              value={
+                <div className="flex gap-2 items-center flex-wrap">
                   {technician.isApproved === 'accept' ? (
-                    // Step 2: Show "Accepted", clicking sends 'cancel'
-                    <span
-                      onClick={() => handleChangeBothStatuses(technician)}
-                      className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                    >
-                      Accepted
-                    </span>
+                    <span onClick={() => handleChangeBothStatuses(technician)} className="bg-[#E6F9DD] text-[#1A932E] px-3 py-1 rounded font-medium cursor-pointer inline-block">Accepted</span>
                   ) : technician.isApproved === 'cancel' ? (
-                    // Step 3: Show "Rejected", clicking sends 'accept'
-                    <span
-                      onClick={() => handleChangeBothStatuses(technician)}
-                      className="badge bg-[#FFE4E1] text-[#FF0000] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                    >
-                      Rejected
-                    </span>
+                    <span onClick={() => handleChangeBothStatuses(technician)} className="bg-[#FFE4E1] text-[#FF0000] px-3 py-1 rounded font-medium cursor-pointer inline-block">Rejected</span>
                   ) : (
-                    // Step 1: First time — show Accept + Reject
                     <>
-                      <span
-                        onClick={() => handleChangeBothStatuses(technician)}
-                        className="badge bg-[#E6F9DD] text-[#1A932E] p-2 px-3 rounded shadow block text-center w-[100px] cursor-pointer"
-                      >
-                        Accept
-                      </span>
-                      <button
-                        onClick={() => {
-                          setSelectedTechId(technician.id);
-                          setShowRejectModal(true);
-                        }}
-                        className="badges text-sm px-3 p-2 shadow badge-error bg-[#FFE4E1] text-[#FF0000] w-[100px]"
-                      >
-                        Reject
-                      </button>
+                      <span onClick={() => handleChangeBothStatuses(technician)} className="bg-[#E6F9DD] text-[#1A932E] px-3 py-1 rounded font-medium cursor-pointer inline-block">Accept</span>
+                      <button type="button" onClick={() => { setSelectedTechId(technician.id); setShowRejectModal(true); }} className="bg-[#FFE4E1] text-[#FF0000] px-3 py-1 rounded font-medium text-sm">Reject</button>
                     </>
                   )}
                 </div>
-
-
-
-              </div>
-
-            </div>
-
-            {/* Right Section */}
-            <div className='shadow-lg p-5 bg-white rounded'>
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2 flex'>
-                <strong className='w-[200px] min-w-[200px] inline-block'>Address:</strong>
-                {(technician.address || 'N/A').replace(/^,\s*,\s*/g, '')}
-              </p>
-
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'>
-                <strong className='w-[200px] inline-block'>Date:</strong>
-                {(() => {
-                  const d = new Date(technician.updatedAt);
-                  const month = String(d.getMonth() + 1).padStart(2, '0');
-                  const day = String(d.getDate()).padStart(2, '0');
-                  const year = d.getFullYear();
-                  return `${month}-${day}-${year}`;
-                })()}
-              </p>
-
-              <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Business Name:</strong>{technician?.businessName} </p>
-              <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
-                <strong className='w-[200px] inline-block'>Business Logo:</strong>
-
-
-                {technician?.businessLogo ? (
-                  <img onClick={() => setPreviewImage(technician.businessLogo)} src={technician.businessLogo} alt="" className="w-[40px] h-[40px] rounded-full object-cover" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-[40px] h-[40px] text-black-400 bg-gray-300 p-2 rounded-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M4 21v-2a4 4 0 0 1 3-3.87" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
-
-              </div>
-              <div className='mb-2 border-b border-gray-500 mb-3 pb-2 flex items-center'>
-                <strong className='w-[200px] inline-block'>Profile Image:</strong>
-
-                {technician?.image ? (
-                  <img
-                    onClick={() => setPreviewImage(technician.image)}
-                    src={technician.image}
-                    alt=""
-                    className="w-[40px] h-[40px] rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-[40px] h-[40px] rounded-full bg-gray-300 text-black flex items-center justify-center font-semibold text-sm">
-                    {technician?.firstName?.charAt(0)?.toUpperCase() || '?'}
+              }
+            />
+            <InfoCard
+              icon={<DocIcon />}
+              label="Tax Form"
+              value={
+                technician?.taxForms?.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {technician.taxForms.map((form: string, index: number) => {
+                      const isPDF = form.toLowerCase().endsWith('.pdf');
+                      return (
+                        <span key={index}>
+                          {isPDF ? (
+                            <button type="button" onClick={() => window.open(form, '_blank')} className="flex items-center gap-2 bg-gray-200 px-2 py-1 rounded shadow cursor-pointer text-[#383d71] hover:underline text-sm">
+                              View PDF
+                            </button>
+                          ) : (
+                            <img onClick={() => setPreviewImage(form)} src={form} alt={`Tax Form ${index + 1}`} className="w-10 h-10 rounded object-cover shadow cursor-pointer" />
+                          )}
+                        </span>
+                      );
+                    })}
                   </div>
-                )}
-
-
-              </div>
-              {technician?.taxForms?.length > 0 && (
-                <div className="mt-1 m-auto block mb-2 flex flex-wrap gap-4 items-center">
-                  <strong className='w-[200px] inline-block'>Tax Form:</strong>
-                  {technician.taxForms.map((form: string, index: number) => {
-                    const isPDF = form.toLowerCase().endsWith(".pdf"); // Ensure case-insensitivity
-
-                    return (
-                      <div key={index} className="relative flex items-center gap-2">
-                        {isPDF ? (
-                          // PDF Button
-                          <button
-                            onClick={() => window.open(form, "_blank")}
-                            className="flex items-center gap-2 bg-gray-200 px-3 py-1 rounded shadow hover:bg-gray-300 transition"
-                          >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="orange" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M6 2H14L20 8V22H6V2Z" stroke="orange" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M14 2V8H20" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            <span className="text-sm text-gray-700 font-medium">View PDF</span>
-                          </button>
-                        ) : (
-                          // Image Thumbnail
-                          <img
-                            onClick={() => setPreviewImage(form)}
-                            src={form}
-                            alt={`Tax Form ${index + 1}`}
-                            className="w-[60px] h-[60px] rounded-lg border border-gray-300 shadow-md cursor-pointer hover:scale-105 transition"
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-
-            </div>
+                ) : 'N/A'
+              }
+            />
           </div>
         </div>
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
         <Customer />
-
-        <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Job List</h3>
-        <div className="overflow-x-auto bg-white">
-          <table className="table w-full table-fixed">
-            <thead className=" ">
-              <tr>
-                <th scope="col">
-                  Job Id
-                </th>
-                <th scope="col">
-                  Job Name
-                </th>
-
-
-                {/* <th scope="col">
-                  Tech Rate
-                </th>
-                <th scope="col">
-                  R/I/R/R
-                </th> */}
-                {/* <th scope="col">
-                  Notes
-                </th> */}
-                <th scope="col">
-                  Start Date
-                </th>
-                <th scope="col">
-                  End Date
-                </th>
-                <th scope="col">
-                  Vehicle Price
-                </th>
-                <th scope="col">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(technician.jobs) && technician.jobs.length > 0 ? (
-                technician.jobs.map((jobs: any, index: number) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.id || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="capitalize">{jobs.jobName || '-'}</span>
-                    </td>
-
-                    {/* <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.UserJob?.techFlatRate ? `$${jobs.UserJob.techFlatRate}` : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.UserJob?.rRate ? `$${jobs.UserJob.rRate}` : '-'}
-                    </td> */}
-                    {/* <td className="px-6 py-4">
-                      {jobs.notes || '-'}
-                    </td> */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}
-                    </td>
-                    <td>
-                      <Link href={`/jobs/view?jobId=${jobs.id}`} >
-                        <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-                          data-tooltip-content="View" />
-                      </Link>
-                      <Tooltip id="view" place="top" />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-4 text-gray-500">
-                    <Empty />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-
-          </table>
         </div>
-
-
-        <h3 className='bg-white text-[#000] p-3 font-bold pt-3'>Vehicle List</h3>
-        <div className="overflow-x-auto bg-white">
-          <table className="table w-full table-fixed">
-            <thead className=" ">
-              <tr>
-                <th scope="col">
-                  Job Name
-                </th>
-                <th scope="col">
-                  VIN
-                </th>
-                <th scope="col">
-                  Make
-                </th>
-                <th scope="col">
-                  Model
-                </th>
-                <th scope="col">
-                  Model Year
-                </th>
-                <th scope='col'>
-                  Vehicle Override Price
-                </th>
-                {/* <th scope="col">
-                  Description
-                </th>
-                <th scope="col">
-                  Notes
-                </th> */}
-                <th scope="col">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {technician?.jobs?.flatMap((job: any) => job.vehicles || []).length > 0 ? (
-                technician.jobs.flatMap((job: any, jobIndex: number) =>
-                  (job.vehicles || []).map((vehicle: any, vehicleIndex: number) => (
-                    <tr key={`${jobIndex}-${vehicleIndex}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {vehicle.jobName || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="capitalize">{vehicle.vin || '-'}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {vehicle.make || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {vehicle.model || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {vehicle.modelYear || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        ${vehicle.labourCost || '-'}
-                      </td>
-                      {/* <td className="px-6 py-4">
-                        {Array.isArray(vehicle.jobDescription) &&
-                          vehicle.jobDescription.some((desc: string) => desc.trim() !== '')
-                          ? vehicle.jobDescription.join(', ')
-                          : '-'}
-                      </td>
-                      <td className="px-6 py-4">
-                        {vehicle.notes && vehicle.notes.trim() !== '' ? vehicle.notes : '-'}
-                      </td> */}
-                      <td>
-                        <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} >
-                          <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-                            data-tooltip-content="View" />
+        {/* Job List */}
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
+          <h3 className="font-bold text-gray-800 mb-4">Job List</h3>
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Id</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Price</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {Array.isArray(technician.jobs) && technician.jobs.length > 0 ? (
+                  technician.jobs.map((jobs: any, index: number) => (
+                    <tr key={index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap">{jobs.id || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap"><span className="capitalize">{jobs.jobName || '-'}</span></td>
+                      <td className="px-6 py-4 whitespace-nowrap">{jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/jobs/view?jobId=${jobs.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
+                          <Image alt="View" src={Eye} className="w-4 h-4  " />
                         </Link>
-                        <Tooltip id="view" place="top" />
                       </td>
                     </tr>
                   ))
-                )
-              ) : (
-                <tr>
-                  <td colSpan={7} className="text-center py-4 text-gray-500">
-                                       <Empty />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-
-          </table>
-        </div>
-        <ToastContainer />
-
-        {previewImage && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            onClick={() => setPreviewImage(null)} // Close on backdrop click
-          >
-            <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500"><Empty /></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+        <Tooltip id="view-job" place="top" />
 
-        <RejectReasonModal
-          isOpen={showRejectModal}
-          onClose={() => setShowRejectModal(false)}
-          technicianId={selectedTechId}
-          apiUrl={apiUrl}
-          onSuccess={handleRejectionSuccess}
-        />
+        {/* Vehicle List */}
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-4">
+          <h3 className="font-bold text-gray-800 mb-4">Vehicle List</h3>
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {technician?.jobs?.flatMap((job: any) => job.vehicles || []).length > 0 ? (
+                  technician.jobs.flatMap((job: any, jobIndex: number) =>
+                    (job.vehicles || []).map((vehicle: any, vehicleIndex: number) => (
+                      <tr key={`${jobIndex}-${vehicleIndex}`} className="hover:bg-gray-50/50">
+                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.jobName || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap"><span className="capitalize">{vehicle.vin || '-'}</span></td>
+                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.make || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.model || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.modelYear || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">${vehicle.labourCost || '-'}</td>
+                        <td className="px-6 py-4 text-right">
+                          <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
+                            <Image alt="View" src={Eye} className="w-4 h-4  " />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-gray-500"><Empty /></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <Tooltip id="view-vehicle" place="top" />
       </div>
-    </>
+
+      <ToastContainer />
+      {previewImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setPreviewImage(null)}>
+          <img src={previewImage} alt="Preview" className="max-w-[90%] max-h-[90%] rounded shadow-lg" />
+        </div>
+      )}
+      <RejectReasonModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        technicianId={selectedTechId}
+        apiUrl={apiUrl}
+        onSuccess={handleRejectionSuccess}
+      />
+    </div>
   );
 }

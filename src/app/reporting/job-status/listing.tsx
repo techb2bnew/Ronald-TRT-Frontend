@@ -666,7 +666,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
           { label: 'All Work Order List', href: '/vehicle/listing' }
         ]}
       />
-
+      <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
@@ -754,6 +754,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

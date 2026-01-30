@@ -529,7 +529,7 @@ const JobTable: React.FC = () => {
           { label: 'All Work Order List', href: '/vehicle/listing' }
         ]}
       />
-
+      <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" />
 
       <div className="overflow-auto rounded-md">
@@ -618,6 +618,7 @@ const JobTable: React.FC = () => {
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

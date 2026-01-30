@@ -11,7 +11,7 @@ const ViewDetails = dynamic(() => import('./view'), { ssr: false });
   return (
     <>
     <Suspense fallback={<div>Loading...</div>}>
-    <div className='container m-auto'> 
+    <div className='main-container'> 
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}>

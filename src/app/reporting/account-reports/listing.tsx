@@ -602,7 +602,7 @@ const JobTable: React.FC = () => {
           { label: 'Account Reports', href: '/reporting/account-reports' }
         ]}
       />
-
+      <div className="shadow-lg p-4 bg-white rounded-lg"> 
       <CommonHeader heading="Account Reports" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} showClearFilters={true} onClearFilters={handleClearFilters} />
 
@@ -688,6 +688,7 @@ const JobTable: React.FC = () => {
       {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

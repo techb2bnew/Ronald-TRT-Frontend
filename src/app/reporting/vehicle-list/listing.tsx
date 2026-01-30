@@ -388,6 +388,8 @@ const handleImportCSV = (file: File) => {
           { label: 'Vehicles List', href: '/reporting/vehicle-list' }
         ]}
       />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
+
       <CommonHeader heading="Vehicles List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='' buttonLabel="" buttonLink="" />
 
       <div className="overflow-auto rounded-md">
@@ -469,6 +471,7 @@ const handleImportCSV = (file: File) => {
       {activeJob.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>
     </div>
   );
 };

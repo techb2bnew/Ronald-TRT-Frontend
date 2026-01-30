@@ -648,7 +648,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
           { label: 'Jobs List', href: '/jobs/active-job' }
         ]}
       />
-
+      <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
         onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician" showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
 
@@ -731,6 +731,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
       {activeJob?.length > 0 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
+    </div>  
     </div>
   );
 };
