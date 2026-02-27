@@ -331,12 +331,12 @@ export default function ClientListing() {
       <tr key={cust.id}>
 
         <td>{cust.id}</td>
-        <td><Link className="hover:underline" href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>{cust.fullName || 'N/A'}  </Link></td>
+        <td><Link className="hover:underline" href={`/customer/view?customerId=${cust.id}&allTrtCustomer`}>{cust.fullName || 'N/A'}  </Link></td>
         <td> <a className="hover:underline" href={`mailto:${cust.email}`}>{cust.email || 'N/A'}</a></td>
         <td><a className="hover:underline" href={`tel:${cust.phoneNumber}`}>{cust.phoneNumber || 'N/A'}</a></td>
         <td>{cust.address || 'N/A'}</td>
         <td> 
-          <Link href={`/client/view?customerId=${cust.id}&allTrtCustomer`}>
+          <Link href={`/customer/view?customerId=${cust.id}&allTrtCustomer`}>
             <Image alt='eye' src={Eye} className='w-[16px]' />
           </Link>
         </td>
