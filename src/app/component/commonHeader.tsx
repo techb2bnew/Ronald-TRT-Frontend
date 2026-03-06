@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { addDays } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
@@ -737,6 +738,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                   moveRangeOnFirstSelection={false}
                   ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
                   rangeColors={["#383d71"]}
+                  locale={enUS}
                   months={2}
                   direction="horizontal"
                   showDateDisplay={false}

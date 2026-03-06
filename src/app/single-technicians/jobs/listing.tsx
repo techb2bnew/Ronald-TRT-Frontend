@@ -257,7 +257,7 @@ const JobTable: React.FC = () => {
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.join(''),
-        labourCost: jobData.labourCost,
+        'Vehicle Override Price': jobData.labourCost,
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -284,7 +284,7 @@ const JobTable: React.FC = () => {
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians',
-        'jobDescription', 'labourCost'
+        'jobDescription', 'Vehicle Override Price'
       ];
 
       Papa.parse(text, {
@@ -347,6 +347,8 @@ const JobTable: React.FC = () => {
               return {
                 ...row,
                 technicians,
+                labourCost: row['Vehicle Override Price'],      // CSV field → API field
+                'Vehicle Override Price': undefined,
                 jobDescription: jobDescriptions,
                 assignTechnicians: undefined, // cleanup unused field
               };
@@ -434,9 +436,9 @@ const JobTable: React.FC = () => {
   const handleNewJobClick = async (jobId: string, roleType: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-    console.log(jobId, 'jobId');  
- 
-     // Prepare the payload dynamically
+    console.log(jobId, 'jobId');
+
+    // Prepare the payload dynamically
     const payload = {
       roleType: roleType,  // Dynamic roleType from localStorage
       jobId: jobId,        // Dynamic jobId passed from the selected job 
@@ -526,11 +528,11 @@ const JobTable: React.FC = () => {
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
         <td>
-            {job.labourCost && job.labourCost !== '' 
-              ? `$${job.labourCost}`
-              : <span className="text-gray-400 text-sm">No price added</span>
-            }
-          </td>
+          {job.labourCost && job.labourCost !== ''
+            ? `$${job.labourCost}`
+            : <span className="text-gray-400 text-sm">No price added</span>
+          }
+        </td>
 
         <td>
           {canCreate && (
@@ -564,135 +566,135 @@ const JobTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)} />
+        <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)} />
 
-      <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
-          <thead>
-            <tr>
-              <th className="w-[35px]">
-                <label className="flex items-center cursor-pointer relative">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === activeJob.length}
-                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+        <div className="overflow-auto rounded-md">
+          <table className="table w-full table-fixed">
+            <thead>
+              <tr>
+                <th className="w-[35px]">
+                  <label className="flex items-center cursor-pointer relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === activeJob.length}
+                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
 
-                    onChange={() =>
-                      setSelectedIds(
-                        selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
-                      )
-                    }
-                  />
-                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </span>
-                </label>
-              </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+                      onChange={() =>
+                        setSelectedIds(
+                          selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                        )
+                      }
+                    />
+                    <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                      </svg>
+                    </span>
+                  </label>
+                </th>
+                <th className="w-[100px]" onClick={() => handleSort('id')}>
                   ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[140px]" onClick={() => handleSort('jobName')}>
-                Job Title
-                {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
+                  {sortBy === 'id' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[140px]" onClick={() => handleSort('jobName')}>
+                  Job Title
+                  {sortBy === 'jobName' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
 
-              <th className="w-[150px]" onClick={() => handleSort('fullName')}>
-                Customer Name
-                {sortBy === 'fullName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              {/* <th className="w-[120px]">
+                <th className="w-[150px]" onClick={() => handleSort('fullName')}>
+                  Customer Name
+                  {sortBy === 'fullName' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
-              <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
-                Technician Name
-                {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[140px]" onClick={() => handleSort('vin')}>
-                VIN
-                {sortBy === 'vin' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[80px]" onClick={() => handleSort('make')}>
-                Make
-                {sortBy === 'make' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[80px]" onClick={() => handleSort('model')}>
-                Model
-                {sortBy === 'model' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[80px]" onClick={() => handleSort('modelYear')}>
-                Year
-                {sortBy === 'modelYear' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
-                Vehicle Override Price
-                {sortBy === 'labourCost' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th className="w-[120px]">Status</th>
-              <th className="w-[100px]">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={12} className="text-center py-10">
-                  <Loader />
-                </td>
+                <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
+                  Technician Name
+                  {sortBy === 'technicianName' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[140px]" onClick={() => handleSort('vin')}>
+                  VIN
+                  {sortBy === 'vin' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[80px]" onClick={() => handleSort('make')}>
+                  Make
+                  {sortBy === 'make' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[80px]" onClick={() => handleSort('model')}>
+                  Model
+                  {sortBy === 'model' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[80px]" onClick={() => handleSort('modelYear')}>
+                  Year
+                  {sortBy === 'modelYear' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
+                  Vehicle Override Price
+                  {sortBy === 'labourCost' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
+                <th className="w-[120px]">Status</th>
+                <th className="w-[100px]">Action</th>
               </tr>
-            ) : activeJob.length === 0 ? (
-              <tr>
-                <td colSpan={12} className="text-center py-10">
-                  <Empty />
-                </td>
-              </tr>
-            ) : (
-              activeJob.map((job) => renderRow(job))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={12} className="text-center py-10">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : activeJob.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="text-center py-10">
+                    <Empty />
+                  </td>
+                </tr>
+              ) : (
+                activeJob.map((job) => renderRow(job))
+              )}
+            </tbody>
+          </table>
+        </div>
+        {activeJob.length > 0 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
       </div>
-      {activeJob.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )}
-    </div>
     </div>
   );
 };
