@@ -162,9 +162,35 @@ const JobTable: React.FC = () => {
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
       if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
+        const getTechName = (job: any) => {
+          const firstAssigned = job?.assignedTechnicians?.[0];
+          const tech = firstAssigned || job?.technician;
+          return `${tech?.firstName || ''} ${tech?.lastName || ''}`.trim();
+        };
+        const nameF = getTechName(a);
+        const nameL = getTechName(b);
         return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
+      }
+      if (column === 'modelYear') {
+        const yearA = Number(a?.modelYear ?? 0);
+        const yearB = Number(b?.modelYear ?? 0);
+        return direction === 'asc' ? yearA - yearB : yearB - yearA;
+      }
+      if (column === 'labourCost') {
+        const parseCost = (val: any) => {
+          if (val === null || val === undefined || val === '') return Number.NaN;
+          const num = Number(String(val).replace(/[^0-9.-]+/g, ''));
+          return Number.isFinite(num) ? num : Number.NaN;
+        };
+        const costA = parseCost(a?.labourCost);
+        const costB = parseCost(b?.labourCost);
+
+        const aHas = Number.isFinite(costA);
+        const bHas = Number.isFinite(costB);
+        if (aHas !== bHas) return aHas ? -1 : 1; // keep "no price" at bottom
+        if (!aHas && !bHas) return 0;
+
+        return direction === 'asc' ? costA - costB : costB - costA;
       }
 
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
@@ -592,14 +618,54 @@ const JobTable: React.FC = () => {
               {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
-              <th className="w-[150px]" >
+              <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
+                {sortBy === 'technicianName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
-              <th className="w-[140px]">VIN</th>
-              <th className="w-[80px]">Make</th>
-              <th className="w-[80px]">Model</th>
-              <th className="w-[80px]">Year</th>
-              <th className="w-[120px]">Vehicle Override Price</th>
+              <th className="w-[140px]" onClick={() => handleSort('vin')}>
+                VIN
+                {sortBy === 'vin' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[80px]" onClick={() => handleSort('make')}>
+                Make
+                {sortBy === 'make' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[80px]" onClick={() => handleSort('model')}>
+                Model
+                {sortBy === 'model' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[80px]" onClick={() => handleSort('modelYear')}>
+                Year
+                {sortBy === 'modelYear' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
+                Vehicle Override Price
+                {sortBy === 'labourCost' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>

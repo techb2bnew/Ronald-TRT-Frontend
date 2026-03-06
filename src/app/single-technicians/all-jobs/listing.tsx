@@ -160,6 +160,28 @@ const JobTable: React.FC = () => {
         const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
         return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
       }
+      if (column === 'vehicleCount') {
+        const countA = Number(a?.vehicleCount ?? 0);
+        const countB = Number(b?.vehicleCount ?? 0);
+        return direction === 'asc' ? countA - countB : countB - countA;
+      }
+      if (column === 'estimatedCost') {
+        const parseCost = (val: any) => {
+          if (val === null || val === undefined || val === '') return Number.NaN;
+          const num = Number(String(val).replace(/[^0-9.-]+/g, ''));
+          return Number.isFinite(num) ? num : Number.NaN;
+        };
+        const costA = parseCost(a?.estimatedCost);
+        const costB = parseCost(b?.estimatedCost);
+
+        // Keep "no price" rows at the bottom for both directions
+        const aHas = Number.isFinite(costA);
+        const bHas = Number.isFinite(costB);
+        if (aHas !== bHas) return aHas ? -1 : 1;
+        if (!aHas && !bHas) return 0;
+
+        return direction === 'asc' ? costA - costB : costB - costA;
+      }
 
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
@@ -697,19 +719,41 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
                   </span>
                 )}
               </th>
-              <th className="w-[160px]">
+              <th className="w-[160px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-
+                {sortBy === 'customerName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
-                <th className="w-[150px]">
+                <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
-
+                {sortBy === 'technicianName' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
-              <th className="w-[150px]">Vehicle / Work Order</th>
+              <th className="w-[150px]" onClick={() => handleSort('vehicleCount')}>
+                Vehicle / Work Order
+                {sortBy === 'vehicleCount' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
               {/* <th className="w-[100px]">Sub Total Cost</th>*/}
               <th className="w-[120px]">Start Date</th>
               <th className="w-[120px]">End Date</th>
-              <th className="w-[120px]">Vehicle Price</th>
+              <th className="w-[120px]" onClick={() => handleSort('estimatedCost')}>
+                Vehicle Price
+                {sortBy === 'estimatedCost' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
             </tr>

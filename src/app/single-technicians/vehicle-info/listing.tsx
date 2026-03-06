@@ -131,6 +131,16 @@ const VehicleTable: React.FC = () => {
         const nameB = `${b?.customer?.fullName}`;
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
+      if (column === 'customerEmail') {
+        const emailA = `${a?.customer?.email || ''}`.toLowerCase();
+        const emailB = `${b?.customer?.email || ''}`.toLowerCase();
+        return direction === 'asc' ? emailA.localeCompare(emailB) : emailB.localeCompare(emailA);
+      }
+      if (column === 'modelYear') {
+        const yearA = Number(a?.modelYear ?? 0);
+        const yearB = Number(b?.modelYear ?? 0);
+        return direction === 'asc' ? yearA - yearB : yearB - yearA;
+      }
       if (column === 'technicianName') {
         const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
         const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
@@ -419,11 +429,21 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-               <th className="w-[120px]">
+              <th className="w-[120px]" onClick={() => handleSort('customerEmail')}>
                 Customer Email
+                {sortBy === 'customerEmail' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
-              <th className="w-[150px]">
+              <th className="w-[150px]" onClick={() => handleSort('vin')}>
                 VIN
+                {sortBy === 'vin' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
               {/* <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
@@ -436,14 +456,38 @@ const VehicleTable: React.FC = () => {
               <th className="w-[150px]">
                 Technicians Name
               </th> */}
-              <th className="w-[120px]">
+              <th className="w-[120px]" onClick={() => handleSort('vehicleDescriptor')}>
                 Vehicle Descriptor
+                {sortBy === 'vehicleDescriptor' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>   
-              <th className="w-[100px]">
+              <th className="w-[100px]" onClick={() => handleSort('make')}>
                 Make
+                {sortBy === 'make' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
-              <th className="w-[80px]">Model</th>
-              <th className="w-[60px]">Year</th>
+              <th className="w-[80px]" onClick={() => handleSort('model')}>
+                Model
+                {sortBy === 'model' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
+              <th className="w-[60px]" onClick={() => handleSort('modelYear')}>
+                Year
+                {sortBy === 'modelYear' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
               {/* <th className="w-[50px]">Color</th> */}
               <th className="w-[60px]">Action</th>
             </tr>

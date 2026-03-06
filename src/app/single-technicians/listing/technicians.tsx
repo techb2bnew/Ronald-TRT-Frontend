@@ -328,6 +328,33 @@ const TechnicianTable: React.FC = () => {
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
       }
+      if (column === 'phoneNumber') {
+        const normalizePhone = (val: any) => String(val ?? '').replace(/\D+/g, '');
+        const phoneA = normalizePhone(a?.phoneNumber);
+        const phoneB = normalizePhone(b?.phoneNumber);
+        // If both are numeric-ish, compare as numbers; else string compare
+        if (phoneA && phoneB) {
+          if (phoneA.length === phoneB.length) {
+            return direction === 'asc' ? phoneA.localeCompare(phoneB) : phoneB.localeCompare(phoneA);
+          }
+          return direction === 'asc' ? phoneA.length - phoneB.length : phoneB.length - phoneA.length;
+        }
+        return direction === 'asc'
+          ? String(a?.phoneNumber ?? '').localeCompare(String(b?.phoneNumber ?? ''))
+          : String(b?.phoneNumber ?? '').localeCompare(String(a?.phoneNumber ?? ''));
+      }
+      if (column === 'totalJobs') {
+        const countA = a?.jobs?.length || 0;
+        const countB = b?.jobs?.length || 0;
+        return direction === 'asc' ? countA - countB : countB - countA;
+      }
+      if (column === 'totalWorkOrder') {
+        const getTotalWorkOrders = (tech: any) =>
+          tech?.jobs?.reduce((total: number, job: any) => total + (job?.vehicles?.length || 0), 0) || 0;
+        const countA = getTotalWorkOrders(a);
+        const countB = getTotalWorkOrders(b);
+        return direction === 'asc' ? countA - countB : countB - countA;
+      }
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
       return 0;
@@ -695,17 +722,26 @@ const TechnicianTable: React.FC = () => {
               </th>
             );
           }
-          const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status', 'account status', 'action'];
+
+          const headerToSortKey: Record<string, string> = {
+            'ID': 'id',
+            'Name': 'name',
+            'Email': 'email',
+            'Phone Number': 'phoneNumber',
+            'Total Jobs': 'totalJobs',
+            'Total Work Order': 'totalWorkOrder', 
+          };
+          const sortKey = headerToSortKey[header];
+          const isSortable = Boolean(sortKey);
 
           return (
             <th
               key={index}
               className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}  ${index === 8 ? 'w-[170px]' : ''}`}
-              onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
+              onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}
-              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
+              {isSortable && sortBy === sortKey && (
                 <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                   {sortDirection === 'asc' ? '▲' : '▼'}
                 </span>
