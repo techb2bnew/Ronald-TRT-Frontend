@@ -42,6 +42,7 @@ const JobTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [roleType, setRoleType] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
 
   useEffect(() => {
@@ -85,15 +86,16 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
+      const customerParam = selectedCustomerId ? `&customerId=${encodeURIComponent(selectedCustomerId)}` : '';
 
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'superadmin' || roleType === 'manager'
-          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}`
-          : `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}`
+          ? `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}${customerParam}`
+          : `/api/jobListing?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&limit=${limit}&page=${page}${customerParam}`
         : roleType === 'superadmin'
-          ? `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}`
-          : `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}`;
+          ? `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}${customerParam}`
+          : `/api/jobListing?page=${page}&roleType=single-technician&limit=${limit}${customerParam}`;
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
 
@@ -134,7 +136,7 @@ const JobTable: React.FC = () => {
       fetchTech(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
+  }, [currentPage, searchTerm, pageSize, selectedCustomerId]);
 
 
 
@@ -640,7 +642,10 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
     }
   };
 
-
+  const handleCustomerChange = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setCurrentPage(1);
+  };
   return (
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
@@ -650,7 +655,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician" showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
+        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"  onCustomerChange={(customerId) => handleCustomerChange(customerId)} showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

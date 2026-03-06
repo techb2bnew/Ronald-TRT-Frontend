@@ -38,6 +38,7 @@ const JobTable: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
@@ -88,14 +89,16 @@ const JobTable: React.FC = () => {
 
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const customerParam = selectedCustomerId ? `&customerId=${encodeURIComponent(selectedCustomerId)}` : '';
+
       // Build the endpoint with the current page and page size
       const endpoint = query.trim()
         ? roleType === 'single-technician'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${customerParam}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${customerParam}`
         : roleType === 'single-technician'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${customerParam}`
+          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${customerParam}`;
 
 
       console.log('Fetching API with endpoint:', endpoint);  // Debugging endpoint
@@ -134,7 +137,12 @@ const JobTable: React.FC = () => {
       fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
+  }, [currentPage, searchTerm, pageSize, selectedCustomerId]);
+
+  const handleCustomerChange = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setCurrentPage(1);
+  };
 
 
 
@@ -530,7 +538,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" />
+      <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink=""  onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)} />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

@@ -46,6 +46,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
+  const customerSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedCustomerLabel, setSelectedCustomerLabel] = useState<string>('');
 
   // Close date picker when clicking outside
   useEffect(() => {
@@ -82,6 +86,30 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [searchValue, setSearchValue] = useState("");
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isCustomerSearching, setIsCustomerSearching] = useState<boolean>(false);
+
+  // Close customer dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target as Node)) {
+        setIsCustomerDropdownOpen(false);
+        if (customerSearchTerm.trim()) {
+          setCustomerSearchTerm('');
+          setIsCustomerSearching(false);
+          setCustomer([]);
+          setPage(1);
+          fetchCustomer(1, effectiveRoleType);
+        }
+      }
+    };
+
+    if (isCustomerDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCustomerDropdownOpen, customerSearchTerm, effectiveRoleType]);
 
   const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
     startDate: null,
@@ -224,24 +252,47 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const fetchCustomer = async (page = 1, passedRoleType: string) => {
     try {
       const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userID');
-      const roleType = localStorage.getItem('types');
+      // const userId = localStorage.getItem('userID');
+      const roleTypeFromStorage = localStorage.getItem('types') || '';
+      const role = passedRoleType || roleTypeFromStorage;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-      const response = await fetch(`/api/fetchJobCustomerTechnician?endpoint=fetchCustomer&userId=${userId}&roleType=${roleType}&page=${page}`, {
+      // For single-technician dropdown: show ALL customers
+      const limit = 1000;
+      const url =
+        role === 'single-technician'
+          ? `${apiUrl}/fetchAllCustomer?page=${page}&limit=${limit}&roleType=single-technician`
+          : `/api/fetchJobCustomerTechnician?endpoint=fetchCustomer&roleType=${encodeURIComponent(role)}&page=${page}`;
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
+
+      const newCustomers =
+        role === 'single-technician'
+          ? (data?.customers?.customers || data?.customers || data?.data?.customers || [])
+          : (data?.customers?.customers || []);
+
       setCustomer((prevCustomers) => {
-        const newCustomers = data.customers?.customers || [];
         const uniqueCustomers = [...prevCustomers];
 
-        newCustomers.forEach((customer: any) => {
-          if (!uniqueCustomers.some(c => c.id === customer.id)) {
-            uniqueCustomers.push(customer);
-          }
-        });
+        if (Array.isArray(newCustomers)) {
+          newCustomers.forEach((customer: any) => {
+            if (customer?.id && !uniqueCustomers.some(c => c.id === customer.id)) {
+              uniqueCustomers.push(customer);
+            }
+          });
+        }
+
+        // If we asked for "all" in a single request, stop paginating.
+        if (role === 'single-technician') {
+          setHasMore(Array.isArray(newCustomers) ? newCustomers.length >= limit : false);
+        } else {
+          setHasMore(Array.isArray(newCustomers) ? newCustomers.length > 0 : false);
+        }
 
         return uniqueCustomers;
       });
@@ -363,19 +414,29 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     try {
       setIsCustomerSearching(true);
       const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userID');
+      // const userId = localStorage.getItem('userID');
       const roleType = localStorage.getItem('types');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(searchValue)}&roleType=${roleType}`, {
+
+      const params = new URLSearchParams();
+      params.set('searchQuery', searchValue);
+      params.set('roleType', effectiveRoleType || roleType || 'single-technician');
+      // keep userId as optional (some backends ignore it for single-technician)
+      // if (userId) params.set('userId', userId);
+
+      const response = await fetch(`${apiUrl}/searchCustomers?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         }
       });
       const data = await response.json();
-      if (data.status && data.customers) {
-        setCustomer(data.customers);
-      }
+      console.log(data,'datadata')
+
+      const results = data?.customers || data?.data?.customers || [];
+      console.log(results,'resultsresultsresults')
+      if (Array.isArray(results)) setCustomer(results);
+      setHasMore(false);
     } catch (error) {
       console.error('Error searching customers:', error);
     }
@@ -384,7 +445,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const handleCustomerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCustomerSearchTerm(value);
-    searchCustomers(value);
+    if (customerSearchDebounceRef.current) clearTimeout(customerSearchDebounceRef.current);
+    customerSearchDebounceRef.current = setTimeout(() => {
+      searchCustomers(value);
+    }, 350);
   };
 
   const handleTechScroll = (e: any) => {
@@ -418,13 +482,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     }
   };
 
-  const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setCustomerFilter(value);
-    setSelectedCustomerId(value);
+  const applyCustomerSelection = async (customerId: string, customerName?: string) => {
+    setCustomerFilter(customerId);
+    setSelectedCustomerId(customerId);
+    setSelectedCustomerLabel(customerName || '');
 
-    if (value) {
-      const { jobs } = await fetchCustomerData(value);
+    if (customerId) {
+      const { jobs } = await fetchCustomerData(customerId);
       setCustomerJobs(jobs);
     } else {
       setCustomerJobs([]); // Reset customer jobs if no customer is selected
@@ -432,8 +496,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
     // Trigger the customer change event
     if (onCustomerChange) {
-      onCustomerChange(value, 'single-technician'); // Pass the customer ID and role type
+      onCustomerChange(customerId, 'single-technician'); // Pass the customer ID and role type
     }
+  };
+  const handleCustomerFilterChange = async (event: SelectChangeEvent<string>) => {
+    const value = event.target.value;
+    await applyCustomerSelection(value);
   };
 
   const handleClearFilters = async () => { 
@@ -442,6 +510,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     settechFilter("");
     setSelectedJobId("");
     setSelectedCustomerId("");
+    setSelectedCustomerLabel("");
     setSelectedTechId("");
     setSearchValue("");    
     onSearch?.("");
@@ -497,30 +566,74 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           )}
 
           {onCustomerChange && (
-            <select
-              id="select-assignCustomer"
-              name="assignCustomer"
-              value={customerFilter}
-              onChange={(e) => handleCustomerFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
-              onFocus={() => {
-                if (customer.length === 0) {
-                  fetchCustomer(1, effectiveRoleType);
-                }
-              }}
-              className="w-[150px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
-            >
-              <option value="">Select customer</option>
-              {customer.length > 0 ? (
-                customer.map((cust) => (
-                  <option key={`${cust.id}-${cust.fullName}`} value={cust.id}>
-                    {cust.fullName}
-                  </option>
-                ))
-              ) : (
-                <option value="" disabled>No customer found</option>
+            <div className="relative" ref={customerDropdownRef}>
+              <button
+                type="button"
+                className="w-[190px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+                onClick={() => {
+                  const next = !isCustomerDropdownOpen;
+                  setIsCustomerDropdownOpen(next);
+                  if (next && customer.length === 0) {
+                    setCustomer([]);
+                    setPage(1);
+                    fetchCustomer(1, effectiveRoleType);
+                  }
+                }}
+              >
+                {customerFilter ? (selectedCustomerLabel || 'Selected customer') : 'Select customer'}
+              </button>
+
+              {isCustomerDropdownOpen && (
+                <div className="absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <div className="p-2 border-b border-gray-100">
+                    <input
+                      value={customerSearchTerm}
+                      onChange={handleCustomerSearchChange}
+                      placeholder="Search customer..."
+                      className="w-full h-[38px] px-3 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div
+                    className="max-h-[260px] overflow-auto"
+                    onScroll={handleScroll}
+                  >
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${customerFilter === '' ? 'bg-gray-50' : ''}`}
+                      onClick={async () => {
+                        await applyCustomerSelection('', '');
+                        setIsCustomerDropdownOpen(false);
+                      }}
+                    >
+                      All customers
+                    </button>
+
+                    {customer.length > 0 ? (
+                      customer.map((cust) => (
+                        <button
+                          key={`cust-${cust.id}`}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${cust.id === customerFilter ? 'bg-gray-50' : ''}`}
+                          onClick={async () => {
+                            await applyCustomerSelection(cust.id, cust.fullName || `${cust.firstName || ''} ${cust.lastName || ''}`.trim());
+                            setIsCustomerDropdownOpen(false);
+                          }}
+                        >
+                          {cust.fullName || `${cust.firstName || ''} ${cust.lastName || ''}`.trim() || `#${cust.id}`}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-gray-500">
+                        {customerSearchTerm.trim() ? 'No customer found' : 'Loading customers...'}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </select>
+            </div>
           )}
 
 

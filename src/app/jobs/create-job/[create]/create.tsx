@@ -426,7 +426,7 @@ export default function JobForm() {
           router.push('/jobs/active-job');
         }
       } else {
-        toast.error(result.error || 'Error saving job');
+        toast.error(result.message || result.error || 'Error saving job');
       }
     } catch (error) {
       console.error('Error saving job:', error);

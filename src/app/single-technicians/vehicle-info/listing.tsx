@@ -43,6 +43,7 @@ const VehicleTable: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
   const handleDeleteSuccess = (deletedId: string) => {
     // toast.success('Technician deleted successfully');
@@ -58,15 +59,16 @@ const VehicleTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
+      const customerParam = selectedCustomerId ? `&customerId=${encodeURIComponent(selectedCustomerId)}` : '';
 
 
       const endpoint = query.trim()
         ? roleType === 'single-technician'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${customerParam}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${customerParam}`
         : roleType === 'single-technician'
-          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
+          ? `${apiUrl}/fetchVehicalInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${customerParam}`
+          : `${apiUrl}/fetchVehicalInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${customerParam}`;
 
 
 
@@ -100,7 +102,7 @@ const VehicleTable: React.FC = () => {
       fetchJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
+  }, [currentPage, searchTerm, pageSize, selectedCustomerId]);
 
   const handlePageSizeChange = (size: number) => {
     // Calculate the total number of pages based on the current totalJobs and the new pageSize
@@ -306,6 +308,11 @@ const VehicleTable: React.FC = () => {
     );
   };
 
+  const handleCustomerChange = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setCurrentPage(1);
+  };
+
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
     return (
@@ -371,7 +378,7 @@ const VehicleTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" />
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}/>
  
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

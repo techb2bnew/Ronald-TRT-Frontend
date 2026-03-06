@@ -17,12 +17,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userId: rawUserId,
       limit: rawLimit = '10',
       page: rawPage = '1',
+      customerId: rawCustomerId,
     } = req.query;
 
     // Normalize query params to single strings
     const searchQuery = toSingleString(rawSearchQuery);
     const roleType = toSingleString(rawRoleType);
     const userId = toSingleString(rawUserId);
+    const customerId = toSingleString(rawCustomerId);
     const limit = toSingleString(rawLimit);
     const page = toSingleString(rawPage);
 
@@ -43,7 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `${apiBaseUrl}/searchTechnicianActiveJob?searchQuery=${encodeURIComponent(searchQuery)}` +
         `&roleType=${encodeURIComponent(roleType)}` +
         `&limit=${encodeURIComponent(limit)}` +
-        `&page=${encodeURIComponent(page)}`;
+        `&page=${encodeURIComponent(page)}` + 
+        `&customerId=${encodeURIComponent(customerId)}`;
 
       if (roleType !== 'superadmin' && roleType !== 'manager' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
@@ -53,7 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       backendUrl =
         `${apiBaseUrl}/fetchAllJobs?roleType=${encodeURIComponent(roleType)}` +
         `&limit=${encodeURIComponent(limit)}` +
-        `&page=${encodeURIComponent(page)}`;
+        `&page=${encodeURIComponent(page)}` +
+        `&customerId=${encodeURIComponent(customerId)}` ;
 
       if (roleType !== 'superadmin' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
