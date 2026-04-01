@@ -405,7 +405,8 @@ export default function JobForm() {
     if (others.length > 0) {
       const firstOther = others[0];
       next[firstOther] = Number(((next[firstOther] || 0) + diff).toFixed(2));
-    }
+    } 
+    console.log('next', next);
     return next;
   };
 
@@ -1287,7 +1288,7 @@ export default function JobForm() {
                                 tabIndex={-1}
                                 disableRipple
                               />
-                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (R/I/R/R)`} />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (RR/I/R)`} />
                               {isSelected && (
                                 <TextField
                                   size="small"
