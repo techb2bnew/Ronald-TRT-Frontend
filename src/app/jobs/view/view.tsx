@@ -6,7 +6,7 @@ import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
@@ -224,6 +224,16 @@ export default function ViewDetails() {
               value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.customer?.phoneNumber}`}>{jobData?.customer?.phoneNumber || 'N/A'}</a>}
             />
             <InfoCard
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+              label="Manager Name"
+              value={<span className="capitalize">{`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}</span>}
+            />
+            <InfoCard
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
+              label="Manager Ph. Number"
+              value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.manager?.phoneNumber}`}>{jobData?.manager?.phoneNumber || 'N/A'}</a>}
+            />
+            <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="Start Date"
               value={jobData?.startDate ? new Date(jobData.startDate).toLocaleDateString() : '–'}
@@ -233,11 +243,11 @@ export default function ViewDetails() {
               label="End Date"
               value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : '–'}
             />
-            <InfoCard
+            {/* <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
               label="Vehicle Price"
               value={`$${jobData?.estimatedCost ?? '0'}`}
-            />
+            /> */}
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
               label="Created By"
@@ -248,11 +258,48 @@ export default function ViewDetails() {
               label="Estimated By"
               value={jobData?.estimatedBy || '–'}
             />
+            {jobData?.vehicleTypePricing && (
             <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-              label="Notes"
-              value={jobData?.notes || '–'}
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1a5.002 5.002 0 01-4.546-2.916M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              label="Vehicle Type Pricing"
+              value={
+                Array.isArray(jobData?.vehicleTypePricing) && jobData.vehicleTypePricing.length > 0 ? (
+                  <div className="space-y-1 grid grid-cols-3">
+                    {jobData.vehicleTypePricing.map((item: any, index: number) => (
+                      <div key={`${item?.vehicleType || 'type'}-${index}`} className="text-sm">
+                        <span className="font-medium">{item?.vehicleType || 'Vehicle'}</span>: ${item?.amount ?? 0}
+                      </div>
+                    ))}
+                  </div>
+                ) : '–'
+              }
             />
+            )}
+            {jobData?.insurancePercentage && (
+            <InfoCard
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11h10M7 15h6M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012.172 3H11.83a2 2 0 00-1.414.586l-.828.828A2 2 0 018.172 5H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+              label="Insurance Percentage"
+              value={jobData?.insurancePercentage ? `${jobData.insurancePercentage}%` : '–'}
+            />
+            )}
+            {jobData?.insuranceFile && (
+            <InfoCard
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.656-5.656L5.757 10.76a6 6 0 108.486 8.485L20.5 13" /></svg>}
+              label="Insurance File"
+              value={
+                jobData?.insuranceFile ? (
+                  <a
+                    href={jobData.insuranceFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#383d71] hover:underline break-all"
+                  >
+                    View Insurance File
+                  </a>
+                ) : '–'
+              }
+            />
+            )}
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>}
               label="Job Status"
@@ -261,6 +308,11 @@ export default function ViewDetails() {
                   {jobData?.jobStatus ? 'Completed' : 'Inprogress'}
                 </span>
               }
+            />
+              <InfoCard
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+              label="Notes"
+              value={jobData?.notes || '–'}
             />
           </div>
         </div>

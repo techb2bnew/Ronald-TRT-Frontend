@@ -6,7 +6,7 @@
 // import Breadcrumb from "@/app/component/breadcrumb";
 // import { capitalize, TextField } from "@mui/material";
 // import { Tooltip } from 'react-tooltip';
-// import 'react-tooltip/dist/react-tooltip.css';
+//  
 // import Link from "next/link";
 // import Image from "next/image";
 // import Edit from "../../../../../public/edit.svg";
@@ -772,7 +772,7 @@ import Loading from "@/app/component/loader";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { capitalize, TextField } from "@mui/material";
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import Link from "next/link";
 import Image from "next/image";
 import Edit from "../../../../../public/edit.svg";

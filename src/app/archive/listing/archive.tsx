@@ -12,7 +12,7 @@ import Eye from '../../../../public/eye.svg'
 import Link from 'next/link';
 import Image from 'next/image';
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { ExportToCsv } from 'export-to-csv-file';

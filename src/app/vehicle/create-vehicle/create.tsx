@@ -14,7 +14,7 @@ import Delete from '../../../../public/delete.svg'
 import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Scanner from '../../jobs/create-job/[create]/scanner'
@@ -23,7 +23,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs'; 
+import dayjs from 'dayjs';
 
 // import { CKEditor } from '@ckeditor/ckeditor5-react'; 
 // import type { Editor } from '@ckeditor/ckeditor5-core';
@@ -186,6 +186,7 @@ export default function Technicians() {
 
   // Function to toggle visibility
   const [CustomerData, setCustomerData] = useState<any>(null);
+  const [selectedCustomerJobType, setSelectedCustomerJobType] = useState<string>('');
   const toggleVisibility = () => setIsVisible(prevState => !prevState);
 
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
@@ -1437,7 +1438,7 @@ export default function Technicians() {
     if (descriptionCostFields.length > 1) {
       const updatedFields = descriptionCostFields.filter((_, i) => i !== index);
       setDescriptionCostFields(updatedFields);
-      
+
       // Also update formData
       setFormData((prev) => ({
         ...prev,
@@ -1563,7 +1564,7 @@ export default function Technicians() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
- 
+
       const response = await fetch(
         `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
         {
@@ -1576,9 +1577,10 @@ export default function Technicians() {
 
       if (response.ok) {
         // Return both jobs and all technicians (we'll filter later when job is selected)
+        const jobs = data.jobs || [];
         return {
-          jobs: data.jobs || [],
-          allTechnicians: data.jobs?.flatMap((job: any) => job.technicians) || []
+          jobs,
+          allTechnicians: jobs?.flatMap((job: any) => job.technicians) || [],
         };
       } else {
         toast.error(data.error || 'Error fetching customer data');
@@ -1597,6 +1599,7 @@ export default function Technicians() {
 
     setJobNames(jobs); // Update available jobs for the customer
     setTechnicians([]); // Clear previous technician list
+    setSelectedCustomerJobType('');
 
     // Optionally, store all technicians in state for later filtering
     setAllTechnicians(allTechnicians);  // Store all technicians globally
@@ -1613,6 +1616,8 @@ export default function Technicians() {
     if (selectedJob) {
       setJobId(selectedJob.id);
       localStorage.setItem('jobId', selectedJob.id.toString());
+      const selectedJobType = (selectedJob as any)?.job_type || (selectedJob as any)?.jobType || '';
+      setSelectedCustomerJobType(String(selectedJobType).toLowerCase());
 
       // Safely handle the technicians array and ensure no duplicates
       const jobTechnicians = selectedJob.technicians
@@ -1652,6 +1657,7 @@ export default function Technicians() {
       });
     } else {
       // If no job selected, clear everything
+      setSelectedCustomerJobType('');
       setTechnicians([]);
       setJobForms(prev => {
         const updatedForms = [...prev];
@@ -1728,7 +1734,7 @@ export default function Technicians() {
                         setCustomerSearchTerm('');
                       }}
                     >
-                      <div 
+                      <div
                         style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
                         onKeyDown={(e) => e.stopPropagation()}
                       >
@@ -2095,9 +2101,27 @@ export default function Technicians() {
                     </div>
                   )} */}
                 </div>
-                {/* Client Name and Business Name */}
 
-
+                {selectedCustomerJobType !== 'flat_rate' && selectedCustomerJobType !== 'flatrate' && (
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Insurance Calculated Price ($)"
+                    size="small"
+                    color="warning"
+                    value={formData.insuranceCalculatedPrice}
+                    onChange={(e) => {
+                      setFormData({ ...formData, insuranceCalculatedPrice: e.target.value });
+                      if (e.target.value.trim()) {
+                        setErrors(prev => ({ ...prev, insuranceCalculatedPrice: '' }));
+                      }
+                    }}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      maxLength: 8,
+                    }}
+                  />
+                )}
               </div>
 
               <h2 className='text-md font-bold'>Work Description</h2>

@@ -6,7 +6,7 @@ import Edit from "../../../public/edit.svg";
 import Eye from "../../../public/eye.svg";
 import Delete from "../../../public/delete.svg";
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 
 interface TableActionsProps {
   editRoute: string;

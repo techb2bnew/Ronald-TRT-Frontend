@@ -14,7 +14,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import Papa from 'papaparse';
 import Link from 'next/link';
 
@@ -509,8 +509,7 @@ const JobTable: React.FC = () => {
         )}
         <td>{job.vehicleCount || 0}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
-        <td>${job.estimatedCost || '0'}</td>
+        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td> 
         <td>
           {canCreate && (
             <span
@@ -658,8 +657,7 @@ const JobTable: React.FC = () => {
                 <th className="w-[150px]">Vehicle / Work Order</th>
                 {/* <th className="w-[100px]">Sub Total Cost</th>*/}
                 <th className="w-[120px]">Start Date</th>
-                <th className="w-[120px]">End Date</th>
-                <th className="w-[120px]">Job Estimate</th>
+                <th className="w-[120px]">End Date</th> 
                 <th className="w-[120px]">Status</th>
                 <th className="w-[100px]">Action</th>
               </tr>
@@ -667,24 +665,19 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 10} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 10} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
               ) : (
                 activeJob.map((job) => renderRow(job))
-              )}
-              <td colSpan={roleType === 'single-technician' ? 8 : 9} className='text-right font-semibold'>
-                <span className={roleType === 'single-technician' ? 'pr-[50px]' : 'pr-[50px]'}>
-                  Total: ${totalExpense}
-                </span>
-              </td>
+              )} 
             </tbody>
           </table>
         </div>

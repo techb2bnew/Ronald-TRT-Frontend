@@ -14,7 +14,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';

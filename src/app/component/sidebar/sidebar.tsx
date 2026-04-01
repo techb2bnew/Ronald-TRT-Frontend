@@ -440,7 +440,7 @@ const Sidebar = () => {
                   <Link onClick={handleNavItemClick} href="/vehicle/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/vehicle/listing' || activeLink === '/vehicle/create-vehicle' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
-                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
+                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
                       <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
@@ -672,7 +672,7 @@ const Sidebar = () => {
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-info" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/reporting/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
-                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
+                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
                       <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
@@ -704,7 +704,7 @@ const Sidebar = () => {
                   <Link onClick={handleNavItemClick} href="/reporting/vehicle-list" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/reporting/vehicle-list' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
-                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
+                      <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
                       <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
@@ -1020,7 +1020,7 @@ const Sidebar = () => {
                     <Link onClick={handleNavItemClick} href="/single-technicians/vehicle-info" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/vehicle-info' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#FFFFFF" strokeWidth="2" />
-                        <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" stroke-linejoin="round" />
+                        <path d="M14 9h4l2 3v3h-6V9z" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
                         <circle cx="7" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                         <circle cx="17" cy="17" r="1.5" stroke="#FFFFFF" strokeWidth="2" />
                       </svg>

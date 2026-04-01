@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+ 
 import { useSidebar } from '@/app/component/SidebarContext';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';

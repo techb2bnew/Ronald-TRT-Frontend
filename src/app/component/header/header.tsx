@@ -112,7 +112,7 @@ export default function Header() {
     <header className="bg-white shadow-md   flex justify-between items-center border-[#383d71] border-b-[1px]">
       {/* <h1 className={`text-xl font-bold transition-all duration-300 capitalize ${isCollapsed ? '' : ''}`}> <i>Hi, {technician?.firstName} {technician?.lastName} </i>
       </h1> */}
-      <div className="w-100 ml-auto flex items-center">
+      <div className="w-100 ml-auto flex items-center justify-end">
         <div className="cursor-pointer  border-l border-[#383d71] p-5 hover:bg-[#383d71] hover:text-white" onClick={() => router.push('/profile')}>
           <p className="text-sm p-[2px]">
             {technician?.firstName} {technician?.lastName}

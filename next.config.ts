@@ -1,11 +1,22 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = { 
+const nextConfig = {
   reactStrictMode: false,  // Disable Strict Mode
   typescript: { ignoreBuildErrors: true },
   images: {
-    domains: ["ronaldo-trt.s3.ap-south-1.amazonaws.com", "ronaldo-prorevv.s3.eu-north-1.amazonaws.com"], // ✅ Add the domain here
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ronaldo-trt.s3.ap-south-1.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ronaldo-prorevv.s3.eu-north-1.amazonaws.com',
+      }
+    ],
   },
-  // output: 'export'  --- Guddan
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  }, 
 };
 
 module.exports = nextConfig;
