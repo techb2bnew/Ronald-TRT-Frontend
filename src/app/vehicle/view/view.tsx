@@ -275,7 +275,7 @@ export default function ViewDetails() {
               <div className="divide-y divide-gray-200">
                 {jobData.assignedTechnicians.map((tech: any) => (
                   <div key={tech.id} className="py-4 first:pt-0">
-                    <p className="font-semibold text-gray-900">{tech.firstName} {tech.lastName}</p>
+                    <p className="font-semibold text-gray-900 capitalize">{tech.firstName} {tech.lastName}</p>
                     <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
                     <p className="text-sm text-gray-600">Specialty: {tech?.techType ?? 'N/A'}</p>
                   </div>

@@ -128,6 +128,8 @@ export default function JobForm() {
   const [selectedRrTechnicians, setSelectedRrTechnicians] = useState<any[]>([]);
   const [normalTechPercentages, setNormalTechPercentages] = useState<Record<string, number>>({});
   const [rrTechPercentages, setRrTechPercentages] = useState<Record<string, number>>({});
+  const [normalManualLocks, setNormalManualLocks] = useState<Record<string, boolean>>({});
+  const [rrManualLocks, setRrManualLocks] = useState<Record<string, boolean>>({});
   const [simpleFlatRate, setSimpleFlatRate] = useState<string>('');
   const [rirValue, setRirValue] = useState<string>('');
   const [page, setPage] = useState(1);
@@ -282,12 +284,39 @@ export default function JobForm() {
         setSelectedNormalTechnicians(normalTechs);
         setSelectedRrTechnicians(rirrTechs);
 
-        if (normalTechs.length > 0 && normalTechs[0].UserJob) {
-          setSimpleFlatRate(normalTechs[0].UserJob.techFlatRate || "");
-        }
-        if (rirrTechs.length > 0 && rirrTechs[0].UserJob) {
-          setRirValue(rirrTechs[0].UserJob.rRate || "");
-        }
+        const normalTechPercentagesFromApi: Record<string, number> = {};
+        const rrTechPercentagesFromApi: Record<string, number> = {};
+        const normalLocksFromApi: Record<string, boolean> = {};
+        const rrLocksFromApi: Record<string, boolean> = {};
+
+        const totalNormal = normalTechs.reduce((acc: number, tech: any) => {
+          const id = String(tech.id);
+          const p = tech?.UserJob?.techPercentage;
+          const flat = tech?.UserJob?.techFlatRate;
+          if (p !== null && p !== undefined) normalTechPercentagesFromApi[id] = Number(p);
+          if (flat !== null && flat !== undefined) return acc + Number(flat);
+          return acc;
+        }, 0);
+
+        const totalRr = rirrTechs.reduce((acc: number, tech: any) => {
+          const id = String(tech.id);
+          const p = tech?.UserJob?.rPercentage;
+          const flat = tech?.UserJob?.rRate;
+          if (p !== null && p !== undefined) rrTechPercentagesFromApi[id] = Number(p);
+          if (flat !== null && flat !== undefined) return acc + Number(flat);
+          return acc;
+        }, 0);
+
+        normalTechs.forEach((tech: any) => { normalLocksFromApi[String(tech.id)] = true; });
+        rirrTechs.forEach((tech: any) => { rrLocksFromApi[String(tech.id)] = true; });
+
+        // Prefill totals and per-tech percentages from API edit payload
+        setSimpleFlatRate(totalNormal ? String(totalNormal) : (normalTechs[0]?.UserJob?.techFlatRate || ""));
+        setRirValue(totalRr ? String(totalRr) : (rirrTechs[0]?.UserJob?.rRate || ""));
+        setNormalTechPercentages(normalTechPercentagesFromApi);
+        setRrTechPercentages(rrTechPercentagesFromApi);
+        setNormalManualLocks(normalLocksFromApi);
+        setRrManualLocks(rrLocksFromApi);
 
         const startDateValue = jobData.startDate ? dayjs(jobData.startDate) : null;
         const endDateValue = jobData.endDate ? dayjs(jobData.endDate) : null;
@@ -374,62 +403,106 @@ export default function JobForm() {
     return (amount / count).toFixed(2);
   };
 
-  const distributeEvenPercentages = (ids: string[]) => {
-    if (ids.length === 0) return {} as Record<string, number>;
-    const even = Number((100 / ids.length).toFixed(2));
-    const map: Record<string, number> = {};
-    ids.forEach((id) => { map[id] = even; });
-    const sum = ids.reduce((acc, id) => acc + (map[id] || 0), 0);
-    const diff = Number((100 - sum).toFixed(2));
-    map[ids[0]] = Number((map[ids[0]] + diff).toFixed(2));
-    return map;
-  };
-
-  const rebalancePercentages = (
+  const computeDistributionWithLocks = (
     ids: string[],
-    editedId: string,
-    editedValue: number
+    percentages: Record<string, number>,
+    locks: Record<string, boolean>
   ) => {
     if (ids.length === 0) return {} as Record<string, number>;
     if (ids.length === 1) return { [ids[0]]: 100 };
 
-    const clampedEdited = Math.min(100, Math.max(0, Number.isFinite(editedValue) ? editedValue : 0));
-    const others = ids.filter((id) => id !== editedId);
-    const remaining = Number((100 - clampedEdited).toFixed(2));
-    const evenOther = Number((remaining / others.length).toFixed(2));
-    const next: Record<string, number> = { [editedId]: Number(clampedEdited.toFixed(2)) };
-    others.forEach((id) => { next[id] = evenOther; });
+    const lockedIds = ids.filter((id) => Boolean(locks[id]));
+    const unlockedIds = ids.filter((id) => !Boolean(locks[id]));
 
-    const sum = ids.reduce((acc, id) => acc + (next[id] || 0), 0);
-    const diff = Number((100 - sum).toFixed(2));
-    if (others.length > 0) {
-      const firstOther = others[0];
-      next[firstOther] = Number(((next[firstOther] || 0) + diff).toFixed(2));
-    } 
-    console.log('next', next);
+    const lockedSum = lockedIds.reduce((acc, id) => acc + Number(percentages[id] || 0), 0);
+    const remainingRaw = Number((100 - lockedSum).toFixed(2));
+    const remaining = Math.max(0, remainingRaw);
+
+    const next: Record<string, number> = {};
+    lockedIds.forEach((id) => {
+      next[id] = Number((percentages[id] || 0).toFixed(2));
+    });
+
+    if (unlockedIds.length > 0) {
+      const even = Number((remaining / unlockedIds.length).toFixed(2));
+      unlockedIds.forEach((id) => {
+        next[id] = even;
+      });
+
+      const currentSum = ids.reduce((acc, id) => acc + (next[id] || 0), 0);
+      const diff = Number((100 - currentSum).toFixed(2));
+      if (Math.abs(diff) > 0) {
+        next[unlockedIds[0]] = Number(((next[unlockedIds[0]] || 0) + diff).toFixed(2));
+      }
+    }
+
     return next;
   };
 
   const handleNormalPercentageChange = (techId: string, rawValue: string) => {
     const selectedIds = selectedNormalTechnicians.map((t: any) => String(t.id));
-    const parsed = parseFloat(rawValue);
-    setNormalTechPercentages(rebalancePercentages(selectedIds, String(techId), parsed));
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const nextLocks = { ...normalManualLocks, [editedId]: true };
+    const otherLockedIds = selectedIds.filter((id) => id !== editedId && Boolean(nextLocks[id]));
+    const otherLockedSum = otherLockedIds.reduce((acc, id) => acc + Number(normalTechPercentages[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const nextPercentagesBase = {
+      ...normalTechPercentages,
+      [editedId]: Number(clampedEdited.toFixed(2)),
+    };
+
+    const distributed = computeDistributionWithLocks(selectedIds, nextPercentagesBase, nextLocks);
+    setNormalManualLocks(nextLocks);
+    setNormalTechPercentages(distributed);
   };
 
   const handleRrPercentageChange = (techId: string, rawValue: string) => {
     const selectedIds = selectedRrTechnicians.map((t: any) => String(t.id));
-    const parsed = parseFloat(rawValue);
-    setRrTechPercentages(rebalancePercentages(selectedIds, String(techId), parsed));
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const nextLocks = { ...rrManualLocks, [editedId]: true };
+    const otherLockedIds = selectedIds.filter((id) => id !== editedId && Boolean(nextLocks[id]));
+    const otherLockedSum = otherLockedIds.reduce((acc, id) => acc + Number(rrTechPercentages[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const nextPercentagesBase = {
+      ...rrTechPercentages,
+      [editedId]: Number(clampedEdited.toFixed(2)),
+    };
+
+    const distributed = computeDistributionWithLocks(selectedIds, nextPercentagesBase, nextLocks);
+    setRrManualLocks(nextLocks);
+    setRrTechPercentages(distributed);
   };
 
   useEffect(() => {
-    const selectedIds = selectedNormalTechnicians.map((t: any) => String(t.id));
-    setNormalTechPercentages(distributeEvenPercentages(selectedIds));
+    const ids = selectedNormalTechnicians.map((t: any) => String(t.id));
+    setNormalTechPercentages((prev) => computeDistributionWithLocks(ids, prev, normalManualLocks));
+    setNormalManualLocks((prev) => {
+      const nextLocks: Record<string, boolean> = {};
+      ids.forEach((id) => { nextLocks[id] = Boolean(prev[id]); });
+      return nextLocks;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNormalTechnicians]);
 
   useEffect(() => {
-    const selectedIds = selectedRrTechnicians.map((t: any) => String(t.id));
-    setRrTechPercentages(distributeEvenPercentages(selectedIds));
+    const ids = selectedRrTechnicians.map((t: any) => String(t.id));
+    setRrTechPercentages((prev) => computeDistributionWithLocks(ids, prev, rrManualLocks));
+    setRrManualLocks((prev) => {
+      const nextLocks: Record<string, boolean> = {};
+      ids.forEach((id) => { nextLocks[id] = Boolean(prev[id]); });
+      return nextLocks;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRrTechnicians]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -540,6 +613,12 @@ export default function JobForm() {
         ...(formData.jobType === 'insurancePercentage' && {
           insurancePercentage: formData.insurancePercentage,
         }),
+        // Keep existing file URL on update when user does not upload a new file
+        ...(formData.jobType === 'insurancePercentage' &&
+          !formData.insuranceFile &&
+          existingInsuranceFile && {
+            insuranceFile: existingInsuranceFile,
+          }),
         ...(formData.jobType !== 'insurancePercentage' && {
           pricePerVehicle: formData.pricePerVehicle,
         }),

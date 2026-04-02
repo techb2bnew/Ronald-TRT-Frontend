@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 // import InputLabel from '@mui/material/InputLabel';
@@ -95,6 +95,16 @@ interface Job {
 }
 
 // Define the actual map based on your fields
+const JOB_LIST_PAGE_SIZE = 10;
+
+/** True when job is insurance percentage (API may send snake_case or camelCase). */
+function isInsurancePercentageJobType(jobType: string): boolean {
+  const s = String(jobType || '')
+    .toLowerCase()
+    .replace(/_/g, '');
+  return s === 'insurancepercentage';
+}
+
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
   vehicledescriptor: 'vehicleDescriptor',
   make: 'make',
@@ -179,6 +189,11 @@ export default function Technicians() {
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
+  const [jobDropdownPage, setJobDropdownPage] = useState(1);
+  const [jobHasMore, setJobHasMore] = useState(true);
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const jobFetchInFlightRef = useRef(false);
+
   const [technicianPayRates, setTechnicianPayRates] = useState<{
     [techId: string]: { rRate?: string; techFlatRate?: string };
   }>({});
@@ -225,6 +240,7 @@ export default function Technicians() {
     jobId: '',
     images: [],
     role: '',
+    insuranceCalculatedPrice: '',
   });
   // Replace your current state with this:
   const [jobForms, setJobForms] = useState<JobPayload[]>([
@@ -260,6 +276,7 @@ export default function Technicians() {
       vehicleId: '',
       images: [],
       role: '',
+      insuranceCalculatedPrice: '',
     }
   ]);
 
@@ -326,6 +343,12 @@ export default function Technicians() {
     formDataObj.append('schedule', jobForms[0].schedule ? 'true' : 'false');
     formDataObj.append('roleType', roleType || '');
     formDataObj.append('labourCost', jobForms[0].labourCost || '');
+    if (isInsurancePercentageJobType(selectedCustomerJobType)) {
+      const insPrice = formData.insuranceCalculatedPrice ?? jobForms[0]?.insuranceCalculatedPrice ?? '';
+      if (insPrice !== '' && insPrice != null) {
+        formDataObj.append('insuranceCalculatedPrice', String(insPrice));
+      }
+    }
     formDataObj.append('estimatedBy', estimatedByName);
     if (startDate) formDataObj.append('startDate', startDate.toISOString());
     if (endDate) formDataObj.append('endDate', endDate.toISOString());
@@ -522,6 +545,91 @@ export default function Technicians() {
     setJobForms((prev) => prev.filter((_, i) => i !== index)); // Remove the form at the given index
   };
 
+  const fetchCustomerJobsPage = async (customerId: string, page: number, append: boolean) => {
+    if (!customerId) return;
+    if (jobFetchInFlightRef.current) return;
+    jobFetchInFlightRef.current = true;
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const params = new URLSearchParams();
+      params.set('customerId', customerId);
+      params.set('page', String(page));
+      params.set('limit', String(JOB_LIST_PAGE_SIZE));
+
+      const response = await fetch(`/api/customerJobNamefetch?${params.toString()}`, {
+        method: 'GET',
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        const totalPages = Number(data.totalPages ?? 1) || 1;
+        const currentPg = Number(data.currentPage ?? page) || page;
+
+        if (append) {
+          setJobNames((prev) => {
+            const merged = [...prev, ...jobs];
+            return Array.from(new Map(merged.map((j: any) => [j.id, j])).values()) as Job[];
+          });
+        } else {
+          setJobNames(jobs as Job[]);
+        }
+
+        const newTechs = jobs.flatMap((job: any) => job.technicians || []);
+        setAllTechnicians((prev) => {
+          if (append) {
+            const merged = [...prev, ...newTechs];
+            return Array.from(new Map(merged.map((t: any) => [t.id, t])).values()) as Technicians[];
+          }
+          return Array.from(new Map(newTechs.map((t: any) => [t.id, t])).values()) as Technicians[];
+        });
+
+        setJobHasMore(currentPg < totalPages);
+        setJobDropdownPage(currentPg);
+      } else {
+        toast.error(data.error || 'Error fetching customer data');
+        if (!append) {
+          setJobNames([]);
+          setAllTechnicians([]);
+        }
+        setJobHasMore(false);
+      }
+    } catch (error) {
+      toast.error('An error occurred while fetching customer data');
+      if (!append) {
+        setJobNames([]);
+        setAllTechnicians([]);
+      }
+      setJobHasMore(false);
+    } finally {
+      jobFetchInFlightRef.current = false;
+    }
+  };
+
+  const filteredJobNames = useMemo(() => {
+    const q = jobSearchTerm.trim().toLowerCase();
+    if (!q) return jobNames;
+    return jobNames.filter((job) =>
+      String(job.jobName || '').toLowerCase().includes(q)
+    );
+  }, [jobNames, jobSearchTerm]);
+
+  const handleJobSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setJobSearchTerm(e.target.value);
+  };
+
+  const handleJobScroll = (e: React.UIEvent<HTMLUListElement>) => {
+    const el = e.currentTarget;
+    const bottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+    if (!bottom || !jobHasMore || !selectedCustomerId) return;
+    const nextPage = jobDropdownPage + 1;
+    fetchCustomerJobsPage(selectedCustomerId, nextPage, true);
+  };
 
   const fetchJobData = async (vehicleId: string) => {
     try {
@@ -612,6 +720,13 @@ export default function Technicians() {
           rRate: technicianDetails.map((tech: any) => (tech.rRate)),
           techFlatRate: technicianDetails.map((tech: any) => (tech.techFlatRate)),
           techType: technicianDetails.map((tech: any) => (tech.techType)),
+          // Used in the Insurance Calculated Price input
+          insuranceCalculatedPrice: getValidValue(
+            vehicleData.insuranceCalculatedPrice ??
+            vehicleData.calculatedAmount ??
+            vehicleData.calculated_amount ??
+            ''
+          ),
           startDate: startDate?.format('YYYY-MM-DD') || '',
           endDate: endDate?.format('YYYY-MM-DD') || '',
           ip: '',
@@ -624,7 +739,17 @@ export default function Technicians() {
           localStorage.setItem('jobId', jobId);  // Save jobId to localStorage
         }
 
+        // Ensure insurance/flat fields render correctly in edit case
+        const apiJobType = getValidValue(
+          (vehicleData as any)?.jobType ??
+          (vehicleData as any)?.job_type ??
+          (vehicleData as any)?.jobType
+        );
+        setSelectedCustomerJobType(String(apiJobType).toLowerCase());
+
         setJobForms([formData]);
+        // The Insurance Calculated Price field is bound to `formData`
+        setFormData(formData);
         setDescriptionCostFields(jobDescriptionsArray.length > 0
           ? jobDescriptionsArray
           : [{ id: crypto.randomUUID(), jobDescription: '' }]
@@ -632,6 +757,15 @@ export default function Technicians() {
         setTechnicians(vehicleData.assignedTechnicians || []);
         if (vehicleData.jobName) {
           setSelectedJobName(vehicleData.jobName);
+        }
+
+        const customerIdForJobs = getValidValue(vehicleData.customerId);
+        if (customerIdForJobs) {
+          setSelectedCustomerId(String(customerIdForJobs));
+          setJobDropdownPage(1);
+          setJobSearchTerm('');
+          setJobHasMore(true);
+          await fetchCustomerJobsPage(String(customerIdForJobs), 1, false);
         }
       } else {
         toast.error(data.error || 'Error fetching vehicle data');
@@ -883,6 +1017,51 @@ export default function Technicians() {
           return updatedForms;
         });
         setIsVisible(true);
+
+        const trimmedVin = vin.trim();
+        const resolvedJobId =
+          jobForms[index]?.jobId ||
+          localStorage.getItem('jobId') ||
+          (jobId != null ? String(jobId) : '');
+
+        if (
+          isInsurancePercentageJobType(selectedCustomerJobType) &&
+          resolvedJobId &&
+          trimmedVin
+        ) {
+          try {
+            const settleParams = new URLSearchParams({
+              jobId: String(resolvedJobId),
+              vin: trimmedVin,
+            });
+            const settleRes = await fetch(
+              `${apiUrl}/calculateInsuranceVinSettlement?${settleParams.toString()}`,
+              {
+                method: 'GET',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              }
+            );
+            const settleJson = await settleRes.json();
+            if (settleRes.ok && settleJson?.status && settleJson?.data?.calculatedAmount != null) {
+              const amt = settleJson.data.calculatedAmount;
+              const amtStr = String(amt);
+              setFormData((prev) => ({ ...prev, insuranceCalculatedPrice: amtStr }));
+              setJobForms((prev) => {
+                const next = [...prev];
+                if (next[index]) {
+                  next[index] = { ...next[index], insuranceCalculatedPrice: amtStr };
+                }
+                return next;
+              });
+            } else {
+              toast.error(settleJson?.message || settleJson?.error || 'Could not calculate insurance settlement');
+            }
+          } catch (settleErr) {
+            console.error('calculateInsuranceVinSettlement:', settleErr);
+            toast.error('Failed to calculate insurance settlement');
+          }
+        }
+
         // Now check for VIN duplication in the system
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -1554,55 +1733,14 @@ export default function Technicians() {
 
 
 
-  const fetchCustomerData = async (customerId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(
-        `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
-        {
-          method: 'GET',
-          headers,
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Return both jobs and all technicians (we'll filter later when job is selected)
-        const jobs = data.jobs || [];
-        return {
-          jobs,
-          allTechnicians: jobs?.flatMap((job: any) => job.technicians) || [],
-        };
-      } else {
-        toast.error(data.error || 'Error fetching customer data');
-        return { jobs: [], allTechnicians: [] };
-      }
-    } catch (error) {
-      toast.error('An error occurred while fetching customer data');
-      return { jobs: [], allTechnicians: [] };
-    }
-  };
   const handleCustomerSelect = async (customerId: string) => {
     setSelectedCustomerId(customerId);
-
-    // Fetch customer data (jobs and technicians)
-    const { jobs, allTechnicians } = await fetchCustomerData(customerId);
-
-    setJobNames(jobs); // Update available jobs for the customer
-    setTechnicians([]); // Clear previous technician list
+    setJobDropdownPage(1);
+    setJobSearchTerm('');
+    setJobHasMore(true);
+    setTechnicians([]);
     setSelectedCustomerJobType('');
-
-    // Optionally, store all technicians in state for later filtering
-    setAllTechnicians(allTechnicians);  // Store all technicians globally
+    await fetchCustomerJobsPage(customerId, 1, false);
   };
 
 
@@ -1619,14 +1757,16 @@ export default function Technicians() {
       const selectedJobType = (selectedJob as any)?.job_type || (selectedJob as any)?.jobType || '';
       setSelectedCustomerJobType(String(selectedJobType).toLowerCase());
 
-      // Safely handle the technicians array and ensure no duplicates
-      const jobTechnicians = selectedJob.technicians
-        ? allTechnicians.filter((tech) =>
-          selectedJob.technicians?.some((selectedTech: any) => selectedTech.id === tech.id)
-        )
-        : [];
+      const rawTechs = (selectedJob as any).technicians;
+      let jobTechnicians: any[];
+      if (rawTechs && rawTechs.length > 0) {
+        jobTechnicians = Array.from(new Map(rawTechs.map((t: any) => [t.id, t])).values());
+      } else {
+        jobTechnicians = allTechnicians.filter((tech) =>
+          (selectedJob as any).technicians?.some((selectedTech: any) => selectedTech.id === tech.id)
+        );
+      }
 
-      // Remove duplicates based on technician id
       const uniqueTechnicians = Array.from(
         new Map(jobTechnicians.map((tech: any) => [tech.id, tech])).values()
       );
@@ -1767,32 +1907,67 @@ export default function Technicians() {
                   </FormControl>
                 </div>
                 <div className='relative w-[100%]'>
-
-
-                  <TextField
-                    key={jobNames.length}
-                    fullWidth
-                    name="jobName"
-                    id="outlined-basic"
-                    color="warning"
-                    label="Select Job Title *"
-                    size="small"
-                    value={selectedJobName || jobForms[0]?.jobName || ''}
-                    onChange={(e) => handleJobNameSelect(e.target.value)}
-                    select
-                  >
-                    {jobNames.length > 0 ? (
-                      jobNames.map((job) => (
-                        <MenuItem key={job.id} value={job.jobName}>
-                          {job.jobName}
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="job-title-select" color="warning">Select Job Title *</InputLabel>
+                    <Select
+                      labelId="job-title-select"
+                      id="select-job-title"
+                      color="warning"
+                      name="jobName"
+                      label="Select Job Title *"
+                      value={selectedJobName || jobForms[0]?.jobName || ''}
+                      onChange={(e) => handleJobNameSelect(e.target.value)}
+                      MenuProps={{
+                        disablePortal: true,
+                        PaperProps: {
+                          onScroll: handleJobScroll,
+                          style: {
+                            maxHeight: 300,
+                            overflowY: 'auto',
+                          },
+                        },
+                        autoFocus: false,
+                      }}
+                      onOpen={() => {
+                        setJobSearchTerm('');
+                        if (selectedCustomerId) {
+                          setJobDropdownPage(1);
+                          fetchCustomerJobsPage(selectedCustomerId, 1, false);
+                        }
+                      }}
+                    >
+                      <div
+                        style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <TextField
+                          size="small"
+                          fullWidth
+                          color="warning"
+                          placeholder="Search job..."
+                          value={jobSearchTerm}
+                          onChange={handleJobSearchChange}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      </div>
+                      {jobNames.length === 0 ? (
+                        <MenuItem disabled>
+                          <span className="text-gray-500 text-sm">No jobs available for this customer</span>
                         </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>No jobs available for this customer</MenuItem>
-                    )}
-                  </TextField>
-
-
+                      ) : filteredJobNames.length === 0 ? (
+                        <MenuItem disabled>
+                          <span className="text-gray-500 text-sm">No matching jobs</span>
+                        </MenuItem>
+                      ) : (
+                        filteredJobNames.map((job) => (
+                          <MenuItem key={job.id} value={job.jobName}>
+                            {job.jobName}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
 
                   {errors.jobName && (
                     <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>

@@ -1,6 +1,6 @@
 // components/CommonHeader.tsx
 import Link from 'next/link';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { addDays } from 'date-fns';
@@ -77,8 +77,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedTechId, setSelectedTechId] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [customerHasMore, setCustomerHasMore] = useState(true);
+  const [techHasMore, setTechHasMore] = useState(true);
+  const [jobsHasMore, setJobsHasMore] = useState(true);
+  const [customerPage, setCustomerPage] = useState(1);
+  const [techPage, setTechPage] = useState(1);
+  const jobPageRef = useRef(1);
   const [effectiveRoleType, setEffectiveRoleType] = useState(roleType || '');
   const [customer, setCustomer] = useState<any[]>([]);
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);
@@ -87,6 +91,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [searchValue, setSearchValue] = useState("");
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isCustomerSearching, setIsCustomerSearching] = useState<boolean>(false);
+
+  const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
+  const jobDropdownRef = useRef<HTMLDivElement>(null);
+  const jobSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const jobFetchInFlightRef = useRef(false);
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [debouncedJobSearch, setDebouncedJobSearch] = useState('');
 
   // Close customer dropdown when clicking outside
   useEffect(() => {
@@ -97,7 +108,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           setCustomerSearchTerm('');
           setIsCustomerSearching(false);
           setCustomer([]);
-          setPage(1);
+          setCustomerPage(1);
           fetchCustomer(1, effectiveRoleType);
         }
       }
@@ -111,6 +122,21 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCustomerDropdownOpen, customerSearchTerm, effectiveRoleType]);
+
+  useEffect(() => {
+    const handleJobClickOutside = (event: MouseEvent) => {
+      if (jobDropdownRef.current && !jobDropdownRef.current.contains(event.target as Node)) {
+        setIsJobDropdownOpen(false);
+        if (jobSearchTerm.trim()) {
+          setJobSearchTerm('');
+        }
+      }
+    };
+    if (isJobDropdownOpen) {
+      document.addEventListener('mousedown', handleJobClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleJobClickOutside);
+  }, [isJobDropdownOpen, jobSearchTerm]);
 
   const [dates, setDates] = useState<{ startDate: Date | null, endDate: Date | null }>({
     startDate: null,
@@ -206,49 +232,95 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     setShowDatePicker(false); // Close the date picker after applying filter
   };
 
-  const fetchJobs = async (page = 1, passedRoleType: string) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userID');
+  const JOBS_LIMIT = 10;
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
-    };
+  const fetchJobsPage = useCallback(
+    async (pageNum: number, append: boolean, searchQuery: string) => {
+      const rt = effectiveRoleType || '';
+      if (!rt) return;
+      if (jobFetchInFlightRef.current) return;
+      jobFetchInFlightRef.current = true;
+      try {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userID');
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        };
 
-    // Use passedRoleType directly, no need to fallback to localStorage
-    const effectiveRoleType = passedRoleType || '';  // If passedRoleType is empty, fallback to an empty string or handle as needed
-    console.log("Effective Role Type:", effectiveRoleType); // Log to check if it's correct
+        const params = new URLSearchParams();
+        params.set('page', String(pageNum));
+        params.set('limit', String(JOBS_LIMIT));
+        params.set('roleType', rt);
+        const q = searchQuery.trim();
+        if (q) params.set('searchQuery', q);
+        if (rt !== 'superadmin' && rt !== 'manager' && userId) {
+          params.set('userId', userId);
+        }
 
-    let url;
-    if (effectiveRoleType === 'superadmin' || effectiveRoleType === 'manager') {
-      url = `/api/jobListing?page=${page}&roleType=${encodeURIComponent(effectiveRoleType)}`;
-    } else if (effectiveRoleType === 'single-technician') {
-      url = `/api/jobListing?page=${page}&roleType=single-technician`;
-    } else {
-      url = `/api/jobListing?userId=${userId}&page=${page}&roleType=single-technician`;
-    }
+        const response = await fetch(`/api/jobListing?${params.toString()}`, { headers });
+        const data = await response.json();
 
-    try {
-      const response = await fetch(url, { headers });
-      const data = await response.json();
-
-      if (response.ok) {
-        const fetchedJobs = data.jobs?.jobs || [];
-        setJobs(prev => {
-          const existingIds = new Set(prev.map(job => job.id));
-          const newJobs = fetchedJobs.filter((job: any) => !existingIds.has(job.id));
-          return [...prev, ...newJobs];
-        });
-        setHasMore(fetchedJobs.length > 0);
-      } else {
-        console.error('Error fetching job data:', data.error);
+        if (response.ok) {
+          const fetchedJobs = data.jobs?.jobs || [];
+          const totalPages = Number(data.jobs?.totalPages ?? 1);
+          setJobs((prev) => {
+            if (!append) return fetchedJobs;
+            const existingIds = new Set(prev.map((job: any) => job.id));
+            const newJobs = fetchedJobs.filter((job: any) => !existingIds.has(job.id));
+            return [...prev, ...newJobs];
+          });
+          setJobsHasMore(pageNum < totalPages);
+        } else {
+          console.error('Error fetching job data:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching job data:', error);
+      } finally {
+        jobFetchInFlightRef.current = false;
       }
-    } catch (error) {
-      console.error('Error fetching job data:', error);
-    }
+    },
+    [effectiveRoleType]
+  );
+
+  useEffect(() => {
+    const delay = jobSearchTerm.trim() ? 350 : 0;
+    const t = setTimeout(() => setDebouncedJobSearch(jobSearchTerm), delay);
+    return () => clearTimeout(t);
+  }, [jobSearchTerm]);
+
+  useEffect(() => {
+    jobPageRef.current = 1;
+    fetchJobsPage(1, false, debouncedJobSearch);
+  }, [debouncedJobSearch, effectiveRoleType, fetchJobsPage]);
+
+  const handleJobListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (customerFilter) return;
+    const el = e.currentTarget;
+    const bottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+    if (!bottom || !jobsHasMore || jobFetchInFlightRef.current) return;
+    jobPageRef.current += 1;
+    fetchJobsPage(jobPageRef.current, true, debouncedJobSearch);
   };
 
+  const filteredCustomerJobs = useMemo(() => {
+    if (!customerFilter) return [];
+    const q = jobSearchTerm.trim().toLowerCase();
+    if (!q) return customerJobs;
+    return customerJobs.filter((j: any) =>
+      String(j.jobName ?? '').toLowerCase().includes(q)
+    );
+  }, [customerFilter, customerJobs, jobSearchTerm]);
+
+  const selectedJobLabel = useMemo(() => {
+    if (!jobsFilter) return '';
+    if (customerFilter) {
+      const j = customerJobs.find((x: any) => String(x.id) === String(jobsFilter));
+      return j?.jobName ? String(j.jobName) : '';
+    }
+    const j = jobs.find((x: any) => String(x.id) === String(jobsFilter));
+    return j?.jobName ? String(j.jobName) : '';
+  }, [jobsFilter, customerFilter, customerJobs, jobs]);
 
   const fetchCustomer = async (page = 1, passedRoleType: string) => {
     try {
@@ -290,9 +362,9 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
         // If we asked for "all" in a single request, stop paginating.
         if (role === 'single-technician') {
-          setHasMore(Array.isArray(newCustomers) ? newCustomers.length >= limit : false);
+          setCustomerHasMore(Array.isArray(newCustomers) ? newCustomers.length >= limit : false);
         } else {
-          setHasMore(Array.isArray(newCustomers) ? newCustomers.length > 0 : false);
+          setCustomerHasMore(Array.isArray(newCustomers) ? newCustomers.length > 0 : false);
         }
 
         return uniqueCustomers;
@@ -340,12 +412,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   };
 
   useEffect(() => {
-    fetchCustomer(page, effectiveRoleType);
-  }, [page, effectiveRoleType]);
-
-  useEffect(() => {
-    fetchJobs(page, effectiveRoleType);
-  }, [page, effectiveRoleType]);
+    fetchCustomer(customerPage, effectiveRoleType);
+  }, [customerPage, effectiveRoleType]);
 
 
 
@@ -377,8 +445,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
       if (response.ok) {
         const fetchedTech = data.technician?.technicians || [];
-        setTech((prev) => [...prev, ...fetchedTech]);
-        setHasMore(fetchedTech.length > 0);
+        setTech((prev) => (page === 1 ? fetchedTech : [...prev, ...fetchedTech]));
+        setTechHasMore(fetchedTech.length > 0);
       } else {
         console.error('Error fetching job data:', data.error);
       }
@@ -391,15 +459,20 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
 
 
+  useLayoutEffect(() => {
+    setTech([]);
+    setTechPage(1);
+  }, [effectiveRoleType]);
+
   useEffect(() => {
-    fetchTech(page, effectiveRoleType);
-  }, [page, effectiveRoleType]);
+    fetchTech(techPage, effectiveRoleType);
+  }, [techPage, effectiveRoleType]);
 
 
   const handleScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
-    if (bottom && hasMore && !isCustomerSearching) {
-      setPage(prev => prev + 1);
+    if (bottom && customerHasMore && !isCustomerSearching) {
+      setCustomerPage((prev) => prev + 1);
     }
   };
 
@@ -407,7 +480,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     if (!searchValue.trim()) {
       setIsCustomerSearching(false);
       setCustomer([]);
-      setPage(1);
+      setCustomerPage(1);
       fetchCustomer(1, effectiveRoleType);
       return;
     }
@@ -437,7 +510,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
       const results = data?.customers || data?.data?.customers || [];
       console.log(results,'resultsresultsresults')
       if (Array.isArray(results)) setCustomer(results);
-      setHasMore(false);
+      setCustomerHasMore(false);
     } catch (error) {
       console.error('Error searching customers:', error);
     }
@@ -454,8 +527,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
   const handleTechScroll = (e: any) => {
     const bottom = e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight;
-    if (bottom && hasMore) {
-      setPage(prev => prev + 1);
+    if (bottom && techHasMore) {
+      setTechPage((prev) => prev + 1);
     }
   };
 
@@ -505,7 +578,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     await applyCustomerSelection(value);
   };
 
-  const handleClearFilters = async () => { 
+  const handleClearFilters = async () => {
+    jobPageRef.current = 1;
+    setJobSearchTerm('');
+    setDebouncedJobSearch('');
+    setCustomerPage(1);
+    setTechPage(1);
     setJobsFilter("");
     setCustomerFilter("");
     settechFilter("");
@@ -577,7 +655,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                   setIsCustomerDropdownOpen(next);
                   if (next && customer.length === 0) {
                     setCustomer([]);
-                    setPage(1);
+                    setCustomerPage(1);
                     fetchCustomer(1, effectiveRoleType);
                   }
                 }}
@@ -640,36 +718,104 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
 
           {onNewJobClick && (
-            <select
-              id="job-dropdown"
-              value={jobsFilter}
-              onChange={(e) => handleJobFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
-              className="w-[130px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
-            >
-              <option value="">All Jobs</option>
-              {customerFilter ? (
-                customerJobs.length > 0 ? (
-                  customerJobs.map((job) => (
-                    <option key={`${job.id}-${job.jobName}`} value={job.id}>
-                      {job.jobName}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No jobs for this customer</option>
-                )
-              ) : (
-                jobs.length > 0 ? (
-                  jobs.map((job) => (
-                    <option key={`${job.id}-${job.jobName}`} value={job.id}>
-                      {job.jobName}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No jobs available</option>
-                )
+            <div className="relative" ref={jobDropdownRef}>
+              <button
+                type="button"
+                id="job-dropdown"
+                className="w-[190px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+                onClick={() => {
+                  const next = !isJobDropdownOpen;
+                  setIsJobDropdownOpen(next);
+                  if (next && !customerFilter && jobs.length === 0 && effectiveRoleType) {
+                    jobPageRef.current = 1;
+                    fetchJobsPage(1, false, debouncedJobSearch);
+                  }
+                }}
+              >
+                {jobsFilter ? (selectedJobLabel || 'Selected job') : 'All Jobs'}
+              </button>
+
+              {isJobDropdownOpen && (
+                <div className="absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                  <div className="p-2 border-b border-gray-100">
+                    <input
+                      value={jobSearchTerm}
+                      onChange={(e) => setJobSearchTerm(e.target.value)}
+                      placeholder="Search jobs…"
+                      className="w-full h-[38px] px-3 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div
+                    className="max-h-[260px] overflow-auto"
+                    onScroll={customerFilter ? undefined : handleJobListScroll}
+                  >
+                    <button
+                      type="button"
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${jobsFilter === '' ? 'bg-gray-50' : ''}`}
+                      onClick={() => {
+                        handleJobFilterChange({ target: { value: '' } } as SelectChangeEvent<string>);
+                        setIsJobDropdownOpen(false);
+                      }}
+                    >
+                      All Jobs
+                    </button>
+
+                    {customerFilter ? (
+                      filteredCustomerJobs.length > 0 ? (
+                        filteredCustomerJobs.map((job: any) => (
+                          <button
+                            key={`${job.id}-${job.jobName}`}
+                            type="button"
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${String(job.id) === String(jobsFilter) ? 'bg-gray-50' : ''}`}
+                            onClick={() => {
+                              handleJobFilterChange({ target: { value: String(job.id) } } as SelectChangeEvent<string>);
+                              setIsJobDropdownOpen(false);
+                            }}
+                          >
+                            {job.jobName}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-3 text-sm text-gray-500">
+                          {customerJobs.length === 0
+                            ? 'No jobs for this customer'
+                            : jobSearchTerm.trim()
+                              ? 'No matching jobs'
+                              : 'No jobs for this customer'}
+                        </div>
+                      )
+                    ) : jobs.length > 0 ? (
+                      jobs.map((job: any) => (
+                        <button
+                          key={`${job.id}-${job.jobName}`}
+                          type="button"
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${String(job.id) === String(jobsFilter) ? 'bg-gray-50' : ''}`}
+                          onClick={() => {
+                            handleJobFilterChange({ target: { value: String(job.id) } } as SelectChangeEvent<string>);
+                            setIsJobDropdownOpen(false);
+                          }}
+                        >
+                          {job.jobName}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-gray-500">
+                        {!effectiveRoleType ? 'Loading…' : 'No jobs available'}
+                      </div>
+                    )}
+
+                    {!customerFilter && jobsHasMore && jobs.length > 0 && (
+                      <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100">
+                        Scroll for more…
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </select>
+            </div>
           )}
           {onStatusChange && (
             <select

@@ -1,6 +1,6 @@
 // components/JobTable.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import { useRouter } from "next/navigation";
@@ -35,6 +35,18 @@ const JobTable: React.FC = () => {
   // ─── Tab state ──────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<ActiveTab>('scanned');
 
+  const [insuranceVehicles, setInsuranceVehicles] = useState<any[]>([]);
+  const [insuranceLoading, setInsuranceLoading] = useState<boolean>(false);
+  const [insuranceCurrentPage, setInsuranceCurrentPage] = useState<number>(1);
+  const [insuranceTotalPages, setInsuranceTotalPages] = useState<number>(1);
+
+  const normalizeJobId = (value: any) => {
+    if (value === undefined || value === null) return '';
+    const str = String(value).trim();
+    if (!str || str === 'undefined' || str === 'null') return '';
+    return str;
+  };
+
   const [activeJob, setActiveJob] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<string>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -42,6 +54,7 @@ const JobTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalExpense, setTotalExpense] = useState('0');
+  const [totalDantTechCost, setTotalDantTechCost] = useState('0');
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { isCollapsed } = useSidebar();
@@ -50,6 +63,17 @@ const JobTable: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [roleType, setRoleType] = useState<string | null>(null);
+
+  /** After tab change, fetch immediately (no 500ms debounce) to avoid data → loader → data flash. */
+  const skipSearchDebounceRef = useRef(false);
+  useEffect(() => {
+    skipSearchDebounceRef.current = true;
+  }, [activeTab]);
+
+  const activeJobRef = useRef(activeJob);
+  activeJobRef.current = activeJob;
+  const insuranceVehiclesRef = useRef(insuranceVehicles);
+  insuranceVehiclesRef.current = insuranceVehicles;
 
   useEffect(() => {
     const storedRoleType = localStorage.getItem('types');
@@ -73,8 +97,14 @@ const JobTable: React.FC = () => {
     setCurrentPage(newPage);
   };
 
-  const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
-    setLoading(true);
+  const fetchvehicleInfo = async (
+    page = 1,
+    query = '',
+    limit = pageSize,
+    opts?: { showFullScreenLoader?: boolean }
+  ) => {
+    const showLoader = opts?.showFullScreenLoader !== false;
+    if (showLoader) setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || "";
@@ -101,6 +131,7 @@ const JobTable: React.FC = () => {
         setTotalPages(data.response?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0);
         setTotalExpense(data.response?.totalEstimateCost || data.data?.totalEstimateCost);
+        setTotalDantTechCost(data.response?.totalDantTechCost || data.data?.totalDentTechCost);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -115,12 +146,96 @@ const JobTable: React.FC = () => {
     }
   };
 
+  const fetchInsuranceVehiclesByJob = useCallback(
+    async (
+      jobId?: string,
+      page = 1,
+      limit?: number,
+      searchQuery?: string,
+      opts?: { showFullScreenLoader?: boolean }
+    ) => {
+      const normalizedJobId = normalizeJobId(jobId);
+      const lim = limit ?? pageSize;
+      const showLoader = opts?.showFullScreenLoader !== false;
+      if (showLoader) setInsuranceLoading(true);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (!apiBaseUrl) {
+          throw new Error('NEXT_PUBLIC_API_URL is not configured');
+        }
+
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(lim));
+        if (normalizedJobId) params.set('jobId', normalizedJobId);
+        const q = (searchQuery ?? '').trim();
+        if (q) params.set('search', q);
+
+        const response = await fetch(`${apiBaseUrl}/fetchInsuranceVehiclesByJob?${params.toString()}`, {
+          method: 'GET',
+          headers,
+        });
+
+        const data = await response.json();
+        if (response.ok && data?.status) {
+          setInsuranceVehicles(Array.isArray(data?.vehicles) ? data.vehicles : []);
+          const total = Number(data?.total || 0);
+          setInsuranceTotalPages(Math.max(1, Math.ceil(total / lim)));
+        } else {
+          setInsuranceVehicles([]);
+          setInsuranceTotalPages(1);
+        }
+      } catch (error) {
+        console.error('Error fetching insurance vehicles:', error);
+        setInsuranceVehicles([]);
+        setInsuranceTotalPages(1);
+      } finally {
+        setInsuranceLoading(false);
+      }
+    },
+    [pageSize]
+  );
+
+  const handleInsurancePageChange = (data: { selected: number }) => {
+    const nextPage = data.selected + 1; // Pagination is 0-based in your component
+    setInsuranceCurrentPage(nextPage);
+    const jobId = normalizeJobId(selectedJobId);
+    fetchInsuranceVehiclesByJob(jobId || undefined, nextPage, pageSize, searchTerm);
+  };
+
   useEffect(() => {
+    if (activeTab !== 'insurance') return;
+    const immediate = skipSearchDebounceRef.current;
+    skipSearchDebounceRef.current = false;
+    const delay = immediate ? 0 : 500;
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm, pageSize);
-    }, 500);
+      setInsuranceCurrentPage(1);
+      const jobId = normalizeJobId(selectedJobId);
+      const hasRows = insuranceVehiclesRef.current.length > 0;
+      fetchInsuranceVehiclesByJob(jobId || undefined, 1, pageSize, searchTerm, {
+        showFullScreenLoader: !hasRows,
+      });
+    }, delay);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
+  }, [activeTab, selectedJobId, searchTerm, pageSize, fetchInsuranceVehiclesByJob]);
+
+  useEffect(() => {
+    if (activeTab !== 'scanned') return;
+    const immediate = skipSearchDebounceRef.current;
+    skipSearchDebounceRef.current = false;
+    const delay = immediate ? 0 : 500;
+    const timeoutId = setTimeout(() => {
+      const hasRows = activeJobRef.current.length > 0;
+      fetchvehicleInfo(currentPage, searchTerm, pageSize, {
+        showFullScreenLoader: !hasRows,
+      });
+    }, delay);
+    return () => clearTimeout(timeoutId);
+  }, [activeTab, currentPage, searchTerm, pageSize]);
 
   const handleSort = (column: string) => {
     const direction = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -184,12 +299,12 @@ const JobTable: React.FC = () => {
         }, config);
 
         if (response.data.status) {
-          fetchJobs(currentPage, searchTerm);
+          fetchvehicleInfo(currentPage, searchTerm);
           setActiveJob(prev => prev.map(job => {
             if (job.id === vehicleId) {
               return { ...job, jobStatus: !job.jobStatus };
             }
-            fetchJobs(currentPage, searchTerm);
+            fetchvehicleInfo(currentPage, searchTerm);
             return job;
           }));
           Swal.fire({
@@ -329,7 +444,7 @@ const JobTable: React.FC = () => {
             }).filter(row => !manualHeaders.some(header => row[header] === header));
             await axios.post(`/api/importVehicle`, { data: payloadData }, { headers });
             toast.success('CSV Import Successful!');
-            fetchJobs(currentPage, searchTerm, pageSize);
+            fetchvehicleInfo(currentPage, searchTerm, pageSize);
           } catch (error: unknown) {
             if (axios.isAxiosError(error)) toast.error(error.response?.data?.error || error.message);
             else if (error instanceof Error) toast.error(error.message);
@@ -380,6 +495,8 @@ const JobTable: React.FC = () => {
       if (response.ok && data.status) {
         setActiveJob(data.vehicles.updatedVehicles || []);
         setTotalExpense(data.vehicles?.totalEstimateCost || 0);
+        setTotalDantTechCost(data.vehicles?.totalDentTechCost);
+
       }
     } catch (error) {
       console.error("Error during API request:", error);
@@ -397,7 +514,7 @@ const JobTable: React.FC = () => {
     } else {
       setSelectedDates({ startDate: null, endDate: null });
       if (selectedJobId) await fetchVehicleWithFilters(selectedJobId, null, null);
-      else fetchJobs(currentPage, searchTerm, pageSize);
+      else fetchvehicleInfo(currentPage, searchTerm, pageSize);
     }
   };
 
@@ -511,7 +628,7 @@ const JobTable: React.FC = () => {
       if (selectedDates.startDate && selectedDates.endDate) {
         await fetchVehicleWithFilters(undefined, selectedDates.startDate, selectedDates.endDate);
       } else {
-        fetchJobs(currentPage, searchTerm, pageSize);
+        fetchvehicleInfo(currentPage, searchTerm, pageSize);
       }
     }
   };
@@ -521,86 +638,167 @@ const JobTable: React.FC = () => {
     setSelectedDates({ startDate: null, endDate: null });
     setSearchTerm('');
     setCurrentPage(1);
-    fetchJobs(1, '', pageSize);
+    if (activeTab === 'scanned') {
+      fetchvehicleInfo(1, '', pageSize);
+    }
   };
 
   // ─── Shared table JSX (used in both tabs) ────────────────────────────────────
-  const renderTable = () => (
-    <>
-      <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
-          <thead>
-            <tr>
-              <th className="w-[50px]">
-                <label className="flex items-center cursor-pointer relative">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === activeJob.length && activeJob.length > 0}
-                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
-                    onChange={() =>
-                      setSelectedIds(selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id))
-                    }
-                  />
-                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                  </span>
-                </label>
-              </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
-                {sortBy === 'id' && (
-                  <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+  const renderTable = () => {
+    if (activeTab === 'insurance') {
+      return (
+        <>
+          <div className="overflow-auto rounded-md">
+            <table className="table w-full table-fixed">
+              <thead>
+                <tr>
+                  <th className="w-[160px]">Job Name</th>
+                  <th className="w-[160px]">Customer</th>
+                  <th className="w-[150px]">VIN</th>
+                  <th className="w-[220px]">Gross Settlement</th>
+                  <th className="w-[220px]">Insurance Percentage (%) </th>
+                  <th className="w-[240px]">Insurance File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {insuranceLoading && insuranceVehicles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : insuranceVehicles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Empty />
+                    </td>
+                  </tr>
+                ) : (
+                  insuranceVehicles.map((v: any) => (
+                    <tr key={v.id}>
+                      <td>{v?.job?.jobName || '–'}</td>
+                      <td>{v?.job?.customer.fullName || '–'}</td>
+                      <td>{v?.vin || '–'}</td>
+                      <td>{v?.grossSettlement || '–'}</td>
+                      <td>{v?.job?.insurancePercentage || '–'}%</td>
+                      <td>
+                        {v?.job?.insuranceFile ? (
+                          <a
+                            href={v.job.insuranceFile}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#383d71] hover:underline break-all"
+                          >
+                            View File
+                          </a>
+                        ) : (
+                          '–'
+                        )}
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </th>
-              <th className="w-[120px]">Job Title</th>
-              <th className="w-[120px]">Customer Name</th>
-              {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}
-              {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
-              {roleType !== 'single-technician' && <th className="w-[130px]">Assigned RR/I/R</th>}
-              {roleType !== 'single-technician' && <th className="w-[80px]">RR/I/R</th>}
-              {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>}
-              <th className="w-[150px]">VIN</th>
-              <th className="w-[100px]">Start Date</th>
-              <th className="w-[80px]">End Date</th>
-              {roleType === 'single-technician' && <th className="w-[80px]">Labour Cost</th>}
-              <th className="w-[130px]">Status</th>
-              <th className="w-[100px]">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+              </tbody>
+            </table>
+          </div>
+
+          {insuranceTotalPages > 1 && (
+            <Pagination
+              currentPage={insuranceCurrentPage}
+              totalPages={insuranceTotalPages}
+              onPageChange={handleInsurancePageChange}
+            />
+          )}
+        </>
+      );
+    }
+
+    // scanned tab
+    return (
+      <>
+        <div className="overflow-auto rounded-md">
+          <table className="table w-full table-fixed">
+            <thead>
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
-                  <Loader />
-                </td>
+                <th className="w-[50px]">
+                  <label className="flex items-center cursor-pointer relative">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === activeJob.length && activeJob.length > 0}
+                      className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow bg-white hover:shadow-md border border-slate-300 checked:bg-[var(--foreground)] checked:border-[#fff]"
+                      onChange={() =>
+                        setSelectedIds(
+                          selectedIds.length === activeJob.length ? [] : activeJob.map((cust) => cust.id)
+                        )
+                      }
+                    />
+                    <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                    </span>
+                  </label>
+                </th>
+                <th className="w-[50px]" onClick={() => handleSort('id')}>
+                  ID
+                  {sortBy === 'id' && (
+                    <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
+                <th className="w-[120px]">Job Title</th>
+                <th className="w-[120px]">Customer Name</th>
+                {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}
+                {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
+                {roleType !== 'single-technician' && <th className="w-[130px]">Assigned RR/I/R</th>}
+                {roleType !== 'single-technician' && <th className="w-[80px]">RR/I/R</th>}
+                {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>}
+                <th className="w-[150px]">VIN</th>
+                <th className="w-[100px]">Start Date</th>
+                <th className="w-[80px]">End Date</th>
+                {roleType === 'single-technician' && <th className="w-[80px]">Labour Cost</th>}
+                <th className="w-[130px]">Status</th>
+                <th className="w-[100px]">Action</th>
               </tr>
-            ) : activeJob?.length === 0 ? (
-              <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
-                  <Empty />
-                </td>
-              </tr>
-            ) : (
-              activeJob?.map((job) => renderRow(job))
-            )}
-            {roleType !== 'single-technician' && (
-              <tr>
-                <td colSpan={9} className='text-right font-semibold'>
-                  <span className='pr-[50px]'>Total: ${totalExpense}</span>
-                </td>
-                <td colSpan={5} className='text-right font-semibold'></td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {activeJob?.length > 0 && (
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-      )}
-    </>
-  );
+            </thead>
+            <tbody>
+              {loading && activeJob?.length === 0 ? (
+                <tr>
+                  <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : activeJob?.length === 0 ? (
+                <tr>
+                  <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                    <Empty />
+                  </td>
+                </tr>
+              ) : (
+                activeJob?.map((job) => renderRow(job))
+              )}
+
+              {roleType !== 'single-technician' && (
+                <tr>
+                  <td colSpan={9} className="text-right font-semibold">
+                    <span className="pr-[75px]">Total: ${totalExpense}</span>
+                  </td>
+                  <td colSpan={5} className="text-right font-semibold"></td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {activeJob?.length > 0 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
+      </>
+    );
+  };
 
   return (
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
@@ -611,13 +809,13 @@ const JobTable: React.FC = () => {
           heading="Work Order List"
           onPageSizeChange={handlePageSizeChange}
           onSearch={(term) => setSearchTerm(term)}
-          onExport={downloadCSV}
-          onImport={handleImportCSV}
+          onExport={activeTab === 'scanned' ? downloadCSV : undefined}
+          onImport={activeTab === 'scanned' ? handleImportCSV : undefined}
           userRole='Activejobs'
           buttonLabel="Create Vehicle / Work Order"
           buttonLink="/vehicle/create-vehicle"
-          showDatePicker={true}
-          onDateChange={handleDateChange}
+          showDatePicker={activeTab === 'scanned'}
+          onDateChange={activeTab === 'scanned' ? handleDateChange : undefined}
           onNewJobClick={handleNewJobClick}
           showClearFilters={true}
           onClearFilters={handleClearFilters}
