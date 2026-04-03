@@ -14,7 +14,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
- 
+
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,7 +24,15 @@ import InvoiceGenerator from '@/app/component/invoice-genrated';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-// ─── Mismatch vehicle type ────────────────────────────────────────────────────
+function escapeHtmlForSwal(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Mismatch vehicle type (used by helpers below) ───────────────────────────
 interface MismatchVehicle {
   vin: string;
   make: string;
@@ -33,6 +41,88 @@ interface MismatchVehicle {
 interface MismatchData {
   missingInScanned: MismatchVehicle[];
   missingInInsurance: MismatchVehicle[];
+}
+
+const INSURANCE_PAGE_LIMIT = 500;
+
+function normalizeVinKey(vin: unknown): string {
+  if (vin == null) return '';
+  return String(vin).trim().replace(/\s+/g, '').toUpperCase();
+}
+
+/** Same normalization as vehicle create: insurance percentage jobs only. */
+function isInsuranceJobTypeForInvoice(jobType: unknown): boolean {
+  const s = String(jobType || '')
+    .toLowerCase()
+    .replace(/_/g, '')
+    .replace(/-/g, '')
+    .replace(/\s+/g, '');
+  return s === 'insurancepercentage';
+}
+
+function vehicleToMismatchRow(v: Record<string, unknown>): MismatchVehicle {
+  return {
+    vin: String(v?.vin ?? ''),
+    make: String(v?.make ?? ''),
+    model: String(v?.model ?? ''),
+  };
+}
+
+function computeVinMismatch(selectedJobs: any[], insuranceVehicles: any[]): MismatchData {
+  const scanned = selectedJobs;
+  const insurance = insuranceVehicles || [];
+  const scannedVinSet = new Set<string>();
+  scanned.forEach((v) => {
+    const k = normalizeVinKey(v?.vin);
+    if (k) scannedVinSet.add(k);
+  });
+  const insuranceVinSet = new Set<string>();
+  insurance.forEach((v) => {
+    const k = normalizeVinKey(v?.vin);
+    if (k) insuranceVinSet.add(k);
+  });
+  const missingInScanned = insurance
+    .filter((iv) => {
+      const k = normalizeVinKey(iv?.vin);
+      return k && !scannedVinSet.has(k);
+    })
+    .map((iv) => vehicleToMismatchRow(iv as Record<string, unknown>));
+  const missingInInsurance = scanned
+    .filter((sv) => {
+      const k = normalizeVinKey(sv?.vin);
+      return k && !insuranceVinSet.has(k);
+    })
+    .map((sv) => vehicleToMismatchRow(sv as Record<string, unknown>));
+  return { missingInScanned, missingInInsurance };
+}
+
+async function fetchAllInsuranceVehiclesByJob(jobId: string, token: string): Promise<any[]> {
+  let page = 1;
+  let all: any[] = [];
+  let hasMore = true;
+  while (hasMore) {
+    const url = `${apiUrl}/fetchInsuranceVehiclesByJob?jobId=${encodeURIComponent(jobId)}&page=${page}&limit=${INSURANCE_PAGE_LIMIT}`;
+    const response = await axios.get(url, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    });
+    const data = response.data;
+    const newVehicles =
+      data?.jobs?.vehicles ??
+      data?.response?.vehicles ??
+      data?.vehicles ??
+      [];
+    const arr = Array.isArray(newVehicles) ? newVehicles : [];
+    all = [...all, ...arr];
+    const totalPages = data?.jobs?.totalPages ?? data?.response?.totalPages ?? data?.totalPages;
+    if (totalPages != null && totalPages !== '') {
+      hasMore = page < Number(totalPages);
+    } else {
+      hasMore = arr.length >= INSURANCE_PAGE_LIMIT;
+    }
+    page += 1;
+    if (!hasMore) break;
+  }
+  return all;
 }
 
 // ─── Modal 2: Missing Vehicles detail ────────────────────────────────────────
@@ -133,8 +223,11 @@ const VehicleMismatchAlert: React.FC<{
   mismatchData: MismatchData;
   onProceed: () => void;
   onCancel: () => void;
-}> = ({ mismatchData, onProceed, onCancel }) => {
+  /** Refetch insurance list + recompute VIN mismatch (superadmin insurance job flow). */
+  onViewMissingVehicles: () => Promise<void>;
+}> = ({ mismatchData, onProceed, onCancel, onViewMissingVehicles }) => {
   const [showMissingModal, setShowMissingModal] = useState(false);
+  const [viewLoading, setViewLoading] = useState(false);
   const scannedCount = mismatchData.missingInScanned.length;
   const insuranceCount = mismatchData.missingInInsurance.length;
 
@@ -150,7 +243,7 @@ const VehicleMismatchAlert: React.FC<{
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h2 className="text-lg font-bold text-gray-900">Vehicle Mismatch Detected</h2> 
+              <h2 className="text-lg font-bold text-gray-900">Vehicle Mismatch Detected</h2>
             </div>
             <p className="text-sm text-gray-600 mb-5">
               There are differences between the scanned vehicles and the uploaded insurance vehicle list.
@@ -174,10 +267,20 @@ const VehicleMismatchAlert: React.FC<{
               )}
             </div>
             <button
-              onClick={() => setShowMissingModal(true)}
-              className="w-full py-3 px-4 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors mb-3"
+              type="button"
+              disabled={viewLoading}
+              onClick={async () => {
+                setViewLoading(true);
+                try {
+                  await onViewMissingVehicles();
+                  setShowMissingModal(true);
+                } finally {
+                  setViewLoading(false);
+                }
+              }}
+              className="w-full py-3 px-4 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              View Missing Vehicles
+              {viewLoading ? 'Loading…' : 'View Missing Vehicles'}
             </button>
             <div className="flex gap-3">
               <button onClick={onCancel} className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
@@ -257,6 +360,8 @@ const JobTable: React.FC = () => {
     roleType: string;
     userId: string | null;
   } | null>(null);
+  /** When true, "View Missing Vehicles" refetches insurance vehicles and recomputes VIN mismatch. */
+  const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
   const handlePdrChange = (jobId: string, value: string) => {
     setPdrValues(prev => ({ ...prev, [jobId]: value }));
@@ -610,9 +715,86 @@ const JobTable: React.FC = () => {
       } else {
         toast.error(response.data.message || 'Failed to generate invoice');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating invoice:', error);
-      toast.error('An error occurred while generating invoice');
+
+      let errMsg = '';
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data;
+        errMsg =
+          typeof data === 'string'
+            ? data
+            : String(
+              (data as { error?: string; message?: string })?.error ??
+              (data as { message?: string })?.message ??
+              ''
+            );
+      }
+
+      const lower = errMsg.toLowerCase();
+      const isCustomerEmailMissing =
+        errMsg &&
+        (lower.includes('customer email is missing') ||
+          (lower.includes('email') && lower.includes('missing') && lower.includes('customer')));
+
+      if (isCustomerEmailMissing) {
+        const idFromApi = errMsg.match(/customerId\(s\):\s*([\d,\s]+)/i);
+        const firstParsedId =
+          idFromApi?.[1]
+            ?.split(/[,\s]+/)
+            .map((s) => s.trim())
+            .find(Boolean) ?? '';
+        const customerIdForEdit =
+          firstParsedId ||
+          String(selectedJobs[0]?.customer?.id ?? selectedJobs[0]?.customerId ?? '');
+
+        const safeErr = escapeHtmlForSwal(errMsg);
+        const result = await Swal.fire({
+          title: 'Customer email required',
+          html: `
+            <div style="text-align:left;font-family:inherit;margin-top:4px">
+              <div style="border-radius:14px;background:linear-gradient(145deg,#eef2ff 0%,#f5f3ff 45%,#fff7ed 100%);border:1px solid #c7d2fe;padding:18px 16px;margin-bottom:14px;box-shadow:0 4px 20px rgba(56,61,113,0.08)">
+                <div style="display:flex;align-items:flex-start;gap:12px">
+                  <div style="flex-shrink:0;width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#383d71,#5b5f99);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(56,61,113,0.35)">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </div>
+                  <div>
+                    <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#0f172a;letter-spacing:-0.02em">Invoice needs a customer email</p>
+                    <p style="margin:0;font-size:13px;line-height:1.55;color:#475569">Add a valid email on the customer profile, then try generating the invoice again.</p>
+                  </div>
+                </div>
+              </div> 
+            </div>
+          `,
+          icon: 'warning',
+          iconColor: '#f59e0b',
+          showCancelButton: true,
+          cancelButtonText: 'No',
+          confirmButtonText: 'Add customer email',
+          width: 460,
+          padding: '1.75rem 1.5rem 1.5rem',
+          buttonsStyling: false,
+          customClass: {
+            popup: 'swal-invoice-email-popup',
+            title: '!text-[#0f172a] !text-xl !font-bold !pb-2 !pt-0', 
+            cancelButton:
+              '!bg-[#f1f5f9] hover:!bg-[#e2e8f0] !text-[#475569] !rounded-xl !px-5 !py-3 !text-sm !font-semibold !border !border-slate-200 !m-1',
+              confirmButton:
+              '!bg-[#383d71] hover:!bg-[#2d3159] !text-white !rounded-xl !px-5 !py-3 !text-sm !font-semibold !shadow-lg !shadow-[#383d71]/25 !m-1 !min-w-[200px]',
+            actions: '!gap-2 !mt-2',
+            htmlContainer: '!m-0 !pt-0',
+          },
+        });
+
+        if (result.isConfirmed && customerIdForEdit) {
+          router.push(`/customer/create?customerId=${encodeURIComponent(customerIdForEdit)}`);
+        }
+        return;
+      }
+
+      toast.error(
+        errMsg || 'An error occurred while generating invoice'
+      );
     } finally {
       setIsGeneratingInvoice(false);
     }
@@ -635,10 +817,63 @@ const JobTable: React.FC = () => {
       }
     }
 
-    // ── Step 1: Check for mismatches ─────────────────────────────────────────
-    try {
-        setShowMismatchAlert(true);
+    const jobIdForCompare = String(
+      selectedJobs[0]?.jobId ?? selectedJobs[0]?.job?.id ?? ''
+    );
+    const jobTypeFromSelected =
+      selectedJobs[0]?.job?.jobType ??
+      selectedJobs[0]?.job?.job_type ??
+      selectedJobs[0]?.jobType ??
+      '';
 
+    const jobIdsUnique = Array.from(
+      new Set(
+        selectedJobs
+          .map((j) => String(j.jobId ?? j.job?.id ?? '').trim())
+          .filter(Boolean)
+      )
+    );
+    if (jobIdsUnique.length > 1) {
+      toast.error('Select vehicles from the same job to compare insurance list and generate invoice.');
+      return;
+    }
+
+    const useInsuranceVinCompare =
+      roleType === 'superadmin' &&
+      !!jobIdForCompare &&
+      isInsuranceJobTypeForInvoice(jobTypeFromSelected);
+
+    // ── Superadmin + insurance job: compare selected VINs vs fetchInsuranceVehiclesByJob ──
+    if (useInsuranceVinCompare) {
+      setIsGeneratingInvoice(true);
+      try {
+        const insuranceVehicles = await fetchAllInsuranceVehiclesByJob(jobIdForCompare, token!);
+        const { missingInScanned, missingInInsurance } = computeVinMismatch(
+          selectedJobs,
+          insuranceVehicles
+        );
+        if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
+          setMismatchUseInsuranceCompare(true);
+          setPendingInvoiceArgs({ isPrint, selectedJobs, token, roleType, userId });
+          setMismatchData({ missingInScanned, missingInInsurance });
+          setShowMismatchAlert(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Insurance VIN compare failed:', error);
+        toast.error('Could not load insurance vehicles for comparison. Try again.');
+        return;
+      } finally {
+        setIsGeneratingInvoice(false);
+      }
+      await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
+      return;
+    }
+
+    setMismatchUseInsuranceCompare(false);
+
+    // ── Step 1: Check for mismatches (backend) for other roles / job types ────
+    try {
       const mismatchResponse = await axios.post(
         `${apiUrl}/checkVehicleMismatch`,
         { vehicleIds: selectedJobs.map(job => job.id), roleType, userId },
@@ -699,16 +934,16 @@ const JobTable: React.FC = () => {
           <td>{job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'technician')?.map((tech: any) => (<div key={tech.id} className="capitalize"><Link href={`/technicians/view?technicianId=${tech?.id}`} className='hover:underline'>{tech.firstName} {tech.lastName}</Link></div>))}</td>
         )}
         {roleType !== 'single-technician' && (
-          <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== '' ? `$${tech.VehicleTechnician?.techFlatRate}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
+          <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== '' ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
         )}
         {roleType !== 'single-technician' && (
           <td>{job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'R/I/R/R')?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.firstName} {tech.lastName}</div>))}</td>
         )}
         {roleType !== 'single-technician' && (
-          <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== '' ? `$${tech.VehicleTechnician?.rRate}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
+          <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.rPercentageCalculatedAmount && tech.VehicleTechnician?.rPercentageCalculatedAmount !== '' ? `$${tech.VehicleTechnician?.rPercentageCalculatedAmount}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
         )}
         {roleType === 'single-technician' && (<td>{job?.labourCost ? `$${job.labourCost}` : 'N/A'}</td>)}
-        {roleType !== 'single-technician' && (<td>{job?.totalCombined && job?.totalCombined !== '' ? `$${job?.totalCombined}` : <span className="text-gray-400 text-sm"></span>}</td>)}
+        {/* {roleType !== 'single-technician' && (<td>{job?.totalCombined && job?.totalCombined !== '' ? `$${job?.totalCombined}` : <span className="text-gray-400 text-sm"></span>}</td>)} */}
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
         <td>
@@ -755,13 +990,13 @@ const JobTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} />
 
-        <div className="flex mb-2 shadow-lg p-2 flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
+        {/* <div className="flex mb-2 shadow-lg p-2 flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
           <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>
           {roleType !== 'single-technician title_sdev' && (<div className='total_dent_teach title_sdev'><b>Total Dent Tech  </b>: ${dentTechTotalAmount}</div>)}
           {roleType !== 'single-technician' && (<div className='total_ri_content title_sdev'><b>Total RR/I/R  </b>: ${rRTotalAmount}</div>)}
           <div><b>Total Job Estimate </b>: ${totalJobAmount}</div>
           {roleType !== 'single-technician' && (<div className='total_expense title_sdev'><b>Total Expense </b>: ${totalEstimateAmount}</div>)}
-        </div>
+        </div> */}
 
         <div className="overflow-auto rounded-md">
           <table className="table w-full table-fixed sdev_table">
@@ -780,7 +1015,7 @@ const JobTable: React.FC = () => {
                 {roleType !== 'single-technician' && (<th className="w-[100px]">Dent Tech Rate</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[130px]">Assigned RR/I/R</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[80px]">RR/I/R</th>)}
-                {roleType !== 'single-technician' && (<th className="w-[80px]">Total Expense</th>)}
+                {/* {roleType !== 'single-technician' && (<th className="w-[80px]">Total Expense</th>)} */}
                 {roleType === 'single-technician' && (<th className="w-[80px]">Labour Cost</th>)}
                 <th className="w-[80px]">Start Date</th>
                 <th className="w-[80px]">End Date</th>
@@ -793,9 +1028,9 @@ const JobTable: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 9} className="text-center py-10"><Loader /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Loader /></td></tr>
               ) : activeJob.length === 0 ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 9} className="text-center py-10"><Empty /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Empty /></td></tr>
               ) : (
                 activeJob.map((job) => renderRow(job))
               )}
@@ -815,9 +1050,19 @@ const JobTable: React.FC = () => {
           onCancel={() => {
             setShowMismatchAlert(false);
             setPendingInvoiceArgs(null);
+            setMismatchUseInsuranceCompare(false);
+          }}
+          onViewMissingVehicles={async () => {
+            if (!mismatchUseInsuranceCompare || !pendingInvoiceArgs) return;
+            const { selectedJobs, token } = pendingInvoiceArgs;
+            const jid = String(selectedJobs[0]?.jobId ?? selectedJobs[0]?.job?.id ?? '');
+            if (!token || !jid) return;
+            const insuranceVehicles = await fetchAllInsuranceVehiclesByJob(jid, token);
+            setMismatchData(computeVinMismatch(selectedJobs, insuranceVehicles));
           }}
           onProceed={async () => {
             setShowMismatchAlert(false);
+            setMismatchUseInsuranceCompare(false);
             if (pendingInvoiceArgs) {
               const { isPrint, selectedJobs, token, roleType, userId } = pendingInvoiceArgs;
               setPendingInvoiceArgs(null);

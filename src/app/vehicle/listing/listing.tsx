@@ -553,8 +553,8 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.techFlatRate && tech.VehicleTechnician?.techFlatRate !== ''
-                    ? `$${tech.VehicleTechnician?.techFlatRate}`
+                  {tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== ''
+                    ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}`
                     : <span className="text-gray-500 text-sm"></span>}
                 </div>
               ))
@@ -573,21 +573,21 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.rRate && tech.VehicleTechnician?.rRate !== ''
-                    ? `$${tech.VehicleTechnician?.rRate}`
+                  {tech.VehicleTechnician?.rPercentageCalculatedAmount && tech.VehicleTechnician?.rPercentageCalculatedAmount !== ''
+                    ? `$${tech.VehicleTechnician?.rPercentageCalculatedAmount}`
                     : <span className="text-gray-500 text-sm"></span>}
                 </div>
               ))
             ) : <span className="text-gray-500 text-sm"></span>}
           </td>
         )}
-        {roleType !== 'single-technician' && (
+        {/* {roleType !== 'single-technician' && (
           <td>
             {job?.totalCombined && job?.totalCombined !== ''
               ? `$${job?.totalCombined}`
               : <span className="text-gray-500 text-sm"></span>}
           </td>
-        )}
+        )} */}
         <td>{job?.vin}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
@@ -597,8 +597,8 @@ const JobTable: React.FC = () => {
         <td>
           {canCreate && (
             <span
-              onClick={() => toggleApproval(job.id, job.vehicleStatus)}
-              style={{ cursor: 'pointer' }}
+              // onClick={() => toggleApproval(job.id, job.vehicleStatus)}
+              // style={{ cursor: 'pointer' }}
               className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {job.vehicleStatus ? 'Completed' : 'In Progress'}
@@ -755,7 +755,7 @@ const JobTable: React.FC = () => {
                 {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
                 {roleType !== 'single-technician' && <th className="w-[130px]">Assigned RR/I/R</th>}
                 {roleType !== 'single-technician' && <th className="w-[80px]">RR/I/R</th>}
-                {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>}
+                {/* {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>} */}
                 <th className="w-[150px]">VIN</th>
                 <th className="w-[100px]">Start Date</th>
                 <th className="w-[80px]">End Date</th>
@@ -767,13 +767,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading && activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
@@ -781,14 +781,14 @@ const JobTable: React.FC = () => {
                 activeJob?.map((job) => renderRow(job))
               )}
 
-              {roleType !== 'single-technician' && (
+              {/* {roleType !== 'single-technician' && (
                 <tr>
                   <td colSpan={9} className="text-right font-semibold">
                     <span className="pr-[75px]">Total: ${totalExpense}</span>
                   </td>
                   <td colSpan={5} className="text-right font-semibold"></td>
                 </tr>
-              )}
+              )} */}
             </tbody>
           </table>
         </div>

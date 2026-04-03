@@ -65,85 +65,7 @@ export default function ViewDetails() {
     return acc + parseFloat(job.cost || '0');
   }, 0);
 
-  const calculateTechnicianTotalCost = (jobData: any) => {
-    if (!jobData) return 0;
-
-    // Calculate subtotal from jobDescription
-    let subtotalcost = 0;
-    if (Array.isArray(jobData.jobDescription)) {
-      subtotalcost = jobData.jobDescription.reduce((total: number, item: any) => {
-        let parsedItem = item;
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item);
-          } catch {
-            return total;
-          }
-        }
-        const cost = parseFloat(parsedItem?.cost || '0');
-        return total + (isNaN(cost) ? 0 : cost);
-      }, 0);
-    }
-
-    // If no technicians, return just the subtotal
-    if (!Array.isArray(jobData.assignedTechnicians)) {
-      return subtotalcost;
-    }
-
-    let technicianTotal = subtotalcost;
-
-    // Check if labourCost exists and add it to the total if available
-    const labourCost = parseFloat(jobData.labourCost || '0');
-    if (!isNaN(labourCost) && labourCost > 0) {
-      technicianTotal += labourCost; // Add labourCost to the technician total
-    }
-
-    // Process each technician
-    jobData.assignedTechnicians.forEach((tech: any) => {
-      const techDetails = tech.VehicleTechnician;
-      if (!techDetails) return;
-
-      // Parse simpleFlatRate
-      let simpleFlatRate = 0;
-      try {
-        if (techDetails.simpleFlatRate && techDetails.simpleFlatRate !== "null") {
-          const parsedRate = JSON.parse(techDetails.simpleFlatRate);
-
-          if (techDetails.payRate === "Pay Per Vehicles" && techDetails.payVehicleType) {
-            // For Pay Per Vehicles, get the rate for the specific vehicle type
-            simpleFlatRate = parseFloat(parsedRate[techDetails.payVehicleType]) || 0;
-          } else if (typeof parsedRate === 'object') {
-            // For other payment methods, try to get a technician rate
-            const technicianRate = parsedRate['technician'];
-            simpleFlatRate = parseFloat(technicianRate) || 0;
-          } else if (typeof parsedRate === 'number') {
-            simpleFlatRate = parsedRate;
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing simpleFlatRate:', error);
-        simpleFlatRate = 0;
-      }
-
-      // Parse amountPercentage safely
-      const amountPercentage = parseFloat(
-        techDetails?.amountPercentage === "null" ? "0" : techDetails?.amountPercentage || "0"
-      );
-
-      // Add costs based on payment method
-      if (techDetails.payRate === "Simple Flat Rate" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (techDetails.payRate === "Pay Per Vehicles" && simpleFlatRate > 0) {
-        technicianTotal += simpleFlatRate;
-      }
-      else if (amountPercentage > 0) {
-        technicianTotal += (amountPercentage * subtotalcost) / 100;
-      }
-    });
-
-    return technicianTotal;
-  };
+ 
 
   const backHref = '/vehicle/listing';
 
@@ -211,14 +133,51 @@ export default function ViewDetails() {
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant Country" value={na(jobData?.plantCountry)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant State" value={na(jobData?.plantState)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Customer" value={<span className="capitalize">{na(jobData?.customer?.fullName)}</span>} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label="Customer Email" value={jobData?.customer?.email && String(jobData.customer.email).trim() !== '' ? <a className="hover:underline text-[#383d71]" href={`mailto:${jobData.customer.email}`}>{jobData.customer.email}</a> : 'N/A'} />
+
             {/* Column 2 */}
             <InfoCard icon={<span className="text-sm font-bold">#</span>} label="VIN" value={na(jobData?.vin)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Model" value={na(jobData?.model)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Vehicle Type" value={na(jobData?.vehicleType)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="End Date" value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'} />
-            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Vehicle Override Price" value={jobData?.labourCost && String(jobData.labourCost).trim() !== '' ? `$${jobData.labourCost}` : <span className="text-gray-500">No price added</span>} />
+            {/* <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Vehicle Override Price" value={jobData?.labourCost && String(jobData.labourCost).trim() !== '' ? `$${jobData.labourCost}` : <span className="text-gray-500">No price added</span>} /> */}
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Insurance Calculated Price" value={jobData?.insuranceCalculatedPrice && String(jobData.insuranceCalculatedPrice).trim() !== '' ? `$${jobData.insuranceCalculatedPrice}` : <span className="text-gray-500">No price added</span>} />
+            <InfoCard icon={<>%</>} label="Insurance Percentage" value={jobData?.job?.insurancePercentage != null && String(jobData?.job?.insurancePercentage).trim() !== '' ? `${jobData?.job?.insurancePercentage}%` : <span className="text-gray-500">No percentage added</span>} />
+            <InfoCard
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              }
+              label="Insurance File"
+              value={(() => {
+                const raw = jobData?.job?.insuranceFile;
+                const url = raw != null && String(raw).trim() !== '' ? String(raw).trim() : '';
+                if (!url) return <span className="text-gray-500">No insurance file added</span>;
+                let label = 'View file';
+                try {
+                  const u = url.includes('://') ? new URL(url) : new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+                  const base = u.pathname.split('/').filter(Boolean).pop() || url;
+                  label = decodeURIComponent(base) || 'View file';
+                } catch {
+                  label = url.split('/').filter(Boolean).pop() || 'View file';
+                }
+                return (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-[#383d71] font-medium hover:underline break-all"
+                  >
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    {label}
+                  </a>
+                );
+              })()}
+            />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Created By" value={na(jobData?.createdBy)} />
-            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label="Customer Email" value={jobData?.customer?.email && String(jobData.customer.email).trim() !== '' ? <a className="hover:underline text-[#383d71]" href={`mailto:${jobData.customer.email}`}>{jobData.customer.email}</a> : 'N/A'} />
             {/* Column 3 */}
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>} label="Vehicle Descriptor" value={na(jobData?.vehicleDescriptor)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="Model Year" value={na(jobData?.modelYear)} />
@@ -278,6 +237,12 @@ export default function ViewDetails() {
                     <p className="font-semibold text-gray-900 capitalize">{tech.firstName} {tech.lastName}</p>
                     <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
                     <p className="text-sm text-gray-600">Specialty: {tech?.techType ?? 'N/A'}</p>
+                    {tech?.VehicleTechnician?.techPercentageCalculatedAmount && tech?.VehicleTechnician?.techPercentageCalculatedAmount !== '' && (
+                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.techPercentageCalculatedAmount ?? 'N/A'}</p>
+                    )}
+                    {tech?.VehicleTechnician?.rPercentageCalculatedAmount && tech?.VehicleTechnician?.rPercentageCalculatedAmount !== '' && (
+                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.rPercentageCalculatedAmount ?? 'N/A'}</p>
+                    )}
                   </div>
                 ))}
               </div>

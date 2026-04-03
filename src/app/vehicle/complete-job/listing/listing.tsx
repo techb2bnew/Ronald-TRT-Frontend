@@ -626,14 +626,14 @@ const CompletedJobs: React.FC = () => {
               )}
             </td>
           )}
-          {roleType !== 'single-technician' && (
+          {/* {roleType !== 'single-technician' && (
             <td>
               {completejob?.totalCombined && completejob?.totalCombined !== '' 
                 ? `$${completejob?.totalCombined}`
                 : <span className="text-gray-500 text-xs"></span>
               }
             </td>
-          )}
+          )} */}
 
           {/* <td>{completejob?.assignedTechnicians?.map((tech: any) => (
           <div key={tech.id}>
@@ -656,7 +656,8 @@ const CompletedJobs: React.FC = () => {
           <td>
 
 
-            <span onClick={() => toggleApproval(completejob.id, completejob.vehicleStatus)} style={{ cursor: 'pointer' }}
+            <span 
+            // onClick={() => toggleApproval(completejob.id, completejob.vehicleStatus)} style={{ cursor: 'pointer' }}
               className={`badge ${completejob.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}
             >
               {completejob.vehicleStatus ? 'Completed' : 'In Progress'}
@@ -748,9 +749,9 @@ const CompletedJobs: React.FC = () => {
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">RR/I/R</th>
               )}
-              {roleType !== 'single-technician' && (
+              {/* {roleType !== 'single-technician' && (
                 <th className="w-[120px]">Total Expense</th>
-              )}
+              )} */}
               <th className="w-[150px]">VIN</th>
               <th className="w-[100px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
@@ -765,28 +766,28 @@ const CompletedJobs: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 14} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
               activeJob?.map((job) => renderRow(job))
             )}
-            {roleType !== 'single-technician' && (
+            {/* {roleType !== 'single-technician' && (
               <tr>
                 <td colSpan={9} className='text-right font-semibold bg-white'>
-                  <span className='pr-6'>
+                  <span className='pr-11'>
                     Total: ${totalExpense}
                   </span>
                 </td>
               </tr>
-            )}
+            )} */}
           </tbody>
         </table>
       </div>

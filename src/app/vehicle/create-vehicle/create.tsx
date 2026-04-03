@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import TextField from '@mui/material/TextField';
 // import FormControl from '@mui/material/FormControl';
 // import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText, OutlinedInput, InputAdornment, FormHelperText, FormLabel, Paper, List, ListItem } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Checkbox, ListItemText, OutlinedInput, FormHelperText, FormLabel, Paper, List, ListItem } from '@mui/material';
 // import MenuItem from '@mui/material/MenuItem';
 import Loader from '@/app/component/loader';
 import Swal from 'sweetalert2';
@@ -101,8 +101,33 @@ const JOB_LIST_PAGE_SIZE = 10;
 function isInsurancePercentageJobType(jobType: string): boolean {
   const s = String(jobType || '')
     .toLowerCase()
-    .replace(/_/g, '');
+    .replace(/_/g, '')
+    .replace(/-/g, '')
+    .replace(/\s+/g, '');
   return s === 'insurancepercentage';
+}
+
+/** Resolve tech/r percentage for payload (rates, technicianDetails row, list row, nested VehicleTechnician). */
+function getTechnicianPercentageField(
+  rates: { techPercentage?: string; rPercentage?: string },
+  techDetail: any,
+  key: 'techPercentage' | 'rPercentage',
+  techFromList?: any
+): string {
+  const vt =
+    techDetail?.VehicleTechnician ??
+    techFromList?.VehicleTechnician ??
+    techFromList?.vehicleTechnician;
+  const raw =
+    rates?.[key] ??
+    techDetail?.[key] ??
+    vt?.[key] ??
+    techFromList?.[key] ??
+    '';
+  if (raw == null || raw === '') return '';
+  const s = String(raw).trim();
+  if (s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return '';
+  return s;
 }
 
 const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
@@ -195,7 +220,14 @@ export default function Technicians() {
   const jobFetchInFlightRef = useRef(false);
 
   const [technicianPayRates, setTechnicianPayRates] = useState<{
-    [techId: string]: { rRate?: string; techFlatRate?: string };
+    [techId: string]: {
+      rRate?: string;
+      techFlatRate?: string;
+      techPercentage?: string;
+      rPercentage?: string;
+      techPercentageCalculatedAmount?: string;
+      rPercentageCalculatedAmount?: string;
+    };
   }>({});
   const [buttonVisible, setButtonVisible] = useState<{ [techId: string]: boolean }>({});
 
@@ -365,6 +397,20 @@ export default function Technicians() {
         formDataObj.append(`technicians[${0}][lastName]`, technician.lastName);
         formDataObj.append(`technicians[${0}][labourCost]`, technician.labourCost || '');
         formDataObj.append(`userId[${0}]`, technician.id);
+        const tp0 =
+          technician.techPercentage ??
+          technician.VehicleTechnician?.techPercentage ??
+          '';
+        const rp0 =
+          technician.rPercentage ?? technician.VehicleTechnician?.rPercentage ?? '';
+        formDataObj.append(
+          `technicians[${0}][techPercentage]`,
+          tp0 !== '' && tp0 != null ? String(tp0) : ''
+        );
+        formDataObj.append(
+          `technicians[${0}][rPercentage]`,
+          rp0 !== '' && rp0 != null ? String(rp0) : ''
+        );
       } catch (err) {
         console.error('Failed to parse technician data:', err);
       }
@@ -376,10 +422,21 @@ export default function Technicians() {
             formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
             formDataObj.append(`technicians[${techIndex}][techType]`, techDetail.techType || '');
 
+            const techRow = technicians.find((t) => String(t.id) === String(techDetail.id));
+
             // Get rates from technicianPayRates first, then fall back to techDetail
-            const rates = technicianPayRates[techDetail.id] || {};
+            const rates = technicianPayRates[String(techDetail.id)] || technicianPayRates[techDetail.id] || {};
             const rRateValue = rates.rRate || techDetail.rRate || '';
             const techFlatRateValue = rates.techFlatRate || techDetail.techFlatRate || '';
+            const techPctVal = rates.techPercentageCalculatedAmount ?? techDetail.techPercentageCalculatedAmount ?? '';
+            const rPctVal = rates.rPercentageCalculatedAmount ?? techDetail.rPercentageCalculatedAmount ?? '';
+            const techPercentageVal = getTechnicianPercentageField(
+              rates,
+              techDetail,
+              'techPercentage',
+              techRow
+            );
+            const rPercentageVal = getTechnicianPercentageField(rates, techDetail, 'rPercentage', techRow);
 
             // Append both rates (if available)
             if (techFlatRateValue && techFlatRateValue !== '{}' && techFlatRateValue !== '') {
@@ -389,6 +446,15 @@ export default function Technicians() {
             if (rRateValue && rRateValue !== '{}' && rRateValue !== '') {
               formDataObj.append(`technicians[${techIndex}][rRate]`, rRateValue);
             }
+            if (techPctVal !== '' && techPctVal != null && String(techPctVal).trim() !== '') {
+              formDataObj.append(`technicians[${techIndex}][techPercentageCalculatedAmount]`, String(techPctVal));
+            }
+            if (rPctVal !== '' && rPctVal != null && String(rPctVal).trim() !== '') {
+              formDataObj.append(`technicians[${techIndex}][rPercentageCalculatedAmount]`, String(rPctVal));
+            }
+            // Always send percentage keys so create/update payload matches backend (empty string if unset)
+            formDataObj.append(`technicians[${techIndex}][techPercentage]`, techPercentageVal || '');
+            formDataObj.append(`technicians[${techIndex}][rPercentage]`, rPercentageVal || '');
           });
         }
       });
@@ -421,9 +487,9 @@ export default function Technicians() {
           formDataObj.append('images[]', file);  // In case images are URLs, include them as well
         }
       });
-    }
-    // In your handleAddVehicle function
-    console.log(jobIds, 'jobIdsjobIds');
+    } 
+    console.log(jobForms, 'jobFormsjobForms'); 
+
 
     if (isEdit && jobForms[0]?.id) {
       formDataObj.append('vehicleId', jobForms[0].id);
@@ -678,14 +744,53 @@ export default function Technicians() {
           techType: tech.techType,
           techFlatRate: tech.VehicleTechnician?.techFlatRate || '',
           rRate: tech.VehicleTechnician?.rRate || '',
+          techPercentageCalculatedAmount:
+            tech.VehicleTechnician?.techPercentageCalculatedAmount ??
+            tech.techPercentageCalculatedAmount ??
+            '',
+          rPercentageCalculatedAmount:
+            tech.VehicleTechnician?.rPercentageCalculatedAmount ??
+            tech.rPercentageCalculatedAmount ??
+            '',
+          techPercentage:
+            tech.VehicleTechnician?.techPercentage ?? tech.techPercentage ?? '',
+          rPercentage: tech.VehicleTechnician?.rPercentage ?? tech.rPercentage ?? '',
         })) || [];
 
         // Set technicianPayRates
-        const initialPayRates: { [key: string]: { rRate?: string; techFlatRate?: string; } } = {};
+        const initialPayRates: {
+          [key: string]: {
+            rRate?: string;
+            techFlatRate?: string;
+            techPercentage?: string;
+            rPercentage?: string;
+            techPercentageCalculatedAmount?: string;
+            rPercentageCalculatedAmount?: string;
+          };
+        } = {};
         technicianDetails.forEach((tech: any) => {
-          initialPayRates[tech.id] = {
+          const tid = String(tech.id);
+          const pctOk = (v: unknown) =>
+            v != null &&
+            String(v).trim() !== '' &&
+            String(v).toLowerCase() !== 'null';
+          initialPayRates[tid] = {
             rRate: tech.rRate,
-            techFlatRate: tech.techFlatRate
+            techFlatRate: tech.techFlatRate,
+            techPercentage: pctOk(tech.techPercentage) ? String(tech.techPercentage) : undefined,
+            rPercentage: pctOk(tech.rPercentage) ? String(tech.rPercentage) : undefined,
+            techPercentageCalculatedAmount:
+              tech.techPercentageCalculatedAmount != null &&
+              tech.techPercentageCalculatedAmount !== '' &&
+              String(tech.techPercentageCalculatedAmount).toLowerCase() !== 'null'
+                ? String(tech.techPercentageCalculatedAmount)
+                : undefined,
+            rPercentageCalculatedAmount:
+              tech.rPercentageCalculatedAmount != null &&
+              tech.rPercentageCalculatedAmount !== '' &&
+              String(tech.rPercentageCalculatedAmount).toLowerCase() !== 'null'
+                ? String(tech.rPercentageCalculatedAmount)
+                : undefined,
           };
         });
 
@@ -734,30 +839,31 @@ export default function Technicians() {
           role: getValidValue(vehicleData.role) || '',
         };
 
-        const jobId = formData.jobId;
-        if (jobId) {
-          localStorage.setItem('jobId', jobId);  // Save jobId to localStorage
+        const persistedJobId = formData.jobId;
+        if (persistedJobId) {
+          localStorage.setItem('jobId', String(persistedJobId));
         }
 
-        // Ensure insurance/flat fields render correctly in edit case
+        // Job type for insurance field + job dropdown metadata (API may nest under job)
         const apiJobType = getValidValue(
           (vehicleData as any)?.jobType ??
-          (vehicleData as any)?.job_type ??
-          (vehicleData as any)?.jobType
+            (vehicleData as any)?.job_type ??
+            (vehicleData as any)?.job?.jobType ??
+            (vehicleData as any)?.job?.job_type ??
+            ''
         );
         setSelectedCustomerJobType(String(apiJobType).toLowerCase());
 
         setJobForms([formData]);
-        // The Insurance Calculated Price field is bound to `formData`
         setFormData(formData);
         setDescriptionCostFields(jobDescriptionsArray.length > 0
           ? jobDescriptionsArray
           : [{ id: crypto.randomUUID(), jobDescription: '' }]
         );
         setTechnicians(vehicleData.assignedTechnicians || []);
-        if (vehicleData.jobName) {
-          setSelectedJobName(vehicleData.jobName);
-        }
+
+        const editJobId = getValidValue(vehicleData.jobId);
+        const editJobName = getValidValue(vehicleData.jobName).trim();
 
         const customerIdForJobs = getValidValue(vehicleData.customerId);
         if (customerIdForJobs) {
@@ -766,6 +872,26 @@ export default function Technicians() {
           setJobSearchTerm('');
           setJobHasMore(true);
           await fetchCustomerJobsPage(String(customerIdForJobs), 1, false);
+        }
+
+        // Paginated job list may omit this vehicle's job — prepend so Select value matches a MenuItem
+        if (editJobId && editJobName) {
+          setJobNames((prev) => {
+            const exists = prev.some((j: any) => String(j.id) === String(editJobId));
+            if (exists) return prev;
+            return [
+              {
+                id: editJobId,
+                jobName: editJobName,
+                jobType: apiJobType,
+                job_type: apiJobType,
+                technicians: vehicleData.assignedTechnicians || [],
+              } as Job,
+              ...prev,
+            ];
+          });
+          setJobId(editJobId);
+          setSelectedJobName(editJobName);
         }
       } else {
         toast.error(data.error || 'Error fetching vehicle data');
@@ -955,18 +1081,24 @@ export default function Technicians() {
     }
   }, []);
 
-  // Add this to your component to initialize pay rates
+  /** Only fill missing technician pay rows so edit/vehicle load is not wiped. */
   useEffect(() => {
-    if (technicians.length > 0) {
-      const initialPayRates: { [key: string]: { rRate?: string; techFlatRate?: string } } = {};
-      technicians.forEach(tech => {
-        const payRateKey = tech.UserJob?.rRate !== undefined ? 'rRate' : 'techFlatRate';
-        initialPayRates[tech.id] = {
-          [payRateKey]: tech.UserJob?.[payRateKey] || tech.techFlatRate || ''
+    if (technicians.length === 0) return;
+    setTechnicianPayRates((prev) => {
+      const merged = { ...prev };
+      technicians.forEach((tech) => {
+        const id = String(tech.id);
+        if (merged[id]) return;
+        const payRateKey =
+          tech.UserJob?.rRate !== undefined && tech.UserJob?.rRate !== ''
+            ? 'rRate'
+            : 'techFlatRate';
+        merged[id] = {
+          [payRateKey]: tech.UserJob?.[payRateKey] || tech.techFlatRate || '',
         };
       });
-      setTechnicianPayRates(initialPayRates);
-    }
+      return merged;
+    });
   }, [technicians]);
 
   // Assuming vehicleDetailsMap and JobPayload are aligned correctly
@@ -1042,17 +1174,75 @@ export default function Technicians() {
               }
             );
             const settleJson = await settleRes.json();
-            if (settleRes.ok && settleJson?.status && settleJson?.data?.calculatedAmount != null) {
-              const amt = settleJson.data.calculatedAmount;
-              const amtStr = String(amt);
-              setFormData((prev) => ({ ...prev, insuranceCalculatedPrice: amtStr }));
-              setJobForms((prev) => {
-                const next = [...prev];
-                if (next[index]) {
-                  next[index] = { ...next[index], insuranceCalculatedPrice: amtStr };
-                }
-                return next;
-              });
+            if (settleRes.ok && settleJson?.status && settleJson?.data) {
+              const d = settleJson.data;
+              if (d.calculatedAmount != null) {
+                const amtStr = String(d.calculatedAmount);
+                setFormData((prev) => ({ ...prev, insuranceCalculatedPrice: amtStr }));
+                setJobForms((prev) => {
+                  const next = [...prev];
+                  if (next[index]) {
+                    next[index] = { ...next[index], insuranceCalculatedPrice: amtStr };
+                  }
+                  return next;
+                });
+              }
+              const techList = d.assignedTechnicians || d.technicians;
+              if (Array.isArray(techList)) {
+                setTechnicianPayRates((prev) => {
+                  const next = { ...prev };
+                  for (const t of techList) {
+                    const id = String(t.id);
+                    const vt = t.VehicleTechnician || t;
+                    const tpa = vt.techPercentageCalculatedAmount ?? t.techPercentageCalculatedAmount;
+                    const rpa = vt.rPercentageCalculatedAmount ?? t.rPercentageCalculatedAmount;
+                    const tp = vt.techPercentage ?? t.techPercentage;
+                    const rp = vt.rPercentage ?? t.rPercentage;
+                    next[id] = {
+                      ...(next[id] || {}),
+                      ...(tpa != null && String(tpa).trim() !== '' && String(tpa).toLowerCase() !== 'null'
+                        ? { techPercentageCalculatedAmount: String(tpa) }
+                        : {}),
+                      ...(rpa != null && String(rpa).trim() !== '' && String(rpa).toLowerCase() !== 'null'
+                        ? { rPercentageCalculatedAmount: String(rpa) }
+                        : {}),
+                      ...(tp != null && String(tp).trim() !== '' && String(tp).toLowerCase() !== 'null'
+                        ? { techPercentage: String(tp) }
+                        : {}),
+                      ...(rp != null && String(rp).trim() !== '' && String(rp).toLowerCase() !== 'null'
+                        ? { rPercentage: String(rp) }
+                        : {}),
+                    };
+                  }
+                  return next;
+                });
+                setJobForms((prev) => {
+                  const next = [...prev];
+                  const row = next[index];
+                  if (!row?.technicianDetails) return next;
+                  const merged = row.technicianDetails.map((td: any) => {
+                    const match = techList.find((x: any) => String(x.id) === String(td.id));
+                    if (!match) return td;
+                    const vt = match.VehicleTechnician || match;
+                    return {
+                      ...td,
+                      techPercentageCalculatedAmount:
+                        vt.techPercentageCalculatedAmount ??
+                        match.techPercentageCalculatedAmount ??
+                        td.techPercentageCalculatedAmount,
+                      rPercentageCalculatedAmount:
+                        vt.rPercentageCalculatedAmount ??
+                        match.rPercentageCalculatedAmount ??
+                        td.rPercentageCalculatedAmount,
+                      techPercentage:
+                        vt.techPercentage ?? match.techPercentage ?? td.techPercentage,
+                      rPercentage: vt.rPercentage ?? match.rPercentage ?? td.rPercentage,
+                    };
+                  });
+                  next[index] = { ...row, technicianDetails: merged };
+                  return next;
+                });
+              }
             } else {
               toast.error(settleJson?.message || settleJson?.error || 'Could not calculate insurance settlement');
             }
@@ -1112,34 +1302,63 @@ export default function Technicians() {
   const handlePayRateInput = (
     techId: string,
     value: string,
-    rateType: 'rRate' | 'techFlatRate'
+    rateType: 'rRate' | 'techFlatRate',
+    formIndex = 0
   ) => {
-    // Remove leading/trailing spaces from value
     const newValue = value.trim() === "" ? "" : value;
+    const key = String(techId);
 
-    // Log the update
-    console.log('Updating technician pay rate:', techId, rateType, newValue);
-
-    // Update technicianPayRates state directly to reflect changes
     setTechnicianPayRates((prevRates) => ({
       ...prevRates,
-      [techId]: {
-        ...prevRates[techId],
-        [rateType]: newValue,  // Ensure the field is updated with the new value
-      }
+      [key]: {
+        ...prevRates[key],
+        [rateType]: newValue,
+      },
     }));
 
-    // Optionally update the formData to reflect changes (if needed)
     setJobForms((prevForms) => {
       const updatedForms = [...prevForms];
-      updatedForms[0] = {
-        ...updatedForms[0],
-        technicianDetails: updatedForms[0].technicianDetails?.map((tech: any) => {
-          if (tech.id === techId) {
-            return {
-              ...tech,
-              [rateType]: newValue, // Update the rate value in technician details
-            };
+      const row = updatedForms[formIndex];
+      if (!row) return prevForms;
+      updatedForms[formIndex] = {
+        ...row,
+        technicianDetails: row.technicianDetails?.map((tech: any) => {
+          if (String(tech.id) === key) {
+            return { ...tech, [rateType]: newValue };
+          }
+          return tech;
+        }),
+      };
+      return updatedForms;
+    });
+  };
+
+  const handlePctCalculatedInput = (
+    techId: string,
+    value: string,
+    field: 'techPercentageCalculatedAmount' | 'rPercentageCalculatedAmount',
+    formIndex = 0
+  ) => {
+    const newValue = value.trim() === '' ? '' : value;
+    const key = String(techId);
+
+    setTechnicianPayRates((prevRates) => ({
+      ...prevRates,
+      [key]: {
+        ...prevRates[key],
+        [field]: newValue,
+      },
+    }));
+
+    setJobForms((prevForms) => {
+      const updatedForms = [...prevForms];
+      const row = updatedForms[formIndex];
+      if (!row) return prevForms;
+      updatedForms[formIndex] = {
+        ...row,
+        technicianDetails: row.technicianDetails?.map((tech: any) => {
+          if (String(tech.id) === key) {
+            return { ...tech, [field]: newValue };
           }
           return tech;
         }),
@@ -1153,12 +1372,17 @@ export default function Technicians() {
 
 
   const handlePayRateCheckbox = (techId: string) => {
-    // Get the current value from state
-    const currentValue = technicianPayRates[techId];
-    const currentPayRate = currentValue?.rRate || currentValue?.techFlatRate || '';
+    const key = String(techId);
+    const currentValue = technicianPayRates[key] || technicianPayRates[techId];
+    const currentPayRate =
+      currentValue?.techPercentageCalculatedAmount ||
+      currentValue?.rPercentageCalculatedAmount ||
+      currentValue?.rRate ||
+      currentValue?.techFlatRate ||
+      '';
 
     // Get the original value from the technician data (from your loop)
-    const technician = technicians.find(t => String(t.id) === techId);
+    const technician = technicians.find((t) => String(t.id) === key);
     const originalRRate = technician?.UserJob?.rRate;
     const originalFlatRate = technician?.UserJob?.techFlatRate;
     const originalPayRate = originalRRate ?? originalFlatRate ?? '';
@@ -1180,27 +1404,24 @@ export default function Technicians() {
     }).then((result) => {
       if (result.isConfirmed) {
         toast.success("Pay rate confirmed");
-        setButtonVisible(prev => ({ ...prev, [techId]: false }));
-        // 🔁 Call backend or update state if needed
+        setButtonVisible((prev) => ({ ...prev, [key]: false }));
       } else {
-        // If "No", reset to the original pay rate from UserJob
         setTechnicianPayRates((prev) => {
-          const technicianData = prev[techId] || {};
+          const technicianData = prev[key] || {};
 
-          // Determine which rate type to reset based on what exists in UserJob
           const hasOriginalRRate = originalRRate !== undefined && originalRRate !== null;
           const resetToRRate = hasOriginalRRate;
 
           return {
             ...prev,
-            [techId]: {
+            [key]: {
               ...technicianData,
               rRate: resetToRRate ? originalPayRate : technicianData.rRate,
-              techFlatRate: !resetToRRate ? originalPayRate : technicianData.techFlatRate
+              techFlatRate: !resetToRRate ? originalPayRate : technicianData.techFlatRate,
             },
           };
         });
-        setButtonVisible(prev => ({ ...prev, [techId]: false }));
+        setButtonVisible((prev) => ({ ...prev, [key]: false }));
         toast("No changes made");
       }
     });
@@ -1397,8 +1618,10 @@ export default function Technicians() {
         }
 
         // Remove from technicianPayRates
-        setTechnicianPayRates(prev => {
+        setTechnicianPayRates((prev) => {
           const newRates = { ...prev };
+          const k = String(techId);
+          delete newRates[k];
           delete newRates[techId];
           return newRates;
         });
@@ -1420,14 +1643,13 @@ export default function Technicians() {
           techFlatRate: tech.techType === 'FlatRate' ? rateValue : '',
           rRate: tech.techType !== 'FlatRate' ? rateValue : '',
         });
-
-        // Update technicianPayRates
-        setTechnicianPayRates(prev => ({
+ 
+        setTechnicianPayRates((prev) => ({
           ...prev,
-          [tech.id]: {
+          [String(tech.id)]: {
             rRate: tech.techType !== 'FlatRate' ? rateValue : '',
-            techFlatRate: tech.techType === 'FlatRate' ? rateValue : ''
-          }
+            techFlatRate: tech.techType === 'FlatRate' ? rateValue : '',
+          },
         }));
       }
 
@@ -1791,6 +2013,12 @@ export default function Technicians() {
             techFlatRate: tech.UserJob?.techFlatRate || '',
             rRate: tech.UserJob?.rRate || '',
             techType: tech.techType || 'technician',
+            techPercentageCalculatedAmount:
+              tech.techPercentageCalculatedAmount ?? tech.UserJob?.techPercentageCalculatedAmount ?? '',
+            rPercentageCalculatedAmount:
+              tech.rPercentageCalculatedAmount ?? tech.UserJob?.rPercentageCalculatedAmount ?? '',
+            techPercentage: tech.techPercentage ?? tech.UserJob?.techPercentage ?? '',
+            rPercentage: tech.rPercentage ?? tech.UserJob?.rPercentage ?? '',
           })),
         };
         return updatedForms;
@@ -1915,7 +2143,7 @@ export default function Technicians() {
                       color="warning"
                       name="jobName"
                       label="Select Job Title *"
-                      value={selectedJobName || jobForms[0]?.jobName || ''}
+                      value={(selectedJobName || jobForms[0]?.jobName || '').trim()}
                       onChange={(e) => handleJobNameSelect(e.target.value)}
                       MenuProps={{
                         disablePortal: true,
@@ -2277,7 +2505,7 @@ export default function Technicians() {
                   )} */}
                 </div>
 
-                {selectedCustomerJobType !== 'flat_rate' && selectedCustomerJobType !== 'flatrate' && (
+                {isInsurancePercentageJobType(selectedCustomerJobType) && (
                   <TextField
                     fullWidth
                     type="number"
@@ -2459,14 +2687,33 @@ export default function Technicians() {
                         <List dense>
                           {technicians.length > 0 ? (
                             technicians.map((tech) => {
-                              const value = String(tech.id);
-                              const isChecked = jobForms[index]?.assignTechnicians?.includes(value) || false;
-                              const techDetails = jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === value) || tech;
+                              const tid = String(tech.id);
+                              const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
+                              const techDetails =
+                                jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === tid) || tech;
 
-                              // Determine which rate type to use based on technician type
                               const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
-                              const rateValue = technicianPayRates[tech.id]?.[rateType] ||
-                                techDetails[rateType] || '';
+                              const rateValue =
+                                technicianPayRates[tid]?.[rateType] || techDetails[rateType] || '';
+                              const techPctAmt =
+                                technicianPayRates[tid]?.techPercentageCalculatedAmount ??
+                                techDetails.techPercentageCalculatedAmount ??
+                                (tech as any).VehicleTechnician?.techPercentageCalculatedAmount ??
+                                (tech as any).techPercentageCalculatedAmount;
+                              const rPctAmt =
+                                technicianPayRates[tid]?.rPercentageCalculatedAmount ??
+                                techDetails.rPercentageCalculatedAmount ??
+                                (tech as any).VehicleTechnician?.rPercentageCalculatedAmount ??
+                                (tech as any).rPercentageCalculatedAmount;
+
+                              const hasTechPct =
+                                techPctAmt != null &&
+                                String(techPctAmt).trim() !== '' &&
+                                String(techPctAmt).toLowerCase() !== 'null';
+                              const hasRPct =
+                                rPctAmt != null &&
+                                String(rPctAmt).trim() !== '' &&
+                                String(rPctAmt).toLowerCase() !== 'null';
 
                               return (
                                 <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
@@ -2475,40 +2722,62 @@ export default function Technicians() {
                                       edge="start"
                                       color="warning"
                                       checked={isChecked}
-                                      onChange={() => handleTechnicianChange(String(tech.id), index)}
+                                      onChange={() => handleTechnicianChange(tid, index)}
                                       tabIndex={-1}
                                       disableRipple
                                     />
                                     <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
                                   </div>
                                   {tech.techType === 'technician' ? (
-                                    <TextField
-                                      size="small"
-                                      type="number"
-                                      name="techFlatRate"
-                                      label="Flat Rate ($)"
-                                      color="warning"
-                                      value={rateValue}
-                                      onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'techFlatRate')}
-                                      onClick={() => setActiveInput(tech.id)}
-                                      style={{ maxWidth: '200px' }}
-                                    />
+                                    <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
+                                      <TextField
+                                        size="small"
+                                        type="number"
+                                        name="techFlatRate"
+                                        label={hasTechPct ? 'Flat Rate ($)' : 'Flat Rate ($)'}
+                                        color="warning"
+                                        value={hasTechPct ? String(techPctAmt) : rateValue}
+                                        onChange={(e) =>
+                                          hasTechPct
+                                            ? handlePctCalculatedInput(
+                                                tid,
+                                                e.target.value,
+                                                'techPercentageCalculatedAmount',
+                                                index
+                                              )
+                                            : handlePayRateInput(tid, e.target.value, 'techFlatRate', index)
+                                        }
+                                        onClick={() => setActiveInput(tid)}
+                                        style={{ maxWidth: '280px' }}
+                                      />
+                                    </div>
                                   ) : (
-                                    <TextField
-                                      size="small"
-                                      type="number"
-                                      label="R Rate ($)"
-                                      name="rRate"
-                                      color="warning"
-                                      value={rateValue}
-                                      onChange={(e) => handlePayRateInput(tech.id, e.target.value, 'rRate')}
-                                      onClick={() => setActiveInput(tech.id)}
-                                      style={{ maxWidth: '200px' }}
-                                    />
+                                    <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
+                                      <TextField
+                                        size="small"
+                                        type="number"
+                                        label={hasRPct ? 'R Rate ($)' : 'R Rate ($)'}
+                                        name="rRate"
+                                        color="warning"
+                                        value={hasRPct ? String(rPctAmt) : rateValue}
+                                        onChange={(e) =>
+                                          hasRPct
+                                            ? handlePctCalculatedInput(
+                                                tid,
+                                                e.target.value,
+                                                'rPercentageCalculatedAmount',
+                                                index
+                                              )
+                                            : handlePayRateInput(tid, e.target.value, 'rRate', index)
+                                        }
+                                        onClick={() => setActiveInput(tid)}
+                                        style={{ maxWidth: '280px' }}
+                                      />
+                                    </div>
                                   )}
-                                  {activeInput === tech.id && buttonVisible[tech.id] !== false && (
+                                  {activeInput === tid && buttonVisible[tid] !== false && (
                                     <div
-                                      onClick={() => handlePayRateCheckbox(tech.id)}
+                                      onClick={() => handlePayRateCheckbox(tid)}
                                       className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
                                     >
                                       Save
