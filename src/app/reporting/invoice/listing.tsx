@@ -24,8 +24,9 @@ import InvoiceGenerator from '@/app/component/invoice-genrated';
 import {
   VehicleMismatchAlert,
   computeVinMismatch,
-  fetchAllInsuranceVehiclesByJob,
+  fetchAllInsuranceVehiclesByJobIds,
   isInsuranceJobTypeForInvoice,
+  uniqueNumericJobIdsFromVehicles,
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
 
@@ -94,6 +95,8 @@ const JobTable: React.FC = () => {
     token: string | null;
     roleType: string;
     userId: string | null;
+    /** Selected job ids (insurance VIN compare / refetch). */
+    jobIds?: number[];
   } | null>(null);
   /** When true, "View Missing Vehicles" refetches insurance vehicles and recomputes VIN mismatch. */
   const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
@@ -552,44 +555,53 @@ const JobTable: React.FC = () => {
       }
     }
 
-    const jobIdForCompare = String(
-      selectedJobs[0]?.jobId ?? selectedJobs[0]?.job?.id ?? ''
-    );
+    const jobIdsUnique = uniqueNumericJobIdsFromVehicles(selectedJobs);
     const jobTypeFromSelected =
       selectedJobs[0]?.job?.jobType ??
       selectedJobs[0]?.job?.job_type ??
       selectedJobs[0]?.jobType ??
       '';
 
-    const jobIdsUnique = Array.from(
-      new Set(
-        selectedJobs
-          .map((j) => String(j.jobId ?? j.job?.id ?? '').trim())
-          .filter(Boolean)
-      )
-    );
-    // if (jobIdsUnique.length > 2) {
-    //   toast.error('Select vehicles from the same job to compare insurance list and generate invoice.');
-    //   return;
-    // }
-
     const useInsuranceVinCompare =
       roleType === 'superadmin' &&
-      !!jobIdForCompare &&
+      jobIdsUnique.length > 0 &&
       isInsuranceJobTypeForInvoice(jobTypeFromSelected);
 
-    // ── Superadmin + insurance job: compare selected VINs vs fetchInsuranceVehiclesByJob ──
+    // ── Superadmin + insurance job: compare selected VINs (all selected job ids in array) ──
     if (useInsuranceVinCompare) {
+      for (const jid of jobIdsUnique) {
+        const row =
+          selectedJobs.find((j) => Number(j.jobId ?? j.job?.id) === jid) ?? selectedJobs[0];
+        const jt =
+          row?.job?.jobType ??
+          row?.job?.job_type ??
+          row?.jobType ??
+          '';
+        if (!isInsuranceJobTypeForInvoice(jt)) {
+          toast.error(
+            `Invoice VIN compare is only for insurance percentage jobs (job ${jid} is not eligible).`
+          );
+          return;
+        }
+      }
+
       setIsGeneratingInvoice(true);
       try {
-        const insuranceVehicles = await fetchAllInsuranceVehiclesByJob(jobIdForCompare, token!);
+        const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIdsUnique, token!);
         const { missingInScanned, missingInInsurance } = computeVinMismatch(
           selectedJobs,
           insuranceVehicles
         );
         if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
           setMismatchUseInsuranceCompare(true);
-          setPendingInvoiceArgs({ isPrint, selectedJobs, token, roleType, userId });
+          setPendingInvoiceArgs({
+            isPrint,
+            selectedJobs,
+            token,
+            roleType,
+            userId,
+            jobIds: jobIdsUnique,
+          });
           setMismatchData({ missingInScanned, missingInInsurance });
           setShowMismatchAlert(true);
           return;
@@ -789,10 +801,9 @@ const JobTable: React.FC = () => {
           }}
           onViewMissingVehicles={async () => {
             if (!mismatchUseInsuranceCompare || !pendingInvoiceArgs) return;
-            const { selectedJobs, token } = pendingInvoiceArgs;
-            const jid = String(selectedJobs[0]?.jobId ?? selectedJobs[0]?.job?.id ?? '');
-            if (!token || !jid) return;
-            const insuranceVehicles = await fetchAllInsuranceVehiclesByJob(jid, token);
+            const { selectedJobs, token, jobIds } = pendingInvoiceArgs;
+            if (!token || !jobIds?.length) return;
+            const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIds, token);
             setMismatchData(computeVinMismatch(selectedJobs, insuranceVehicles));
           }}
           onProceed={async () => {

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -15,7 +14,8 @@ export interface MismatchData {
   missingInInsurance: MismatchVehicle[];
 }
 
-export const INSURANCE_PAGE_LIMIT = 500;
+/** Single GET for compare/invoice: ask for all rows in one request (no page loop). */
+export const INSURANCE_FETCH_ALL_LIMIT = 10000;
 
 export function normalizeVinKey(vin: unknown): string {
   if (vin == null) return "";
@@ -70,56 +70,83 @@ export function computeVinMismatch(
   return { missingInScanned, missingInInsurance };
 }
 
+/** GET `fetchInsuranceVehiclesByJob?jobIds=[…]&page=&limit=` — jobIds JSON array e.g. `[60]` or `[60,65]`. */
+async function getFetchInsuranceVehiclesPage(
+  jobIds: number[],
+  page: number,
+  limit: number,
+  token: string
+): Promise<{ vehicles: any[]; totalPages?: number | string | null }> {
+  const params = new URLSearchParams();
+  params.set('jobIds', JSON.stringify(jobIds));
+  params.set('page', String(page));
+  params.set('limit', String(limit));
+
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(
+    `${apiUrl}/fetchInsuranceVehiclesByJob?${params.toString()}`,
+    { method: 'GET', headers }
+  );
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(
+      String(data?.message ?? data?.error ?? `HTTP ${response.status}`)
+    );
+  }
+  const newVehicles =
+    data?.jobs?.vehicles ??
+    data?.response?.vehicles ??
+    data?.vehicles ??
+    [];
+  const arr = Array.isArray(newVehicles) ? newVehicles : [];
+  const totalPages =
+    data?.jobs?.totalPages ?? data?.response?.totalPages ?? data?.totalPages;
+  return { vehicles: arr, totalPages };
+}
+
+/** Single job: same GET as multi-job with `jobIds: [id]`. */
 export async function fetchAllInsuranceVehiclesByJob(
   jobId: string,
   token: string
 ): Promise<any[]> {
-  let page = 1;
-  let all: any[] = [];
-  let hasMore = true;
-  while (hasMore) {
-    const url = `${apiUrl}/fetchInsuranceVehiclesByJob?jobId=${encodeURIComponent(jobId)}&page=${page}&limit=${INSURANCE_PAGE_LIMIT}`;
-    const response = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = response.data;
-    const newVehicles =
-      data?.jobs?.vehicles ??
-      data?.response?.vehicles ??
-      data?.vehicles ??
-      [];
-    const arr = Array.isArray(newVehicles) ? newVehicles : [];
-    all = [...all, ...arr];
-    const totalPages =
-      data?.jobs?.totalPages ?? data?.response?.totalPages ?? data?.totalPages;
-    if (totalPages != null && totalPages !== "") {
-      hasMore = page < Number(totalPages);
-    } else {
-      hasMore = arr.length >= INSURANCE_PAGE_LIMIT;
-    }
-    page += 1;
-    if (!hasMore) break;
-  }
-  return all;
+  const n = Number(jobId);
+  if (!Number.isFinite(n) || n <= 0) return [];
+  return fetchAllInsuranceVehiclesByJobIds([n], token);
 }
 
-/** Fetch insurance vehicles for multiple jobs (one API call per job) and merge results. */
+/** Unique positive numeric job ids from vehicle rows (checkbox-selected rows). */
+export function uniqueNumericJobIdsFromVehicles(rows: any[]): number[] {
+  const set = new Set<number>();
+  for (const j of rows) {
+    const raw = j?.jobId ?? j?.job?.id;
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (Number.isFinite(n) && n > 0) set.add(n);
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+/**
+ * One GET only: `?page=1&limit=…&jobIds=[…]` — avoids multiple sequential page requests.
+ */
 export async function fetchAllInsuranceVehiclesByJobIds(
-  jobIds: string[],
+  jobIds: Array<number | string>,
   token: string
 ): Promise<any[]> {
-  const unique = Array.from(
-    new Set(jobIds.map((id) => String(id).trim()).filter(Boolean))
+  const numeric = jobIds
+    .map((id) => (typeof id === 'number' ? id : Number(id)))
+    .filter((n): n is number => Number.isFinite(n) && n > 0);
+  const unique = Array.from(new Set(numeric)).sort((a, b) => a - b);
+  if (unique.length === 0) return [];
+
+  const { vehicles: arr } = await getFetchInsuranceVehiclesPage(
+    unique,
+    1,
+    INSURANCE_FETCH_ALL_LIMIT,
+    token
   );
-  const merged: any[] = [];
-  for (const jid of unique) {
-    const batch = await fetchAllInsuranceVehiclesByJob(jid, token);
-    merged.push(...batch);
-  }
-  return merged;
+  return arr;
 }
 
 export const MissingVehiclesModal: React.FC<{

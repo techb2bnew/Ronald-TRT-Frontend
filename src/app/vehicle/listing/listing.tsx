@@ -8,6 +8,7 @@ import {
   computeVinMismatch,
   fetchAllInsuranceVehiclesByJobIds,
   isInsuranceJobTypeForInvoice,
+  uniqueNumericJobIdsFromVehicles,
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
 import { useRouter } from "next/navigation";
@@ -79,7 +80,8 @@ const JobTable: React.FC = () => {
   const [pendingCompareArgs, setPendingCompareArgs] = useState<{
     selectedJobs: any[];
     token: string;
-    jobIds: string[];
+    /** Job ids from checkbox-selected rows, e.g. [56, 60] */
+    jobIds: number[];
   } | null>(null);
   const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
@@ -184,20 +186,27 @@ const JobTable: React.FC = () => {
         }
 
         const token = localStorage.getItem('token');
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
 
+        const q = (searchQuery ?? '').trim();
+
+        // Only send jobIds after header job filter (omit param when id blank / first load)
         const params = new URLSearchParams();
+        if (normalizedJobId) {
+          const n = Number(normalizedJobId);
+          const jobIds: (number | string)[] =
+            Number.isFinite(n) && n > 0 ? [n] : [normalizedJobId];
+          params.set('jobIds', JSON.stringify(jobIds));
+        }
         params.set('page', String(page));
         params.set('limit', String(lim));
-        if (normalizedJobId) params.set('jobId', normalizedJobId);
-        const q = (searchQuery ?? '').trim();
         if (q) params.set('search', q);
 
-        const response = await fetch(`${apiBaseUrl}/fetchInsuranceVehiclesByJob?${params.toString()}`, {
-          method: 'GET',
-          headers,
-        });
+        const response = await fetch(
+          `${apiBaseUrl}/fetchInsuranceVehiclesByJob?${params.toString()}`,
+          { method: 'GET', headers }
+        );
 
         const data = await response.json();
         if (response.ok && data?.status) {
@@ -683,41 +692,26 @@ const JobTable: React.FC = () => {
       return;
     }
 
-    let scannedJobs: any[] = [];
-    if (selectedIds.length > 0) {
-      scannedJobs = activeJob.filter((j) => selectedIds.includes(j.id));
-    } else if (selectedJobId) {
-      scannedJobs = [...activeJob];
-    } else {
-      toast.error('Select vehicles in the list, then try again.');
+    if (selectedIds.length === 0) {
+      toast.error('Select one or more vehicles using the checkboxes to compare.');
       return;
     }
+    const scannedJobs = activeJob.filter((j) => selectedIds.includes(j.id));
     if (scannedJobs.length === 0) {
       toast.error('No vehicles to compare for this view.');
       return;
     }
 
-    let jobIdsUnique = Array.from(
-      new Set(
-        scannedJobs
-          .map((j) => String(j.jobId ?? j.job?.id ?? '').trim())
-          .filter(Boolean)
-      )
-    );
-    if (jobIdsUnique.length === 0 && selectedJobId) {
-      jobIdsUnique = [String(selectedJobId).trim()].filter(Boolean);
-    }
-
+    const jobIdsUnique = uniqueNumericJobIdsFromVehicles(scannedJobs);
     if (jobIdsUnique.length === 0) {
-      toast.error('Could not determine job for these vehicles.');
+      toast.error('Could not determine job id for the selected vehicles.');
       return;
     }
 
     for (const jid of jobIdsUnique) {
       const row =
-        scannedJobs.find(
-          (j) => String(j.jobId ?? j.job?.id ?? '').trim() === jid
-        ) ?? scannedJobs[0];
+        scannedJobs.find((j) => Number(j.jobId ?? j.job?.id) === jid) ??
+        scannedJobs[0];
       const jt =
         row?.job?.jobType ??
         row?.job?.job_type ??

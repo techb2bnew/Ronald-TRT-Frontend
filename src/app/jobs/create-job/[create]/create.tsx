@@ -31,6 +31,44 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
+/** API: single URL or JSON string array e.g. `["https://...","https://..."]` */
+function parseInsuranceFileUrls(raw: unknown): string[] {
+  if (raw == null || raw === '') return [];
+  if (Array.isArray(raw)) {
+    return raw.map((u) => String(u).trim()).filter(Boolean);
+  }
+  const s = String(raw).trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) {
+        return parsed.map((u) => String(u).trim()).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [s];
+}
+
+function fileLabelFromInsuranceUrl(url: string): string {
+  try {
+    const path = new URL(url).pathname;
+    const name = decodeURIComponent(path.split('/').pop() || url);
+    return name.replace(/\s+/g, ' ').trim() || url;
+  } catch {
+    return url;
+  }
+}
+
+/** Match backend: one URL as string; multiple as JSON.stringify array. */
+function serializeInsuranceFileForApi(urls: string[]): string {
+  if (urls.length === 0) return '';
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
+
 interface SelectedTechnician {
   userId: string;
   techFlatRate?: string;
@@ -138,7 +176,7 @@ export default function JobForm() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [managerSearchTerm, setManagerSearchTerm] = useState<string>('');
   const [isManagerSearching, setIsManagerSearching] = useState<boolean>(false);
-  const [existingInsuranceFile, setExistingInsuranceFile] = useState<string>('');
+  const [existingInsuranceFileUrls, setExistingInsuranceFileUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const type = localStorage.getItem('types');
@@ -261,7 +299,7 @@ export default function JobForm() {
         },
       });
       const data = await response.json();
-
+      console.log(data, 'data');
       if (response.ok && data.jobs) {
         const jobData = data.jobs;
         const technicians = jobData.technicians || [];
@@ -351,7 +389,7 @@ export default function JobForm() {
           insurancePercentage: jobData.insurancePercentage || '',
           pricePerVehicle: jobData.pricePerVehicle || '',
         }));
-        setExistingInsuranceFile(jobData.insuranceFile || '');
+        setExistingInsuranceFileUrls(parseInsuranceFileUrls(jobData.insuranceFile));
 
         setJobId(jobData.id);
         setStartDate(startDateValue);
@@ -646,8 +684,8 @@ export default function JobForm() {
         // Previously saved file URL (edit). Send whenever present — including when new files are
         // uploaded so the backend still receives the original attachment alongside multipart uploads.
         ...(formData.jobType === 'insurancePercentage' &&
-          existingInsuranceFile && {
-            insuranceFile: existingInsuranceFile,
+          existingInsuranceFileUrls.length > 0 && {
+            insuranceFile: serializeInsuranceFileForApi(existingInsuranceFileUrls),
           }),
         ...(formData.jobType !== 'insurancePercentage' && {
           pricePerVehicle: formData.pricePerVehicle,
@@ -669,9 +707,9 @@ export default function JobForm() {
         });
         formData.insuranceFiles.forEach((file) => {
           multipartData.append('insuranceFile', file);
-        });
-        console.log(multipartData, 'multipartData');
-        console.log(formData.insuranceFiles, 'formData.insuranceFiles');
+        }); 
+      console.log(formData.insuranceFiles, 'formData.insuranceFiles');
+
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
@@ -1195,17 +1233,32 @@ export default function JobForm() {
                   </ul>
                 )}
 
-                {existingInsuranceFile && formData.insuranceFiles.length === 0 && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    Current file:{' '}
-                    <a
-                      href={existingInsuranceFile}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline break-all"
-                    >
-                      {existingInsuranceFile}
-                    </a>
+                {existingInsuranceFileUrls.length > 0 && formData.insuranceFiles.length === 0 && (
+                  <div className="mt-3 text-xs text-gray-600">
+                    <p className="font-medium text-gray-800 mb-2">Current insurance file(s)</p>
+                    <ul className="space-y-2">
+                      {existingInsuranceFileUrls.map((url, idx) => (
+                        <li
+                          key={`${url}-${idx}`}
+                          className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                        >
+                          <span className="text-gray-500 shrink-0 font-medium">{idx + 1}.</span>
+                          <div className="min-w-0 flex-1">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#383d71] font-medium hover:underline break-all"
+                            >
+                              {fileLabelFromInsuranceUrl(url)}
+                            </a>
+                            <p className="text-[11px] text-gray-400 mt-0.5 break-all line-clamp-2" title={url}>
+                              {url}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
