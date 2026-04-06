@@ -243,7 +243,7 @@ export const MissingVehiclesModal: React.FC<{
             <button
               type="button"
               onClick={onProceed}
-              className="flex-1 py-2.5 px-4 rounded-lg primary-bg text-sm border border-black-500 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              className="flex-1 py-2.5 px-4 rounded-lg primary-bg text-sm border border-black-500 text-white  font-medium hover:bg-gray-800 transition-colors"
             >
               Proceed Anyway
             </button>
@@ -331,7 +331,7 @@ export const VehicleMismatchAlert: React.FC<{
                   setViewLoading(false);
                 }
               }}
-              className="w-full py-3 px-4 primary-bg text-sm border border-black-500 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 primary-bg text-sm border border-black-500 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {viewLoading ? "Loading…" : "View Missing Vehicles"}
             </button>

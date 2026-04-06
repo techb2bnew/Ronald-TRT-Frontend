@@ -670,7 +670,8 @@ export default function JobForm() {
         formData.insuranceFiles.forEach((file) => {
           multipartData.append('insuranceFile', file);
         });
-
+        console.log(multipartData, 'multipartData');
+        console.log(formData.insuranceFiles, 'formData.insuranceFiles');
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
