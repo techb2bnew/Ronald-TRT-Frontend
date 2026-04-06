@@ -38,11 +38,14 @@ interface CommonHeaderProps {
   onInvoiceStatueChange?: (status: string) => void;
   onClearFilters?: () => void;
   showClearFilters?: boolean;
+  /** Work order list: compare scanned vs insurance VINs (superadmin). */
+  onCompareWorkOrderClick?: () => void;
+  compareWorkOrderLabel?: string;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -998,6 +1001,21 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                 }}
               />
             </label>
+          )}
+          {onCompareWorkOrderClick && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 border border-[#383d71] text-[#383d71] rounded-lg hover:bg-[#383d71]/10 transition-colors"
+              onClick={onCompareWorkOrderClick}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 3h5v5" />
+                <path d="M8 3H3v5" />
+                <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+                <path d="m15 9 6-6" />
+              </svg>
+              {compareWorkOrderLabel}
+            </button>
           )}
           {onExport && (
 

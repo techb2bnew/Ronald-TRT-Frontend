@@ -73,7 +73,8 @@ interface JobPayload {
   other: string;
   insurancePercentage: string;
   pricePerVehicle: string;
-  insuranceFile: File | null;
+  /** Multiple insurance uploads (CSV / Excel). */
+  insuranceFiles: File[];
 }
 
 export default function JobForm() {
@@ -103,7 +104,7 @@ export default function JobForm() {
     other: '',
     insurancePercentage: '',
     pricePerVehicle: '',
-    insuranceFile: null,
+    insuranceFiles: [],
   });
 
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -390,10 +391,39 @@ export default function JobForm() {
   };
 
   const handleInsuranceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
+    const list = e.target.files;
+    if (!list?.length) return;
+    const picked = Array.from(list);
+    const allowedExt = /\.(csv|xlsx|xls)$/i;
+    const allowed = picked.filter((f) => allowedExt.test(f.name));
+    if (allowed.length < picked.length) {
+      toast.error('Only CSV or Excel (.csv, .xlsx, .xls) files are allowed for insurance upload.');
+    }
+    if (allowed.length === 0) {
+      e.target.value = '';
+      return;
+    }
+    setFormData((prev) => {
+      const seen = new Set(
+        prev.insuranceFiles.map((f) => `${f.name}-${f.size}-${f.lastModified}`)
+      );
+      const merged = [...prev.insuranceFiles];
+      for (const f of allowed) {
+        const key = `${f.name}-${f.size}-${f.lastModified}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(f);
+        }
+      }
+      return { ...prev, insuranceFiles: merged };
+    });
+    e.target.value = '';
+  };
+
+  const removeInsuranceFileAt = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      insuranceFile: file,
+      insuranceFiles: prev.insuranceFiles.filter((_, i) => i !== index),
     }));
   };
 
@@ -613,9 +643,9 @@ export default function JobForm() {
         ...(formData.jobType === 'insurancePercentage' && {
           insurancePercentage: formData.insurancePercentage,
         }),
-        // Keep existing file URL on update when user does not upload a new file
+        // Previously saved file URL (edit). Send whenever present — including when new files are
+        // uploaded so the backend still receives the original attachment alongside multipart uploads.
         ...(formData.jobType === 'insurancePercentage' &&
-          !formData.insuranceFile &&
           existingInsuranceFile && {
             insuranceFile: existingInsuranceFile,
           }),
@@ -627,7 +657,7 @@ export default function JobForm() {
       const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
 
       // if file upload needed
-      if (formData.insuranceFile) {
+      if (formData.insuranceFiles.length > 0) {
         const multipartData = new FormData();
         Object.entries(requestBody).forEach(([key, value]) => {
           if (value === undefined || value === null) return;
@@ -637,7 +667,9 @@ export default function JobForm() {
           }
           multipartData.append(key, String(value));
         });
-        multipartData.append('insuranceFile', formData.insuranceFile);
+        formData.insuranceFiles.forEach((file) => {
+          multipartData.append('insuranceFile', file);
+        });
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -1121,23 +1153,48 @@ export default function JobForm() {
 
               <div>
                 <FormLabel color="warning" className="mb-2 block">
-                  Upload Insurance File
+                  Upload insurance file — CSV or Excel (multiple files allowed)
                 </FormLabel>
 
                 <label className="w-full cursor-pointer block">
                   <input
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                    multiple
                     onChange={handleInsuranceFileChange}
                     className="hidden"
                   />
 
                   <div className="w-full rounded-full border border-gray-300 py-3 text-center text-gray-500 bg-white shadow-sm hover:shadow-md transition">
-                    {formData.insuranceFile ? formData.insuranceFile.name : "Choose file"}
+                    {formData.insuranceFiles.length > 0
+                      ? `${formData.insuranceFiles.length} file(s) selected — click to add more`
+                      : 'Choose CSV or Excel file(s)'}
                   </div>
                 </label>
 
-                {existingInsuranceFile && !formData.insuranceFile && (
+                {formData.insuranceFiles.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-xs text-gray-700">
+                    {formData.insuranceFiles.map((f, i) => (
+                      <li
+                        key={`${f.name}-${i}-${f.lastModified}`}
+                        className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1"
+                      >
+                        <span className="truncate" title={f.name}>
+                          {f.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeInsuranceFileAt(i)}
+                          className="shrink-0 text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {existingInsuranceFile && formData.insuranceFiles.length === 0 && (
                   <div className="mt-2 text-xs text-gray-600">
                     Current file:{' '}
                     <a

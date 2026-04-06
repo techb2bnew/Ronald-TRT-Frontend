@@ -3,6 +3,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
+import {
+  VehicleMismatchAlert,
+  computeVinMismatch,
+  fetchAllInsuranceVehiclesByJobIds,
+  isInsuranceJobTypeForInvoice,
+  type MismatchData,
+} from '@/app/component/vehicleMismatchModals';
 import { useRouter } from "next/navigation";
 import toast from 'react-hot-toast';
 import Pagination from '../../component/pagination';
@@ -63,6 +70,18 @@ const JobTable: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [roleType, setRoleType] = useState<string | null>(null);
+
+  const [showMismatchAlert, setShowMismatchAlert] = useState(false);
+  const [mismatchData, setMismatchData] = useState<MismatchData>({
+    missingInScanned: [],
+    missingInInsurance: [],
+  });
+  const [pendingCompareArgs, setPendingCompareArgs] = useState<{
+    selectedJobs: any[];
+    token: string;
+    jobIds: string[];
+  } | null>(null);
+  const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
   /** After tab change, fetch immediately (no 500ms debounce) to avoid data → loader → data flash. */
   const skipSearchDebounceRef = useRef(false);
@@ -605,7 +624,7 @@ const JobTable: React.FC = () => {
             </span>
           )}
         </td>
-        <td>
+        <td> 
           <TableActions
             editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
             deleteRoute={`/api/deleteVehicle`}
@@ -640,6 +659,99 @@ const JobTable: React.FC = () => {
     setCurrentPage(1);
     if (activeTab === 'scanned') {
       fetchvehicleInfo(1, '', pageSize);
+    }
+  };
+
+  const closeMismatchFlow = () => {
+    setShowMismatchAlert(false);
+    setPendingCompareArgs(null);
+    setMismatchUseInsuranceCompare(false);
+  };
+
+  const handleCompareWorkOrder = async () => {
+    if (activeTab !== 'scanned') {
+      toast.error('Switch to Scanned Vehicles to compare with the insurance list.');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please sign in again.');
+      return;
+    }
+    if (roleType !== 'superadmin') {
+      toast.error('Only superadmin can compare work orders with the insurance list.');
+      return;
+    }
+
+    let scannedJobs: any[] = [];
+    if (selectedIds.length > 0) {
+      scannedJobs = activeJob.filter((j) => selectedIds.includes(j.id));
+    } else if (selectedJobId) {
+      scannedJobs = [...activeJob];
+    } else {
+      toast.error('Select vehicles in the list, then try again.');
+      return;
+    }
+    if (scannedJobs.length === 0) {
+      toast.error('No vehicles to compare for this view.');
+      return;
+    }
+
+    let jobIdsUnique = Array.from(
+      new Set(
+        scannedJobs
+          .map((j) => String(j.jobId ?? j.job?.id ?? '').trim())
+          .filter(Boolean)
+      )
+    );
+    if (jobIdsUnique.length === 0 && selectedJobId) {
+      jobIdsUnique = [String(selectedJobId).trim()].filter(Boolean);
+    }
+
+    if (jobIdsUnique.length === 0) {
+      toast.error('Could not determine job for these vehicles.');
+      return;
+    }
+
+    for (const jid of jobIdsUnique) {
+      const row =
+        scannedJobs.find(
+          (j) => String(j.jobId ?? j.job?.id ?? '').trim() === jid
+        ) ?? scannedJobs[0];
+      const jt =
+        row?.job?.jobType ??
+        row?.job?.job_type ??
+        row?.jobType ??
+        '';
+      if (!isInsuranceJobTypeForInvoice(jt)) {
+        toast.error(
+          `Compare work order is only for insurance percentage jobs (job ${jid} is not eligible).`
+        );
+        return;
+      }
+    }
+
+    try {
+      const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIdsUnique, token);
+      const { missingInScanned, missingInInsurance } = computeVinMismatch(
+        scannedJobs,
+        insuranceVehicles
+      );
+      if (missingInScanned.length === 0 && missingInInsurance.length === 0) {
+        toast.success(
+          jobIdsUnique.length > 1
+            ? 'Scanned vehicles match the insurance lists for the selected jobs.'
+            : 'Scanned vehicles match the insurance list for this job.'
+        );
+        return;
+      }
+      setMismatchUseInsuranceCompare(true);
+      setPendingCompareArgs({ selectedJobs: scannedJobs, token, jobIds: jobIdsUnique });
+      setMismatchData({ missingInScanned, missingInInsurance });
+      setShowMismatchAlert(true);
+    } catch (e) {
+      console.error('Compare work order:', e);
+      toast.error('Could not load insurance vehicles. Try again.');
     }
   };
 
@@ -819,6 +931,12 @@ const JobTable: React.FC = () => {
           onNewJobClick={handleNewJobClick}
           showClearFilters={true}
           onClearFilters={handleClearFilters}
+          onCompareWorkOrderClick={
+            roleType === 'superadmin' && activeTab === 'scanned'
+              ? handleCompareWorkOrder
+              : undefined
+          }
+          compareWorkOrderLabel="Compare work order"
         />
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}
@@ -849,6 +967,22 @@ const JobTable: React.FC = () => {
         {/* Both tabs share the same table */}
         {renderTable()}
       </div>
+
+      {showMismatchAlert && (
+        <VehicleMismatchAlert
+          mismatchData={mismatchData}
+          showProceedAnyway={false}
+          onCancel={closeMismatchFlow}
+          onViewMissingVehicles={async () => {
+            if (!mismatchUseInsuranceCompare || !pendingCompareArgs) return;
+            const { selectedJobs, token, jobIds } = pendingCompareArgs;
+            if (!token || !jobIds?.length) return;
+            const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIds, token);
+            setMismatchData(computeVinMismatch(selectedJobs, insuranceVehicles));
+          }}
+          onProceed={closeMismatchFlow}
+        />
+      )}
     </div>
   );
 };
