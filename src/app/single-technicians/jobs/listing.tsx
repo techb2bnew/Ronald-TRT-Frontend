@@ -256,8 +256,7 @@ const JobTable: React.FC = () => {
         notes: jobData.notes,
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.join(''),
-        'Vehicle Override Price': jobData.labourCost,
+        jobDescription: jobData.jobDescription.join(''), 
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -284,7 +283,7 @@ const JobTable: React.FC = () => {
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians',
-        'jobDescription', 'Vehicle Override Price'
+        'jobDescription'
       ];
 
       Papa.parse(text, {
@@ -346,9 +345,7 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
-                technicians,
-                labourCost: row['Vehicle Override Price'],      // CSV field → API field
-                'Vehicle Override Price': undefined,
+                technicians, 
                 jobDescription: jobDescriptions,
                 assignTechnicians: undefined, // cleanup unused field
               };
@@ -527,12 +524,12 @@ const JobTable: React.FC = () => {
         <td>{job?.make}</td>
         <td>{job?.model}</td>
         <td>{job?.modelYear}</td>
-        <td>
+        {/* <td>
           {job.labourCost && job.labourCost !== ''
             ? `$${job.labourCost}`
             : <span className="text-gray-400 text-sm">No price added</span>
           }
-        </td>
+        </td> */}
 
         <td>
           {canCreate && (
@@ -660,14 +657,14 @@ const JobTable: React.FC = () => {
                     </span>
                   )}
                 </th>
-                <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
+                {/* <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
                   Vehicle Override Price
                   {sortBy === 'labourCost' && (
                     <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                       {sortDirection === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
-                </th>
+                </th> */}
                 <th className="w-[120px]">Status</th>
                 <th className="w-[100px]">Action</th>
               </tr>
@@ -675,13 +672,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="text-center py-10">
+                  <td colSpan={11} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="text-center py-10">
+                  <td colSpan={11} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

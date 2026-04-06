@@ -515,7 +515,7 @@ export default function ViewDetails() {
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
-                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th>
+                  {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th> */}
                   <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
                 </tr>
               </thead>
@@ -529,7 +529,7 @@ export default function ViewDetails() {
                         <td className="px-6 py-4 whitespace-nowrap">{vehicle.make || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{vehicle.model || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{vehicle.modelYear || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">${vehicle.labourCost || '-'}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap">${vehicle.labourCost || '-'}</td> */}
                         <td className="px-6 py-4 text-right">
                           <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
                             <Image alt="View" src={Eye} className="w-4 h-4  " />

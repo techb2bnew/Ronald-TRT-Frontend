@@ -329,7 +329,7 @@ export default function ViewDetails() {
                 <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
                 <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
                 <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th>
+                {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th> */}
                 <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
               </tr>
             </thead>
@@ -348,9 +348,9 @@ export default function ViewDetails() {
                     <td className="px-6 py-4">{vehicles.make || 'N/A'}</td>
                     <td className="px-6 py-4">{vehicles.model || '–'}</td>
                     <td className="px-6 py-4">{vehicles.modelYear || '–'}</td>
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       {vehicles.labourCost && vehicles.labourCost !== '' ? `$${vehicles.labourCost}` : <span className="text-gray-400 text-sm">No price added</span>}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 text-right">
                       <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
                         <Image alt="View" src={Eye} className="w-4 h-4" />
@@ -360,7 +360,7 @@ export default function ViewDetails() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-500"><Empty /></td>
+                  <td colSpan={6} className="text-center py-8 text-gray-500"><Empty /></td>
                 </tr>
               )}
             </tbody>
