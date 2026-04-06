@@ -8,6 +8,37 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from '@/app/component/SidebarContext';
 
+/** Single URL or JSON string array from API */
+function parseInsuranceFileUrls(raw: unknown): string[] {
+  if (raw == null || raw === '') return [];
+  if (Array.isArray(raw)) {
+    return raw.map((u) => String(u).trim()).filter(Boolean);
+  }
+  const s = String(raw).trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) {
+        return parsed.map((u) => String(u).trim()).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [s];
+}
+
+function fileLabelFromInsuranceUrl(url: string): string {
+  try {
+    const path = new URL(url).pathname;
+    const name = decodeURIComponent(path.split('/').pop() || url);
+    return name.replace(/\s+/g, ' ').trim() || url;
+  } catch {
+    return url;
+  }
+}
+
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
   const searchParams = useSearchParams();
@@ -151,29 +182,31 @@ export default function ViewDetails() {
               }
               label="Insurance File"
               value={(() => {
-                const raw = jobData?.job?.insuranceFile;
-                const url = raw != null && String(raw).trim() !== '' ? String(raw).trim() : '';
-                if (!url) return <span className="text-gray-500">No insurance file added</span>;
-                let label = 'View file';
-                try {
-                  const u = url.includes('://') ? new URL(url) : new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
-                  const base = u.pathname.split('/').filter(Boolean).pop() || url;
-                  label = decodeURIComponent(base) || 'View file';
-                } catch {
-                  label = url.split('/').filter(Boolean).pop() || 'View file';
+                const urls = parseInsuranceFileUrls(jobData?.job?.insuranceFile);
+                if (urls.length === 0) {
+                  return <span className="text-gray-500">No insurance file added</span>;
                 }
                 return (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-[#383d71] font-medium hover:underline break-all"
-                  >
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    {label}
-                  </a>
+                  <ul className="space-y-2">
+                    {urls.map((url, idx) => (
+                      <li key={`${url}-${idx}`}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-start gap-2 text-[#383d71] font-medium hover:underline break-all"
+                        >
+                          <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          <span>
+                            <span className="text-gray-500 font-normal mr-1">{idx + 1}.</span>
+                            {fileLabelFromInsuranceUrl(url)}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 );
               })()}
             />
