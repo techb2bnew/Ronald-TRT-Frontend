@@ -232,10 +232,10 @@ export default function ViewDetails() {
       if (response.ok) {
         setJobsData(data.jobs);  // Set the  CustomerData data
       } else {
-        toast.error(data.error || 'Error fetching technician data');
+        toast.error(data.error || 'Error fetching dent tech data');
       }
     } catch (error) {
-      toast.error('An error occurred while fetching technician data');
+      toast.error('An error occurred while fetching dent tech data');
     }
   };
 
@@ -495,14 +495,16 @@ export default function ViewDetails() {
   };
 
   const handleMarkTechniciansPaid = async () => {
-    const rowsToMark =
-      selectedAssignmentKeys.length > 0
-        ? displayedAssignmentRows.filter((row, index) =>
-            selectedAssignmentKeys.includes(assignmentRowKey(row.tech, row.vehicle, index)),
-          )
-        : displayedAssignmentRows;
+    if (selectedAssignmentKeys.length === 0) {
+      toast.error('Please select at least one dent tech first.');
+      return;
+    }
+
+    const rowsToMark = displayedAssignmentRows.filter((row, index) =>
+      selectedAssignmentKeys.includes(assignmentRowKey(row.tech, row.vehicle, index)),
+    );
     if (!rowsToMark.length) {
-      toast.error('Select at least one row to mark as paid.');
+      toast.error('Please select at least one dent tech first.');
       return;
     }
 
@@ -510,7 +512,7 @@ export default function ViewDetails() {
       title: 'Mark all payments as paid?',
       html: `
         <p style="margin:0;font-size:15px;line-height:1.65;color:#4b5563;text-align:center">
-          Are you sure you want to mark <strong style="color:#111827;font-weight:600">all technician payments</strong> as paid for this job?
+          Are you sure you want to mark <strong style="color:#111827;font-weight:600">all dent tech payments</strong> as paid for this job?
         </p>
       `,
       icon: 'question',
@@ -750,7 +752,7 @@ export default function ViewDetails() {
                 type="search"
                 value={assignmentSearchQuery}
                 onChange={(e) => setAssignmentSearchQuery(e.target.value)}
-                placeholder="Search by technician name, VIN, make, or model…"
+                placeholder="Search by dent tech name, VIN, make, or model…"
                 autoComplete="off"
                 className="w-full max-w-xl rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm focus:border-[#383d71] focus:outline-none focus:ring-2 focus:ring-[#383d71]/25"
               />
@@ -868,7 +870,7 @@ export default function ViewDetails() {
                   ) : (
                     <tr>
                       <td colSpan={10} className="text-center py-8 text-gray-500">
-                        No rows match your search. Try another technician name, VIN, make, or model.
+                        No rows match your search. Try another dent tech name, VIN, make, or model.
                       </td>
                     </tr>
                   )
