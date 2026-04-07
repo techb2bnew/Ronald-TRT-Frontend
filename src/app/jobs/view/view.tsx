@@ -1,17 +1,194 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
- 
+
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import Empty from '@/app/component/empty';
 import { useSidebar } from '@/app/component/SidebarContext';
+import Swal from 'sweetalert2';
+
+/** Single URL or JSON string array from API */
+function parseInsuranceFileUrls(raw: unknown): string[] {
+  if (raw == null || raw === '') return [];
+  if (Array.isArray(raw)) {
+    return raw.map((u) => String(u).trim()).filter(Boolean);
+  }
+  const s = String(raw).trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) {
+        return parsed.map((u) => String(u).trim()).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [s];
+}
+
+function fileLabelFromInsuranceUrl(url: string): string {
+  try {
+    const path = new URL(url).pathname;
+    const name = decodeURIComponent(path.split('/').pop() || url);
+    return name.replace(/\s+/g, ' ').trim() || url;
+  } catch {
+    return url;
+  }
+}
+
+/** Per-vehicle link row on technician (API may use VehicleTechnician or UserJob). */
+function getVehicleTechnicianLink(tech: any): any {
+  return tech?.VehicleTechnician ?? tech?.UserJob ?? null;
+}
+
+/** One table row per technician–vehicle assignment (same tech repeats for each vehicle). */
+type TechnicianVehicleAssignmentRow = {
+  tech: any;
+  vehicle: any;
+  vt: any;
+};
+
+function buildTechnicianVehicleAssignmentRows(vehicles: any[] | undefined): TechnicianVehicleAssignmentRow[] {
+  if (!Array.isArray(vehicles) || vehicles.length === 0) return [];
+
+  const rows: TechnicianVehicleAssignmentRow[] = [];
+
+  for (const vehicle of vehicles) {
+    const assigned = vehicle?.assignedTechnicians;
+    if (!Array.isArray(assigned)) continue;
+
+    for (const t of assigned) {
+      if (t?.id == null) continue;
+      rows.push({
+        tech: t,
+        vehicle,
+        vt: getVehicleTechnicianLink(t),
+      });
+    }
+  }
+
+  rows.sort((a, b) => {
+    const an = `${a.tech?.firstName ?? ''} ${a.tech?.lastName ?? ''}`.trim().toLowerCase();
+    const bn = `${b.tech?.firstName ?? ''} ${b.tech?.lastName ?? ''}`.trim().toLowerCase();
+    if (an !== bn) return an.localeCompare(bn);
+    return (Number(a.vehicle?.id) || 0) - (Number(b.vehicle?.id) || 0);
+  });
+
+  return rows;
+}
+
+function assignmentRowKey(tech: any, vehicle: any, index: number): string {
+  return `${tech?.id ?? 't'}-${vehicle?.id ?? vehicle?.vin ?? index}`;
+}
+
+type AssignmentSortKey =
+  | 'techName'
+  | 'techFlat'
+  | 'rr'
+  | 'vin'
+  | 'make'
+  | 'model'
+  | 'modelYear';
+
+function filterAssignmentRows(
+  rows: TechnicianVehicleAssignmentRow[],
+  query: string,
+): TechnicianVehicleAssignmentRow[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((row) => {
+    const name = `${row.tech?.firstName ?? ''} ${row.tech?.lastName ?? ''}`.toLowerCase();
+    const vin = String(row.vehicle?.vin ?? '').toLowerCase();
+    const make = String(row.vehicle?.make ?? '').toLowerCase();
+    const model = String(row.vehicle?.model ?? '').toLowerCase();
+    return (
+      name.includes(q) ||
+      vin.includes(q) ||
+      make.includes(q) ||
+      model.includes(q)
+    );
+  });
+}
+
+function sortAssignmentRows(
+  rows: TechnicianVehicleAssignmentRow[],
+  key: AssignmentSortKey,
+  dir: 'asc' | 'desc',
+): TechnicianVehicleAssignmentRow[] {
+  const out = [...rows];
+  const mult = dir === 'asc' ? 1 : -1;
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return Number.isNaN(n) ? 0 : n;
+  };
+  out.sort((a, b) => {
+    let cmp = 0;
+    switch (key) {
+      case 'techName': {
+        const sa = `${a.tech?.firstName ?? ''} ${a.tech?.lastName ?? ''}`.trim();
+        const sb = `${b.tech?.firstName ?? ''} ${b.tech?.lastName ?? ''}`.trim();
+        cmp = sa.localeCompare(sb, undefined, { sensitivity: 'base' });
+        break;
+      }
+      case 'techFlat':
+        cmp = num(a.vt?.techPercentageCalculatedAmount) - num(b.vt?.techPercentageCalculatedAmount);
+        break;
+      case 'rr':
+        cmp = num(a.vt?.rPercentageCalculatedAmount) - num(b.vt?.rPercentageCalculatedAmount);
+        break;
+      case 'vin':
+        cmp = String(a.vehicle?.vin ?? '').localeCompare(String(b.vehicle?.vin ?? ''), undefined, {
+          sensitivity: 'base',
+        });
+        break;
+      case 'make':
+        cmp = String(a.vehicle?.make ?? '').localeCompare(String(b.vehicle?.make ?? ''), undefined, {
+          sensitivity: 'base',
+        });
+        break;
+      case 'model':
+        cmp = String(a.vehicle?.model ?? '').localeCompare(String(b.vehicle?.model ?? ''), undefined, {
+          sensitivity: 'base',
+        });
+        break;
+      case 'modelYear':
+        cmp = num(a.vehicle?.modelYear) - num(b.vehicle?.modelYear);
+        break;
+      default:
+        cmp = 0;
+    }
+    return cmp * mult;
+  });
+  return out;
+}
+
+async function downloadInsuranceFile(url: string) {
+  const filename = fileLabelFromInsuranceUrl(url);
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
@@ -19,6 +196,10 @@ export default function ViewDetails() {
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedAssignmentKeys, setSelectedAssignmentKeys] = useState<string[]>([]);
+  const [assignmentSearchQuery, setAssignmentSearchQuery] = useState('');
+  const [assignmentSortKey, setAssignmentSortKey] = useState<AssignmentSortKey>('techName');
+  const [assignmentSortDir, setAssignmentSortDir] = useState<'asc' | 'desc'>('asc');
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -73,6 +254,13 @@ export default function ViewDetails() {
     }
   }, []);
 
+  useEffect(() => {
+    setSelectedAssignmentKeys([]);
+    setAssignmentSearchQuery('');
+    setAssignmentSortKey('techName');
+    setAssignmentSortDir('asc');
+  }, [jobData?.id]);
+
   const calculateTotalCost = (jobData: any) => {
     let subtotalcost = 0;
 
@@ -126,7 +314,26 @@ export default function ViewDetails() {
     return totalCost;
   };
 
+  const technicianVehicleAssignmentRows = useMemo(() => {
+    if (!jobData) return [];
+    const vehiclesRaw =
+      Array.isArray(jobData.vehicles)
+        ? jobData.vehicles
+        : Array.isArray(jobData.technicians)
+          ? jobData.technicians
+          : [];
+    return buildTechnicianVehicleAssignmentRows(vehiclesRaw);
+  }, [jobData?.vehicles, jobData?.technicians, jobData]);
 
+  const displayedAssignmentRows = useMemo(() => {
+    const filtered = filterAssignmentRows(technicianVehicleAssignmentRows, assignmentSearchQuery);
+    return sortAssignmentRows(filtered, assignmentSortKey, assignmentSortDir);
+  }, [
+    technicianVehicleAssignmentRows,
+    assignmentSearchQuery,
+    assignmentSortKey,
+    assignmentSortDir,
+  ]);
 
   if (!jobData) {
     return <div><Loading /></div>;
@@ -164,6 +371,88 @@ export default function ViewDetails() {
 
   const baseBreadcrumb = getBaseBreadcrumb();
   const backHref = baseBreadcrumb.href;
+
+  const assignmentRowKeys = displayedAssignmentRows.map((row, index) =>
+    assignmentRowKey(row.tech, row.vehicle, index),
+  );
+  const allAssignmentRowsSelected =
+    assignmentRowKeys.length > 0 && assignmentRowKeys.every((k) => selectedAssignmentKeys.includes(k));
+
+  const toggleAssignmentRow = (key: string) => {
+    setSelectedAssignmentKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+
+  const toggleAllAssignmentRows = () => {
+    if (allAssignmentRowsSelected) setSelectedAssignmentKeys([]);
+    else setSelectedAssignmentKeys([...assignmentRowKeys]);
+  };
+
+  const handleAssignmentSort = (key: AssignmentSortKey) => {
+    if (key === assignmentSortKey) {
+      setAssignmentSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setAssignmentSortKey(key);
+      setAssignmentSortDir('asc');
+    }
+  };
+
+  const handleMarkTechniciansPaid = async () => {
+    const result = await Swal.fire({
+      title: 'Mark all payments as paid?',
+      html: `
+        <p style="margin:0;font-size:15px;line-height:1.65;color:#4b5563;text-align:center">
+          Are you sure you want to mark <strong style="color:#111827;font-weight:600">all technician payments</strong> as paid for this job?
+        </p>
+      `,
+      icon: 'question',
+      iconColor: '#383d71',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#383d71',
+      cancelButtonColor: '#e5e7eb',
+      confirmButtonText: 'Yes, mark paid',
+      cancelButtonText: 'No',
+      width: 460,
+      backdrop: 'rgba(15, 23, 42, 0.55)',
+      buttonsStyling: true,
+      customClass: {
+        popup: 'swal-job-paid-confirm',
+      },
+    });
+    if (result.isConfirmed) {
+      toast.success('Technician payments marked as paid.');
+    }
+  };
+
+  const SortTh = ({ columnKey, label }: { columnKey: AssignmentSortKey; label: string }) => (
+    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 -mx-1 text-left font-semibold text-gray-700 hover:bg-gray-100 hover:text-[#383d71] transition-colors"
+        onClick={() => handleAssignmentSort(columnKey)}
+        aria-sort={
+          assignmentSortKey === columnKey
+            ? assignmentSortDir === 'asc'
+              ? 'ascending'
+              : 'descending'
+            : 'none'
+        }
+      >
+        <span>{label}</span>
+        {assignmentSortKey === columnKey ? (
+          <span className="text-[#383d71]" aria-hidden>
+            {assignmentSortDir === 'asc' ? '↑' : '↓'}
+          </span>
+        ) : (
+          <span className="text-gray-300 font-normal" aria-hidden>
+            ↕
+          </span>
+        )}
+      </button>
+    </th>
+  );
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
     <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
@@ -259,46 +548,58 @@ export default function ViewDetails() {
               value={jobData?.estimatedBy || '–'}
             />
             {jobData?.vehicleTypePricing && (
-            <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1a5.002 5.002 0 01-4.546-2.916M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-              label="Vehicle Type Pricing"
-              value={
-                Array.isArray(jobData?.vehicleTypePricing) && jobData.vehicleTypePricing.length > 0 ? (
-                  <div className="space-y-1 grid grid-cols-3">
-                    {jobData.vehicleTypePricing.map((item: any, index: number) => (
-                      <div key={`${item?.vehicleType || 'type'}-${index}`} className="text-sm">
-                        <span className="font-medium">{item?.vehicleType || 'Vehicle'}</span>: ${item?.amount ?? 0}
-                      </div>
-                    ))}
-                  </div>
-                ) : '–'
-              }
-            />
+              <InfoCard
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1a5.002 5.002 0 01-4.546-2.916M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                label="Vehicle Type Pricing"
+                value={
+                  Array.isArray(jobData?.vehicleTypePricing) && jobData.vehicleTypePricing.length > 0 ? (
+                    <div className="space-y-1 grid grid-cols-3">
+                      {jobData.vehicleTypePricing.map((item: any, index: number) => (
+                        <div key={`${item?.vehicleType || 'type'}-${index}`} className="text-sm">
+                          <span className="font-medium">{item?.vehicleType || 'Vehicle'}</span>: ${item?.amount ?? 0}
+                        </div>
+                      ))}
+                    </div>
+                  ) : '–'
+                }
+              />
             )}
             {jobData?.insurancePercentage && (
-            <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11h10M7 15h6M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012.172 3H11.83a2 2 0 00-1.414.586l-.828.828A2 2 0 018.172 5H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-              label="Insurance Percentage"
-              value={jobData?.insurancePercentage ? `${jobData.insurancePercentage}%` : '–'}
-            />
+              <InfoCard
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11h10M7 15h6M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012.172 3H11.83a2 2 0 00-1.414.586l-.828.828A2 2 0 018.172 5H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                label="Insurance Percentage"
+                value={jobData?.insurancePercentage ? `${jobData.insurancePercentage}%` : '–'}
+              />
             )}
-            {jobData?.insuranceFile && (
-            <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.656-5.656L5.757 10.76a6 6 0 108.486 8.485L20.5 13" /></svg>}
-              label="Insurance File"
-              value={
-                jobData?.insuranceFile ? (
-                  <a
-                    href={jobData.insuranceFile}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#383d71] hover:underline break-all"
-                  >
-                    View Insurance File
-                  </a>
-                ) : '–'
-              }
-            />
+            {parseInsuranceFileUrls(jobData?.insuranceFile).length > 0 && (
+              <InfoCard
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.656-5.656L5.757 10.76a6 6 0 108.486 8.485L20.5 13" /></svg>}
+                label="Insurance File"
+                value={
+                  <ul className="space-y-2">
+                    {parseInsuranceFileUrls(jobData.insuranceFile).map((url, idx) => {
+                      const label = fileLabelFromInsuranceUrl(url);
+                      return (
+                        <li key={`${url}-${idx}`}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#383d71] font-medium hover:underline break-all"
+                            onClick={(e) => {
+                              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                              e.preventDefault();
+                              void downloadInsuranceFile(url);
+                            }}
+                          >
+                            {label}
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                }
+              />
             )}
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>}
@@ -309,7 +610,7 @@ export default function ViewDetails() {
                 </span>
               }
             />
-              <InfoCard
+            <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
               label="Notes"
               value={jobData?.notes || '–'}
@@ -318,54 +619,134 @@ export default function ViewDetails() {
         </div>
 
         {/* Vehicle List */}
-        <div className="shadow-lg p-4 bg-white rounded-lg mt-4"> 
-        <h3 className="font-bold rounded-t-lg mb-4">Vehicle List</h3>
-        <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Dent Tech Name</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
-                {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Override Price</th> */}
-                <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {Array.isArray(jobData.vehicles) && jobData.vehicles.length > 0 ? (
-                jobData.vehicles.map((vehicles: any, index: number) => (
-                  <tr key={vehicles.id ?? index} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4">
-                      <span className="capitalize">
-                        {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
-                          ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
-                          : '–'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4"><span className="capitalize">{vehicles.vin || '–'}</span></td>
-                    <td className="px-6 py-4">{vehicles.make || 'N/A'}</td>
-                    <td className="px-6 py-4">{vehicles.model || '–'}</td>
-                    <td className="px-6 py-4">{vehicles.modelYear || '–'}</td>
-                    {/* <td className="px-6 py-4">
-                      {vehicles.labourCost && vehicles.labourCost !== '' ? `$${vehicles.labourCost}` : <span className="text-gray-400 text-sm">No price added</span>}
-                    </td> */}
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
-                        <Image alt="View" src={Eye} className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500"><Empty /></td>
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-5">
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="font-bold rounded-t-lg m-0">Tech and assigned vehicles report</h3>
+              <div className="flex flex-row gap-3">
+              <div className="w-[500px]">
+              <label htmlFor="assignment-table-search" className="sr-only">
+                Search tech and vehicles
+              </label>
+              <input
+                id="assignment-table-search"
+                type="search"
+                value={assignmentSearchQuery}
+                onChange={(e) => setAssignmentSearchQuery(e.target.value)}
+                placeholder="Search by technician name, VIN, make, or model…"
+                autoComplete="off"
+                className="w-full max-w-xl rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm focus:border-[#383d71] focus:outline-none focus:ring-2 focus:ring-[#383d71]/25"
+              />
+              </div>
+              <button
+                type="button"
+                onClick={handleMarkTechniciansPaid}
+                className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                Mark as paid
+              </button>
+            </div>
+
+            </div>
+            
+          </div>
+          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="w-12 text-left text-sm font-semibold text-gray-700 px-4 py-3">
+                    {displayedAssignmentRows.length > 0 ? (
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
+                        checked={allAssignmentRowsSelected}
+                        onChange={toggleAllAssignmentRows}
+                        aria-label="Select all visible rows"
+                      />
+                    ) : null}
+                  </th>
+                  <SortTh columnKey="techName" label="Assigned Dent Tech" />
+                  <SortTh columnKey="techFlat" label="Tech Flat Rate" />
+                  <SortTh columnKey="rr" label="RR/I/R" />
+                  <SortTh columnKey="vin" label="VIN" />
+                  <SortTh columnKey="make" label="Make" />
+                  <SortTh columnKey="model" label="Model" />
+                  <SortTh columnKey="modelYear" label="Model Year" />
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Payment Status</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {technicianVehicleAssignmentRows.length > 0 ? (
+                  displayedAssignmentRows.length > 0 ? (
+                  displayedAssignmentRows.map((row, index) => {
+                    const { tech, vehicle, vt } = row;
+                    const key = assignmentRowKey(tech, vehicle, index);
+                    return (
+                      <tr key={key} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-4 align-middle">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
+                            checked={selectedAssignmentKeys.includes(key)}
+                            onChange={() => toggleAssignmentRow(key)}
+                            aria-label={`Select row ${tech?.firstName ?? ''} ${vehicle?.vin ?? ''}`}
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="capitalize">
+                            {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {vt?.techPercentageCalculatedAmount != null && vt.techPercentageCalculatedAmount !== '' ? (
+                            <div>${vt.techPercentageCalculatedAmount}</div>
+                          ) : (
+                            '–'
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {vt?.rPercentageCalculatedAmount != null && vt.rPercentageCalculatedAmount !== '' ? (
+                            <div>${vt.rPercentageCalculatedAmount}</div>
+                          ) : (
+                            '–'
+                          )}
+                        </td>
+                        <td className="px-6 py-4">{vehicle?.vin ?? '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.make ?? 'N/A'}</td>
+                        <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
+                        <td className="px-6 py-4">
+                          <button className="primary-bg pl-5 pr-5 p-2 rounded cursor-pointer text-white">Unpaid</button>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            href={`/vehicle/view?vehicleId=${vehicle?.id}`}
+                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#000] transition-colors"
+                            data-tooltip-id="view-vehicle"
+                            data-tooltip-content="View vehicle"
+                          >
+                            <Image alt="View" src={Eye} className="w-4 h-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                  ) : (
+                    <tr>
+                      <td colSpan={10} className="text-center py-8 text-gray-500">
+                        No rows match your search. Try another technician name, VIN, make, or model.
+                      </td>
+                    </tr>
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan={10} className="text-center py-8 text-gray-500"><Empty /></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         <Tooltip id="view-vehicle" place="top" />
         <ToastContainer />

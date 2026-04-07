@@ -593,14 +593,15 @@ const [roleType, setRoleType] = useState<string | null>(null);
         </td>
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.techFlatRate !== '' && (
-                  `$${tech.VehicleTechnician?.techFlatRate}`
-                )}
-
-              </div>
-            ))}
+            {job?.assignedTechnicians?.length > 0 ? (
+              job?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== ''
+                    ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}`
+                    : <span className="text-gray-500 text-sm"></span>}
+                </div>
+              ))
+            ) : <span className="text-gray-500 text-sm"></span>}
           </td>
         )}
         <td>
@@ -616,16 +617,18 @@ const [roleType, setRoleType] = useState<string | null>(null);
 
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">
-                {tech.VehicleTechnician?.rRate !== '' && (
-                  `$${tech.VehicleTechnician?.rRate}`
-                )}
-              </div>
-            ))}
+            {job?.assignedTechnicians?.length > 0 ? (
+              job?.assignedTechnicians?.map((tech: any) => (
+                <div key={tech.id} className="capitalize">
+                  {tech.VehicleTechnician?.rPercentageCalculatedAmount && tech.VehicleTechnician?.rPercentageCalculatedAmount !== ''
+                    ? `$${tech.VehicleTechnician?.rPercentageCalculatedAmount}`
+                    : <span className="text-gray-500 text-sm"></span>}
+                </div>
+              ))
+            ) : <span className="text-gray-500 text-sm"></span>}
           </td>
         )}
-        <td>${job?.totalCombined}</td>
+        {/* <td>${job?.totalCombined}</td> */}
 
         <td>{job?.vin}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
@@ -722,9 +725,9 @@ const [roleType, setRoleType] = useState<string | null>(null);
               {roleType !== 'single-technician' && (
                 <th className="w-[80px]">RR/I/R</th>
               )}
-              {roleType !== 'single-technician' && (
+              {/* {roleType !== 'single-technician' && (
                 <th className="w-[80px]">Total Expense</th>
-              )}
+              )} */}
               <th className="w-[160px]">VIN</th>
               <th className="w-[80px]">Start Date</th>
               <th className="w-[80px]">End Date</th>
@@ -735,13 +738,13 @@ const [roleType, setRoleType] = useState<string | null>(null);
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={14} className="text-center py-10">
+                <td colSpan={13} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={14} className="text-center py-10">
+                <td colSpan={13} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

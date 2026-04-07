@@ -622,7 +622,7 @@ const JobTable: React.FC = () => {
         {roleType === 'single-technician' && (
           <td>{job.labourCost !== null && (`$${job.labourCost || '-'}`) || '-'}</td>
         )}
-        <td>
+        {/* <td>
           {canCreate && (
             <span
               // onClick={() => toggleApproval(job.id, job.vehicleStatus)}
@@ -632,7 +632,7 @@ const JobTable: React.FC = () => {
               {job.vehicleStatus ? 'Completed' : 'In Progress'}
             </span>
           )}
-        </td>
+        </td> */}
         <td> 
           <TableActions
             editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
@@ -866,20 +866,20 @@ const JobTable: React.FC = () => {
                 <th className="w-[100px]">Start Date</th>
                 <th className="w-[80px]">End Date</th>
                 {roleType === 'single-technician' && <th className="w-[80px]">Labour Cost</th>}
-                <th className="w-[130px]">Status</th>
+                {/* <th className="w-[130px]">Status</th> */}
                 <th className="w-[100px]">Action</th>
               </tr>
             </thead>
             <tbody>
               {loading && activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

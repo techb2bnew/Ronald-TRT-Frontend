@@ -545,7 +545,7 @@ const JobTable: React.FC = () => {
             <span className="text-gray-400">No vehicles</span>
           )}
         </td>
-        <td>{`${job.estimatedCost ? '$' + job.estimatedCost : '-'}`}</td>
+        {/* <td>{`${job.estimatedCost ? '$' + job.estimatedCost : '-'}`}</td> */}
 
 
 
@@ -655,7 +655,7 @@ const JobTable: React.FC = () => {
                 No. Of Dent Tech
               </th>
               <th className="w-[120px]">Work Order Completed </th>
-              <th className="w-[100px]">Job Estimate</th>
+              {/* <th className="w-[100px]">Job Estimate</th> */}
               <th className="w-[100px]">All Tech Total</th>
               <th className="w-[80px]">All RR Total</th>
               <th className="w-[100px]">Total Expense</th> 

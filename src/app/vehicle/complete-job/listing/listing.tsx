@@ -85,7 +85,7 @@ const CompletedJobs: React.FC = () => {
         // const filteredJobs = fetchedTechnicians.filter(completeJob => !completeJob.deletedStatus);
         setTotalPages(data?.vehicles?.totalPages);
         setActiveJob(fetchedTechnicians);
-        setTotalExpense(data.vehicles?.totalEstimateCost || data.data.totalEstimateCost);
+        setTotalExpense(data.vehicles?.totalEstimateCost || data.data?.totalEstimateCost);
 
         // setTotalPages(data.jobs.totalPages); // Set the total pages from API response
         // setCurrentPage(data.jobs.currentPage); // Update current page from API
@@ -653,7 +653,7 @@ const CompletedJobs: React.FC = () => {
               ) || '-'}
             </td>
           )}
-          <td>
+          {/* <td>
 
 
             <span 
@@ -664,7 +664,7 @@ const CompletedJobs: React.FC = () => {
             </span>
 
 
-          </td>
+          </td> */}
           <td>
             <TableActions
               editRoute={`/vehicle/create-vehicle?vahicleId=${completejob.id}`}
@@ -759,20 +759,20 @@ const CompletedJobs: React.FC = () => {
               {roleType === 'single-technician' && (
                 <th className="w-[80px]">Labour Cost</th>
               )}
-              <th className="w-[130px]">Status</th>
+              {/* <th className="w-[130px]">Status</th> */}
               <th className="w-[100px]">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 9 : 12} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={roleType === 'single-technician' ? 10 : 13} className="text-center py-10">
+                <td colSpan={roleType === 'single-technician' ? 9 : 12} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

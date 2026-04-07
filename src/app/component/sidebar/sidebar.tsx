@@ -711,7 +711,7 @@ const Sidebar = () => {
                     <span className="sidebar-text">Vehicles List</span>
                   </Link>
                 </li>
-                {userType !== 'manager' && (
+                {/* {userType !== 'manager' && (
                   <li>
                     <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-4 space-x-2   rounded hover:bg-[#f54a00] ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
                       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -730,7 +730,7 @@ const Sidebar = () => {
                       <span className="sidebar-text">Accounts Report</span>
                     </Link>
                   </li>
-                )}
+                )} */}
 
                 {/* {userType !== 'single-technician' && userType !== 'ifs' && (
                   <li>
