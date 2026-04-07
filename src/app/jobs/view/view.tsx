@@ -724,7 +724,7 @@ export default function ViewDetails() {
                             href={`/vehicle/view?vehicleId=${vehicle?.id}`}
                             className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#000] transition-colors"
                             data-tooltip-id="view-vehicle"
-                            data-tooltip-content="View vehicle"
+                            data-tooltip-content="View vehicle" 
                           >
                             <Image alt="View" src={Eye} className="w-4 h-4" />
                           </Link>
