@@ -622,7 +622,7 @@ const JobTable: React.FC = () => {
     // ── Step 1: Check for mismatches (backend) for other roles / job types ────
     try {
       const mismatchResponse = await axios.post(
-        `${apiUrl}/checkVehicleMismatch`,
+        `${apiUrl}/fetchInsuranceVehiclesByJob`,
         { vehicleIds: selectedJobs.map(job => job.id), roleType, userId },
         { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
       );

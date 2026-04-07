@@ -197,6 +197,8 @@ export default function ViewDetails() {
   const [userType, setUserType] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedAssignmentKeys, setSelectedAssignmentKeys] = useState<string[]>([]);
+  const [isSubmittingPaid, setIsSubmittingPaid] = useState<boolean>(false);
+  const [submittingRowKey, setSubmittingRowKey] = useState<string | null>(null);
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState('');
   const [assignmentSortKey, setAssignmentSortKey] = useState<AssignmentSortKey>('techName');
   const [assignmentSortDir, setAssignmentSortDir] = useState<'asc' | 'desc'>('asc');
@@ -375,8 +377,16 @@ export default function ViewDetails() {
   const assignmentRowKeys = displayedAssignmentRows.map((row, index) =>
     assignmentRowKey(row.tech, row.vehicle, index),
   );
+  const selectableAssignmentRowKeys = displayedAssignmentRows
+    .map((row, index) => ({
+      key: assignmentRowKey(row.tech, row.vehicle, index),
+      isPaid: row?.vt?.paidStatus === true || row?.vt?.paid === true,
+    }))
+    .filter((entry) => !entry.isPaid)
+    .map((entry) => entry.key);
   const allAssignmentRowsSelected =
-    assignmentRowKeys.length > 0 && assignmentRowKeys.every((k) => selectedAssignmentKeys.includes(k));
+    selectableAssignmentRowKeys.length > 0 &&
+    selectableAssignmentRowKeys.every((k) => selectedAssignmentKeys.includes(k));
 
   const toggleAssignmentRow = (key: string) => {
     setSelectedAssignmentKeys((prev) =>
@@ -386,7 +396,7 @@ export default function ViewDetails() {
 
   const toggleAllAssignmentRows = () => {
     if (allAssignmentRowsSelected) setSelectedAssignmentKeys([]);
-    else setSelectedAssignmentKeys([...assignmentRowKeys]);
+    else setSelectedAssignmentKeys([...selectableAssignmentRowKeys]);
   };
 
   const handleAssignmentSort = (key: AssignmentSortKey) => {
@@ -398,7 +408,104 @@ export default function ViewDetails() {
     }
   };
 
+  const applyPaidStatusToLocalRows = (rows: TechnicianVehicleAssignmentRow[]) => {
+    const vehicleIds = new Set(rows.map((r) => Number(r.vehicle?.id)).filter((id) => !Number.isNaN(id)));
+    const technicianIds = new Set(rows.map((r) => Number(r.tech?.id)).filter((id) => !Number.isNaN(id)));
+    setJobsData((prev: any) => {
+      if (!prev || !Array.isArray(prev.vehicles)) return prev;
+      return {
+        ...prev,
+        vehicles: prev.vehicles.map((vehicle: any) => {
+          const vehicleMatched = vehicleIds.has(Number(vehicle?.id));
+          if (!vehicleMatched || !Array.isArray(vehicle.assignedTechnicians)) return vehicle;
+          return {
+            ...vehicle,
+            assignedTechnicians: vehicle.assignedTechnicians.map((tech: any) => {
+              if (!technicianIds.has(Number(tech?.id))) return tech;
+              return {
+                ...tech,
+                VehicleTechnician: { ...(tech?.VehicleTechnician || {}), paidStatus: true, paidAt: new Date().toISOString() },
+                UserJob: { ...(tech?.UserJob || {}), paidStatus: true, paidAt: new Date().toISOString() },
+              };
+            }),
+          };
+        }),
+      };
+    });
+  };
+
+  const markRowsAsPaid = async (rows: TechnicianVehicleAssignmentRow[]) => {
+    if (!rows.length) {
+      toast.error('No rows available to mark as paid.');
+      return false;
+    }
+    const jobId = Number(jobData?.id);
+    if (!jobId) {
+      toast.error('Job ID missing.');
+      return false;
+    }
+
+    const items = Array.from(
+      new Map(
+        rows
+          .map((r) => ({
+            vehicleId: Number(r.vehicle?.id),
+            technicianId: Number(r.tech?.id),
+          }))
+          .filter((item) => !Number.isNaN(item.vehicleId) && !Number.isNaN(item.technicianId))
+          .map((item) => [`${item.vehicleId}-${item.technicianId}`, item]),
+      ).values(),
+    );
+
+    if (!items.length) {
+      toast.error('Vehicle/technician IDs missing for selected rows.');
+      return false;
+    }
+
+    try {
+      setIsSubmittingPaid(true);
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch('/api/markVehicleTechnicianPaid', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          jobId,
+          paid: true,
+          items,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data?.status === false) {
+        throw new Error(data?.message || data?.error || 'Failed to mark payment as paid');
+      }
+
+      applyPaidStatusToLocalRows(rows);
+      await fetchCustomerData(String(jobId));
+      toast.success('Payment marked as paid successfully.');
+      return true;
+    } catch (error: any) {
+      toast.error(error?.message || 'Error while marking payment as paid.');
+      return false;
+    } finally {
+      setIsSubmittingPaid(false);
+    }
+  };
+
   const handleMarkTechniciansPaid = async () => {
+    const rowsToMark =
+      selectedAssignmentKeys.length > 0
+        ? displayedAssignmentRows.filter((row, index) =>
+            selectedAssignmentKeys.includes(assignmentRowKey(row.tech, row.vehicle, index)),
+          )
+        : displayedAssignmentRows;
+    if (!rowsToMark.length) {
+      toast.error('Select at least one row to mark as paid.');
+      return;
+    }
+
     const result = await Swal.fire({
       title: 'Mark all payments as paid?',
       html: `
@@ -422,7 +529,17 @@ export default function ViewDetails() {
       },
     });
     if (result.isConfirmed) {
-      toast.success('Technician payments marked as paid.');
+      const ok = await markRowsAsPaid(rowsToMark);
+      if (ok) setSelectedAssignmentKeys([]);
+    }
+  };
+
+  const handleSingleRowMarkPaid = async (row: TechnicianVehicleAssignmentRow, rowKey: string) => {
+    setSubmittingRowKey(rowKey);
+    try {
+      await markRowsAsPaid([row]);
+    } finally {
+      setSubmittingRowKey(null);
     }
   };
 
@@ -641,9 +758,10 @@ export default function ViewDetails() {
               <button
                 type="button"
                 onClick={handleMarkTechniciansPaid}
-                className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                disabled={isSubmittingPaid}
+                className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Mark as paid
+                {isSubmittingPaid ? 'Updating...' : 'Mark as paid'}
               </button>
             </div>
 
@@ -655,7 +773,7 @@ export default function ViewDetails() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="w-12 text-left text-sm font-semibold text-gray-700 px-4 py-3">
-                    {displayedAssignmentRows.length > 0 ? (
+                    {selectableAssignmentRowKeys.length > 0 ? (
                       <input
                         type="checkbox"
                         className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
@@ -682,6 +800,7 @@ export default function ViewDetails() {
                   displayedAssignmentRows.map((row, index) => {
                     const { tech, vehicle, vt } = row;
                     const key = assignmentRowKey(tech, vehicle, index);
+                    const isPaid = vt?.paidStatus === true || vt?.paid === true;
                     return (
                       <tr key={key} className="hover:bg-gray-50/50">
                         <td className="px-4 py-4 align-middle">
@@ -689,6 +808,7 @@ export default function ViewDetails() {
                             type="checkbox"
                             className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
                             checked={selectedAssignmentKeys.includes(key)}
+                            disabled={isPaid}
                             onChange={() => toggleAssignmentRow(key)}
                             aria-label={`Select row ${tech?.firstName ?? ''} ${vehicle?.vin ?? ''}`}
                           />
@@ -717,7 +837,20 @@ export default function ViewDetails() {
                         <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
                         <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
                         <td className="px-6 py-4">
-                          <button className="primary-bg pl-5 pr-5 p-2 rounded cursor-pointer text-white">Unpaid</button>
+                          {isPaid ? (
+                            <span className="inline-flex items-center rounded bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700">
+                              Paid
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSingleRowMarkPaid(row, key)}
+                              disabled={isSubmittingPaid}
+                              className="primary-bg pl-5 pr-5 p-2 rounded cursor-pointer text-white disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {submittingRowKey === key ? 'Updating...' : 'Unpaid'}
+                            </button>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link
