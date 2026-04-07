@@ -712,7 +712,7 @@ export default function ViewDetails() {
                             '–'
                           )}
                         </td>
-                        <td className="px-6 py-4">{vehicle?.vin ?? '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.vin ?? '–' }</td>
                         <td className="px-6 py-4">{vehicle?.make ?? 'N/A'}</td>
                         <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
                         <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
