@@ -30,6 +30,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "export-to-csv-file": [
+        "./src/shims/export-to-csv-file"
       ]
     }
   },

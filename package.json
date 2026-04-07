@@ -28,7 +28,6 @@
     "dynamsoft-capture-vision-router": "^2.4.33",
     "dynamsoft-core": "^3.4.31",
     "dynamsoft-license": "^3.4.31",
-    "export-to-csv-file": "^0.2.2",
     "form-data": "^4.0.5",
     "formidable": "^3.5.4",
     "libphonenumber-js": "^1.12.40",
