@@ -96,7 +96,7 @@ export default function ViewDetails() {
     return acc + parseFloat(job.cost || '0');
   }, 0);
 
- 
+
 
   const backHref = '/vehicle/listing';
 
@@ -171,7 +171,11 @@ export default function ViewDetails() {
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Model" value={na(jobData?.model)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Vehicle Type" value={na(jobData?.vehicleType)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="End Date" value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'} />
-            {/* <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Vehicle Override Price" value={jobData?.labourCost && String(jobData.labourCost).trim() !== '' ? `$${jobData.labourCost}` : <span className="text-gray-500">No price added</span>} /> */}
+
+            {jobData?.pdr !== 'null' && jobData?.pdr !== null && (
+              <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="PDR" value={jobData?.pdr && String(jobData.pdr).trim() !== '' ? `$${jobData.pdr}` : <span className="text-gray-500">No price added</span>} />
+            )}
+
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="Insurance Calculated Price" value={jobData?.insuranceCalculatedPrice && String(jobData.insuranceCalculatedPrice).trim() !== '' ? `$${jobData.insuranceCalculatedPrice}` : <span className="text-gray-500">No price added</span>} />
             <InfoCard icon={<>%</>} label="Insurance Percentage" value={jobData?.job?.insurancePercentage != null && String(jobData?.job?.insurancePercentage).trim() !== '' ? `${jobData?.job?.insurancePercentage}%` : <span className="text-gray-500">No percentage added</span>} />
             <InfoCard

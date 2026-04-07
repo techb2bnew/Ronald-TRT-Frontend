@@ -425,7 +425,7 @@ const JobTable: React.FC = () => {
         <td> <Link href={`/reporting/view-invoice?invoiceId=${job.invoiceNumber}`} className='hover:underline'> {job?.invoiceNumber}</Link> </td>
         <td>  {job?.customer?.fullName} </td>
         <td>  {job?.job?.jobName} </td>
-        <td>  {job?.totalCombined ? `$${job.totalCombined}` : 'N/A'}</td>
+        {/* <td>  {job?.totalCombined ? `$${job.totalCombined}` : 'N/A'}</td> */}
         <td>{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</td>
         <td>
           <div
@@ -541,7 +541,7 @@ const JobTable: React.FC = () => {
               <th>
                 Job Name
               </th>
-              <th className="w-[160px]">Grand Total</th>
+              {/* <th className="w-[160px]">Grand Total</th> */}
               <th>Invoice Created Date</th>
               <th className="w-[130px]">Status</th>
               <th className="w-[220px]">Add Paid Date</th>

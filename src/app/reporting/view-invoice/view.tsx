@@ -226,8 +226,8 @@ export default function ViewDetails() {
                             {userType !== 'single-technician' && <td className="px-6 py-4">{tech.techType || 'N/A'}</td>}
                             <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`mailto:${tech.email}`}>{tech.email}</a></td>
                             <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a></td>
-                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.rRate ? `$${tech.VehicleTechnician.rRate}` : 'N/A'}</td>}
-                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.techFlatRate ? `$${tech.VehicleTechnician.techFlatRate}` : 'N/A'}</td>}
+                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.rPercentageCalculatedAmount ? `$${tech.VehicleTechnician.rPercentageCalculatedAmount}` : 'N/A'}</td>}
+                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.techPercentageCalculatedAmount ? `$${tech.VehicleTechnician.techPercentageCalculatedAmount}` : 'N/A'}</td>}
                             {userType === 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.labourCost ? `$${tech.VehicleTechnician.labourCost}` : 'N/A'}</td>}
                             <td className="px-6 py-4 text-right">
                               <Link href={`/technicians/view?technicianId=${tech.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-tech" data-tooltip-content="View">
