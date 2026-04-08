@@ -598,7 +598,7 @@ export default function Technicians() {
             {/* Address */}
             <div className='mb-4 relative'>
               <GooglePlacesAutocomplete
-                apiKey="AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE"
+                apiKey="AIzaSyBgdQ0wlbTwbi5mBt7UwyT7qFHMtX50waI"
                 selectProps={{
                   placeholder: 'Search for an address...',
                   value: address,

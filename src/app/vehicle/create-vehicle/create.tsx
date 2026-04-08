@@ -239,7 +239,13 @@ export default function Technicians() {
   const [descriptionCostFields, setDescriptionCostFields] = useState<DescriptionCostField[]>([
     { id: crypto.randomUUID(), jobDescription: '' },
   ]);
-  const vehicleTypes = ['SUV', 'Sedan', 'Truck', 'Van', 'Motorcycle'];
+  const vehicleTypes = [
+    'Sedan',
+    'SUV',
+    'Truck',  
+    'Chassis Trucks',
+    'Other',
+  ];
   const [formData, setFormData] = useState<JobPayload>({
     jobName: '',
     id: '',
@@ -357,7 +363,7 @@ export default function Technicians() {
     // Append vehicle-related fields - use jobForms[0] instead of formData
     const vehicleFields = [
       'vin', 'vehicleDescriptor', 'make', 'manufacturerName', 'model', 'modelYear',
-      'vehicleType', 'plantCountry', 'plantCompanyName', 'plantState', 'bodyClass', 'color', 'createdBy', 'notes'
+      'plantCountry', 'plantCompanyName', 'plantState', 'bodyClass', 'color', 'createdBy', 'notes'
     ];
 
     vehicleFields.forEach((field) => {
@@ -369,6 +375,12 @@ export default function Technicians() {
         console.log(`${field} not provided`);
       }
     });
+
+    // Always send vehicleType (single string) when available.
+    const selectedVehicleType = String(jobForms[0]?.vehicleType ?? '').trim();
+    if (selectedVehicleType) {
+      formDataObj.append('vehicleType', selectedVehicleType);
+    }
 
     // Append customer and schedule - use jobForms[0] instead of formData
     formDataObj.append('customerId', jobForms[0].assignCustomer || '');
@@ -2409,6 +2421,7 @@ export default function Technicians() {
 
                           />
                         </div>
+                        {isInsurancePercentageJobType(selectedCustomerJobType) && (
                         <div className="text-xs relative">
                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
                             <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -2426,6 +2439,7 @@ export default function Technicians() {
 
                           />
                         </div>
+                        )}
                       </div>
                     </div>
 
@@ -2434,6 +2448,31 @@ export default function Technicians() {
               )}
 
               <div className="grid grid-cols-3 gap-4">
+                {!isInsurancePercentageJobType(selectedCustomerJobType) && (
+                  <div className='mb-4 relative'>
+                    <FormControl fullWidth size="small">
+                      <InputLabel id={`vehicle-type-${index}`} color="warning">Select a Type</InputLabel>
+                      <Select
+                        labelId={`vehicle-type-${index}`}
+                        id={`select-vehicle-type-${index}`}
+                        value={form.vehicleType || ''}
+                        label="Select a Type"
+                        name="vehicleType"
+                        color="warning"
+                        onChange={(event) => handleSelectChange(event as SelectChangeEvent<string>, 'vehicleType', index)}
+                      >
+                        <MenuItem value="">
+                          <em>Select a Type</em>
+                        </MenuItem>
+                        {vehicleTypes.map((type) => (
+                          <MenuItem key={type} value={type}>
+                            {type}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                )}
                 <div className='mb-4 relative'>
 
 
