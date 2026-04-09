@@ -508,10 +508,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
         }
       });
       const data = await response.json();
-      console.log(data,'datadata')
+      console.log(data, 'datadata')
 
       const results = data?.customers || data?.data?.customers || [];
-      console.log(results,'resultsresultsresults')
+      console.log(results, 'resultsresultsresults')
       if (Array.isArray(results)) setCustomer(results);
       setCustomerHasMore(false);
     } catch (error) {
@@ -594,7 +594,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     setSelectedCustomerId("");
     setSelectedCustomerLabel("");
     setSelectedTechId("");
-    setSearchValue("");    
+    setSearchValue("");
     onSearch?.("");
     setWorkOrderStatus("");
     setInvoiceStatus("");
@@ -602,16 +602,16 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     setDates({ startDate: null, endDate: null });
     setShowDatePicker(false);
 
-    setActiveFilter("all"); 
-    setCustomerJobs([]); 
-    onSearch?.("");  
-    onDateChange?.([null, null]);  
-    onAllJobsClick?.();  
-    onNewJobClick?.("", "single-technician");  
-    onNewTechClick?.("", "single-technician");  
-    onCustomerChange?.("", "single-technician");  
-    onStatusChange?.("");  
-    onInvoiceStatueChange?.("");   
+    setActiveFilter("all");
+    setCustomerJobs([]);
+    onSearch?.("");
+    onDateChange?.([null, null]);
+    onAllJobsClick?.();
+    onNewJobClick?.("", "single-technician");
+    onNewTechClick?.("", "single-technician");
+    onCustomerChange?.("", "single-technician");
+    onStatusChange?.("");
+    onInvoiceStatueChange?.("");
     onClearFilters?.();
   };
 
@@ -871,64 +871,64 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </div>
           )}
 
-            {showDatePicker && (
-          <div className="relative" ref={datePickerRef}>
+          {showDatePicker && (
+            <div className="relative" ref={datePickerRef}>
               <button
                 className="p-3 bg-white text-[12px] rounded-lg w-[100px] border border-gray-300"
                 onClick={handleDateFilterClick}
               >
                 Date Filter
               </button>
-            {showDatePickers && (
-              <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
-                <DateRange
-                  editableDateInputs={true}
-                  onChange={handleDateChange}
-                  moveRangeOnFirstSelection={false}
-                  ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
-                  rangeColors={["#383d71"]}
-                  locale={enUS}
-                  months={2}
-                  direction="horizontal"
-                  showDateDisplay={false}
-                />
-                <div className="text-right">
-                  <button
-                    className="bg-[#383d71] text-white p-2 text-sm rounded"
-                    onClick={handleApplyFilter}
-                  >
-                    Close
-                  </button>
+              {showDatePickers && (
+                <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
+                  <DateRange
+                    editableDateInputs={true}
+                    onChange={handleDateChange}
+                    moveRangeOnFirstSelection={false}
+                    ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
+                    rangeColors={["#383d71"]}
+                    locale={enUS}
+                    months={2}
+                    direction="horizontal"
+                    showDateDisplay={false}
+                  />
+                  <div className="text-right">
+                    <button
+                      className="bg-[#383d71] text-white p-2 text-sm rounded"
+                      onClick={handleApplyFilter}
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-            )}
+              )}
+            </div>
+          )}
 
 
           {showClearFilters && (
-            selectedJobId || 
-            selectedCustomerId || 
-            selectedTechId || 
-            dates.startDate || 
-            dates.endDate || 
-            searchValue || 
-            workOrderStatus || 
+            selectedJobId ||
+            selectedCustomerId ||
+            selectedTechId ||
+            dates.startDate ||
+            dates.endDate ||
+            searchValue ||
+            workOrderStatus ||
             invoiceStatus
           ) && (
-            <button
-              type="button"
-              className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
-              onClick={() => {
-                handleClearFilters();
-                onClearFilters?.();
-              }}
-            >
-              Clear
-            </button>
-          )}
+              <button
+                type="button"
+                className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
+                onClick={() => {
+                  handleClearFilters();
+                  onClearFilters?.();
+                }}
+              >
+                Clear
+              </button>
+            )}
 
-          {onPageSizeChange && ( 
+          {onPageSizeChange && (
             <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
               <option value="">Show 10</option>
               <option value="10">10</option>
@@ -977,15 +977,31 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               In Progress Jobs
             </button>
           )}
+
+          {onCompareWorkOrderClick && (
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 border border-[#383d71] text-[#383d71] rounded-lg hover:bg-[#383d71]/10 transition-colors"
+              onClick={onCompareWorkOrderClick}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 3h5v5" />
+                <path d="M8 3H3v5" />
+                <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+                <path d="m15 9 6-6" />
+              </svg>
+              {compareWorkOrderLabel}
+            </button>
+          )}
           {onImport && (
 
             <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
                 <polyline points="3 4 5 6 7 4" />
                 <line x1="5" y1="6" x2="5" y2="1" />
               </svg>
-
 
 
               Import
@@ -1002,29 +1018,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               />
             </label>
           )}
-          {onCompareWorkOrderClick && (
-            <button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2 border border-[#383d71] text-[#383d71] rounded-lg hover:bg-[#383d71]/10 transition-colors"
-              onClick={onCompareWorkOrderClick}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 3h5v5" />
-                <path d="M8 3H3v5" />
-                <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
-                <path d="m15 9 6-6" />
-              </svg>
-              {compareWorkOrderLabel}
-            </button>
-          )}
+
           {onExport && (
 
             <button className="flex items-center gap-2 px-4 py-2 bg-[#383d71] text-white rounded-lg hover:bg-[#2d3159] transition-colors" onClick={onExport}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
                 <polyline points="3 4 5 6 7 4" />
                 <line x1="5" y1="6" x2="5" y2="1" />
               </svg>
+
 
               Export
             </button>

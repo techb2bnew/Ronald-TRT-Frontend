@@ -191,7 +191,7 @@ export default function Technicians() {
   const hasVehicleInfo = searchParams?.has('vehicleInfo') ?? false;
   const [selectedTechnician, setSelectedTechnician] = useState<Technicians | null>(null);
   const [userVehicleData, setUserVehicleData] = useState<{ rRate: string; techFlatRate: string } | null>(null);
-  const userId = localStorage.getItem('userID');
+  const [userId, setUserId] = useState<string | null>(null);
   const [vehiclesData, setVehiclesData] = useState<any[]>([]);
   const [activeTechnicianId, setActiveTechnicianId] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState(10);
@@ -317,6 +317,12 @@ export default function Technicians() {
       insuranceCalculatedPrice: '',
     }
   ]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserId(localStorage.getItem('userID'));
+    }
+  }, []);
 
 
   // Function to handle adding a new vehicle form
@@ -1137,18 +1143,39 @@ export default function Technicians() {
     setSubmitting(true);
 
     try {
-      // Fetch the vehicle details from NHTSA API first
-      const vehicleDetailsResponse = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${vin}?format=json`);
-      const vehicleDetailsData = await vehicleDetailsResponse.json();
+      // Fetch the vehicle details from NHTSA API first.
+      // If request itself fails (network/CORS/503 upstream issues), continue to fallback API.
+      let vehicleDetailsResponse: Response | null = null;
+      let vehicleDetailsData: any = null;
+      try {
+        vehicleDetailsResponse = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVIN/${vin}?format=json`);
+        vehicleDetailsData = await vehicleDetailsResponse.json().catch(() => null);
+      } catch (nhtsaErr) {
+        console.warn('NHTSA VIN decode failed, trying fallback:', nhtsaErr);
+      }
 
-      if (vehicleDetailsResponse.ok && vehicleDetailsData.Results) {
-        let vehicleDetails: Record<string, any> = {};
+      let vehicleDetails: Record<string, any> = {};
+      if (vehicleDetailsResponse?.ok && vehicleDetailsData?.Results) {
         vehicleDetailsData.Results.forEach((item: any) => {
           const key = vehicleDetailsMap[item.Variable.toLowerCase().replace(/ /g, '')];
           if (key && item.Value && item.Value !== "N/A") {
             vehicleDetails[key] = item.Value;
           }
         });
+      } else {
+        // Fallback: use Corgi via Next API when NHTSA is unavailable (e.g. 503).
+        const fallbackRes = await fetch(`/api/decodeVinFallback?vin=${encodeURIComponent(vin)}`, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const fallbackJson = await fallbackRes.json().catch(() => ({}));
+        if (fallbackRes.ok && fallbackJson?.status && fallbackJson?.vehicleDetails) {
+          vehicleDetails = fallbackJson.vehicleDetails;
+          toast.success('VIN decoded via fallback service.');
+        }
+      }
+
+      if (Object.keys(vehicleDetails).length > 0) {
 
         // Update formData with vehicle details
         setJobForms(prev => {
@@ -1301,7 +1328,7 @@ export default function Technicians() {
           toast.error(checkVehicleData.error || "Error checking vehicle details.");
         }
       } else {
-        toast.error("Failed to fetch vehicle details from NHTSA.");
+        toast.error("Failed to decode VIN from both NHTSA and fallback service.");
       }
     } catch (error) {
       console.error("Error fetching vehicle details:", error);
@@ -1872,6 +1899,7 @@ export default function Technicians() {
 
 
   const handleScan = (vin: string, index: number) => {
+    console.log(vin, 'vinvinvin')
     setFormData((prev) => ({ ...prev, vin }));
     setTimeout(() => {
       fetchVehicleDetails(vin, index);
