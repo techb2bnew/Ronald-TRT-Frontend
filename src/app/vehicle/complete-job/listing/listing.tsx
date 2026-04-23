@@ -743,11 +743,11 @@ const CompletedJobs: React.FC = () => {
               )}
               {roleType !== 'single-technician' && (
                 <th className="w-[130px]" >
-                  Assigned RR/I/R
+                  Assigned R&I
                 </th>
               )}
               {roleType !== 'single-technician' && (
-                <th className="w-[80px]">RR/I/R</th>
+                <th className="w-[80px]">R&I</th>
               )}
               {/* {roleType !== 'single-technician' && (
                 <th className="w-[120px]">Total Expense</th>

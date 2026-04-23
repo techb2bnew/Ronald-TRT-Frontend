@@ -1283,7 +1283,7 @@ export default function Technicians() {
                 });
               }
             } else {
-              toast.error(settleJson?.message || settleJson?.error || 'Could not calculate insurance settlement');
+              // toast.error(settleJson?.message || settleJson?.error || 'Could not calculate insurance settlement');
             }
           } catch (settleErr) {
             console.error('calculateInsuranceVinSettlement:', settleErr);
@@ -2479,18 +2479,18 @@ export default function Technicians() {
                 {!isInsurancePercentageJobType(selectedCustomerJobType) && (
                   <div className='mb-4 relative'>
                     <FormControl fullWidth size="small">
-                      <InputLabel id={`vehicle-type-${index}`} color="warning">Select a Type</InputLabel>
+                      <InputLabel id={`vehicle-type-${index}`} color="warning">Select vehicle</InputLabel>
                       <Select
                         labelId={`vehicle-type-${index}`}
                         id={`select-vehicle-type-${index}`}
                         value={form.vehicleType || ''}
-                        label="Select a Type"
+                        label="Select vehicle"
                         name="vehicleType"
                         color="warning"
                         onChange={(event) => handleSelectChange(event as SelectChangeEvent<string>, 'vehicleType', index)}
                       >
                         <MenuItem value="">
-                          <em>Select a Type</em>
+                          <em>Select vehicle</em>
                         </MenuItem>
                         {vehicleTypes.map((type) => (
                           <MenuItem key={type} value={type}>
@@ -2607,7 +2607,7 @@ export default function Technicians() {
                       <button
                         type="button"
                         onClick={() => handleRemoveDescription(index)}
-                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full p-1 transition-colors"
+                        className="absolute cursor-pointer top-[-12px] bg-red-100   right-[-10px] text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full p-1 transition-colors"
                         title="Remove description"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

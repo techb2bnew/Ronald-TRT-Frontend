@@ -128,6 +128,14 @@ export default function ViewDetails() {
     return (item as any)?.description ?? (item as any)?.name ?? String(item);
   };
 
+  const formatTechType = (type:any) => {
+    if (!type) return 'N/A';
+  
+    if (type === 'R/I/R/R') return 'R&I';
+  
+    return type;
+  };
+
   return (
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
@@ -273,7 +281,9 @@ export default function ViewDetails() {
                   <div key={tech.id} className="py-4 first:pt-0">
                     <p className="font-semibold text-gray-900 capitalize">{tech.firstName} {tech.lastName}</p>
                     <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
-                    <p className="text-sm text-gray-600">Specialty: {tech?.techType ?? 'N/A'}</p>
+                    <p className="text-sm text-gray-600">
+                      Specialty: {formatTechType(tech?.techType)}
+                    </p>
                     {tech?.VehicleTechnician?.techPercentageCalculatedAmount && tech?.VehicleTechnician?.techPercentageCalculatedAmount !== '' && (
                       <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.techPercentageCalculatedAmount ?? 'N/A'}</p>
                     )}

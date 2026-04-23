@@ -18,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userId: rawUserId,
       page: rawPage = '1',
       limit: rawLimit = '10',
+      vehicleStatus: rawVehicleStatus,
     } = req.query;
 
     const searchQuery = toSingleString(rawSearchQuery);
@@ -25,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userId = toSingleString(rawUserId);
     const page = toSingleString(rawPage);
     const limit = toSingleString(rawLimit);
-
+    const vehicleStatus = toSingleString(rawVehicleStatus);
     if (!roleType) {
       return res.status(400).json({ error: 'roleType parameter is required' });
     }
@@ -43,11 +44,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (roleType !== 'superadmin' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
       }
+      if (vehicleStatus) {
+        backendUrl += `&vehicleStatus=${encodeURIComponent(vehicleStatus)}`; 
+      }
     } else {
       // Use fetchVehicleInfo API for paginated data
       backendUrl = `${apiBaseUrl}/fetchVehicleInfo?&userId=${encodeURIComponent(userId)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&roleType=${encodeURIComponent(roleType)}`;
       if (roleType !== 'superadmin' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
+      }
+      if (vehicleStatus) {
+        backendUrl += `&vehicleStatus=${encodeURIComponent(vehicleStatus)}`;  
       }
     }
 

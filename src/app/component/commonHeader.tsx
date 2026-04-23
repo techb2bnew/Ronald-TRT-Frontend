@@ -622,13 +622,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     <div className="px-1 mb-4">
       <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
         <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
-          {/* <p className='text-sm'>{title}</p> */}
+          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1> 
         </div>
-        <div className='mobile_listing_item  flex items-center gap-4'>
+        <div className='mobile_listing_item  flex flex-wrap items-center gap-2'>
           {onSearch && (
 
-            <div className="flex w-[220px] relative search__input border border-gray-300 rounded-lg">
+            <div className="flex w-[200px] relative search__input border border-gray-300 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="absolute right-3 top-1/2 -translate-y-1/2 z-[1] pointer-events-none text-gray-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -651,7 +650,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             <div className="relative" ref={customerDropdownRef}>
               <button
                 type="button"
-                className="w-[190px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
+                className="w-[160px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
                 onClick={() => {
                   const next = !isCustomerDropdownOpen;
@@ -667,7 +666,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               </button>
 
               {isCustomerDropdownOpen && (
-                <div className="absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="absolute z-[9999] mt-1 w-[300px] bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="p-2 border-b border-gray-100">
                     <input
                       value={customerSearchTerm}
@@ -725,7 +724,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <button
                 type="button"
                 id="job-dropdown"
-                className="w-[190px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
+                className="w-[130px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
                 onClick={() => {
                   const next = !isJobDropdownOpen;
@@ -752,7 +751,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                   </div>
 
                   <div
-                    className="max-h-[260px] overflow-auto"
+                    className="max-h-[240px] overflow-auto"
                     onScroll={customerFilter ? undefined : handleJobListScroll}
                   >
                     <button
@@ -825,7 +824,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               id="status-dropdown"
               defaultValue=""
               onChange={(e) => onStatusChange?.(e.target.value)}
-              className="w-[140px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              className="w-[110px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
             >
               <option value="">All Status</option>
@@ -981,7 +980,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           {onCompareWorkOrderClick && (
             <button
               type="button"
-              className="flex items-center gap-2 px-4 py-2 border border-[#383d71] text-[#383d71] rounded-lg hover:bg-[#383d71]/10 transition-colors"
+              className="flex items-center gap-1 px-4 py-2 border border-[#383d71] text-[#383d71] rounded-lg hover:bg-[#383d71]/10 transition-colors"
               onClick={onCompareWorkOrderClick}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -995,7 +994,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           )}
           {onImport && (
 
-            <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <label className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
 
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
@@ -1021,7 +1020,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           {onExport && (
 
-            <button className="flex items-center gap-2 px-4 py-2 bg-[#383d71] text-white rounded-lg hover:bg-[#2d3159] transition-colors" onClick={onExport}>
+            <button className="flex items-center gap-2 px-3 py-2 bg-[#383d71] text-white rounded-lg hover:bg-[#2d3159] transition-colors" onClick={onExport}>
 
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
@@ -1034,7 +1033,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </button>
           )}
           {buttonLink && buttonLabel && canCreate && (
-            <Link href={buttonLink} className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+            <Link href={buttonLink} className="flex items-center gap-1 px-2 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
               {buttonLabel}
               <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

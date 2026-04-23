@@ -47,7 +47,7 @@ const JobTable: React.FC = () => {
   const [insuranceLoading, setInsuranceLoading] = useState<boolean>(false);
   const [insuranceCurrentPage, setInsuranceCurrentPage] = useState<number>(1);
   const [insuranceTotalPages, setInsuranceTotalPages] = useState<number>(1);
-
+  const [workOrderStatus, setWorkOrderStatus] = useState<string>('');
   const normalizeJobId = (value: any) => {
     if (value === undefined || value === null) return '';
     const str = String(value).trim();
@@ -122,9 +122,10 @@ const JobTable: React.FC = () => {
     page = 1,
     query = '',
     limit = pageSize,
-    opts?: { showFullScreenLoader?: boolean }
+    opts?: { showFullScreenLoader?: boolean; status?: string }
   ) => {
     const showLoader = opts?.showFullScreenLoader !== false;
+    const status = opts?.status ?? workOrderStatus;
     if (showLoader) setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -132,18 +133,17 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  
       const endpoint = query.trim()
-        ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-        : roleType === 'superadmin' || roleType === 'manager'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
-
+      ? roleType === 'superadmin'
+        ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+        : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+      : roleType === 'superadmin' || roleType === 'manager'
+        ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+        : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-
+  
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
@@ -718,8 +718,8 @@ const JobTable: React.FC = () => {
         row?.jobType ??
         '';
       if (!isInsuranceJobTypeForInvoice(jt)) {
-        toast.error(
-          `Compare work order is only for insurance percentage jobs (job ${jid} is not eligible).`
+        toast(
+          `This is not an insurance percentage job. Please select an insurance percentage job to compare work orders.`
         );
         return;
       }
@@ -859,8 +859,8 @@ const JobTable: React.FC = () => {
                 <th className="w-[120px]">Customer Name</th>
                 {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}
                 {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
-                {roleType !== 'single-technician' && <th className="w-[130px]">Assigned RR/I/R</th>}
-                {roleType !== 'single-technician' && <th className="w-[80px]">RR/I/R</th>}
+                {roleType !== 'single-technician' && <th className="w-[130px]">Assigned R&I</th>}
+                {roleType !== 'single-technician' && <th className="w-[80px]">R&I</th>}
                 {/* {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>} */}
                 <th className="w-[150px]">VIN</th>
                 <th className="w-[100px]">Start Date</th>
@@ -925,6 +925,10 @@ const JobTable: React.FC = () => {
           onNewJobClick={handleNewJobClick}
           showClearFilters={true}
           onClearFilters={handleClearFilters}
+          onStatusChange={(status) => {
+            setWorkOrderStatus(status);    
+            fetchvehicleInfo(1, searchTerm, pageSize, { status });
+          }}
           onCompareWorkOrderClick={
             roleType === 'superadmin' && activeTab === 'scanned'
               ? handleCompareWorkOrder

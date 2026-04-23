@@ -760,8 +760,8 @@ const JobTable: React.FC = () => {
                 <th className="w-[120px]">Customer Name</th>
                 {roleType !== 'single-technician' && (<th className="w-[150px]">Assigned Dent Tech</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[100px]">Dent Tech Rate</th>)}
-                {roleType !== 'single-technician' && (<th className="w-[130px]">Assigned RR/I/R</th>)}
-                {roleType !== 'single-technician' && (<th className="w-[80px]">RR/I/R</th>)}
+                {roleType !== 'single-technician' && (<th className="w-[130px]">Assigned R&I</th>)}
+                {roleType !== 'single-technician' && (<th className="w-[80px]">R&I</th>)}
                 {/* {roleType !== 'single-technician' && (<th className="w-[80px]">Total Expense</th>)} */}
                 {roleType === 'single-technician' && (<th className="w-[80px]">Labour Cost</th>)}
                 <th className="w-[80px]">Start Date</th>
