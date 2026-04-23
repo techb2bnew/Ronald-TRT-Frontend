@@ -431,7 +431,7 @@ export default function ViewDetails() {
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Rate</th>
-                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">RR/I/R</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
                   <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>

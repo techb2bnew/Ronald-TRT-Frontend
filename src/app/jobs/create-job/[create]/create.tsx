@@ -1077,11 +1077,13 @@ export default function JobForm() {
                   control={<Radio color="warning" />}
                   label="Flat rate"
                 />
+                 {userType !== 'manager' && (
                 <FormControlLabel
                   value="insurancePercentage"
                   control={<Radio color="warning" />}
                   label="Insurance percentage"
                 />
+                )}
               </RadioGroup>
             </FormControl>
           </div>

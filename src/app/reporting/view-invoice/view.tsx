@@ -202,7 +202,7 @@ export default function ViewDetails() {
                     {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Type</th>}
                     <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Email</th>
                     <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Phone</th>
-                    {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">RR/I/R</th>}
+                    {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>}
                     {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Flat Rate</th>}
                     {userType === 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Labour Cost</th>}
                     <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
