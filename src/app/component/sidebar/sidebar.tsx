@@ -625,7 +625,7 @@ const Sidebar = () => {
           </li> */}
 
 
-          <li className='p-1  relative group'>
+          {/* <li className='p-1  relative group'>
             <button onClick={handleDropdownTogglesReporting} className={`flex items-center justify-between pl-2 space-x-2   rounded w-full 
             ${isUser5Open ? 'text-[#fff900]' : ''}
             ${!isUser5Open && (
@@ -654,15 +654,11 @@ const Sidebar = () => {
                     <path d="M19.6289 20.5335C20.0335 20.5335 20.3614 20.2056 20.3614 19.8011C20.3614 19.3965 20.0335 19.0686 19.6289 19.0686C19.2244 19.0686 18.8965 19.3965 18.8965 19.8011C18.8965 20.2056 19.2244 20.5335 19.6289 20.5335Z" fill="currentColor" />
                   </svg>
                 </div>
-                {/* <span className={`transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden' : 'inline'}`}>Other Reports</span> */}
-                <span className="sidebar-text">Other Reports</span>
+                 <span className="sidebar-text">Other Reports</span>
               </div>
               <svg className={`transform transition-transform ${isUser5Open ? 'rotate-180' : 'rotate-0'} ${isCollapsed ? 'opacity-0 max-w-0 overflow-hidden' : 'opacity-100'}`} width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 7l4.5 4.5L13.5 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-
-
-
+              </svg> 
             </button>
 
             {isUser5Open && (
@@ -710,38 +706,10 @@ const Sidebar = () => {
                     </svg>
                     <span className="sidebar-text">Vehicles List</span>
                   </Link>
-                </li>
-                {/* {userType !== 'manager' && (
-                  <li>
-                    <Link onClick={handleNavItemClick} href="/reporting/account-reports" className={`flex items-center p-4 space-x-2   rounded hover:bg-[#f54a00] ${activeLink === '/reporting/account-reports' || activeLink === '/reporting/account-reports' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
-                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clipPath="url(#clip0_217_1077)">
-                          <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
-                          <path d="M12.1827 6.62988H7.6484C7.24227 6.62988 6.91309 6.95906 6.91309 7.3652C6.91309 7.77133 7.24227 8.10051 7.6484 8.10051H12.1827C12.5888 8.10051 12.918 7.77133 12.918 7.3652C12.918 6.95906 12.5888 6.62988 12.1827 6.62988Z" fill="currentColor" />
-                          <path d="M15.6141 10.0613H7.6484C7.24227 10.0613 6.91309 10.3905 6.91309 10.7966C6.91309 11.2027 7.24227 11.5319 7.6484 11.5319H15.6141C16.0202 11.5319 16.3494 11.2027 16.3494 10.7966C16.3494 10.3905 16.0202 10.0613 15.6141 10.0613Z" fill="currentColor" />
-                          <path d="M19.5667 0.15083C19.3027 0.0321973 18.9941 0.0790332 18.7775 0.270439L16.7184 2.092L14.6569 0.248604C14.3777 -0.00116212 13.9557 -0.00116212 13.6765 0.248604L11.6177 2.08978L9.55859 0.248604C9.27942 -0.00116212 8.85762 -0.00116212 8.57844 0.248604L6.51691 2.092L4.45785 0.270439C4.24145 0.0792676 3.93262 0.0324316 3.66863 0.15083C3.40492 0.269697 3.23531 0.531963 3.23531 0.821182V13.9094H0.735313C0.32918 13.9094 0 14.2386 0 14.6447V16.4339C0 18.3665 1.5723 19.9388 3.50488 19.9388V18.4682C2.38309 18.4682 1.47059 17.5555 1.47059 16.4339V15.38H12.9902V16.4339C12.9902 18.3665 14.5625 19.9388 16.4951 19.9388C18.4277 19.9388 20 18.3665 20 16.434V0.821143C20 0.531924 19.8304 0.269697 19.5667 0.15083ZM18.5294 16.4339C18.5294 17.5555 17.6167 18.4682 16.4951 18.4682C15.3736 18.4682 14.4608 17.5555 14.4608 16.4339V14.6447C14.4608 14.2386 14.1316 13.9094 13.7255 13.9094H4.7059V2.45325L6.03262 3.62704C6.31203 3.87411 6.73211 3.87286 7.00981 3.62435L9.06863 1.78317L11.1275 3.62411C11.4066 3.87388 11.8287 3.87388 12.1079 3.62411L14.1669 1.78294L16.2257 3.62411C16.5037 3.87263 16.9238 3.8736 17.2029 3.62681L18.5294 2.45329V16.4339Z" fill="currentColor" />
-                        </g>
-                        <defs>
-                          <clipPath id="clip0_217_1077">
-                            <rect width="20" height="20" fill="currentColor" />
-                          </clipPath>
-                        </defs>
-                      </svg>
-                      <span className="sidebar-text">Accounts Report</span>
-                    </Link>
-                  </li>
-                )} */}
-
-                {/* {userType !== 'single-technician' && userType !== 'ifs' && (
-                  <li>
-                    <Link onClick={handleNavItemClick} href="/all-customer/listing" className={`flex items-center p-2 space-x-2   rounded ${activeLink === '/all-customer/listing' || activeLink === '/all-customer/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
-                      <span>Genrate Custom Reports</span>
-                    </Link>
-                  </li>
-                )} */}
+                </li> 
               </ul>
             )}
-          </li>
+          </li> */}
 
 
 
