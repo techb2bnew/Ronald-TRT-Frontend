@@ -449,7 +449,7 @@ const Sidebar = () => {
                   </Link>
                 </li>
 
-                <li >
+                {/* <li >
                   <Link onClick={handleNavItemClick} href="/vehicle/complete-job/listing" className={`flex items-center p-4 space-x-2  rounded hover:bg-[#f54a00] ${activeLink === '/vehicle/complete-job/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
                     <svg width="20" height="24" viewBox="0 0 24 24" fill="none"
                       xmlns="http://www.w3.org/2000/svg">
@@ -463,7 +463,7 @@ const Sidebar = () => {
 
                     <span className="sidebar-text">Completed Work Order</span>
                   </Link>
-                </li>
+                </li> */}
                 {/* {userType !== 'single-technician' && (
                   <li >
                     <Link onClick={handleNavItemClick} href="/jobs/job-group/listing" className={`flex items-center p-2 space-x-2  rounded ${activeLink === '/jobs/job-group/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}  >
