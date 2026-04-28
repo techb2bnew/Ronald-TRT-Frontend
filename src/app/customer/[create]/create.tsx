@@ -278,7 +278,7 @@ export default function Technicians() {
     }
     if (formData.phoneNumber) {
       const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
-      
+
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -320,7 +320,19 @@ export default function Technicians() {
 
       const data = await response.json();
       if (response.ok) {
-        toast.success(data.message);
+        // toast.success(data.message);
+        toast.success(data.message, {
+          style: {
+            background: '#16a34a', // strong green
+            color: '#ffffff',      // white text
+            fontWeight: '600',
+            padding: '12px 16px',
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#16a34a',
+          },
+        });
         setFormData({
           fullName: '',
           phoneNumber: '',

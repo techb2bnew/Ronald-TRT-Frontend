@@ -1142,7 +1142,7 @@ export default function ViewDetails() {
                       <div className="pl-2 pr-2">
                         {userType !== 'single-technician' && (
                           <div className="mb-2 text-sm items-center flex">
-                            <strong className="mr-3 inline-block w-[180px] capitalize">RR/I/R: </strong>
+                            <strong className="mr-3 inline-block w-[180px] capitalize">R&I: </strong>
                             {(() => {
                               let totalCost = 0;
 

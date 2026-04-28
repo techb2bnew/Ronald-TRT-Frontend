@@ -346,7 +346,7 @@ export default function Technicians() {
     if (name === "secondaryEmail") {
       const isValidEmail = emailPattern.test(value);
       const isSameAsPrimary = value.toLowerCase() === formData.email.toLowerCase();
-      
+
       if (isSameAsPrimary && value.trim() !== '') {
         setErrors((prev) => ({
           ...prev,
@@ -791,11 +791,44 @@ export default function Technicians() {
         }
       } else {
         if (isSingleTechnician) {
-          toast.success('Single technician added successfully');
+          toast.success('Single technician added successfully', {
+            style: {
+              background: '#16a34a', // strong green
+              color: '#ffffff',      // white text
+              fontWeight: '600',
+              padding: '12px 16px',
+            },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#16a34a',
+            },
+          });
         } else if (searchParams!.has('manager')) {
-          toast.success('Manager added successfully');
+          toast.success('Manager added successfully', {
+            style: {
+              background: '#16a34a', // strong green
+              color: '#ffffff',      // white text
+              fontWeight: '600',
+              padding: '12px 16px',
+            },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#16a34a',
+            },
+          });
         } else {
-          toast.success('Technician added successfully');
+          toast.success('Technician added successfully', {
+            style: {
+              background: '#16a34a', // strong green
+              color: '#ffffff',      // white text
+              fontWeight: '600',
+              padding: '12px 16px',
+            },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#16a34a',
+            },
+          });
         }
         if (searchParams!.has('singletechnician')) {
           router.push('/single-technicians/listing');
@@ -867,48 +900,48 @@ export default function Technicians() {
     }
   };
 
- const handlePhoneChange = (value: string | undefined) => {
-  const v = value || "";
-  setFormData(prev => ({ ...prev, phoneNumber: v }));
+  const handlePhoneChange = (value: string | undefined) => {
+    const v = value || "";
+    setFormData(prev => ({ ...prev, phoneNumber: v }));
 
-  if (!submitAttempted) return;
+    if (!submitAttempted) return;
 
-  const digitsOnly = v.replace(/\D/g, "");
-  const nationalNumber = getNationalNumber(digitsOnly, v);
+    const digitsOnly = v.replace(/\D/g, "");
+    const nationalNumber = getNationalNumber(digitsOnly, v);
 
-  if (nationalNumber.length === 10) {
-    setErrors(prev => {
-      const ne = { ...prev };
-      delete ne.phoneNumber;
-      return ne;
-    });
-  }
-};
-
-const handleSecondaryPhoneChange = (value: string | undefined) => {
-  const v = value || "";
-  
-  // Check if secondary phone matches primary phone
-  if (v && formData.phoneNumber) {
-    const primaryDigits = formData.phoneNumber.replace(/\D/g, '');
-    const secondaryDigits = v.replace(/\D/g, '');
-    
-    if (primaryDigits === secondaryDigits && primaryDigits.length >= 10) {
-      setErrors(prev => ({
-        ...prev,
-        secondaryContactName: 'Secondary phone number cannot be same as primary phone number'
-      }));
-    } else {
+    if (nationalNumber.length === 10) {
       setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.secondaryContactName;
-        return newErrors;
+        const ne = { ...prev };
+        delete ne.phoneNumber;
+        return ne;
       });
     }
-  }
-  
-  setFormData(prev => ({ ...prev, secondaryContactName: v }));
-};
+  };
+
+  const handleSecondaryPhoneChange = (value: string | undefined) => {
+    const v = value || "";
+
+    // Check if secondary phone matches primary phone
+    if (v && formData.phoneNumber) {
+      const primaryDigits = formData.phoneNumber.replace(/\D/g, '');
+      const secondaryDigits = v.replace(/\D/g, '');
+
+      if (primaryDigits === secondaryDigits && primaryDigits.length >= 10) {
+        setErrors(prev => ({
+          ...prev,
+          secondaryContactName: 'Secondary phone number cannot be same as primary phone number'
+        }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.secondaryContactName;
+          return newErrors;
+        });
+      }
+    }
+
+    setFormData(prev => ({ ...prev, secondaryContactName: v }));
+  };
 
 
 
@@ -1109,7 +1142,7 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                   </span>
                 </label>
                 <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check2">
-                Dent Tech
+                  Dent Tech
                 </label>
               </div>
               <div className="inline-flex items-center">
@@ -1134,7 +1167,7 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                   </span>
                 </label>
                 <label className="cursor-pointer ml-2 text-slate-600 text-sm" htmlFor="check1">
-                RR/I/R
+                  R&I
                 </label>
               </div>
             </div>
@@ -1477,7 +1510,7 @@ const handleSecondaryPhoneChange = (value: string | undefined) => {
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.secondaryEmail}
                 </div>
-              )} 
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

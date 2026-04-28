@@ -14,7 +14,7 @@ import Delete from '../../../../public/delete.svg'
 import Image from 'next/image';
 import Link from 'next/link';
 import { Tooltip } from 'react-tooltip';
- 
+
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import Breadcrumb from '@/app/component/breadcrumb';
 import Scanner from '../../jobs/create-job/[create]/scanner'
@@ -242,7 +242,7 @@ export default function Technicians() {
   const vehicleTypes = [
     'Sedan',
     'SUV',
-    'Truck',  
+    'Truck',
     'Chassis Trucks',
     'Other',
   ];
@@ -505,8 +505,8 @@ export default function Technicians() {
           formDataObj.append('images[]', file);  // In case images are URLs, include them as well
         }
       });
-    } 
-    console.log(jobForms, 'jobFormsjobForms'); 
+    }
+    console.log(jobForms, 'jobFormsjobForms');
 
 
     if (isEdit && jobForms[0]?.id) {
@@ -526,7 +526,18 @@ export default function Technicians() {
 
       const result = await response.json();
       if (response.ok) {
-        toast.success('Vehicle added successfully.');
+        toast.success('Work order added successfully.', {
+          style: {
+            background: '#16a34a',
+            color: '#ffffff',
+            fontWeight: '600',
+            padding: '12px 16px',
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#16a34a',
+          },
+        });
         if (submit) {
           router.push('/vehicle/listing');
         }
@@ -799,14 +810,14 @@ export default function Technicians() {
             rPercentage: pctOk(tech.rPercentage) ? String(tech.rPercentage) : undefined,
             techPercentageCalculatedAmount:
               tech.techPercentageCalculatedAmount != null &&
-              tech.techPercentageCalculatedAmount !== '' &&
-              String(tech.techPercentageCalculatedAmount).toLowerCase() !== 'null'
+                tech.techPercentageCalculatedAmount !== '' &&
+                String(tech.techPercentageCalculatedAmount).toLowerCase() !== 'null'
                 ? String(tech.techPercentageCalculatedAmount)
                 : undefined,
             rPercentageCalculatedAmount:
               tech.rPercentageCalculatedAmount != null &&
-              tech.rPercentageCalculatedAmount !== '' &&
-              String(tech.rPercentageCalculatedAmount).toLowerCase() !== 'null'
+                tech.rPercentageCalculatedAmount !== '' &&
+                String(tech.rPercentageCalculatedAmount).toLowerCase() !== 'null'
                 ? String(tech.rPercentageCalculatedAmount)
                 : undefined,
           };
@@ -865,10 +876,10 @@ export default function Technicians() {
         // Job type for insurance field + job dropdown metadata (API may nest under job)
         const apiJobType = getValidValue(
           (vehicleData as any)?.jobType ??
-            (vehicleData as any)?.job_type ??
-            (vehicleData as any)?.job?.jobType ??
-            (vehicleData as any)?.job?.job_type ??
-            ''
+          (vehicleData as any)?.job_type ??
+          (vehicleData as any)?.job?.jobType ??
+          (vehicleData as any)?.job?.job_type ??
+          ''
         );
         setSelectedCustomerJobType(String(apiJobType).toLowerCase());
 
@@ -1316,12 +1327,17 @@ export default function Technicians() {
 
         if (checkVehicleResponse) {
           if (!checkVehicleData.status) {
-            // If VIN is a duplicate, show SweetAlert
             Swal.fire({
               title: 'Duplicate VIN found',
-              text: checkVehicleData.message, // Show the message from the API response
+              text: checkVehicleData.message,
               icon: 'warning',
+              showCancelButton: true,          // show Exit button
               confirmButtonText: 'OK',
+              cancelButtonText: 'Exit',        // Exit button text
+            }).then((result) => {
+              if (result.dismiss === Swal.DismissReason.cancel) {
+                router.push('/vehicle/listing');
+              }
             });
           }
         } else {
@@ -1682,7 +1698,7 @@ export default function Technicians() {
           techFlatRate: tech.techType === 'FlatRate' ? rateValue : '',
           rRate: tech.techType !== 'FlatRate' ? rateValue : '',
         });
- 
+
         setTechnicianPayRates((prev) => ({
           ...prev,
           [String(tech.id)]: {
@@ -2450,23 +2466,23 @@ export default function Technicians() {
                           />
                         </div>
                         {isInsurancePercentageJobType(selectedCustomerJobType) && (
-                        <div className="text-xs relative">
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
-                            <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
-                            <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
-                          </svg>
+                          <div className="text-xs relative">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
+                              <path d="M3 11V9L5.5 5H14.5L17 9V11H3Z" stroke="#5B5B99" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="6" cy="14" r="1.2" fill="#5B5B99" />
+                              <circle cx="14" cy="14" r="1.2" fill="#5B5B99" />
+                            </svg>
 
-                          <TextField
-                            fullWidth
-                            label="Vehicle Type"
-                            size="small"
-                            color="warning"
-                            value={form.vehicleType || ''}
-                            onChange={(e) => handleChange(e, 'vehicleType', index)}
+                            <TextField
+                              fullWidth
+                              label="Vehicle Type"
+                              size="small"
+                              color="warning"
+                              value={form.vehicleType || ''}
+                              onChange={(e) => handleChange(e, 'vehicleType', index)}
 
-                          />
-                        </div>
+                            />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -2807,11 +2823,11 @@ export default function Technicians() {
                                         onChange={(e) =>
                                           hasTechPct
                                             ? handlePctCalculatedInput(
-                                                tid,
-                                                e.target.value,
-                                                'techPercentageCalculatedAmount',
-                                                index
-                                              )
+                                              tid,
+                                              e.target.value,
+                                              'techPercentageCalculatedAmount',
+                                              index
+                                            )
                                             : handlePayRateInput(tid, e.target.value, 'techFlatRate', index)
                                         }
                                         onClick={() => setActiveInput(tid)}
@@ -2830,11 +2846,11 @@ export default function Technicians() {
                                         onChange={(e) =>
                                           hasRPct
                                             ? handlePctCalculatedInput(
-                                                tid,
-                                                e.target.value,
-                                                'rPercentageCalculatedAmount',
-                                                index
-                                              )
+                                              tid,
+                                              e.target.value,
+                                              'rPercentageCalculatedAmount',
+                                              index
+                                            )
                                             : handlePayRateInput(tid, e.target.value, 'rRate', index)
                                         }
                                         onClick={() => setActiveInput(tid)}

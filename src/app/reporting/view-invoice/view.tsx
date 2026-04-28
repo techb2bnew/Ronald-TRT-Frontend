@@ -149,7 +149,7 @@ export default function ViewDetails() {
                 } />
                 <InfoCard icon={<MailIcon />} label="Dent Tech Email:" value={<a className="hover:underline text-[#383d71]" href={`mailto:${tech.email}`}>{tech.email}</a>} />
                 <InfoCard icon={<PhoneIcon />} label="Dent Tech Ph. Number:" value={<a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>} />
-                {tech.UserJob?.rRate != null && tech.UserJob.rRate !== '' && <InfoCard icon={<DollarIcon />} label="RR/I/R:" value={`$${tech.UserJob.rRate}`} />}
+                {tech.UserJob?.rRate != null && tech.UserJob.rRate !== '' && <InfoCard icon={<DollarIcon />} label="R&I:" value={`$${tech.UserJob.rRate}`} />}
                 {tech.UserJob?.techFlatRate != null && tech.UserJob.techFlatRate !== '' && <InfoCard icon={<DollarIcon />} label="Dent Tech Flat Rate:" value={`$${tech.UserJob.techFlatRate}`} />}
                 {tech.UserJob?.payVehicleType && <InfoCard icon={<DocIcon />} label="Vehicle Type:" value={tech.UserJob.payVehicleType} />}
               </React.Fragment>

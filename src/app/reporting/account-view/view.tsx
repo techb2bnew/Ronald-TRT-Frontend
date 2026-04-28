@@ -183,7 +183,7 @@ export default function ViewDetails() {
                                 } />
                                 <InfoCard icon={<MailIcon />} label="Dent Tech Email:" value={<a className="hover:underline text-[#383d71]" href={`mailto:${tech.email}`}>{tech.email}</a>} />
                                 <InfoCard icon={<PhoneIcon />} label="Dent Tech Ph. Number:" value={<a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a>} />
-                                {tech.UserJob?.rRate != null && tech.UserJob.rRate !== '' && <InfoCard icon={<DollarIcon />} label="RR/I/R:" value={`$${tech.UserJob.rRate}`} />}
+                                {tech.UserJob?.rRate != null && tech.UserJob.rRate !== '' && <InfoCard icon={<DollarIcon />} label="R&I:" value={`$${tech.UserJob.rRate}`} />}
                                 {tech.UserJob?.techFlatRate != null && tech.UserJob.techFlatRate !== '' && <InfoCard icon={<DollarIcon />} label="Dent Tech Flat Rate:" value={`$${tech.UserJob.techFlatRate}`} />}
                                 {tech.UserJob?.payVehicleType && <InfoCard icon={<DocIcon />} label="Vehicle Type:" value={tech.UserJob.payVehicleType} />}
                             </React.Fragment>
@@ -191,7 +191,7 @@ export default function ViewDetails() {
 
                         <InfoCard icon={<DollarIcon />} label="Job Estimate:" value={jobData?.estimatedCost != null ? `$${jobData.estimatedCost}` : '–'} />
                         <InfoCard icon={<DollarIcon />} label="Total Flat Rate:" value={jobData?.totalFlatRate != null ? `$${jobData.totalFlatRate}` : '–'} />
-                        <InfoCard icon={<DollarIcon />} label="Total RR/I/R:" value={jobData?.totalRRate != null ? `$${jobData.totalRRate}` : '–'} />
+                        <InfoCard icon={<DollarIcon />} label="Total R&I:" value={jobData?.totalRRate != null ? `$${jobData.totalRRate}` : '–'} />
                         <InfoCard icon={<DollarIcon />} label="Total Expense:" value={jobData?.totalCombined != null ? `$${jobData.totalCombined}` : '–'} />
                         <InfoCard icon={<DollarIcon />} label="Estimated Profit / loss:" value={
                             estimatedProfit != null ? <span className={estimatedProfit < 0 ? 'text-red-500' : 'text-green-700'}>{`$${estimatedProfit.toFixed(2)}`}</span> : '–'
@@ -225,7 +225,7 @@ export default function ViewDetails() {
                                             <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Vehicle Type</th>
                                             <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Email</th>
                                             <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Phone</th>
-                                            <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">RR/I/R</th>
+                                            <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>
                                             <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Flat Rate</th>
                                             <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
                                         </tr>

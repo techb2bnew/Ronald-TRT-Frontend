@@ -416,7 +416,7 @@ const CompletedJobs: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <span
                         data-tooltip-id={tooltipId}
-                        data-tooltip-content="RR/I/R price is not added for this job."
+                        data-tooltip-content="R&I price is not added for this job."
                         style={{
                           height: '12px',
                           width: '12px',
@@ -462,7 +462,7 @@ const CompletedJobs: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <span
                         data-tooltip-id={tooltipId}
-                        data-tooltip-content="RR/I/R price is not added for this job."
+                        data-tooltip-content="R&I price is not added for this job."
                         style={{
                           height: '12px',
                           width: '12px',

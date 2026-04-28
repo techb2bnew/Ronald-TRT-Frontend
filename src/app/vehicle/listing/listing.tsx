@@ -401,7 +401,7 @@ const JobTable: React.FC = () => {
     const formattedData = selectedJobs.map((jobData) => {
       const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
         const vt = tech.VehicleTechnician || {};
-        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
+        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}, techPercentage ${vt.techPercentage}`;
       }).join(', ');
       return {
         id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,

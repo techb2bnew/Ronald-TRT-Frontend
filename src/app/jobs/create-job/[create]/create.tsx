@@ -685,8 +685,8 @@ export default function JobForm() {
         // uploaded so the backend still receives the original attachment alongside multipart uploads.
         ...(formData.jobType === 'insurancePercentage' &&
           existingInsuranceFileUrls.length > 0 && {
-            insuranceFile: serializeInsuranceFileForApi(existingInsuranceFileUrls),
-          }),
+          insuranceFile: serializeInsuranceFileForApi(existingInsuranceFileUrls),
+        }),
         ...(formData.jobType !== 'insurancePercentage' && {
           pricePerVehicle: formData.pricePerVehicle,
         }),
@@ -707,8 +707,8 @@ export default function JobForm() {
         });
         formData.insuranceFiles.forEach((file) => {
           multipartData.append('insuranceFile', file);
-        }); 
-      console.log(formData.insuranceFiles, 'formData.insuranceFiles');
+        });
+        console.log(formData.insuranceFiles, 'formData.insuranceFiles');
 
         const response = await fetch(endpoint, {
           method: "POST",
@@ -720,7 +720,18 @@ export default function JobForm() {
 
         const result = await response.json();
         if (response.ok) {
-          toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully');
+          toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully', {
+            style: {
+              background: '#16a34a', // strong green
+              color: '#ffffff',      // white text
+              fontWeight: '600',
+              padding: '12px 16px',
+            },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#16a34a',
+            },
+          });
           if (searchParams!.has('completeOrder')) {
             router.push('/jobs/complete-job/listing');
           } else if (searchParams!.has('vehicleInfo')) {
@@ -748,7 +759,18 @@ export default function JobForm() {
 
       const result = await response.json();
       if (response.ok) {
-        toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully');
+        toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully', {
+          style: {
+            background: '#16a34a', // strong green
+            color: '#ffffff',      // white text
+            fontWeight: '600',
+            padding: '12px 16px',
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#16a34a',
+          },
+        });
         if (searchParams!.has('completeOrder')) {
           router.push('/jobs/complete-job/listing');
         } else if (searchParams!.has('vehicleInfo')) {
@@ -1061,7 +1083,7 @@ export default function JobForm() {
                 }}
               />
             </div> */}
-           
+
           </div>
 
           {/* NEW SECTION START */}
@@ -1077,12 +1099,12 @@ export default function JobForm() {
                   control={<Radio color="warning" />}
                   label="Flat rate"
                 />
-                 {userType !== 'manager' && (
-                <FormControlLabel
-                  value="insurancePercentage"
-                  control={<Radio color="warning" />}
-                  label="Insurance percentage"
-                />
+                {userType !== 'manager' && (
+                  <FormControlLabel
+                    value="insurancePercentage"
+                    control={<Radio color="warning" />}
+                    label="Insurance percentage"
+                  />
                 )}
               </RadioGroup>
             </FormControl>
@@ -1158,7 +1180,7 @@ export default function JobForm() {
                       startAdornment: <InputAdornment position="start">$</InputAdornment>,
                     }}
                   />
-                    <TextField
+                  <TextField
                     fullWidth
                     type="number"
                     label="Other Vehicles"
@@ -1291,7 +1313,7 @@ export default function JobForm() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="RR/I/R Flat Rate ($)"
+                  label="R&I Flat Rate ($)"
                   size="small"
                   color="warning"
                   value={rirValue}
@@ -1358,7 +1380,7 @@ export default function JobForm() {
               <FormControl fullWidth size="small">
                 <FormLabel color="warning" className='mb-4'>Assign Dent Tech to this vehicle</FormLabel>
                 <TextField
-                  label="Search Dent Tech"
+                  label="Search"
                   variant="outlined"
                   fullWidth
                   color="warning"
@@ -1435,9 +1457,9 @@ export default function JobForm() {
           {userType !== 'single-technician' && (
             <div className='mb-4 flex items-start gap-3 relative mt-3'>
               <FormControl fullWidth size="small">
-                <FormLabel color="warning" className='mb-4'>Assign RR/I/R to this vehicle</FormLabel>
+                <FormLabel color="warning" className='mb-4'>Assign R&I to this vehicle</FormLabel>
                 <TextField
-                  label="Search Dent Tech"
+                  label="Search"
                   variant="outlined"
                   fullWidth
                   color="warning"
@@ -1480,7 +1502,7 @@ export default function JobForm() {
                                 tabIndex={-1}
                                 disableRipple
                               />
-                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (RR/I/R)`} />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (R&I)`} />
                               {isSelected && (
                                 <TextField
                                   size="small"
@@ -1502,7 +1524,7 @@ export default function JobForm() {
                       </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
-                        No RR/I/R Dent Tech Available
+                        No R&I Dent Tech Available
                       </div>
                     )}
                   </List>

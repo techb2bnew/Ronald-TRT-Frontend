@@ -329,7 +329,7 @@ const TechnicianTable: React.FC = () => {
             {tech.accountStatus ? 'Active' : 'Inactive'}
           </span>
         </td>
-        <td className='capitalize'>{tech.techType === 'technician' ? 'Dent Tech' : tech.techType === 'R/I/R/R' ? 'RR/I/R' : tech.techType}</td>
+        <td className='capitalize'>{tech.techType === 'technician' ? 'Dent Tech' : tech.techType === 'R/I/R/R' ? 'R&I' : tech.techType}</td>
 
         {/* <td className='font-sm'>
           <Link
