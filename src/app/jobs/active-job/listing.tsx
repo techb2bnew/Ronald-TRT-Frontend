@@ -322,8 +322,7 @@ const JobTable: React.FC = () => {
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '),
-        estimatedCost: jobData.estimatedCost,
+        assignTechnicians: jobData.technicians.map((tech: any) => `${tech.id}`).join(', '), 
         manager: `${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`,
         assignManager: `${jobData?.manager?.id || ''}`
       };
@@ -393,7 +392,7 @@ const JobTable: React.FC = () => {
 
       const manualHeaders = [
         'id', 'customer', 'assignCustomer', 'jobTitle',
-        'technicians', 'assignTechnicians', 'estimatedCost', 'manager', 'assignManager'
+        'technicians', 'assignTechnicians', 'manager', 'assignManager'
       ];
 
       Papa.parse(text, {
@@ -440,9 +439,7 @@ const JobTable: React.FC = () => {
                 assignTechnicians: undefined,
                 jobName: undefined,
               };
-            });
-
-            console.log('Processed import data:', JSON.stringify(payloadData, null, 2));
+            }); 
 
             const response = await axios.post(
               `/api/importActiveJob`,
