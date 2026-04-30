@@ -630,26 +630,26 @@ export default function ViewDetails() {
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
               label="Customer Ph. Number"
               value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.customer?.phoneNumber}`}>{jobData?.customer?.phoneNumber || 'N/A'}</a>}
-            /> 
-              <InfoCard
-                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-                label="Technician Name"
-                value={<span className="capitalize">{`${jobData?.technician?.firstName || ''} ${jobData?.technician?.lastName || ''}`.trim() || 'N/A'}</span>}
-              /> 
-             {isSingleTechnician && (
+            />
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-              label="Manager Name"
-              value={<span className="capitalize">{`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}</span>}
+              label="Technician Name"
+              value={<span className="capitalize">{`${jobData?.technician?.firstName || ''} ${jobData?.technician?.lastName || ''}`.trim() || 'N/A'}</span>}
             />
-             )}
-             {isSingleTechnician && (
-            <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
-              label="Manager Ph. Number"
-              value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.manager?.phoneNumber}`}>{jobData?.manager?.phoneNumber || 'N/A'}</a>}
-            />
-             )}
+            {isSingleTechnician && (
+              <InfoCard
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                label="Manager Name"
+                value={<span className="capitalize">{`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}</span>}
+              />
+            )}
+            {isSingleTechnician && (
+              <InfoCard
+                icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
+                label="Manager Ph. Number"
+                value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.manager?.phoneNumber}`}>{jobData?.manager?.phoneNumber || 'N/A'}</a>}
+              />
+            )}
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="Start Date"
@@ -675,7 +675,7 @@ export default function ViewDetails() {
               label="Estimated By"
               value={jobData?.estimatedBy || '–'}
             />
-             {isSingleTechnician && (
+            {isSingleTechnician && (
               <InfoCard
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1a5.002 5.002 0 01-4.546-2.916M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 label="Vehicle Type Pricing"
@@ -752,32 +752,32 @@ export default function ViewDetails() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-bold rounded-t-lg m-0">Tech and assigned vehicles report</h3>
               <div className="flex flex-row gap-3">
-              <div className="w-[500px]">
-              <label htmlFor="assignment-table-search" className="sr-only">
-                Search tech and vehicles
-              </label>
-              <input
-                id="assignment-table-search"
-                type="search"
-                value={assignmentSearchQuery}
-                onChange={(e) => setAssignmentSearchQuery(e.target.value)}
-                placeholder="Search by dent tech name, VIN, make, or model…"
-                autoComplete="off"
-                className="w-full max-w-xl rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm focus:border-[#383d71] focus:outline-none focus:ring-2 focus:ring-[#383d71]/25"
-              />
+                <div className="w-[500px]">
+                  <label htmlFor="assignment-table-search" className="sr-only">
+                    Search tech and vehicles
+                  </label>
+                  <input
+                    id="assignment-table-search"
+                    type="search"
+                    value={assignmentSearchQuery}
+                    onChange={(e) => setAssignmentSearchQuery(e.target.value)}
+                    placeholder="Search by dent tech name, VIN, make, or model…"
+                    autoComplete="off"
+                    className="w-full max-w-xl rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 shadow-sm focus:border-[#383d71] focus:outline-none focus:ring-2 focus:ring-[#383d71]/25"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleMarkTechniciansPaid}
+                  disabled={isSubmittingPaid}
+                  className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmittingPaid ? 'Updating...' : 'Mark as paid'}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleMarkTechniciansPaid}
-                disabled={isSubmittingPaid}
-                className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmittingPaid ? 'Updating...' : 'Mark as paid'}
-              </button>
-            </div>
 
             </div>
-            
+
           </div>
           <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
             <table className="w-full">
@@ -802,80 +802,100 @@ export default function ViewDetails() {
                   <SortTh columnKey="model" label="Model" />
                   <SortTh columnKey="modelYear" label="Model Year" />
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Payment Status</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Invoice Status</th>
                   <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {technicianVehicleAssignmentRows.length > 0 ? (
                   displayedAssignmentRows.length > 0 ? (
-                  displayedAssignmentRows.map((row, index) => {
-                    const { tech, vehicle, vt } = row;
-                    const key = assignmentRowKey(tech, vehicle, index);
-                    const isPaid = vt?.paidStatus === true || vt?.paid === true;
-                    return (
-                      <tr key={key} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-4 align-middle">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
-                            checked={selectedAssignmentKeys.includes(key)}
-                            disabled={isPaid}
-                            onChange={() => toggleAssignmentRow(key)}
-                            aria-label={`Select row ${tech?.firstName ?? ''} ${vehicle?.vin ?? ''}`}
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="capitalize">
-                            {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {vt?.techPercentageCalculatedAmount != null && vt.techPercentageCalculatedAmount !== '' ? (
-                            <div>${vt.techPercentageCalculatedAmount}</div>
-                          ) : (
-                            '–'
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          {vt?.rPercentageCalculatedAmount != null && vt.rPercentageCalculatedAmount !== '' ? (
-                            <div>${vt.rPercentageCalculatedAmount}</div>
-                          ) : (
-                            '–'
-                          )}
-                        </td>
-                        <td className="px-6 py-4">{vehicle?.vin ?? '–' }</td>
-                        <td className="px-6 py-4">{vehicle?.make ?? 'N/A'}</td>
-                        <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
-                        <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
-                        <td className="px-6 py-4">
-                          {isPaid ? (
-                            <span className="inline-flex items-center rounded bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700">
-                              Paid
+                    displayedAssignmentRows.map((row, index) => {
+                      const { tech, vehicle, vt } = row;
+                      const key = assignmentRowKey(tech, vehicle, index);
+                      const isPaid = vt?.paidStatus === true || vt?.paid === true;
+                      return (
+                        <tr key={key} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-4 align-middle">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-[#383d71] focus:ring-[#383d71]"
+                              checked={selectedAssignmentKeys.includes(key)}
+                              disabled={isPaid}
+                              onChange={() => toggleAssignmentRow(key)}
+                              aria-label={`Select row ${tech?.firstName ?? ''} ${vehicle?.vin ?? ''}`}
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="capitalize">
+                              {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
                             </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleSingleRowMarkPaid(row, key)}
-                              disabled={isSubmittingPaid}
-                              className="primary-bg pl-5 pr-5 p-2 rounded cursor-pointer text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          </td>
+                          <td className="px-6 py-4">
+                            {vt?.techPercentageCalculatedAmount != null && vt.techPercentageCalculatedAmount !== '' ? (
+                              <div>${vt.techPercentageCalculatedAmount}</div>
+                            ) : (
+                              '–'
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {vt?.rPercentageCalculatedAmount != null && vt.rPercentageCalculatedAmount !== '' ? (
+                              <div>${vt.rPercentageCalculatedAmount}</div>
+                            ) : (
+                              '–'
+                            )}
+                          </td>
+                          <td className="px-6 py-4">{vehicle?.vin ?? '–'}</td>
+                          <td className="px-6 py-4">{vehicle?.make ?? 'N/A'}</td>
+                          <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
+                          <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
+                          <td className="px-6 py-4">
+                            {isPaid ? (
+                              <span className="inline-flex items-center rounded bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700">
+                                Paid
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSingleRowMarkPaid(row, key)}
+                                disabled={isSubmittingPaid}
+                                className="primary-bg pl-5 pr-5 p-2 rounded cursor-pointer text-white disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {submittingRowKey === key ? 'Updating...' : 'Unpaid'}
+                              </button>
+                            )}
+                          </td>
+
+                          <td className="px-6 py-4">
+                            {(() => {
+                              const invoiceStatus = vehicle?.invoice?.[0]?.status?.toLowerCase();
+
+                              const isPaid = invoiceStatus === 'paid';
+
+                              return (
+                                <span
+                                  className={`inline-flex items-center rounded px-3 py-1.5 text-sm font-medium ${isPaid
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-red-100 text-red-700'
+                                    }`}
+                                >
+                                  {isPaid ? 'Paid' : 'Unpaid'}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <Link
+                              href={`/vehicle/view?vehicleId=${vehicle?.id}`}
+                              className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#000] transition-colors"
+                              data-tooltip-id="view-vehicle"
+                              data-tooltip-content="View vehicle"
                             >
-                              {submittingRowKey === key ? 'Updating...' : 'Unpaid'}
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Link
-                            href={`/vehicle/view?vehicleId=${vehicle?.id}`}
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#000] transition-colors"
-                            data-tooltip-id="view-vehicle"
-                            data-tooltip-content="View vehicle" 
-                          >
-                            <Image alt="View" src={Eye} className="w-4 h-4" />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })
+                              <Image alt="View" src={Eye} className="w-4 h-4" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={10} className="text-center py-8 text-gray-500">

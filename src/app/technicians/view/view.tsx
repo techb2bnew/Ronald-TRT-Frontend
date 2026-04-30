@@ -431,7 +431,8 @@ export default function ViewDetails() {
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Rate</th>
-                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>  
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Payment</th> 
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
                   <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
@@ -446,6 +447,7 @@ export default function ViewDetails() {
                       <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td>
                       <td className="px-6 py-4">{job.UserJob?.techFlatRate ? `$${job.UserJob.techFlatRate}` : '–'}</td>
                       <td className="px-6 py-4">{job.UserJob?.rRate ? job.UserJob.rRate : '–'}</td>
+                      <td className="px-6 py-4">${job.techTotalEarned ? job.techTotalEarned : '–'}</td>
                       <td className="px-6 py-4">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
                       <td className="px-6 py-4">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
                       <td className="px-6 py-4 text-right">
