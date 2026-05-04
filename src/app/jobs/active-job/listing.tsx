@@ -600,7 +600,7 @@ const JobTable: React.FC = () => {
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
-          onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters} />
+          onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters}  selectedRows={selectedIds} />
 
         <div className="overflow-auto rounded-md">
           <table className="table w-full table-fixed">

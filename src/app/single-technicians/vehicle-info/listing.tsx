@@ -388,7 +388,7 @@ const VehicleTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}/>
+      <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}  selectedRows={selectedIds}/>
  
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

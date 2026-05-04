@@ -22,7 +22,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
- 
+
 import Papa from 'papaparse';
 import Link from 'next/link';
 
@@ -133,17 +133,17 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
       const endpoint = query.trim()
-      ? roleType === 'superadmin'
-        ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-        : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-      : roleType === 'superadmin' || roleType === 'manager'
-        ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-        : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
+        ? roleType === 'superadmin'
+          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+        : roleType === 'superadmin' || roleType === 'manager'
+          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-  
+
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
@@ -571,9 +571,28 @@ const JobTable: React.FC = () => {
         <td>{job?.customer?.fullName}</td>
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'technician')?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">{tech.firstName} {tech.lastName}</div>
-            ))}
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="flex items-center gap-2 mb-1">
+
+                  <span
+                    className={`capitalize font-medium ${tech?.deletedStatus
+                        ? "text-red-600"
+                        : "text-gray-900"
+                      }`}
+                  >
+                    {tech.firstName} {tech.lastName}
+                  </span>
+
+                  {tech?.deletedStatus && (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[10px] font-medium text-red-700">
+                      Deleted Tech
+                    </span>
+                  )}
+
+                </div>
+              ))}
           </td>
         )}
         {roleType !== 'single-technician' && (
@@ -633,7 +652,7 @@ const JobTable: React.FC = () => {
             </span>
           )}
         </td> */}
-        <td> 
+        <td>
           <TableActions
             editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
             deleteRoute={`/api/deleteVehicle`}
@@ -926,7 +945,7 @@ const JobTable: React.FC = () => {
           showClearFilters={true}
           onClearFilters={handleClearFilters}
           onStatusChange={(status) => {
-            setWorkOrderStatus(status);    
+            setWorkOrderStatus(status);
             fetchvehicleInfo(1, searchTerm, pageSize, { status });
           }}
           onCompareWorkOrderClick={
@@ -935,6 +954,7 @@ const JobTable: React.FC = () => {
               : undefined
           }
           compareWorkOrderLabel="Compare work order"
+          selectedRows={selectedIds}
         />
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}

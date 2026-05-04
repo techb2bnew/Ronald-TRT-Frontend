@@ -826,9 +826,24 @@ export default function ViewDetails() {
                             />
                           </td>
                           <td className="px-6 py-4">
-                            <span className="capitalize">
-                              {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
-                            </span>
+                            <div className="flex items-center gap-2">
+
+                              <span
+                                className={`capitalize font-medium ${tech?.deletedStatus
+                                    ? "text-red-600"
+                                    : "text-gray-900"
+                                  }`}
+                              >
+                                {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
+                              </span>
+
+                              {tech?.deletedStatus && (
+                                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                                  Deleted Tech
+                                </span>
+                              )}
+
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             {vt?.techPercentageCalculatedAmount != null && vt.techPercentageCalculatedAmount !== '' ? (
@@ -874,8 +889,8 @@ export default function ViewDetails() {
                               return (
                                 <span
                                   className={`inline-flex items-center rounded px-3 py-1.5 text-sm font-medium ${isPaid
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-red-100 text-red-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'
                                     }`}
                                 >
                                   {isPaid ? 'Paid' : 'Unpaid'}

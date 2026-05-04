@@ -6,7 +6,7 @@ import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
- 
+
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
@@ -190,119 +190,146 @@ export default function ViewDetails() {
               )
             } />
           </div>
-          </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
-            <h3 className="font-bold p-3">Assign Dent Tech</h3>
-            <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Name</th>
-                    {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Type</th>}
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Email</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Phone</th>
-                    {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>}
-                    {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Flat Rate</th>}
-                    {userType === 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Labour Cost</th>}
-                    <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {jobData?.job?.vehicles?.flatMap((vehicle: any) =>
-                    vehicle.assignedTechnicians?.length > 0
-                      ? vehicle.assignedTechnicians.map((tech: any, index: number) => (
-                          <tr key={`${vehicle.id}-${tech.id}-${index}`} className="hover:bg-gray-50/50">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                {tech.image ? (
-                                  <img onClick={() => setPreviewImage(tech.image)} src={tech.image} alt="" className="w-8 h-8 rounded-full object-cover cursor-pointer" />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full bg-[#1e3e6f] text-white flex items-center justify-center text-sm font-semibold">{tech.firstName?.trim()?.[0]?.toUpperCase() || '?'}</div>
-                                )}
-                                <span className="capitalize">{tech.firstName} {tech.lastName}</span>
-                              </div>
-                            </td>
-                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.techType || 'N/A'}</td>}
-                            <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`mailto:${tech.email}`}>{tech.email}</a></td>
-                            <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a></td>
-                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.rPercentageCalculatedAmount ? `$${tech.VehicleTechnician.rPercentageCalculatedAmount}` : 'N/A'}</td>}
-                            {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.techPercentageCalculatedAmount ? `$${tech.VehicleTechnician.techPercentageCalculatedAmount}` : 'N/A'}</td>}
-                            {userType === 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.labourCost ? `$${tech.VehicleTechnician.labourCost}` : 'N/A'}</td>}
-                            <td className="px-6 py-4 text-right">
-                              <Link href={`/technicians/view?technicianId=${tech.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-tech" data-tooltip-content="View">
-                                <Image alt="View" src={Eye} className="w-4 h-4" />
-                              </Link>
-                            </td>
-                          </tr>
-                        ))
-                      : []
-                  )}
-                  {jobData?.job?.vehicles?.every((v: any) => !v.assignedTechnicians?.length) && (
-                    <tr>
-                      <td colSpan={8} className="text-center py-8 text-gray-500">No technicians assigned to any vehicle</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <Tooltip id="view-tech" place="top" />
-
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
-            <h3 className="font-bold p-3">Vehicle List</h3>
-            <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Dent Tech Name</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
-                    {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Description</th>
-                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Notes</th> */}
-                    <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {Array.isArray(jobData?.job?.vehicles) && jobData.job.vehicles.length > 0 ? (
-                    jobData.job.vehicles.map((vehicles: any, index: number) => (
-                      <tr key={vehicles.id ?? index} className="hover:bg-gray-50/50">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
+          <h3 className="font-bold p-3">Assign Dent Tech</h3>
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Name</th>
+                  {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Type</th>}
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Email</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Phone</th>
+                  {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>}
+                  {userType !== 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Flat Rate</th>}
+                  {userType === 'single-technician' && <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Labour Cost</th>}
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {jobData?.job?.vehicles?.flatMap((vehicle: any) =>
+                  vehicle.assignedTechnicians?.length > 0
+                    ? vehicle.assignedTechnicians.map((tech: any, index: number) => (
+                      <tr key={`${vehicle.id}-${tech.id}-${index}`} className="hover:bg-gray-50/50">
                         <td className="px-6 py-4">
-                          <span className="capitalize">
-                            {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
-                              ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
-                              : '–'}
-                          </span>
+                          <div className="flex items-center gap-3">
+
+                            {tech.image ? (
+                              <img
+                                onClick={() => setPreviewImage(tech.image)}
+                                src={tech.image}
+                                alt=""
+                                className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-[#1e3e6f] text-white flex items-center justify-center text-sm font-semibold">
+                                {tech.firstName?.trim()?.[0]?.toUpperCase() || '?'}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2">
+
+                              <span
+                                className={`capitalize font-medium ${tech?.deletedStatus
+                                    ? "text-red-600"
+                                    : "text-gray-900"
+                                  }`}
+                              >
+                                {tech.firstName} {tech.lastName}
+                              </span>
+
+                              {tech?.deletedStatus && (
+                                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[10px] font-medium text-red-700">
+                                  Deleted Tech
+                                </span>
+                              )}
+
+                            </div>
+
+                          </div>
                         </td>
-                        <td className="px-6 py-4 capitalize">{vehicles.vin || '–'}</td>
-                        <td className="px-6 py-4">{vehicles.make || 'N/A'}</td>
-                        <td className="px-6 py-4">{vehicles.model || '–'}</td>
-                        <td className="px-6 py-4">{vehicles.modelYear || '–'}</td>
-                        {/* <td className="px-6 py-4">
-                          {Array.isArray(vehicles.jobDescription) && vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
-                            ? vehicles.jobDescription.join(', ')
-                            : '–'}
-                        </td>
-                        <td className="px-6 py-4">{vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '–'}</td> */}
+                        {userType !== 'single-technician' && <td className="px-6 py-4">{tech.techType || 'N/A'}</td>}
+                        <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`mailto:${tech.email}`}>{tech.email}</a></td>
+                        <td className="px-6 py-4"><a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber}`}>{tech.phoneNumber || 'N/A'}</a></td>
+                        {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.rPercentageCalculatedAmount ? `$${tech.VehicleTechnician.rPercentageCalculatedAmount}` : 'N/A'}</td>}
+                        {userType !== 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.techPercentageCalculatedAmount ? `$${tech.VehicleTechnician.techPercentageCalculatedAmount}` : 'N/A'}</td>}
+                        {userType === 'single-technician' && <td className="px-6 py-4">{tech.VehicleTechnician?.labourCost ? `$${tech.VehicleTechnician.labourCost}` : 'N/A'}</td>}
                         <td className="px-6 py-4 text-right">
-                          <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
+                          <Link href={`/technicians/view?technicianId=${tech.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-tech" data-tooltip-content="View">
                             <Image alt="View" src={Eye} className="w-4 h-4" />
                           </Link>
                         </td>
                       </tr>
                     ))
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="text-center py-8 text-gray-500">No vehicle found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    : []
+                )}
+                {jobData?.job?.vehicles?.every((v: any) => !v.assignedTechnicians?.length) && (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-gray-500">No technicians assigned to any vehicle</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          <Tooltip id="view-vehicle" place="top" />
+        </div>
+        <Tooltip id="view-tech" place="top" />
+
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
+          <h3 className="font-bold p-3">Vehicle List</h3>
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Dent Tech Name</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
+                  {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Description</th>
+                    <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Notes</th> */}
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.isArray(jobData?.job?.vehicles) && jobData.job.vehicles.length > 0 ? (
+                  jobData.job.vehicles.map((vehicles: any, index: number) => (
+                    <tr key={vehicles.id ?? index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4">
+                        <span className="capitalize">
+                          {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
+                            ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
+                            : '–'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 capitalize">{vehicles.vin || '–'}</td>
+                      <td className="px-6 py-4">{vehicles.make || 'N/A'}</td>
+                      <td className="px-6 py-4">{vehicles.model || '–'}</td>
+                      <td className="px-6 py-4">{vehicles.modelYear || '–'}</td>
+                      {/* <td className="px-6 py-4">
+                          {Array.isArray(vehicles.jobDescription) && vehicles.jobDescription.some((desc: string) => desc.trim() !== '')
+                            ? vehicles.jobDescription.join(', ')
+                            : '–'}
+                        </td>
+                        <td className="px-6 py-4">{vehicles.notes && vehicles.notes.trim() !== '' ? vehicles.notes : '–'}</td> */}
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
+                          <Image alt="View" src={Eye} className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-gray-500">No vehicle found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <Tooltip id="view-vehicle" place="top" />
       </div>
 
       <ToastContainer />

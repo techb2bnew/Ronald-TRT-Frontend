@@ -514,10 +514,10 @@ const JobTable: React.FC = () => {
           buttonsStyling: false,
           customClass: {
             popup: 'swal-invoice-email-popup',
-            title: '!text-[#0f172a] !text-xl !font-bold !pb-2 !pt-0', 
+            title: '!text-[#0f172a] !text-xl !font-bold !pb-2 !pt-0',
             cancelButton:
               '!bg-[#f1f5f9] hover:!bg-[#e2e8f0] !text-[#475569] !rounded-xl !px-5 !py-3 !text-sm !font-semibold !border !border-slate-200 !m-1',
-              confirmButton:
+            confirmButton:
               '!bg-[#383d71] hover:!bg-[#2d3159] !text-white !rounded-xl !px-5 !py-3 !text-sm !font-semibold !shadow-lg !shadow-[#383d71]/25 !m-1 !min-w-[200px]',
             actions: '!gap-2 !mt-2',
             htmlContainer: '!m-0 !pt-0',
@@ -678,7 +678,31 @@ const JobTable: React.FC = () => {
         <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job?.vin}</Link></td>
         <td><Link href={`/client/view?customerId=${job?.customer?.id}`} className='hover:underline'>{job?.customer?.fullName}</Link></td>
         {roleType !== 'single-technician' && (
-          <td>{job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'technician')?.map((tech: any) => (<div key={tech.id} className="capitalize"><Link href={`/technicians/view?technicianId=${tech?.id}`} className='hover:underline'>{tech.firstName} {tech.lastName}</Link></div>))}</td>
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="flex items-center gap-2 mb-1">
+
+                  <Link
+                    href={`/technicians/view?technicianId=${tech?.id}`}
+                    className={`hover:underline capitalize font-medium ${tech?.deletedStatus
+                        ? "text-red-600"
+                        : "text-gray-900"
+                      }`}
+                  >
+                    {tech.firstName} {tech.lastName}
+                  </Link>
+
+                  {tech?.deletedStatus && (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[10px] font-medium text-red-700">
+                      Deleted Tech
+                    </span>
+                  )}
+
+                </div>
+              ))}
+          </td>
         )}
         {roleType !== 'single-technician' && (
           <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== '' ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
@@ -735,7 +759,7 @@ const JobTable: React.FC = () => {
       </div>
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} />
+        <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} selectedRows={selectedIds} />
 
         {/* <div className="flex mb-2 shadow-lg p-2 flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
           <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>
@@ -745,7 +769,7 @@ const JobTable: React.FC = () => {
           {roleType !== 'single-technician' && (<div className='total_expense title_sdev'><b>Total Expense </b>: ${totalEstimateAmount}</div>)}
         </div> */}
 
-        <div className="overflow-auto rounded-md">
+        <div className="custom-table-scroll rounded-md">
           <table className="table w-full table-fixed sdev_table">
             <thead>
               <tr>
@@ -758,7 +782,7 @@ const JobTable: React.FC = () => {
                 <th className="w-[100px]">Job Title</th>
                 <th className="w-[160px]">VIN</th>
                 <th className="w-[120px]">Customer Name</th>
-                {roleType !== 'single-technician' && (<th className="w-[150px]">Assigned Dent Tech</th>)}
+                {roleType !== 'single-technician' && (<th className="w-[200px]">Assigned Dent Tech</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[100px]">Dent Tech Rate</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[130px]">Assigned R&I</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[80px]">R&I</th>)}

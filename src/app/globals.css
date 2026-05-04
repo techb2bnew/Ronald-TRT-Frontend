@@ -256,7 +256,40 @@ tr:nth-child(even) {background: #f6f7ff;}
   }
 }
 
+/* Table show scroll on hover css */
+.custom-table-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
 
+.custom-table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-table-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.custom-table-scroll:hover {
+  scrollbar-color: #c7c7c7 transparent;
+}
+
+.custom-table-scroll:hover::-webkit-scrollbar-thumb {
+  background: #c7c7c7;
+}
+
+.custom-table-scroll:hover::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}
+
+/* End Css */
 /* car loader */
 
 /* @keyframes spin {

@@ -128,11 +128,11 @@ export default function ViewDetails() {
     return (item as any)?.description ?? (item as any)?.name ?? String(item);
   };
 
-  const formatTechType = (type:any) => {
+  const formatTechType = (type: any) => {
     if (!type) return 'N/A';
-  
+
     if (type === 'R/I/R/R') return 'R&I';
-  
+
     return type;
   };
 
@@ -279,7 +279,22 @@ export default function ViewDetails() {
               <div className="divide-y divide-gray-200">
                 {jobData.assignedTechnicians.map((tech: any) => (
                   <div key={tech.id} className="py-4 first:pt-0">
-                    <p className="font-semibold text-gray-900 capitalize">{tech.firstName} {tech.lastName}</p>
+                    <div className="flex items-center gap-2">
+                      <p
+                        className={`font-semibold capitalize ${tech?.deletedStatus
+                            ? "text-red-600"
+                            : "text-gray-900"
+                          }`}
+                      >
+                        {tech.firstName} {tech.lastName}
+                      </p>
+
+                      {tech?.deletedStatus && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                          Deleted Tech
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
                     <p className="text-sm text-gray-600">
                       Specialty: {formatTechType(tech?.techType)}

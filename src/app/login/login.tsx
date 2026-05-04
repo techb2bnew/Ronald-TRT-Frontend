@@ -137,7 +137,7 @@ export default function Login() {
           });
         }
       } else {
-          router.push('/vehicle/listing');
+          router.push('/dashboard');
         }  
       }
     } catch (error) {

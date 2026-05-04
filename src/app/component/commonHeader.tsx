@@ -3,13 +3,12 @@ import Link from 'next/link';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { addDays } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
 import toast from 'react-hot-toast';
-
 interface CommonHeaderProps {
   heading: string;
   // title: string;
@@ -25,7 +24,7 @@ interface CommonHeaderProps {
   onCompletedJobClick?: () => void;
   onInProgressJobClick?: () => void;
   onAllJobsClick?: () => void;
-  onColumnSelect?: (column: string[]) => void;
+  selectedRows?: string[];
   additionalComponents?: React.ReactNode;
   showDatePicker?: boolean;
   onDateChange?: (newValue: [any, any]) => void;
@@ -45,7 +44,7 @@ interface CommonHeaderProps {
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, selectedRows = [], onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -169,7 +168,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
   const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
   const [selectedColumn, setSelectedColumn] = useState<string[]>([]); // Default is an array
-
+  const isRowSelected = selectedRows.length > 0;
 
   useEffect(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -622,7 +621,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     <div className="px-1 mb-4">
       <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
         <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1> 
+          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
         </div>
         <div className='mobile_listing_item  flex flex-wrap items-center gap-2'>
           {onSearch && (
@@ -873,10 +872,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           {showDatePicker && (
             <div className="relative" ref={datePickerRef}>
               <button
-                className="p-3 bg-white text-[12px] rounded-lg w-[100px] border border-gray-300"
+                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300"
                 onClick={handleDateFilterClick}
               >
-                Date Filter
+                {dates.startDate && dates.endDate
+                  ? `${format(dates.startDate, "dd MMM")} - ${format(
+                    dates.endDate,
+                    "dd MMM"
+                  )}`
+                  : "Date Filter"}
               </button>
               {showDatePickers && (
                 <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
@@ -994,8 +998,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           )}
           {onImport && (
 
-            <label className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-
+            <label
+              className={`flex items-center gap-2 px-3 py-2  rounded-lg  transition-colors
+                ${isRowSelected
+                  ? "bg-green-600 text-white hover:bg-green-700+"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`} >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
                 <polyline points="3 4 5 6 7 4" />
@@ -1008,6 +1016,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                 type="file"
                 accept=".csv"
                 style={{ display: 'none' }}
+                disabled={!isRowSelected}
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
                     onImport?.(e.target.files[0]);
@@ -1015,12 +1024,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                   }
                 }}
               />
+
             </label>
           )}
 
           {onExport && (
 
-            <button className="flex items-center gap-2 px-3 py-2 bg-[#383d71] text-white rounded-lg hover:bg-[#2d3159] transition-colors" onClick={onExport}>
+            <button disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+                ${isRowSelected
+                ? "bg-[#383d71] text-white hover:bg-[#2d3159]"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`} onClick={onExport}>
 
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />

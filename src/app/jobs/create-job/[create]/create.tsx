@@ -1363,15 +1363,30 @@ export default function JobForm() {
           </LocalizationProvider>
 
           <div className="grid grid-cols-1 gap-4 mt-4">
-            <div className='mb-4'>
+            <div className="mb-4">
               <textarea
                 name="notes"
                 id="notes"
-                placeholder='Notes'
+                placeholder="Notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    notes: e.target.value
+                  })
+                }
                 className="w-full p-3 border border-gray-300 rounded-md resize-y min-h-[100px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
               />
+
+              <div className="mt-1 text-sm text-gray-500 text-right">
+                {
+                  formData.notes
+                    .trim()
+                    .split(/\s+/)
+                    .filter(word => word.length > 0).length
+                }{" "}
+                words
+              </div>
             </div>
           </div>
 

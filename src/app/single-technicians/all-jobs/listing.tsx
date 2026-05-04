@@ -676,8 +676,8 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"  onCustomerChange={(customerId) => handleCustomerChange(customerId)} showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
+      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV}  userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"  onCustomerChange={(customerId) => handleCustomerChange(customerId)} showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}  selectedRows={selectedIds}/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

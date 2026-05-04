@@ -382,7 +382,7 @@ export default function ClientListing() {
       />
       
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create" />
+      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create"  selectedRows={selectedIds}/>
       
 
       <div className="overflow-x-auto rounded-md">
