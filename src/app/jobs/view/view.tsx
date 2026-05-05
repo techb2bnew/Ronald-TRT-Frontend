@@ -574,12 +574,12 @@ export default function ViewDetails() {
   );
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
         <div className="text-gray-900">{value}</div>
       </div>
     </div>

@@ -933,7 +933,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           {onPageSizeChange && (
             <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
-              <option value="">Show 10</option>
+              <option value="10">Show 10</option>
               <option value="10">10</option>
               <option value="20">20</option>
               <option value="30">30</option>
