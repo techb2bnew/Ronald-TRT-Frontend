@@ -101,6 +101,12 @@ const JobTable: React.FC = () => {
   /** When true, "View Missing Vehicles" refetches insurance vehicles and recomputes VIN mismatch. */
   const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
+  const withSerialNo = (jobs: any[], start = 1) =>
+    jobs.map((job: any, index: number) => ({
+      ...job,
+      serialNo: start + index,
+    }));
+
   const handlePdrChange = (jobId: string, value: string) => {
     if (value === '') {
       setPdrValues(prev => ({ ...prev, [jobId]: '' }));
@@ -166,8 +172,9 @@ const JobTable: React.FC = () => {
         setInvoiceDates(initialInvoiceDates);
 
         const updatedJobs = customerFilter ? [...fetchedTechnicians, ...customerJobs] : fetchedTechnicians;
-        setOriginalJobs(updatedJobs);
-        setActiveJob(updatedJobs);
+        const jobsWithSerial = withSerialNo(updatedJobs, (page - 1) * limit + 1);
+        setOriginalJobs(jobsWithSerial);
+        setActiveJob(jobsWithSerial);
         setDentTechTotalAmount(data.response?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
         setRRTotalAmount(data.response?.totalRrCost ?? data.data.totalRrCost ?? '0');
         setTotalEstimateAmount(data.response?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
@@ -203,6 +210,11 @@ const JobTable: React.FC = () => {
         if (column === 'fullName') {
           const nameA = a?.customer?.fullName || ''; const nameB = b?.customer?.fullName || '';
           return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        }
+        if (column === 'serialNo') {
+          const serialA = Number(a?.serialNo ?? 0);
+          const serialB = Number(b?.serialNo ?? 0);
+          return direction === 'asc' ? serialA - serialB : serialB - serialA;
         }
         const valueA = a[column] || ''; const valueB = b[column] || '';
         if (typeof valueA === 'string' && typeof valueB === 'string') {
@@ -324,7 +336,7 @@ const JobTable: React.FC = () => {
         const requestBody: { [key: string]: any } = { startDate, endDate, roleType, vehicleStatus: 'false' };
         if (roleType !== 'superadmin' && roleType !== 'manager') requestBody.technicianId = userId;
         const response = await axios.post(apiPoint, requestBody, { headers: { 'Authorization': `Bearer ${token}` } });
-        setActiveJob(response.data.vehicles.updatedVehicles);
+        setActiveJob(withSerialNo(response.data.vehicles.updatedVehicles || []));
       } catch (error) { console.error("Error fetching filtered jobs:", error); } finally { setLoading(false); }
     }
   };
@@ -341,13 +353,13 @@ const JobTable: React.FC = () => {
       const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (response.ok) {
-        setOriginalJobs(data.vehicles.updatedVehicles);
+        setOriginalJobs(withSerialNo(data.vehicles.updatedVehicles || []));
         const filteredJobs = data.vehicles.updatedVehicles.filter((job: any) => selectedStatus === 'completed' ? job.vehicleStatus === true : selectedStatus === 'inProgress' ? job.vehicleStatus === false : true);
         setDentTechTotalAmount(data.vehicles?.totalDantTechCost);
         setRRTotalAmount(data.vehicles?.totalRrCost);
         setTotalEstimateAmount(data.vehicles?.totalEstimateCost);
         setTotalJobAmount(data.vehicles?.totalJobEstimateCost || '0');
-        setActiveJob(filteredJobs);
+        setActiveJob(withSerialNo(filteredJobs));
       }
     } catch (error) { console.error("Error during API request:", error); }
   };
@@ -371,7 +383,8 @@ const JobTable: React.FC = () => {
     try {
       setLoading(true);
       const { jobs, vehicles } = await fetchCustomerData(customerId);
-      setCustomerJobs(vehicles); setActiveJob(vehicles);
+      const vehiclesWithSerial = withSerialNo(vehicles);
+      setCustomerJobs(vehiclesWithSerial); setActiveJob(vehiclesWithSerial);
     } catch (error) { toast.error("Failed to load customer data"); } finally { setLoading(false); }
   };
 
@@ -383,14 +396,14 @@ const JobTable: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectedStatus === '') { setActiveJob(originalJobs); }
+    if (selectedStatus === '') { setActiveJob(withSerialNo(originalJobs)); }
     else {
       const filtered = originalJobs.filter(job => {
         if (selectedStatus === 'completed') return job.vehicleStatus === true;
         else if (selectedStatus === 'inProgress') return job.vehicleStatus === false;
         return true;
       });
-      setActiveJob(filtered);
+      setActiveJob(withSerialNo(filtered));
     }
   }, [selectedStatus, originalJobs]);
 
@@ -682,6 +695,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{job?.serialNo}</td>
         <td><Link href={`/jobs/view?jobId=${job?.job?.id}&ActiveWorkOrder`} className='hover:underline'>{job?.jobName}</Link></td>
         <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job?.vin}</Link></td>
         <td><Link href={`/client/view?customerId=${job?.customer?.id}`} className='hover:underline'>{job?.customer?.fullName}</Link></td>
@@ -787,6 +801,14 @@ const JobTable: React.FC = () => {
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2"><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg></span>
                   </label>
                 </th>
+                <th className="w-[120px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  {sortBy === 'serialNo' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
                 <th className="w-[100px]">Job Title</th>
                 <th className="w-[160px]">VIN</th>
                 <th className="w-[120px]">Customer Name</th>
@@ -807,9 +829,9 @@ const JobTable: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Loader /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Loader /></td></tr>
               ) : activeJob.length === 0 ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Empty /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Empty /></td></tr>
               ) : (
                 activeJob.map((job) => renderRow(job))
               )}

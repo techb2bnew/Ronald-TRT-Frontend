@@ -55,6 +55,12 @@ const JobTable: React.FC = () => {
   const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
   const [pdrValues, setPdrValues] = useState<Record<string, string>>({});
 
+  const withSerialNo = (jobs: any[], start = 1) =>
+    jobs.map((job: any, index: number) => ({
+      ...job,
+      serialNo: start + index,
+    }));
+
   useEffect(() => {
     // Ensure this code runs only on the client-side (after the component mounts)
     const storedRoleType = localStorage.getItem('types');
@@ -100,7 +106,8 @@ const JobTable: React.FC = () => {
         setInvoiceDates(initialInvoiceDates);
 
 
-        setOriginalJobs(fetchedTechnicians);
+        const jobsWithSerial = withSerialNo(fetchedTechnicians, (page - 1) * limit + 1);
+        setOriginalJobs(jobsWithSerial);
         const filteredJobs = fetchedTechnicians.filter((job: any) => {
           return selectedStatus === 'paid'
             ? job.status === true
@@ -109,7 +116,7 @@ const JobTable: React.FC = () => {
               : true;
         });
 
-        setActiveJob(fetchedTechnicians);
+        setActiveJob(jobsWithSerial);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalVehicles || 0);
 
@@ -165,6 +172,11 @@ const JobTable: React.FC = () => {
           return direction === 'asc'
             ? nameA.localeCompare(nameB)
             : nameB.localeCompare(nameA);
+        }
+        if (column === 'serialNo') {
+          const serialA = Number(a?.serialNo ?? 0);
+          const serialB = Number(b?.serialNo ?? 0);
+          return direction === 'asc' ? serialA - serialB : serialB - serialA;
         }
 
         // Handle other columns
@@ -265,7 +277,7 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.vehicles.updatedVehicles);
+        setActiveJob(withSerialNo(response.data.vehicles.updatedVehicles || []));
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -310,7 +322,7 @@ const JobTable: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.invoice.invoices);
+        setActiveJob(withSerialNo(data.invoice.invoices || []));
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -339,7 +351,7 @@ const JobTable: React.FC = () => {
 
   useEffect(() => {
     if (selectedStatus === '') {
-      setActiveJob(originalJobs);
+      setActiveJob(withSerialNo(originalJobs));
     } else {
       const filtered = originalJobs.filter(job => {
         console.log(job.status, 'job vehicleStatus');
@@ -356,7 +368,7 @@ const JobTable: React.FC = () => {
         console.log('No jobs match the filter criteria');
       }
 
-      setActiveJob(filtered);
+      setActiveJob(withSerialNo(filtered));
     }
   }, [selectedStatus, originalJobs]);
 
@@ -422,6 +434,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td> */}
+        <td>{job?.serialNo}</td>
         <td> <Link href={`/reporting/view-invoice?invoiceId=${job.invoiceNumber}`} className='hover:underline'> {job?.invoiceNumber}</Link> </td>
         <td>  {job?.customer?.fullName} </td>
         <td>  {job?.job?.jobName} </td>
@@ -546,6 +559,14 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
               </th> */}
+                <th onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  {sortBy === 'serialNo' && (
+                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                      {sortDirection === 'asc' ? '▲' : '▼'}
+                    </span>
+                  )}
+                </th>
                 <th onClick={() => handleSort('id')}>
                   Invoice ID
                   {sortBy === 'id' && (
@@ -570,13 +591,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10">
+                  <td colSpan={8} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10">
+                  <td colSpan={8} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

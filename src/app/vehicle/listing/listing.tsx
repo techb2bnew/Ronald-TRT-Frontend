@@ -858,7 +858,7 @@ const JobTable: React.FC = () => {
                   insuranceVehicles.map((v: any) => (
                     <tr key={v.id}>
                       <td>{v?.job?.jobName || '–'}</td>
-                      <td>{v?.job?.customer.fullName || '–'}</td>
+                      <td>{v?.job?.customer?.fullName || '–'}</td>
                       <td>{v?.vin || '–'}</td>
                       <td>{v?.grossSettlement || '–'}</td>
                       <td>{v?.job?.insurancePercentage || '–'}%</td>
