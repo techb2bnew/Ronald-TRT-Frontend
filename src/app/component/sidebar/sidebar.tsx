@@ -303,7 +303,7 @@ const Sidebar = () => {
             }`} />
         </div>
 
-        <ul className="flex flex-col py-2 laptop_size overflow-auto h-[90vh]" style={{ lineHeight: '1' }}>
+        <ul className="flex flex-col py-2 laptop_size h-[90vh]" style={{ lineHeight: '1' }}>
           <li className='py-0.5 pl-2'>
             <Link onClick={handleNavItemClick} href="/dashboard" className={`flex items-center py-2 px-3 space-x-2 rounded overflow-hidden hover:bg-[#f54a00] ${activeLink === '/dashboard' || activeLink === '/dashboard' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}   >
               <svg width="18" height="18" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
