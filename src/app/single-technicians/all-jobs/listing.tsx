@@ -531,7 +531,7 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td>{serialNo}</td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td> */}
         <td> {job?.jobName}</td>
 
 
@@ -727,14 +727,14 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
                   </span>
                 )}
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
+              {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
                 Job Id
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
+              </th> */}
               <th className="w-[100px]" onClick={() => handleSort('jobName')}>
                 Job Title
                 {sortBy === 'jobName' && (

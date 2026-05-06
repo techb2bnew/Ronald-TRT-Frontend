@@ -273,7 +273,7 @@ const ManagerTable: React.FC = () => {
           </label>
         </td>
         <td>{serialNo}</td>
-        <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td>
+        {/* <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td> */}
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
@@ -608,7 +608,7 @@ const ManagerTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg"> 
       <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
+        headers={['', 'Serial No', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}

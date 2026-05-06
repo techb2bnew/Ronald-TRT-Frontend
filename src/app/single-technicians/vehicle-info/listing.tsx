@@ -352,7 +352,7 @@ const VehicleTable: React.FC = () => {
           </label>
         </td> 
         <td>{job?.serialNo}</td>
-        <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td>
+        {/* <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td> */}
         <td>{job.customer.fullName}</td>
         <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
         <td>{job.vin}</td>
@@ -431,14 +431,14 @@ const VehicleTable: React.FC = () => {
                   </span>
                 )}
               </th>
-              <th className="w-[80px]" onClick={() => handleSort('id')}>
+              {/* <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
+              </th> */}
                 <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
                 {sortBy === 'customerName' && (
@@ -513,13 +513,13 @@ const VehicleTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={10} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10">
+                <td colSpan={10} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

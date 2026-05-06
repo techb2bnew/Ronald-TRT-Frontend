@@ -291,8 +291,7 @@ const TechnicianTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{serialNo}</td>
-        <td>{tech.id}</td>
+        <td>{serialNo}</td> 
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
@@ -627,7 +626,7 @@ const TechnicianTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
+        headers={['', 'Serial No',   'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -656,7 +655,7 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['serialno', 'id', 'name', 'email', 'type'];
+          const sortableColumns = ['serialno', 'name', 'email', 'type'];
 
           return (
             <th

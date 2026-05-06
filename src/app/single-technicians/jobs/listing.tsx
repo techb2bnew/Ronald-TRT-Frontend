@@ -539,7 +539,7 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td>{job.serialNo}</td>
-        <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline'>{job.id}</Link></td> */}
         <td>{job?.jobName}</td>
 
 
@@ -634,14 +634,14 @@ const JobTable: React.FC = () => {
                     </span>
                   )}
                 </th>
-                <th className="w-[100px]" onClick={() => handleSort('id')}>
+                {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
                   ID
                   {sortBy === 'id' && (
                     <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                       {sortDirection === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
-                </th>
+                </th> */}
                 <th className="w-[140px]" onClick={() => handleSort('jobName')}>
                   Job Title
                   {sortBy === 'jobName' && (
@@ -717,13 +717,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="text-center py-10">
+                  <td colSpan={11} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="text-center py-10">
+                  <td colSpan={11} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

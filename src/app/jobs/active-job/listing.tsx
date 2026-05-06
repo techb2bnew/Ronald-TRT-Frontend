@@ -328,7 +328,7 @@ const JobTable: React.FC = () => {
       serialToIdMap[String(serialNo)] = String(jobData.id);
       return {
         'Serial No': serialNo,
-        customer: `${jobData?.customer?.fullName}`,
+        customer: `${jobData?.customer?.fullName || ''}`,
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
@@ -526,7 +526,7 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td>{serialNo}</td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td> */}
         <td> {job?.jobName}</td>
 
 
@@ -669,14 +669,14 @@ const JobTable: React.FC = () => {
                     </span>
                   )}
                 </th>
-                <th className="w-[100px]" onClick={() => handleSort('id')}>
+                {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
                   Job Id
                   {sortBy === 'id' && (
                     <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                       {sortDirection === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
-                </th>
+                </th> */}
                 <th className="w-[150px]" onClick={() => handleSort('jobName')}>
                   Job Title
                   {sortBy === 'jobName' && (
@@ -705,13 +705,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 11 : 10} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 9} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 11 : 10} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 9} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

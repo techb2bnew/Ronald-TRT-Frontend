@@ -610,7 +610,7 @@ const JobTable: React.FC = () => {
           </label>
         </td>
         <td>{serialNo}</td>
-        <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
+        {/* <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job.id}</Link></td> */}
         <td>{job?.jobName}</td>
         <td>{job?.customer?.fullName}</td>
         {roleType !== 'single-technician' && (
@@ -930,12 +930,12 @@ const JobTable: React.FC = () => {
                     <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                   )}
                 </th>
-                <th className="w-[50px]" onClick={() => handleSort('id')}>
+                {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
                   ID
                   {sortBy === 'id' && (
                     <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
                   )}
-                </th>
+                </th> */}
                 <th className="w-[120px]">Job Title</th>
                 <th className="w-[120px]">Customer Name</th>
                 {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}

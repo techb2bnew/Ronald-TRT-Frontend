@@ -622,7 +622,7 @@ const TechnicianTable: React.FC = () => {
           </label>
         </td>
         <td>{serialNo}</td>
-        <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td>
+        {/* <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td> */}
 
         <td>
           <div className="flex items-center gap-2">
@@ -738,7 +738,7 @@ const TechnicianTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
+        headers={['', 'Serial No', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -768,7 +768,6 @@ const TechnicianTable: React.FC = () => {
 
           const headerToSortKey: Record<string, string> = {
             'Serial No': 'serialno',
-            'ID': 'id',
             'Name': 'name',
             'Email': 'email',
             'Phone Number': 'phoneNumber',

@@ -379,7 +379,7 @@ export default function ClientListing() {
           </label>
         </td>
         <td>{cust.serialNo}</td>
-        <td>{cust.id}</td>
+        {/* <td>{cust.id}</td> */}
         <td>
           <div className="flex items-center gap-2">
 
@@ -457,14 +457,14 @@ export default function ClientListing() {
                   </span>
                 )}
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
+              {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
                   <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
                     {sortDirection === 'asc' ? '▲' : '▼'}
                   </span>
                 )}
-              </th>
+              </th> */}
               <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Name
                 {sortBy === 'fullName' && (
@@ -503,13 +503,13 @@ export default function ClientListing() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={7} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : customer.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={7} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
