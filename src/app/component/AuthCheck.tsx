@@ -9,19 +9,26 @@ import Swal from 'sweetalert2';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const AuthCheck = ({ children }: { children: React.ReactNode }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  // Block UI only when user is clearly unauthenticated.
+  // If token exists, render immediately to avoid double loaders on navigation,
+  // and validate in background (redirect if invalid).
+  const [isBlocking, setIsBlocking] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const token = localStorage.getItem("token");
+    const technicianId = localStorage.getItem("userID");
+    return !(token && technicianId);
+  });
   const router = useRouter();
 
   useEffect(() => {
     const checkAuthAndStatus = async () => {
-      setIsLoading(true);
-  
       const token = localStorage.getItem("token");
       const technicianId = localStorage.getItem("userID");
   
       if (!token || !technicianId) {
         localStorage.clear();
-        router.push("/");
+        setIsBlocking(true);
+        router.replace("/login");
         return;
       }
   
@@ -42,7 +49,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             });
         if (response.status === 400 || response.status === 401) {
           localStorage.clear();
-          router.push("/");
+          router.replace("/login");
           return;
         }
   
@@ -60,7 +67,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.push("/");
+          router.replace("/login");
           return;
         }   
         if (!currentUser?.accountStatus) {
@@ -73,9 +80,10 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.push("/");
+          router.replace("/login");
           return;
-        }   if (currentUser?.deletedStatus) {
+        }
+        if (currentUser?.deletedStatus) {
           await Swal.fire({
             icon: 'warning',
             title: 'Account Deleted',
@@ -85,17 +93,18 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.push("/");
+          router.replace("/login");
           return;
         }
   
         // ✅ Passed all checks
-        setIsLoading(false);
+        setIsBlocking(false);
   
       } catch (error) {
         console.error("Error in AuthCheck:", error);
         localStorage.clear();
-        router.push("/");
+        setIsBlocking(true);
+        router.replace("/login");
       }
     };
   
@@ -104,13 +113,13 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
   
   
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white z-[99999]"> 
-  //       <Loading />
-  //     </div>
-  //   );
-  // }
+  if (isBlocking) {
+    return (
+      <div className="fixed inset-0 flex justify-center items-center bg-white z-99999">
+        <Loading />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 };
