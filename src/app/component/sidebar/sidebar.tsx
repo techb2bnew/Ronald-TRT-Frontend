@@ -852,7 +852,7 @@ const Sidebar = () => {
 
               <Link onClick={handleNavItemClick} href="/manager/listing" className={`flex items-center py-2 px-3 space-x-2 rounded hover:bg-[#f54a00] ${activeLink === '/manager/listing' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`}>
 
-                <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="18px" height="18px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="16" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
                 {/* <span className={`pl-2 transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:opacity-100' : 'block'}`}>Staff Management </span> */}
                 <span className="sidebar-text">Staff Management </span>
 
@@ -968,7 +968,7 @@ const Sidebar = () => {
                   </li>
                   <li >
                     <Link onClick={handleNavItemClick} href="/single-technicians/jobs" className={`flex items-center py-2 px-3 space-x-2 rounded hover:bg-[#f54a00] ${activeLink === '/single-technicians/jobs' ? 'active text-[#fff] bg-[#1e3e6f]  ' : ''}`} >
-                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg width="20" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_217_1077)">
                           <path d="M16.325 18.4683H3.38379V19.9388H16.325V18.4683Z" fill="currentColor" />
                           <path d="M12.1827 6.62988H7.6484C7.24227 6.62988 6.91309 6.95906 6.91309 7.3652C6.91309 7.77133 7.24227 8.10051 7.6484 8.10051H12.1827C12.5888 8.10051 12.918 7.77133 12.918 7.3652C12.918 6.95906 12.5888 6.62988 12.1827 6.62988Z" fill="currentColor" />
@@ -977,7 +977,7 @@ const Sidebar = () => {
                         </g>
                         <defs>
                           <clipPath id="clip0_217_1077">
-                            <rect width="20" height="20" fill="currentColor" />
+                            <rect width="20" height="24" fill="currentColor" />
                           </clipPath>
                         </defs>
                       </svg>
