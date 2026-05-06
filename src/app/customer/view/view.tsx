@@ -15,6 +15,7 @@ import { useSidebar } from '@/app/component/SidebarContext';
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
+  const router = useRouter();
   const [CustomerData, setCustomerData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const searchParams = useSearchParams();
@@ -100,8 +101,6 @@ export default function ViewDetails() {
     navigator.clipboard.writeText(text).then(() => toast.success(`${label} copied`)).catch(() => toast.error('Failed to copy'));
   };
 
-  const backHref = isSingleTechnician ? '/single-technicians/listing' : '/customer/listing';
-
   if (!CustomerData) {
     return <div><Loading /></div>;
   }
@@ -139,10 +138,9 @@ export default function ViewDetails() {
 
       <Breadcrumb
         items={[
-          {
-            label: isSingleTechnician ? 'All Customer' : 'Customer',
-            href: isSingleTechnician ? '/single-technicians/listing' : '/customer/listing',
-          },
+          isSingleTechnician
+            ? { label: 'All Customer', onClick: () => router.back() }
+            : { label: 'Customer', href: '/customer/listing' },
           { label: 'View Detail', href: '' }
         ]}
       />

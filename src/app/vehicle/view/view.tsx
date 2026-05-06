@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from '@/app/component/SidebarContext';
 
@@ -41,6 +41,7 @@ function fileLabelFromInsuranceUrl(url: string): string {
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -97,9 +98,6 @@ export default function ViewDetails() {
   }, 0);
 
 
-
-  const backHref = '/vehicle/listing';
-
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
     <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
@@ -140,14 +138,14 @@ export default function ViewDetails() {
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '/vehicle/listing' },
-          { label: 'View Detail', href: '' }
+          { label: 'Vehicles Info', onClick: () => router.back() },
+          { label: 'View Detail', href: '' },
         ]}
       />
 
       <div className="mx-auto">
         {/* <div className="flex items-center gap-3 mb-4">
-          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Link href="/vehicle/listing" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <svg className="w-8 h-8 bg-[#1e3e6f] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             <span className="font-semibold text-lg">Vehicle Detail</span>
           </Link>

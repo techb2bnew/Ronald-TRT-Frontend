@@ -1723,7 +1723,13 @@ export default function Technicians() {
 
 
 
+  const MAX_VEHICLE_IMAGES = 5;
+  const MAX_IMAGE_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per file (before compression)
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const resetInput = () => {
+      e.target.value = '';
+    };
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const files = e.target.files ? Array.from(e.target.files) : [];
 
@@ -1732,16 +1738,32 @@ export default function Technicians() {
 
     if (validImageFiles.length === 0) {
       toast.error("Please upload only JPEG, PNG, or WEBP images.");
+      resetInput();
       return;
     }
 
-    // Check total images won't exceed 5
-    const currentImageCount = jobForms[index]?.images?.length || 0;
-    const newImageCount = validImageFiles.length;
-
-    if (currentImageCount + newImageCount > 5) {
-      toast.error(`You can only upload up to 5 images. You already have ${currentImageCount} images.`);
+    const oversized = validImageFiles.filter((file) => file.size > MAX_IMAGE_FILE_BYTES);
+    if (oversized.length > 0) {
+      toast.error(
+        `Each image must be 5 MB or smaller. ${oversized.length} file(s) exceed the limit.`,
+      );
+      resetInput();
       return;
+    }
+
+    const currentImageCount = jobForms[index]?.images?.length || 0;
+    const remainingSlots = MAX_VEHICLE_IMAGES - currentImageCount;
+    if (remainingSlots <= 0) {
+      toast.error(`You can only upload up to ${MAX_VEHICLE_IMAGES} images.`);
+      resetInput();
+      return;
+    }
+
+    const filesToAdd = validImageFiles.slice(0, remainingSlots);
+    if (validImageFiles.length > remainingSlots) {
+      toast.error(
+        `You can upload at most ${MAX_VEHICLE_IMAGES} images total (${remainingSlots} slot(s) left; extra files were not added).`,
+      );
     }
 
     const maxWidth = 800;
@@ -1749,27 +1771,29 @@ export default function Technicians() {
     const quality = 0.7;
 
     // Compress each valid image and ensure the result is typed as File
-    const compressions: Promise<File>[] = validImageFiles.map(file =>
-      compressImage(file, maxWidth, maxHeight, quality)
+    const compressions: Promise<File>[] = filesToAdd.map((file) =>
+      compressImage(file, maxWidth, maxHeight, quality),
     );
 
     Promise.all(compressions)
       .then((compressedFiles) => {
-        setJobForms(prev => {
+        setJobForms((prev) => {
           const updatedForms = [...prev];
           updatedForms[index] = {
             ...updatedForms[index],
             images: [
               ...(updatedForms[index].images || []),
-              ...compressedFiles
-            ].slice(0, 5) // Ensure max 5 images
+              ...compressedFiles,
+            ].slice(0, MAX_VEHICLE_IMAGES),
           };
           return updatedForms;
         });
+        resetInput();
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Compression error:', error);
         toast.error('Failed to compress images.');
+        resetInput();
       });
   };
 
@@ -2685,7 +2709,10 @@ export default function Technicians() {
                       <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                     </svg>
                     <p className='text-sm mb-1 mt-1'>Upload File</p>
-                    <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, PNG and GIF' images will be accepted)</span>
+                    <span className="text-center m-auto text-xs block">
+                      {' '}
+                      (JPEG, PNG, WEBP — max {MAX_VEHICLE_IMAGES} images, 5 MB each)
+                    </span>
                   </label>
                   <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={(e) => handleFileChange(e, index)} />
                   {/* onChange={handleFileChange} */}

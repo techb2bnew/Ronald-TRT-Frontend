@@ -570,13 +570,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10">
+                  <td colSpan={7} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10">
+                  <td colSpan={7} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

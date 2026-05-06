@@ -4,8 +4,10 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
+import { useRouter } from 'next/navigation';
 
 export default function ViewDetails() {
+  const router = useRouter();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [userType, setUserType] = useState<string | null>(null);
@@ -144,8 +146,8 @@ export default function ViewDetails() {
     <>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '/reporting/vehicle-info' },
-          { label: 'View Detail', href: '/jobs/job-group/listing' }
+          { label: 'Vehicles Info', onClick: () => router.back() },
+          { label: 'View Detail', href: '' },
         ]}
       />
       <div className='max-w-7xl mx-auto p-4 rounded-lg shadow bg-white'>

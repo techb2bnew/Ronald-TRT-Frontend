@@ -9,6 +9,7 @@ import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
 import toast from 'react-hot-toast';
+import { Tooltip } from 'react-tooltip';
 interface CommonHeaderProps {
   heading: string;
   // title: string;
@@ -997,11 +998,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </button>
           )}
           {onImport && (
-
+            <>
             <label
+              data-tooltip-id="common-header-import-csv"
+              data-tooltip-content="Import updates existing records from CSV only."
               className={`flex items-center gap-2 px-3 py-2  rounded-lg  transition-colors
                 ${isRowSelected
-                  ? "bg-green-600 text-white hover:bg-green-700+"
+                  ? "bg-green-600 text-white hover:bg-green-700"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`} >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
@@ -1026,6 +1029,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               />
 
             </label>
+            <Tooltip id="common-header-import-csv" place="top" />
+            </>
           )}
 
           {onExport && (

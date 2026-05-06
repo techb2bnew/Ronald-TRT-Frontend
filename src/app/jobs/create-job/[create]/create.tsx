@@ -930,7 +930,7 @@ export default function JobForm() {
 
       <div className='bg-white p-4 mt-5'>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4 mb-2">
+          <div className="grid grid-cols-3 gap-4 mb-2">
             <div className='mb-2 items-start gap-3 relative'>
               <FormControl fullWidth size="small">
                 <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
@@ -1008,9 +1008,7 @@ export default function JobForm() {
                 </div>
               )}
             </div>
-          </div>
-
-          <div className={`grid ${userType === 'single-technician' || userType === 'manager' ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-2`}>
+            <div className={`grid ${userType === 'single-technician' || userType === 'manager' ? 'grid-cols-1' : 'grid-cols-1'} gap-4 mb-2`}>
             {userType !== 'single-technician' && userType !== 'manager' && (
               <div className='mb-2 items-start gap-3 relative'>
                 <FormControl fullWidth size="small">
@@ -1066,30 +1064,17 @@ export default function JobForm() {
                   </Select>
                 </FormControl>
               </div>
-            )}
-
-            {/* <div className="mb-4">
-              <TextField
-                fullWidth
-                type="number"
-                label="Job Estimate ($)"
-                size="small"
-                color="warning"
-                value={formData.estimatedCost}
-                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
-                inputProps={{
-                  inputMode: 'decimal',
-                  maxLength: 8,
-                }}
-              />
-            </div> */}
+            )} 
 
           </div>
+          </div>
+
+          
 
           {/* NEW SECTION START */}
-          <div className="mb-4">
+          <div className="mb-0">
             <FormControl component="fieldset">
-              <FormLabel color="warning" className="mb-2">Job Type</FormLabel>
+              <FormLabel color="warning" className="mb-0">Job Type</FormLabel>
               <RadioGroup
                 value={formData.jobType}
                 onChange={handleJobTypeChange}
@@ -1128,7 +1113,7 @@ export default function JobForm() {
                 <span className="font-medium">Vehicle Type Pricing</span>
               </AccordionSummary>
               <AccordionDetails>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <TextField
                     fullWidth
                     type="number"
@@ -1391,7 +1376,7 @@ export default function JobForm() {
           </div>
 
           {userType !== 'single-technician' && (
-            <div className='mb-4 flex items-start relative mt-3'>
+            <div className='mb-3 flex items-start relative'>
               <FormControl fullWidth size="small">
                 <FormLabel color="warning" className='mb-4'>Assign Dent Tech to this vehicle</FormLabel>
                 <TextField

@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
 
 import Link from 'next/link';
@@ -203,6 +203,7 @@ export default function ViewDetails() {
   const [assignmentSortKey, setAssignmentSortKey] = useState<AssignmentSortKey>('techName');
   const [assignmentSortDir, setAssignmentSortDir] = useState<'asc' | 'desc'>('asc');
 
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -344,35 +345,33 @@ export default function ViewDetails() {
     const isCompletedJob = searchParams!.has('completedJob');
     const isActiveJob = searchParams!.has('activeJob');
     const isJobStatus = searchParams!.has('jobStatus');
+    const goBack = () => router.back();
 
     if (isCompletedJob) {
-      return { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' };
+      return { label: 'Completed Work Orders', onClick: goBack };
     }
 
     if (isActiveJob) {
-      return { label: 'Job Detail', href: '/jobs/active-job' };
+      return { label: 'Job Detail', onClick: goBack };
     }
 
     if (isJobStatus) {
       const jobStatus = searchParams!.get('jobStatus');
       return {
         label: `${jobStatus?.charAt(0).toUpperCase()}${jobStatus?.slice(1)} All IFS Work Orders`,
-        href: `/reporting/job-status`,
+        onClick: goBack,
       };
     }
 
     if (pathname!.includes('/reporting/job-status')) {
-      return { label: 'All Work Orders', href: '/reporting/job-status' };
+      return { label: 'All Work Orders', onClick: goBack };
     }
 
     return {
       label: isSingleTechnician ? 'Job List' : 'Single Technician Work Order',
-      href: isSingleTechnician ? '/jobs/active-job' : '/single-technicians/jobs',
+      onClick: goBack,
     };
   };
-
-  const baseBreadcrumb = getBaseBreadcrumb();
-  const backHref = baseBreadcrumb.href;
 
   const assignmentRowKeys = displayedAssignmentRows.map((row, index) =>
     assignmentRowKey(row.tech, row.vehicle, index),
@@ -590,14 +589,14 @@ export default function ViewDetails() {
       <Breadcrumb
         items={[
           getBaseBreadcrumb(),
-          isEdit ? { label: 'View Details' } : { label: 'Create Technician', href: '/technicians/create-technician' },
+          isEdit ? { label: 'View Details' } : { label: 'Create Technician' },
         ]}
       />
 
       <div className="mx-auto">
         {/* Header: back + View Details */}
         {/* <div className="flex items-center gap-3 mb-4">
-          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Link href="/jobs/active-job" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <svg className="w-8 h-8 bg-[#383d71] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             <span className="font-semibold text-lg">View Details</span>
           </Link>
