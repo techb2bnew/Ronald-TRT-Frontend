@@ -533,7 +533,12 @@ const JobTable: React.FC = () => {
         <td> {job?.customer?.fullName}  </td>
 
         {roleType !== 'single-technician' && (
-          <td>{job?.manager?.firstName} {job?.manager?.lastName}</td>
+          <td >
+            <span className={job?.manager?.deletedStatus ? 'text-red-600' : ''}>  {job?.manager?.firstName} {job?.manager?.lastName}</span>
+            {job?.manager?.deletedStatus && (
+              <span className="d-block ml-2 text-xs text-red-600 bg-red-100 p-2 rounded shadow">Deleted</span>
+            )}
+          </td>
         )}
         <td>{job.vehicleCount || 0}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>

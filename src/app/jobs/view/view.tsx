@@ -639,7 +639,18 @@ export default function ViewDetails() {
               <InfoCard
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
                 label="Manager Name"
-                value={<span className="capitalize">{`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}</span>}
+                value={
+                  <span className="inline-flex items-center gap-2">
+                    <span className={`capitalize ${jobData?.manager?.deletedStatus ? 'text-red-600' : ''}`}>
+                      {`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}
+                    </span>
+                    {jobData?.manager?.deletedStatus && (
+                      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                        Deleted manager
+                      </span>
+                    )}
+                  </span>
+                }
               />
             )}
             {isSingleTechnician && (
