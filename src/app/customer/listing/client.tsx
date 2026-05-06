@@ -79,7 +79,11 @@ export default function ClientListing() {
           : data.customers?.customers || [];
         //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
 
-        setCustomer(fetchedCustomers);
+        const customersWithSerialNo = fetchedCustomers.map((cust: any, index: number) => ({
+          ...cust,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
+        setCustomer(customersWithSerialNo);
         setTotalPages(data.customers?.totalPages || 1);
       } else {
         if (data.error === 'Invalid Token') {
@@ -103,14 +107,22 @@ export default function ClientListing() {
     setSortBy(column);
 
     const sortedCustomers = [...customer].sort((a, b) => {
-      if (column === 'name') {
-        const nameA = `${a.firstName} ${a.lastName}`;
-        const nameB = `${b.firstName} ${b.lastName}`;
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
+
+      if (column === 'fullName') {
+        const nameA = `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim();
+        const nameB = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim();
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
 
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+      const valueA = a[column] ?? '';
+      const valueB = b[column] ?? '';
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -347,7 +359,7 @@ export default function ClientListing() {
   };
 
 
-  const renderRow = (cust: any) => {
+  const renderRow = (cust: any, index: number) => {
     const isChecked = selectedIds.includes(cust.id);
     return (
       <tr key={cust.id}>
@@ -366,6 +378,7 @@ export default function ClientListing() {
             </span>
           </label>
         </td>
+        <td>{cust.serialNo}</td>
         <td>{cust.id}</td>
         <td>
           <div className="flex items-center gap-2">
@@ -436,6 +449,14 @@ export default function ClientListing() {
                   </span>
                 </label>
               </th>
+              <th className="w-[80px]" onClick={() => handleSort('serialNo')}>
+                Serial No
+                {sortBy === 'serialNo' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
+              </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
                 {sortBy === 'id' && (
@@ -482,18 +503,18 @@ export default function ClientListing() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : customer.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10">
+                <td colSpan={8} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              customer.map((cust) => renderRow(cust))
+              customer.map((cust, index) => renderRow(cust, index))
             )}
           </tbody>
         </table>

@@ -146,7 +146,12 @@ const TechnicianTable: React.FC = () => {
         const fetchedTechnicians: Technicians[] = query.trim()
           ? data.technicians || []
           : data.technician?.technicians || [];
-        const filteredTechnicians = fetchedTechnicians.filter(technician => technician?.Role?.name !== "super admin");
+        const filteredTechnicians = fetchedTechnicians
+          .filter(technician => technician?.Role?.name !== "super admin")
+          .map((technician: any, index: number) => ({
+            ...technician,
+            serialNo: (page - 1) * limit + index + 1,
+          }));
 
         setTechnicians(filteredTechnicians);
         setTotalPages(data.technician?.totalPages || 1);
@@ -191,6 +196,10 @@ const TechnicianTable: React.FC = () => {
 
       // Handle different column types
       switch (column) {
+        case 'serialno':
+          valueA = Number(a.serialNo) || 0;
+          valueB = Number(b.serialNo) || 0;
+          break;
         case 'type':
           valueA = a.techType ? a.techType.toString().trim().toLowerCase() : '';
           valueB = b.techType ? b.techType.toString().trim().toLowerCase() : '';
@@ -260,9 +269,10 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -281,6 +291,7 @@ const TechnicianTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         <td>{tech.id}</td>
         <td>
           <div className="flex items-center gap-2">
@@ -616,7 +627,7 @@ const TechnicianTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
+        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -645,12 +656,12 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'type'];
+          const sortableColumns = ['serialno', 'id', 'name', 'email', 'type'];
 
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[60px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? ' ' : ''}`}
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)} // Ensure the column is passed correctly
             >
               {header}

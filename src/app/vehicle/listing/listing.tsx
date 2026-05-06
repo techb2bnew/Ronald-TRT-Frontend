@@ -149,7 +149,11 @@ const JobTable: React.FC = () => {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
           : data.response.vehicles || [];
-        setActiveJob(fetchedTechnicians);
+        const vehiclesWithSerialNo = fetchedTechnicians.map((vehicle: any, index: number) => ({
+          ...vehicle,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
+        setActiveJob(vehiclesWithSerialNo);
         setTotalPages(data.response?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0);
         setTotalExpense(data.response?.totalEstimateCost || data.data?.totalEstimateCost);
@@ -272,6 +276,11 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
       if (column === 'fullName') {
         const nameA = `${a?.customer?.fullName}`;
         const nameB = `${b?.customer?.fullName}`;
@@ -550,7 +559,11 @@ const JobTable: React.FC = () => {
       });
       const data = await response.json();
       if (response.ok && data.status) {
-        setActiveJob(data.vehicles.updatedVehicles || []);
+        const filteredVehiclesWithSerialNo = (data.vehicles.updatedVehicles || []).map((vehicle: any, index: number) => ({
+          ...vehicle,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(filteredVehiclesWithSerialNo);
         setTotalExpense(data.vehicles?.totalEstimateCost || 0);
         setTotalDantTechCost(data.vehicles?.totalDentTechCost);
 
@@ -575,9 +588,10 @@ const JobTable: React.FC = () => {
     }
   };
 
-  const renderRow = (job: any) => {
+  const renderRow = (job: any, index: number) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
+    const serialNo = job.serialNo ?? ((currentPage - 1) * pageSize + index + 1);
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -595,6 +609,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
         <td>{job?.jobName}</td>
         <td>{job?.customer?.fullName}</td>
@@ -897,6 +912,12 @@ const JobTable: React.FC = () => {
                     </span>
                   </label>
                 </th>
+                <th className="w-[70px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  {sortBy === 'serialNo' && (
+                    <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                  )}
+                </th>
                 <th className="w-[50px]" onClick={() => handleSort('id')}>
                   ID
                   {sortBy === 'id' && (
@@ -921,18 +942,18 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading && activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
               ) : (
-                activeJob?.map((job) => renderRow(job))
+                activeJob?.map((job, index) => renderRow(job, index))
               )}
 
               {/* {roleType !== 'single-technician' && (

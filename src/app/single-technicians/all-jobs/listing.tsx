@@ -106,9 +106,10 @@ const JobTable: React.FC = () => {
 
       if (response.ok) {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
-        const jobsWithVehicleCount = fetchedJobs.map(job => ({
+        const jobsWithVehicleCount = fetchedJobs.map((job, index) => ({
           ...job,
-          vehicleCount: job.vehicles ? job.vehicles.length : 0  // Count vehicles for each job
+          vehicleCount: job.vehicles ? job.vehicles.length : 0,  // Count vehicles for each job
+          serialNo: (page - 1) * limit + index + 1,
         }));
 
         setActiveJob(jobsWithVehicleCount);
@@ -150,6 +151,11 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
       if (column === 'customerName') {
         const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
@@ -504,8 +510,9 @@ const JobTable: React.FC = () => {
     );
   };
 
-  const renderRow = (job: any) => {
+  const renderRow = (job: any, index: number) => {
     const isChecked = selectedIds.includes(job.id);
+    const serialNo = job.serialNo ?? ((currentPage - 1) * pageSize + index + 1);
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -523,6 +530,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td>
         <td> {job?.jobName}</td>
 
@@ -614,7 +622,11 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.jobs.jobs); // Update the jobs with filtered data
+        const filteredJobsWithSerialNo = (response.data.jobs.jobs || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(filteredJobsWithSerialNo); // Update the jobs with filtered data
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -654,7 +666,11 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.jobs.jobs);
+        const jobsWithSerialNo = (data.jobs.jobs || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(jobsWithSerialNo);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -702,6 +718,14 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
                     </svg>
                   </span>
                 </label>
+              </th>
+              <th className="w-[100px]" onClick={() => handleSort('serialNo')}>
+                Serial No
+                {sortBy === 'serialNo' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
               <th className="w-[100px]" onClick={() => handleSort('id')}>
                 Job Id
@@ -761,18 +785,18 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob?.map((job) => renderRow(job))
+              activeJob?.map((job, index) => renderRow(job, index))
             )}
           </tbody>
         </table>

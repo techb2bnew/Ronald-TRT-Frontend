@@ -148,9 +148,10 @@ const ManagerTable: React.FC = () => {
         : data.data?.managers || [];
 
       // Add job count for each manager
-      const techniciansWithJobCount = fetchedTechnicians.map((tech: any) => ({
+      const techniciansWithJobCount = fetchedTechnicians.map((tech: any, index: number) => ({
         ...tech,
         jobCount: tech.managedJobs ? tech.managedJobs.length : 0, // Count jobs for each manager
+        serialNo: (page - 1) * limit + index + 1,
       })); 
         
         setTechnicians(techniciansWithJobCount);
@@ -198,6 +199,9 @@ const ManagerTable: React.FC = () => {
       if (column === 'name') {
         valueA = `${a.firstName} ${a.lastName}`.toLowerCase(); // Combine firstName and lastName
         valueB = `${b.firstName} ${b.lastName}`.toLowerCase();
+      } else if (column === 'serialno') {
+        valueA = Number(a.serialNo) || 0;
+        valueB = Number(b.serialNo) || 0;
       } else {
         valueA = a[column]?.toString().toLowerCase() || ''; // Handle undefined
         valueB = b[column]?.toString().toLowerCase() || '';
@@ -246,9 +250,10 @@ const ManagerTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -267,6 +272,7 @@ const ManagerTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td>
         <td>
           <div className="flex items-center gap-2">
@@ -602,7 +608,7 @@ const ManagerTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg"> 
       <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
+        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -631,7 +637,7 @@ const ManagerTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status'];
+          const sortableColumns = ['serialno', 'id', 'name', 'email'];
 
           return (
             <th

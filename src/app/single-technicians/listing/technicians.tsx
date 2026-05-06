@@ -270,7 +270,12 @@ const TechnicianTable: React.FC = () => {
           ? data.technicians || []  // For search API response
           : data.technician?.technicians || [];  // For pagination API response
         //  const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
-        const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin");
+        const filteredSingleTechnician = fetchedTechnicians
+          .filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin")
+          .map((singleTechnician: any, index: number) => ({
+            ...singleTechnician,
+            serialNo: (page - 1) * limit + index + 1,
+          }));
         setTechnicians(filteredSingleTechnician);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
@@ -355,6 +360,11 @@ const TechnicianTable: React.FC = () => {
         const countA = getTotalWorkOrders(a);
         const countB = getTotalWorkOrders(b);
         return direction === 'asc' ? countA - countB : countB - countA;
+      }
+      if (column === 'serialno') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
       }
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
@@ -589,9 +599,10 @@ const TechnicianTable: React.FC = () => {
     );
   };
   // Render row function for SortableTable
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -610,6 +621,7 @@ const TechnicianTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td>
 
         <td>
@@ -726,7 +738,7 @@ const TechnicianTable: React.FC = () => {
       <div className="shadow-lg p-4 bg-white rounded-lg">
       <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
+        headers={['', 'Serial No', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -755,6 +767,7 @@ const TechnicianTable: React.FC = () => {
           }
 
           const headerToSortKey: Record<string, string> = {
+            'Serial No': 'serialno',
             'ID': 'id',
             'Name': 'name',
             'Email': 'email',
@@ -768,7 +781,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}  ${index === 8 ? 'w-[170px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[120px]' : ''} ${index === 2 ? 'w-[100px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 9 ? 'w-[170px]' : ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}

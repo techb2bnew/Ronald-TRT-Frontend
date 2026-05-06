@@ -78,8 +78,12 @@ const VehicleTable: React.FC = () => {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
           : data.jobs.vehicles || [];
+        const jobsWithSerial = fetchedTechnicians.map((job: any, index: number) => ({
+          ...job,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
 
-        setActiveJob(fetchedTechnicians);
+        setActiveJob(jobsWithSerial);
         setTotalPages(data.jobs.totalPages);
       } else {
         if (data.error === 'Invalid Token') {
@@ -140,6 +144,11 @@ const VehicleTable: React.FC = () => {
         const yearA = Number(a?.modelYear ?? 0);
         const yearB = Number(b?.modelYear ?? 0);
         return direction === 'asc' ? yearA - yearB : yearB - yearA;
+      }
+      if (column === 'serialNo') {
+        const serialA = Number(a?.serialNo ?? 0);
+        const serialB = Number(b?.serialNo ?? 0);
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
       }
       if (column === 'technicianName') {
         const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
@@ -342,6 +351,7 @@ const VehicleTable: React.FC = () => {
             </span>
           </label>
         </td> 
+        <td>{job?.serialNo}</td>
         <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td>
         <td>{job.customer.fullName}</td>
         <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
@@ -412,6 +422,14 @@ const VehicleTable: React.FC = () => {
                     </svg>
                   </span>
                 </label>
+              </th>
+              <th className="w-[90px]" onClick={() => handleSort('serialNo')}>
+                Serial No
+                {sortBy === 'serialNo' && (
+                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
+                    {sortDirection === 'asc' ? '▲' : '▼'}
+                  </span>
+                )}
               </th>
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
@@ -495,13 +513,13 @@ const VehicleTable: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>

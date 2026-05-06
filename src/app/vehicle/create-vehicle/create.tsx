@@ -217,6 +217,7 @@ export default function Technicians() {
   const [jobDropdownPage, setJobDropdownPage] = useState(1);
   const [jobHasMore, setJobHasMore] = useState(true);
   const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
   const jobFetchInFlightRef = useRef(false);
 
   const [technicianPayRates, setTechnicianPayRates] = useState<{
@@ -714,6 +715,16 @@ export default function Technicians() {
     );
   }, [jobNames, jobSearchTerm]);
 
+  const filteredTechnicians = useMemo(() => {
+    const q = technicianSearchTerm.trim().toLowerCase();
+    if (!q) return technicians;
+    return technicians.filter((tech: any) => {
+      const fullName = `${tech?.firstName || ''} ${tech?.lastName || ''}`.toLowerCase();
+      const techType = String(tech?.techType || '').toLowerCase();
+      return fullName.includes(q) || techType.includes(q);
+    });
+  }, [technicians, technicianSearchTerm]);
+
   const handleJobSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setJobSearchTerm(e.target.value);
   };
@@ -993,6 +1004,7 @@ export default function Technicians() {
   const fetchTechniciansOnClick = () => {
     const roleType = localStorage.getItem('types') || ''; // Get roleType from localStorage
     if (roleType) {
+      setTechnicianSearchTerm('');
       // Call fetchData for technicians on button click
       fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
         endpoint: 'fetchTechnicianJob',
@@ -2793,10 +2805,19 @@ export default function Technicians() {
                   <div className='mb-4 flex items-start gap-3 relative mt-3'>
                     <FormControl fullWidth size="small">
                       <FormLabel color="warning" className="mb-1">Assign Technicians to this vehicle*</FormLabel>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        color="warning"
+                        placeholder="Search technician..."
+                        value={technicianSearchTerm}
+                        onChange={(e) => setTechnicianSearchTerm(e.target.value)}
+                        className="mb-2"
+                      />
                       <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                         <List dense>
-                          {technicians.length > 0 ? (
-                            technicians.map((tech) => {
+                          {filteredTechnicians.length > 0 ? (
+                            filteredTechnicians.map((tech) => {
                               const tid = String(tech.id);
                               const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
                               const techDetails =
@@ -2836,7 +2857,9 @@ export default function Technicians() {
                                       tabIndex={-1}
                                       disableRipple
                                     />
-                                    <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
+                                    <ListItemText
+                                      primary={`${tech.firstName} ${tech.lastName} (${tech.techType === 'R/I/R/R' ? 'R&I' : tech.techType})`}
+                                    />
                                   </div>
                                   {tech.techType === 'technician' ? (
                                     <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
@@ -2896,6 +2919,10 @@ export default function Technicians() {
                                 </ListItem>
                               );
                             })
+                          ) : technicians.length > 0 ? (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              No matching technician found
+                            </div>
                           ) : (
                             <div className="p-4 text-center text-gray-500 text-sm">
                               No technicians available
