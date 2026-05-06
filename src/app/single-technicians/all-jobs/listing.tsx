@@ -341,7 +341,7 @@ const JobTable: React.FC = () => {
         }
       };
       return {
-        id: jobData.id,
+        // id: jobData.id,
         customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,

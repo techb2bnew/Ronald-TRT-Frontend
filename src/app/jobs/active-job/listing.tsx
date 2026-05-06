@@ -19,6 +19,7 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const ACTIVE_JOB_IMPORT_ID_MAP_KEY = 'activeJobImportSerialToIdMap';
 interface Jobs {
   id: string;
   name: string;
@@ -286,7 +287,8 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
 
 
       const technician = jobData.technicians?.[0] || {};
@@ -316,8 +318,10 @@ const JobTable: React.FC = () => {
           return rate;
         }
       };
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
       return {
-        id: jobData.id,
+        'Serial No': serialNo,
         customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,
@@ -329,6 +333,7 @@ const JobTable: React.FC = () => {
 
     });
 
+    localStorage.setItem(ACTIVE_JOB_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -390,8 +395,17 @@ const JobTable: React.FC = () => {
         .replace(/^\uFEFF/, '')
         .trimStart();
 
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(ACTIVE_JOB_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'customer', 'assignCustomer', 'jobTitle',
+        'Serial No', 'customer', 'assignCustomer', 'jobTitle',
         'technicians', 'assignTechnicians', 'manager', 'assignManager'
       ];
 
@@ -419,7 +433,14 @@ const JobTable: React.FC = () => {
             });
 
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
 
@@ -435,7 +456,9 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
+                id: resolvedJobId,
                 technicians: technicians,
+                ['Serial No']: undefined,
                 assignTechnicians: undefined,
                 jobName: undefined,
               };

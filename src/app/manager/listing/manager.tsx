@@ -23,6 +23,7 @@ import RejectReasonModal from '@/app/component/rejectReasonModal';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const MANAGER_IMPORT_ID_MAP_KEY = 'managerImportSerialToIdMap';
 interface Technicians {
   id: string;
   name: string;
@@ -417,16 +418,19 @@ const ManagerTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => {
-      const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
-      const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedTechnicians.map((tech, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(tech.id);
       return {
-        Id: tech.id,
+        'Serial No': serialNo,
         Name: `${tech.firstName} ${tech.lastName}`,
         Email: tech.email,
         Address: tech.address,
       };
     });
+
+    localStorage.setItem(MANAGER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     // Ensure no headers are included in the data when downloading
     csvExporter.generateCsv(formattedData);
@@ -456,7 +460,7 @@ const ManagerTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Address'
+        'Serial No', 'Name', 'Email', 'Address'
       ];
 
       Papa.parse(text, {
@@ -464,6 +468,15 @@ const ManagerTable: React.FC = () => {
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
+
+          const savedSerialToIdMap: Record<string, string> = (() => {
+            try {
+              const raw = localStorage.getItem(MANAGER_IMPORT_ID_MAP_KEY);
+              return raw ? JSON.parse(raw) : {};
+            } catch {
+              return {};
+            }
+          })();
 
           // Log raw data for debugging
           console.log("Raw CSV data:", rows);
@@ -488,12 +501,24 @@ const ManagerTable: React.FC = () => {
                   else if (lower === 'false') value = false;
                   else if (lower === 'null') value = null;
                 }
-
-                if (key.toLowerCase() === 'id' && !isNaN(Number(value))) {
-                  value = parseInt(value, 10);
-                }
                 obj[key] = value;
               });
+
+              // Resolve Id from Serial No map for backend update payload
+              const serialNoVal = obj['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+
+              if (mappedIdFromSerial != null) {
+                obj['Id'] = !isNaN(Number(mappedIdFromSerial))
+                  ? parseInt(mappedIdFromSerial, 10)
+                  : mappedIdFromSerial;
+              }
+
+              // Do not send Serial No to backend
+              obj['Serial No'] = undefined;
 
               return obj;
             })

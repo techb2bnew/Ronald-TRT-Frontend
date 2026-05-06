@@ -102,8 +102,16 @@ const JobTable: React.FC = () => {
   const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
   const handlePdrChange = (jobId: string, value: string) => {
+    if (value === '') {
+      setPdrValues(prev => ({ ...prev, [jobId]: '' }));
+      return;
+    }
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue) || numericValue < 0) {
+      return;
+    }
     setPdrValues(prev => ({ ...prev, [jobId]: value }));
-    if (value && !isNaN(Number(value))) {
+    if (!Number.isNaN(numericValue)) {
       setPdrErrors(prev => ({ ...prev, [jobId]: '' }));
     }
   };
@@ -237,7 +245,7 @@ const JobTable: React.FC = () => {
         return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
       }).join(', ');
       return {
-        id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`, jobName: jobData.jobName,
+        // id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`, jobName: jobData.jobName,
         assignCustomer: jobData?.customer?.id, bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
         model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
         vehicleDescriptor: jobData.vehicleDescriptor, manufacturerName: jobData.manufacturerName,
@@ -720,13 +728,13 @@ const JobTable: React.FC = () => {
         <td>
           <TextField label="" variant="outlined" fullWidth color="warning" size="small" type='date' value={invoiceDates[job.id] || ''} onChange={(e) => handleDateAutoSave(job.id, e.target.value)} InputLabelProps={{ shrink: true }} />
         </td>
-        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Generated' : 'Pending'}</span>)}</td>
+        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Sent' : 'Pending'}</span>)}</td>
         <td>{canCreate && (<span className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.vehicleStatus ? 'Completed' : 'In Progress'}</span>)}</td>
         {roleType !== 'single-technician' && (
           <td>
             <div className="flex gap-2 items-center">
               <FormControl fullWidth size="small">
-                <TextField label="PDR" variant="outlined" fullWidth color="warning" size="small" type='number' value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
+                <TextField label="PDR" variant="outlined" fullWidth color="warning" size="small" type='number' inputProps={{ min: 0 }} value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
               </FormControl>
               <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
             </div>

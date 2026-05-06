@@ -18,6 +18,7 @@ import axios from 'axios';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const CUSTOMER_IMPORT_ID_MAP_KEY = 'customerImportSerialToIdMap';
 interface Customer {
   id: string;
   name: string;
@@ -175,12 +176,19 @@ export default function ClientListing() {
       alert("Please select at least one customer to export.");
       return;
     }
-    const formattedData = selectedCustomers.map((customerData) => ({
-      Id: customerData.id,
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedCustomers.map((customerData, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(customerData.id);
+      return {
+      'Serial No': serialNo,
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
       Address: customerData.address || 'N/A',
-    }));
+      };
+    });
+
+    localStorage.setItem(CUSTOMER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     csvExporter.generateCsv(formattedData);
   };
@@ -208,9 +216,19 @@ export default function ClientListing() {
 
       text = lines.join('\n');
 
-      // CSV columns: Id, Name, Email, Phone, Address (5 cols; 4th = Phone, 5th = Address)
-      // Id, Name, Email, Address (4 cols) or Id, Name, Email, Phone, Address (5 cols)
-      const manualHeaders = ['Id', 'Name', 'Email', 'Address'];
+      // Expected exported columns:
+      // Serial No, Name, Email, Address
+      // Older format fallback:
+      // Id, Name, Email, Address
+      const manualHeaders = ['Serial No', 'Name', 'Email', 'Address'];
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(CUSTOMER_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
 
       Papa.parse(text, {
         header: false,
@@ -221,7 +239,7 @@ export default function ClientListing() {
           const cleanedData = rawRows
             .filter((row) => {
               const firstCell = String(row[0] ?? '').trim().toLowerCase();
-              if (firstCell === 'id') return false;
+              if (firstCell === 'id' || firstCell === 'serial no') return false;
               return true;
             })
             .map((row) => {
@@ -251,9 +269,19 @@ export default function ClientListing() {
               return hasRealData;
             })
             .map((row) => {
-              const idVal = row.Id;
-              const numId = idVal != null && idVal !== '' && !isNaN(Number(idVal)) ? Number(idVal) : null;
-              const { Id, ...rest } = row;
+              // Resolve customer id from saved Serial No -> Id map.
+              // If import file is older and includes Id directly, keep fallback.
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const customerIdVal = mappedIdFromSerial ?? row['Customer Id'] ?? row['Id'];
+              const numId = customerIdVal != null && customerIdVal !== '' && !isNaN(Number(customerIdVal))
+                ? Number(customerIdVal)
+                : null;
+
+              const { ['Serial No']: _serialNo, ['Customer Id']: _customerId, Id: _legacyId, ...rest } = row;
               return numId !== null ? { ...rest, Id: numId } : rest;
             })
             .filter((row) => {

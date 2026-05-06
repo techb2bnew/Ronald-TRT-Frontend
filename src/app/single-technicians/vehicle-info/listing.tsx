@@ -195,7 +195,7 @@ const VehicleTable: React.FC = () => {
         return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
       }).join(', ');
       return {
-        id: jobData.id,
+        // id: jobData.id,
         vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName,

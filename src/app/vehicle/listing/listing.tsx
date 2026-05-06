@@ -27,6 +27,7 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+const VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY = 'vehicleWorkOrderImportSerialToIdMap';
 
 // ─── Tab type ────────────────────────────────────────────────────────────────
 type ActiveTab = 'scanned' | 'insurance';
@@ -398,13 +399,17 @@ const JobTable: React.FC = () => {
       useKeysAsHeaders: true,
     };
     const csvExporter = new ExportToCsv(csvOptions);
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
       const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
         const vt = tech.VehicleTechnician || {};
         return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}, techPercentage ${vt.techPercentage}`;
       }).join(', ');
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
       return {
-        id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,
+        'Serial No': serialNo,
+        vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName, assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
         model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
@@ -416,6 +421,7 @@ const JobTable: React.FC = () => {
         jobDescription: jobData.jobDescription.join(' '), technicianRates,
       };
     });
+    localStorage.setItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -427,8 +433,17 @@ const JobTable: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       let text = (e.target?.result as string).replace(/^\uFEFF/, '').trimStart();
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'Serial No', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'vehicleType', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates'
@@ -452,7 +467,14 @@ const JobTable: React.FC = () => {
             return !isHeaderRow && hasData;
           });
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
               const rateChunks = row.technicianRates
@@ -468,7 +490,14 @@ const JobTable: React.FC = () => {
                 return { id: technicianIds[index] || null, name, techFlatRate, rRate };
               });
               const jobDescriptions = row.jobDescription ? row.jobDescription.split(',').map((desc: any) => desc.trim()) : [];
-              return { ...row, technicians, jobDescription: jobDescriptions, assignTechnicians: undefined };
+              return {
+                ...row,
+                id: resolvedJobId,
+                technicians,
+                jobDescription: jobDescriptions,
+                ['Serial No']: undefined,
+                assignTechnicians: undefined,
+              };
             }).filter(row => !manualHeaders.some(header => row[header] === header));
             await axios.post(`/api/importVehicle`, { data: payloadData }, { headers });
             toast.success('CSV Import Successful!');

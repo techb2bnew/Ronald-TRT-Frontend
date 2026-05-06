@@ -21,6 +21,7 @@ import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY = 'singleTechJobsImportSerialToIdMap';
 
 interface VehcileInfo {
   id: string;
@@ -230,13 +231,16 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
       const vt = firstTech.VehicleTechnician || {};
 
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
 
       return {
-        id: jobData.id,
+        'Serial No': serialNo,
         vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName,
@@ -259,6 +263,7 @@ const JobTable: React.FC = () => {
         jobDescription: jobData.jobDescription.join(''), 
       };
     });
+    localStorage.setItem(SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -277,8 +282,17 @@ const JobTable: React.FC = () => {
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart(); // Remove leading whitespace/newlines
 
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'Serial No', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'vehicleType',
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
@@ -310,7 +324,14 @@ const JobTable: React.FC = () => {
             });
 
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               // Extract technician names and IDs
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
@@ -345,8 +366,10 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
+                id: resolvedJobId,
                 technicians, 
                 jobDescription: jobDescriptions,
+                ['Serial No']: undefined,
                 assignTechnicians: undefined, // cleanup unused field
               };
             }).filter(row =>

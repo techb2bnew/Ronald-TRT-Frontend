@@ -20,6 +20,7 @@ import Papa from 'papaparse';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY = 'singleTechnicianImportSerialToIdMap';
 
 interface Singletechnician {
   id: string;
@@ -413,17 +414,24 @@ const TechnicianTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => ({
-      Id: tech.id,
-      Name: `${tech.firstName} ${tech.lastName}`,
-      Email: tech.email,
-      Phone: tech.phoneNumber,
-      Address: tech.address,
-      Status: tech.isApproved,
-      AccountStatus: tech.accountStatus,
-      DeletedStatus: tech.deletedStatus,
-      IsApproved: tech.isApproved,
-    }));
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedTechnicians.map((tech, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(tech.id);
+      return {
+        'Serial No': serialNo,
+        Name: `${tech.firstName} ${tech.lastName}`,
+        Email: tech.email,
+        Phone: tech.phoneNumber,
+        Address: tech.address,
+        Status: tech.isApproved,
+        AccountStatus: tech.accountStatus,
+        DeletedStatus: tech.deletedStatus,
+        IsApproved: tech.isApproved,
+      };
+    });
+
+    localStorage.setItem(SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     csvExporter.generateCsv(formattedData);
   };
@@ -453,9 +461,17 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Status',
+        'Serial No', 'Name', 'Email', 'Phone', 'Address', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
 
       Papa.parse(text, {
         header: false, // Don't use auto headers
@@ -478,6 +494,21 @@ const TechnicianTable: React.FC = () => {
                 }
                 obj[key] = value;
               });
+
+              // Resolve Id from Serial No map for update payload
+              const serialNoVal = obj['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              if (mappedIdFromSerial != null) {
+                obj['Id'] = !isNaN(Number(mappedIdFromSerial))
+                  ? parseInt(mappedIdFromSerial, 10)
+                  : mappedIdFromSerial;
+              }
+
+              // Do not send Serial No to backend
+              obj['Serial No'] = undefined;
               return obj;
             })
             .filter((row) => {
