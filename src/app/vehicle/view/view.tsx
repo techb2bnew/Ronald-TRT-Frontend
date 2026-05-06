@@ -297,12 +297,36 @@ export default function ViewDetails() {
                     <p className="text-sm text-gray-600">
                       Specialty: {formatTechType(tech?.techType)}
                     </p>
-                    {tech?.VehicleTechnician?.techPercentageCalculatedAmount && tech?.VehicleTechnician?.techPercentageCalculatedAmount !== '' && (
-                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.techPercentageCalculatedAmount ?? 'N/A'}</p>
-                    )}
-                    {tech?.VehicleTechnician?.rPercentageCalculatedAmount && tech?.VehicleTechnician?.rPercentageCalculatedAmount !== '' && (
-                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.rPercentageCalculatedAmount ?? 'N/A'}</p>
-                    )}
+                    {((tech?.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                      String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                      String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null') ||
+                      (tech?.VehicleTechnician?.techFlatRate != null &&
+                        String(tech?.VehicleTechnician?.techFlatRate).trim() !== '' &&
+                        String(tech?.VehicleTechnician?.techFlatRate).toLowerCase() !== 'null')) && (
+                        <p className="text-sm text-gray-600">
+                          Amount: $
+                          {(tech?.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                            String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                            String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null')
+                            ? tech?.VehicleTechnician?.techPercentageCalculatedAmount
+                            : tech?.VehicleTechnician?.techFlatRate}
+                        </p>
+                      )}
+                    {((tech?.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                      String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                      String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null') ||
+                      (tech?.VehicleTechnician?.rRate != null &&
+                        String(tech?.VehicleTechnician?.rRate).trim() !== '' &&
+                        String(tech?.VehicleTechnician?.rRate).toLowerCase() !== 'null')) && (
+                        <p className="text-sm text-gray-600">
+                          Amount: $
+                          {(tech?.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                            String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                            String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null')
+                            ? tech?.VehicleTechnician?.rPercentageCalculatedAmount
+                            : tech?.VehicleTechnician?.rRate}
+                        </p>
+                      )}
                   </div>
                 ))}
               </div>

@@ -644,9 +644,15 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== ''
+                  {(tech.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                    String(tech.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                    String(tech.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null')
                     ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}`
-                    : <span className="text-gray-500 text-sm"></span>}
+                    : ((tech.VehicleTechnician?.techFlatRate != null &&
+                      String(tech.VehicleTechnician?.techFlatRate).trim() !== '' &&
+                      String(tech.VehicleTechnician?.techFlatRate).toLowerCase() !== 'null')
+                      ? `$${tech.VehicleTechnician?.techFlatRate}`
+                      : <span className="text-gray-500 text-sm"></span>)}
                 </div>
               ))
             ) : <span className="text-gray-500 text-sm"></span>}
@@ -664,9 +670,15 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.rPercentageCalculatedAmount && tech.VehicleTechnician?.rPercentageCalculatedAmount !== ''
+                  {(tech.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                    String(tech.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                    String(tech.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null')
                     ? `$${tech.VehicleTechnician?.rPercentageCalculatedAmount}`
-                    : <span className="text-gray-500 text-sm"></span>}
+                    : ((tech.VehicleTechnician?.rRate != null &&
+                      String(tech.VehicleTechnician?.rRate).trim() !== '' &&
+                      String(tech.VehicleTechnician?.rRate).toLowerCase() !== 'null')
+                      ? `$${tech.VehicleTechnician?.rRate}`
+                      : <span className="text-gray-500 text-sm"></span>)}
                 </div>
               ))
             ) : <span className="text-gray-500 text-sm"></span>}
