@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,  // Disable Strict Mode
+  reactStrictMode: false,
   typescript: { ignoreBuildErrors: true },
+
   images: {
     remotePatterns: [
       {
@@ -14,9 +15,20 @@ const nextConfig = {
       }
     ],
   },
+
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-  }, 
+  },
+
+  async redirects() {
+    return [
+      {
+        source: '/old-url',
+        destination: '/new-url',
+        permanent: true, // ✅ 301
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
