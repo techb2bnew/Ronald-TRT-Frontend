@@ -232,6 +232,12 @@ export default function Technicians() {
   }>({});
   const [buttonVisible, setButtonVisible] = useState<{ [techId: string]: boolean }>({});
 
+  // Per-form percentage state (cohorts split by techType within each jobForm)
+  const [techPercentages, setTechPercentages] = useState<Record<number, Record<string, number>>>({});
+  const [rPercentages, setRPercentages] = useState<Record<number, Record<string, number>>>({});
+  const [techManualLocks, setTechManualLocks] = useState<Record<number, Record<string, boolean>>>({});
+  const [rManualLocks, setRManualLocks] = useState<Record<number, Record<string, boolean>>>({});
+
   // Function to toggle visibility
   const [CustomerData, setCustomerData] = useState<any>(null);
   const [selectedCustomerJobType, setSelectedCustomerJobType] = useState<string>('');
@@ -437,43 +443,30 @@ export default function Technicians() {
     if (roleType !== 'single-technician') {
       jobForms.forEach((form, formIndex) => {
         if (Array.isArray(form.technicianDetails)) {
+          const formTechPcts = techPercentages[formIndex] || {};
+          const formRPcts = rPercentages[formIndex] || {};
+
           form.technicianDetails.forEach((techDetail, techIndex) => {
-            formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
+            const tid = String(techDetail.id);
+            formDataObj.append(`technicians[${techIndex}][id]`, tid);
             formDataObj.append(`technicians[${techIndex}][techType]`, techDetail.techType || '');
 
-            const techRow = technicians.find((t) => String(t.id) === String(techDetail.id));
+            const isTechType = techDetail.techType === 'technician';
+            const pctValueRaw = isTechType ? formTechPcts[tid] : formRPcts[tid];
+            const pctValue =
+              pctValueRaw !== undefined && pctValueRaw !== null
+                ? Number(pctValueRaw).toFixed(2)
+                : '';
 
-            // Get rates from technicianPayRates first, then fall back to techDetail
-            const rates = technicianPayRates[String(techDetail.id)] || technicianPayRates[techDetail.id] || {};
-            const rRateValue = rates.rRate || techDetail.rRate || '';
-            const techFlatRateValue = rates.techFlatRate || techDetail.techFlatRate || '';
-            const techPctVal = rates.techPercentageCalculatedAmount ?? techDetail.techPercentageCalculatedAmount ?? '';
-            const rPctVal = rates.rPercentageCalculatedAmount ?? techDetail.rPercentageCalculatedAmount ?? '';
-            const techPercentageVal = getTechnicianPercentageField(
-              rates,
-              techDetail,
-              'techPercentage',
-              techRow
+            // Always send both percentage keys so the backend payload shape stays consistent.
+            formDataObj.append(
+              `technicians[${techIndex}][techPercentage]`,
+              isTechType ? pctValue : ''
             );
-            const rPercentageVal = getTechnicianPercentageField(rates, techDetail, 'rPercentage', techRow);
-
-            // Append both rates (if available)
-            if (techFlatRateValue && techFlatRateValue !== '{}' && techFlatRateValue !== '') {
-              formDataObj.append(`technicians[${techIndex}][techFlatRate]`, techFlatRateValue);
-            }
-
-            if (rRateValue && rRateValue !== '{}' && rRateValue !== '') {
-              formDataObj.append(`technicians[${techIndex}][rRate]`, rRateValue);
-            }
-            if (techPctVal !== '' && techPctVal != null && String(techPctVal).trim() !== '') {
-              formDataObj.append(`technicians[${techIndex}][techPercentageCalculatedAmount]`, String(techPctVal));
-            }
-            if (rPctVal !== '' && rPctVal != null && String(rPctVal).trim() !== '') {
-              formDataObj.append(`technicians[${techIndex}][rPercentageCalculatedAmount]`, String(rPctVal));
-            }
-            // Always send percentage keys so create/update payload matches backend (empty string if unset)
-            formDataObj.append(`technicians[${techIndex}][techPercentage]`, techPercentageVal || '');
-            formDataObj.append(`technicians[${techIndex}][rPercentage]`, rPercentageVal || '');
+            formDataObj.append(
+              `technicians[${techIndex}][rPercentage]`,
+              !isTechType ? pctValue : ''
+            );
           });
         }
       });
@@ -662,21 +655,25 @@ export default function Technicians() {
 
       const data = await response.json();
 
-      if (response.ok) {
+        if (response.ok) {
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        const normalizedJobs = jobs.map((j: any) => ({
+          ...j,
+          jobName: String(j?.jobName ?? '').trim(),
+        }));
         const totalPages = Number(data.totalPages ?? 1) || 1;
         const currentPg = Number(data.currentPage ?? page) || page;
 
         if (append) {
           setJobNames((prev) => {
-            const merged = [...prev, ...jobs];
+            const merged = [...prev, ...normalizedJobs];
             return Array.from(new Map(merged.map((j: any) => [j.id, j])).values()) as Job[];
           });
         } else {
-          setJobNames(jobs as Job[]);
+          setJobNames(normalizedJobs as Job[]);
         }
 
-        const newTechs = jobs.flatMap((job: any) => job.technicians || []);
+        const newTechs = normalizedJobs.flatMap((job: any) => job.technicians || []);
         setAllTechnicians((prev) => {
           if (append) {
             const merged = [...prev, ...newTechs];
@@ -711,7 +708,7 @@ export default function Technicians() {
     const q = jobSearchTerm.trim().toLowerCase();
     if (!q) return jobNames;
     return jobNames.filter((job) =>
-      String(job.jobName || '').toLowerCase().includes(q)
+      String(job.jobName || '').trim().toLowerCase().includes(q)
     );
   }, [jobNames, jobSearchTerm]);
 
@@ -837,7 +834,7 @@ export default function Technicians() {
         setTechnicianPayRates(initialPayRates);
 
         const formData: JobPayload = {
-          jobName: getValidValue(vehicleData.jobName),
+          jobName: String(getValidValue(vehicleData.jobName) ?? '').trim(),
           jobId: getValidValue(vehicleData.jobId),
           id: getValidValue(vehicleData.id),
           vin: getValidValue(vehicleData.vin),
@@ -901,6 +898,33 @@ export default function Technicians() {
           : [{ id: crypto.randomUUID(), jobDescription: '' }]
         );
         setTechnicians(vehicleData.assignedTechnicians || []);
+
+        // Seed per-form percentage state from the loaded vehicle so existing
+        // values are preserved and won't be auto-redistributed on first render.
+        const seedTechPcts: Record<string, number> = {};
+        const seedRPcts: Record<string, number> = {};
+        const seedTechLocks: Record<string, boolean> = {};
+        const seedRLocks: Record<string, boolean> = {};
+        technicianDetails.forEach((td: any) => {
+          const tid = String(td.id);
+          if (td.techType === 'technician') {
+            const v = Number(td.techPercentage);
+            if (Number.isFinite(v) && v > 0) {
+              seedTechPcts[tid] = v;
+              seedTechLocks[tid] = true;
+            }
+          } else if (td.techType === 'R/I/R/R') {
+            const v = Number(td.rPercentage);
+            if (Number.isFinite(v) && v > 0) {
+              seedRPcts[tid] = v;
+              seedRLocks[tid] = true;
+            }
+          }
+        });
+        setTechPercentages({ 0: seedTechPcts });
+        setRPercentages({ 0: seedRPcts });
+        setTechManualLocks({ 0: seedTechLocks });
+        setRManualLocks({ 0: seedRLocks });
 
         const editJobId = getValidValue(vehicleData.jobId);
         const editJobName = getValidValue(vehicleData.jobName).trim();
@@ -1365,6 +1389,166 @@ export default function Technicians() {
       setSubmitting(false);
     }
   };
+
+  /**
+   * Auto-distribute 100% across `ids` while preserving manually-locked rows.
+   * Same logic as create-job: locked rows keep their values, the remainder
+   * is split evenly across unlocked rows, and any rounding diff is absorbed
+   * by the first unlocked row so the total stays exactly 100.
+   */
+  const computeDistributionWithLocks = (
+    ids: string[],
+    percentages: Record<string, number>,
+    locks: Record<string, boolean>
+  ): Record<string, number> => {
+    if (ids.length === 0) return {};
+    if (ids.length === 1) return { [ids[0]]: 100 };
+
+    const lockedIds = ids.filter((id) => Boolean(locks[id]));
+    const unlockedIds = ids.filter((id) => !Boolean(locks[id]));
+
+    const lockedSum = lockedIds.reduce((acc, id) => acc + Number(percentages[id] || 0), 0);
+    const remaining = Math.max(0, Number((100 - lockedSum).toFixed(2)));
+
+    const next: Record<string, number> = {};
+    lockedIds.forEach((id) => {
+      next[id] = Number((percentages[id] || 0).toFixed(2));
+    });
+
+    if (unlockedIds.length > 0) {
+      const even = Number((remaining / unlockedIds.length).toFixed(2));
+      unlockedIds.forEach((id) => {
+        next[id] = even;
+      });
+
+      const currentSum = ids.reduce((acc, id) => acc + (next[id] || 0), 0);
+      const diff = Number((100 - currentSum).toFixed(2));
+      if (Math.abs(diff) > 0) {
+        next[unlockedIds[0]] = Number(((next[unlockedIds[0]] || 0) + diff).toFixed(2));
+      }
+    }
+
+    return next;
+  };
+
+  const getTechCohort = (formIndex: number): string[] => {
+    const form = jobForms[formIndex];
+    if (!form?.technicianDetails) return [];
+    return form.technicianDetails
+      .filter((t: any) => t.techType === 'technician')
+      .map((t: any) => String(t.id));
+  };
+
+  const getRCohort = (formIndex: number): string[] => {
+    const form = jobForms[formIndex];
+    if (!form?.technicianDetails) return [];
+    return form.technicianDetails
+      .filter((t: any) => t.techType === 'R/I/R/R')
+      .map((t: any) => String(t.id));
+  };
+
+  const handleTechPercentageChange = (techId: string, rawValue: string, formIndex: number) => {
+    const cohort = getTechCohort(formIndex);
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const formLocks = techManualLocks[formIndex] || {};
+    const formPcts = techPercentages[formIndex] || {};
+
+    const nextLocks = { ...formLocks, [editedId]: true };
+    const otherLockedSum = cohort
+      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
+      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
+
+    setTechManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
+    setTechPercentages((prev) => ({ ...prev, [formIndex]: distributed }));
+  };
+
+  const handleRPercentageChange = (techId: string, rawValue: string, formIndex: number) => {
+    const cohort = getRCohort(formIndex);
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const formLocks = rManualLocks[formIndex] || {};
+    const formPcts = rPercentages[formIndex] || {};
+
+    const nextLocks = { ...formLocks, [editedId]: true };
+    const otherLockedSum = cohort
+      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
+      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
+
+    setRManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
+    setRPercentages((prev) => ({ ...prev, [formIndex]: distributed }));
+  };
+
+  /**
+   * Whenever the technicians assigned to any jobForm change, re-balance
+   * percentages within each cohort (technician / R&I) for that form.
+   * Locked rows keep their values; new rows get the auto-calculated share.
+   */
+  useEffect(() => {
+    jobForms.forEach((_form, formIndex) => {
+      const techCohort = getTechCohort(formIndex);
+      const rCohort = getRCohort(formIndex);
+
+      setTechManualLocks((prev) => {
+        const cur = prev[formIndex] || {};
+        const next: Record<string, boolean> = {};
+        techCohort.forEach((id) => {
+          next[id] = Boolean(cur[id]);
+        });
+        return { ...prev, [formIndex]: next };
+      });
+      setTechPercentages((prev) => {
+        const cur = prev[formIndex] || {};
+        const filtered: Record<string, number> = {};
+        techCohort.forEach((id) => {
+          if (cur[id] !== undefined) filtered[id] = cur[id];
+        });
+        const locks = (techManualLocks[formIndex] || {}) as Record<string, boolean>;
+        const lockSubset: Record<string, boolean> = {};
+        techCohort.forEach((id) => {
+          lockSubset[id] = Boolean(locks[id]);
+        });
+        return { ...prev, [formIndex]: computeDistributionWithLocks(techCohort, filtered, lockSubset) };
+      });
+
+      setRManualLocks((prev) => {
+        const cur = prev[formIndex] || {};
+        const next: Record<string, boolean> = {};
+        rCohort.forEach((id) => {
+          next[id] = Boolean(cur[id]);
+        });
+        return { ...prev, [formIndex]: next };
+      });
+      setRPercentages((prev) => {
+        const cur = prev[formIndex] || {};
+        const filtered: Record<string, number> = {};
+        rCohort.forEach((id) => {
+          if (cur[id] !== undefined) filtered[id] = cur[id];
+        });
+        const locks = (rManualLocks[formIndex] || {}) as Record<string, boolean>;
+        const lockSubset: Record<string, boolean> = {};
+        rCohort.forEach((id) => {
+          lockSubset[id] = Boolean(locks[id]);
+        });
+        return { ...prev, [formIndex]: computeDistributionWithLocks(rCohort, filtered, lockSubset) };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobForms]);
 
   const handlePayRateInput = (
     techId: string,
@@ -2019,8 +2203,8 @@ export default function Technicians() {
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0);
         const jobObjects: Job[] = fetchedJobs.map(job => ({
-          id: job.id,           // Correct id mapping
-          jobName: job.jobName  // Correct jobName mapping
+          id: job.id,
+          jobName: String(job.jobName ?? '').trim(),
         }));
         setJobNames(jobObjects);
       } else {
@@ -2059,10 +2243,13 @@ export default function Technicians() {
 
 
   const handleJobNameSelect = async (selectedName: string) => {
-    setSelectedJobName(selectedName);
+    const trimmedName = String(selectedName ?? '').trim();
+    setSelectedJobName(trimmedName);
     setTechnicians([]); // Clear technicians first to avoid showing old ones
 
-    const selectedJob = jobNames.find(job => job.jobName === selectedName);
+    const selectedJob = jobNames.find(
+      (job) => String(job.jobName ?? '').trim() === trimmedName
+    );
     console.log('selectedJob:', selectedJob);
 
     if (selectedJob) {
@@ -2094,7 +2281,7 @@ export default function Technicians() {
         updatedForms[0] = {
           ...updatedForms[0],
           jobId: selectedJob.id.toString(),
-          jobName: selectedName,
+          jobName: trimmedName,
           assignTechnicians: uniqueTechnicians.map((tech: any) => String(tech.id)),
           technicianDetails: uniqueTechnicians.map((tech: any) => ({
             id: tech.id,
@@ -2115,6 +2302,34 @@ export default function Technicians() {
         };
         return updatedForms;
       });
+
+      // Seed per-form percentage state for form 0 from API-supplied values
+      // so any pre-existing splits are preserved (and locked) on selection.
+      const seedTechPcts: Record<string, number> = {};
+      const seedRPcts: Record<string, number> = {};
+      const seedTechLocks: Record<string, boolean> = {};
+      const seedRLocks: Record<string, boolean> = {};
+      uniqueTechnicians.forEach((tech: any) => {
+        const tid = String(tech.id);
+        const techType = tech.techType || 'technician';
+        if (techType === 'technician') {
+          const v = Number(tech.techPercentage ?? tech.UserJob?.techPercentage);
+          if (Number.isFinite(v) && v > 0) {
+            seedTechPcts[tid] = v;
+            seedTechLocks[tid] = true;
+          }
+        } else {
+          const v = Number(tech.rPercentage ?? tech.UserJob?.rPercentage);
+          if (Number.isFinite(v) && v > 0) {
+            seedRPcts[tid] = v;
+            seedRLocks[tid] = true;
+          }
+        }
+      });
+      setTechPercentages((prev) => ({ ...prev, 0: seedTechPcts }));
+      setRPercentages((prev) => ({ ...prev, 0: seedRPcts }));
+      setTechManualLocks((prev) => ({ ...prev, 0: seedTechLocks }));
+      setRManualLocks((prev) => ({ ...prev, 0: seedRLocks }));
     } else {
       // If no job selected, clear everything
       setSelectedCustomerJobType('');
@@ -2130,6 +2345,10 @@ export default function Technicians() {
         };
         return updatedForms;
       });
+      setTechPercentages((prev) => ({ ...prev, 0: {} }));
+      setRPercentages((prev) => ({ ...prev, 0: {} }));
+      setTechManualLocks((prev) => ({ ...prev, 0: {} }));
+      setRManualLocks((prev) => ({ ...prev, 0: {} }));
     }
   };
 
@@ -2281,8 +2500,8 @@ export default function Technicians() {
                         </MenuItem>
                       ) : (
                         filteredJobNames.map((job) => (
-                          <MenuItem key={job.id} value={job.jobName}>
-                            {job.jobName}
+                          <MenuItem key={job.id} value={String(job.jobName ?? '').trim()}>
+                            {String(job.jobName ?? '').trim()}
                           </MenuItem>
                         ))
                       )}
@@ -2820,31 +3039,11 @@ export default function Technicians() {
                             filteredTechnicians.map((tech) => {
                               const tid = String(tech.id);
                               const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
-                              const techDetails =
-                                jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === tid) || tech;
-
-                              const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
-                              const rateValue =
-                                technicianPayRates[tid]?.[rateType] || techDetails[rateType] || '';
-                              const techPctAmt =
-                                technicianPayRates[tid]?.techPercentageCalculatedAmount ??
-                                techDetails.techPercentageCalculatedAmount ??
-                                (tech as any).VehicleTechnician?.techPercentageCalculatedAmount ??
-                                (tech as any).techPercentageCalculatedAmount;
-                              const rPctAmt =
-                                technicianPayRates[tid]?.rPercentageCalculatedAmount ??
-                                techDetails.rPercentageCalculatedAmount ??
-                                (tech as any).VehicleTechnician?.rPercentageCalculatedAmount ??
-                                (tech as any).rPercentageCalculatedAmount;
-
-                              const hasTechPct =
-                                techPctAmt != null &&
-                                String(techPctAmt).trim() !== '' &&
-                                String(techPctAmt).toLowerCase() !== 'null';
-                              const hasRPct =
-                                rPctAmt != null &&
-                                String(rPctAmt).trim() !== '' &&
-                                String(rPctAmt).toLowerCase() !== 'null';
+                              const isTechType = tech.techType === 'technician';
+                              const formPcts = isTechType
+                                ? techPercentages[index] || {}
+                                : rPercentages[index] || {};
+                              const percentage = isChecked ? (formPcts[tid] ?? 0) : 0;
 
                               return (
                                 <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
@@ -2861,59 +3060,22 @@ export default function Technicians() {
                                       primary={`${tech.firstName} ${tech.lastName} (${tech.techType === 'R/I/R/R' ? 'R&I' : tech.techType})`}
                                     />
                                   </div>
-                                  {tech.techType === 'technician' ? (
+                                  {isChecked && (
                                     <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
                                       <TextField
                                         size="small"
                                         type="number"
-                                        name="techFlatRate"
-                                        label={hasTechPct ? 'Flat Rate ($)' : 'Flat Rate ($)'}
+                                        label="Per Tech %"
                                         color="warning"
-                                        value={hasTechPct ? String(techPctAmt) : rateValue}
+                                        value={Number.isFinite(percentage) ? percentage : ''}
                                         onChange={(e) =>
-                                          hasTechPct
-                                            ? handlePctCalculatedInput(
-                                              tid,
-                                              e.target.value,
-                                              'techPercentageCalculatedAmount',
-                                              index
-                                            )
-                                            : handlePayRateInput(tid, e.target.value, 'techFlatRate', index)
+                                          isTechType
+                                            ? handleTechPercentageChange(tid, e.target.value, index)
+                                            : handleRPercentageChange(tid, e.target.value, index)
                                         }
-                                        onClick={() => setActiveInput(tid)}
-                                        style={{ maxWidth: '280px' }}
+                                        inputProps={{ min: 0, max: 100, step: 0.01 }}
+                                        sx={{ width: 130 }}
                                       />
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
-                                      <TextField
-                                        size="small"
-                                        type="number"
-                                        label={hasRPct ? 'R Rate ($)' : 'R Rate ($)'}
-                                        name="rRate"
-                                        color="warning"
-                                        value={hasRPct ? String(rPctAmt) : rateValue}
-                                        onChange={(e) =>
-                                          hasRPct
-                                            ? handlePctCalculatedInput(
-                                              tid,
-                                              e.target.value,
-                                              'rPercentageCalculatedAmount',
-                                              index
-                                            )
-                                            : handlePayRateInput(tid, e.target.value, 'rRate', index)
-                                        }
-                                        onClick={() => setActiveInput(tid)}
-                                        style={{ maxWidth: '280px' }}
-                                      />
-                                    </div>
-                                  )}
-                                  {activeInput === tid && buttonVisible[tid] !== false && (
-                                    <div
-                                      onClick={() => handlePayRateCheckbox(tid)}
-                                      className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
-                                    >
-                                      Save
                                     </div>
                                   )}
                                 </ListItem>

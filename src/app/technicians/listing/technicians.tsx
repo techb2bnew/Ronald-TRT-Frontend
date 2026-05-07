@@ -14,11 +14,13 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { Country, State } from 'country-state-city';
 import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 
 
@@ -46,6 +48,8 @@ const TechnicianTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [originalTechnicians, setOriginalTechnicians] = useState<any[]>([]);
+  const [accountStatusFilter, setAccountStatusFilter] = useState<string>('');
 
   // Fetch technicians on success
   const handleRejectionSuccess = () => {
@@ -153,6 +157,7 @@ const TechnicianTable: React.FC = () => {
             serialNo: (page - 1) * limit + index + 1,
           }));
 
+        setOriginalTechnicians(filteredTechnicians);
         setTechnicians(filteredTechnicians);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
@@ -175,11 +180,34 @@ const TechnicianTable: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm, pageSize]);
 
+  // Account status filter (client-side over current page) + serial renumber.
+  useEffect(() => {
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    let result = originalTechnicians;
+    if (accountStatusFilter === 'active') {
+      result = originalTechnicians.filter((t: any) => Boolean(t?.accountStatus));
+    } else if (accountStatusFilter === 'inactive') {
+      result = originalTechnicians.filter((t: any) => !t?.accountStatus);
+    }
+    setTechnicians(renumberSerialNo(result, startSerial));
+  }, [accountStatusFilter, originalTechnicians, currentPage, pageSize]);
+
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setOriginalTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech: any) => tech.id !== deletedId),
+        startSerial
+      )
+    );
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   // Function to handle sorting logic
@@ -624,7 +652,7 @@ const TechnicianTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} />
+      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} onAccountStatusChange={(status) => setAccountStatusFilter(status)} showClearFilters={true} onClearFilters={() => setAccountStatusFilter('')} />
       <SortableTable
         headers={['', 'Serial No',   'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}
@@ -664,10 +692,8 @@ const TechnicianTable: React.FC = () => {
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)} // Ensure the column is passed correctly
             >
               {header}
-              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {sortableColumns.includes(columnKey) && (
+                <SortIcon active={sortBy === columnKey} direction={sortDirection} />
               )}
             </th>
 

@@ -19,6 +19,7 @@ import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -699,11 +700,7 @@ const [roleType, setRoleType] = useState<string | null>(null);
               </th>
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Job ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               <th className="w-[100px]"   >Job Title
               </th>

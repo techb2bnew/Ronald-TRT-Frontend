@@ -16,8 +16,10 @@ import Image from 'next/image';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 const SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY = 'singleTechnicianImportSerialToIdMap';
@@ -313,9 +315,14 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -784,10 +791,8 @@ const TechnicianTable: React.FC = () => {
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}
-              {isSortable && sortBy === sortKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {isSortable && (
+                <SortIcon active={sortBy === sortKey} direction={sortDirection} />
               )}
             </th>
           );

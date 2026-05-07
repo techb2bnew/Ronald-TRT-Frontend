@@ -13,6 +13,7 @@ import Loader from '@/app/component/loader';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
+import SortIcon from '@/app/component/sortIcon';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
   id: string;
@@ -246,19 +247,11 @@ const [permissions, setPermissions] = useState<any[]>([]);
             <tr>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th> 
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]">
                 Customer Number 

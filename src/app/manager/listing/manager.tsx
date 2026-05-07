@@ -14,11 +14,13 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { Country, State } from 'country-state-city';
 import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 
 
@@ -178,9 +180,14 @@ const ManagerTable: React.FC = () => {
 
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   // Function to handle sorting logic
@@ -646,10 +653,8 @@ const ManagerTable: React.FC = () => {
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
             >
               {header}
-              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {sortableColumns.includes(columnKey) && (
+                <SortIcon active={sortBy === columnKey} direction={sortDirection} />
               )}
             </th>
           );

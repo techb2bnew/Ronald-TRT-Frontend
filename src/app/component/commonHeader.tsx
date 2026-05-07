@@ -36,6 +36,8 @@ interface CommonHeaderProps {
   fetchCustomerData?: (customerId: string) => Promise<any>;
   onStatusChange?: (status: string) => void;
   onInvoiceStatueChange?: (status: string) => void;
+  /** When provided, a condition-based Account Status filter dropdown is shown. */
+  onAccountStatusChange?: (status: string) => void;
   onClearFilters?: () => void;
   showClearFilters?: boolean;
   /** Work order list: compare scanned vs insurance VINs (superadmin). */
@@ -45,7 +47,7 @@ interface CommonHeaderProps {
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, selectedRows = [], onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, selectedRows = [], onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onAccountStatusChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -91,6 +93,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);
   const [workOrderStatus, setWorkOrderStatus] = useState<string>("");
   const [invoiceStatus, setInvoiceStatus] = useState<string>("");
+  const [accountStatusFilter, setAccountStatusFilter] = useState<string>("");
   const [searchValue, setSearchValue] = useState("");
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isCustomerSearching, setIsCustomerSearching] = useState<boolean>(false);
@@ -598,6 +601,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     onSearch?.("");
     setWorkOrderStatus("");
     setInvoiceStatus("");
+    setAccountStatusFilter("");
 
     setDates({ startDate: null, endDate: null });
     setShowDatePicker(false);
@@ -612,6 +616,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     onCustomerChange?.("", "single-technician");
     onStatusChange?.("");
     onInvoiceStatueChange?.("");
+    onAccountStatusChange?.("");
     onClearFilters?.();
   };
 
@@ -845,6 +850,23 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <option value="unPaid">Unpaid</option>
             </select>
           )}
+          {onAccountStatusChange && (
+            <select
+              id="accountStatus-dropdown"
+              value={accountStatusFilter}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAccountStatusFilter(val);
+                onAccountStatusChange?.(val);
+              }}
+              className="w-[150px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">Account Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Deactive</option>
+            </select>
+          )}
           {onNewTechClick && (
             <select
               id="tech-dropdown"
@@ -918,7 +940,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             dates.endDate ||
             searchValue ||
             workOrderStatus ||
-            invoiceStatus
+            invoiceStatus ||
+            accountStatusFilter
           ) && (
               <button
                 type="button"

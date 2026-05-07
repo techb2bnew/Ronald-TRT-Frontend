@@ -16,6 +16,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
 import { Tooltip } from 'react-tooltip';
 import Link from 'next/link';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -555,35 +556,19 @@ const CompletedJobs: React.FC = () => {
               </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               {/* <th className="w-[150px]" onClick={() => handleSort('jobDescription')}>
                 Job Description
-                {sortBy === 'jobDescription' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-green-500' : 'text-red-500'}`}>
-                   {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'jobDescription'} direction={sortDirection} />
               </th> */}
               <th className="w-[160px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[160px]" onClick={() => handleSort('technicianName')}>
                 Dent Tech Name
-                {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white-500'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
               </th>
 
               <th className="w-[100px]">Total Cost</th>

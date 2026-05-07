@@ -21,10 +21,12 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
 
 import Papa from 'papaparse';
 import Link from 'next/link';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 const VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY = 'vehicleWorkOrderImportSerialToIdMap';
@@ -107,7 +109,14 @@ const JobTable: React.FC = () => {
   };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   const handlePageSizeChange = (size: number) => {
@@ -271,28 +280,88 @@ const JobTable: React.FC = () => {
   }, [activeTab, currentPage, searchTerm, pageSize]);
 
   const handleSort = (column: string) => {
-    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
+    const direction = sortBy === column && sortDirection === 'asc' ? 'desc' : 'asc';
     setSortDirection(direction);
     setSortBy(column);
 
+    const techsOfType = (job: any, type: 'technician' | 'R/I/R/R') =>
+      (job?.assignedTechnicians ?? []).filter((t: any) => t?.techType === type);
+
+    const techNameLabel = (job: any, type: 'technician' | 'R/I/R/R') => {
+      const t = techsOfType(job, type)[0];
+      if (!t) return '';
+      return `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim().toLowerCase();
+    };
+
+    const techRateValue = (job: any, kind: 'tech' | 'r') => {
+      const t = (job?.assignedTechnicians ?? [])[0];
+      if (!t?.VehicleTechnician) return 0;
+      const vt = t.VehicleTechnician;
+      const pct = kind === 'tech' ? vt.techPercentageCalculatedAmount : vt.rPercentageCalculatedAmount;
+      const flat = kind === 'tech' ? vt.techFlatRate : vt.rRate;
+      const pickRaw = pct != null && String(pct).trim() !== '' && String(pct).toLowerCase() !== 'null'
+        ? pct
+        : flat;
+      const num = parseFloat(String(pickRaw ?? '').replace(/[^0-9.\-]/g, ''));
+      return Number.isNaN(num) ? 0 : num;
+    };
+
+    const dateValue = (v: any) => {
+      if (!v) return 0;
+      const t = new Date(v).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'serialNo') {
-        const serialA = Number(a.serialNo) || 0;
-        const serialB = Number(b.serialNo) || 0;
-        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      let valueA: string | number = '';
+      let valueB: string | number = '';
+
+      switch (column) {
+        case 'serialNo':
+          valueA = Number(a?.serialNo) || 0;
+          valueB = Number(b?.serialNo) || 0;
+          break;
+        case 'fullName':
+          valueA = (a?.customer?.fullName ?? '').toLowerCase().trim();
+          valueB = (b?.customer?.fullName ?? '').toLowerCase().trim();
+          break;
+        case 'technicianName':
+          valueA = techNameLabel(a, 'technician');
+          valueB = techNameLabel(b, 'technician');
+          break;
+        case 'rIName':
+          valueA = techNameLabel(a, 'R/I/R/R');
+          valueB = techNameLabel(b, 'R/I/R/R');
+          break;
+        case 'techFlatRate':
+          valueA = techRateValue(a, 'tech');
+          valueB = techRateValue(b, 'tech');
+          break;
+        case 'rRate':
+          valueA = techRateValue(a, 'r');
+          valueB = techRateValue(b, 'r');
+          break;
+        case 'startDate':
+        case 'endDate':
+          valueA = dateValue(a?.[column]);
+          valueB = dateValue(b?.[column]);
+          break;
+        case 'labourCost':
+          valueA = Number(a?.labourCost) || 0;
+          valueB = Number(b?.labourCost) || 0;
+          break;
+        case 'vin':
+        case 'jobName':
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
+          break;
+        default:
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
       }
-      if (column === 'fullName') {
-        const nameA = `${a?.customer?.fullName}`;
-        const nameB = `${b?.customer?.fullName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
-      }
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -926,27 +995,63 @@ const JobTable: React.FC = () => {
                 </th>
                 <th className="w-[70px]" onClick={() => handleSort('serialNo')}>
                   Serial No
-                  {sortBy === 'serialNo' && (
-                    <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
                   ID
-                  {sortBy === 'id' && (
-                    <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
                 </th> */}
-                <th className="w-[120px]">Job Title</th>
-                <th className="w-[120px]">Customer Name</th>
-                {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}
-                {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
-                {roleType !== 'single-technician' && <th className="w-[130px]">Assigned R&I</th>}
-                {roleType !== 'single-technician' && <th className="w-[80px]">R&I</th>}
+                <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('jobName')}>
+                  Job Title
+                  <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
+                </th>
+                <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('fullName')}>
+                  Customer Name
+                  <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
+                </th>
+                {roleType !== 'single-technician' && (
+                  <th className="w-[150px] cursor-pointer select-none" onClick={() => handleSort('technicianName')}>
+                    Assigned Dent Tech
+                    <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('techFlatRate')}>
+                    Tech Flat Rate
+                    <SortIcon active={sortBy === 'techFlatRate'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[130px] cursor-pointer select-none" onClick={() => handleSort('rIName')}>
+                    Assigned R&I
+                    <SortIcon active={sortBy === 'rIName'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('rRate')}>
+                    R&I
+                    <SortIcon active={sortBy === 'rRate'} direction={sortDirection} />
+                  </th>
+                )}
                 {/* {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>} */}
-                <th className="w-[150px]">VIN</th>
-                <th className="w-[100px]">Start Date</th>
-                <th className="w-[80px]">End Date</th>
-                {roleType === 'single-technician' && <th className="w-[80px]">Labour Cost</th>}
+                <th className="w-[150px] cursor-pointer select-none" onClick={() => handleSort('vin')}>
+                  VIN
+                  <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
+                </th>
+                <th className="w-[100px] cursor-pointer select-none" onClick={() => handleSort('startDate')}>
+                  Start Date
+                  <SortIcon active={sortBy === 'startDate'} direction={sortDirection} />
+                </th>
+                <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('endDate')}>
+                  End Date
+                  <SortIcon active={sortBy === 'endDate'} direction={sortDirection} />
+                </th>
+                {roleType === 'single-technician' && (
+                  <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('labourCost')}>
+                    Labour Cost
+                    <SortIcon active={sortBy === 'labourCost'} direction={sortDirection} />
+                  </th>
+                )}
                 {/* <th className="w-[130px]">Status</th> */}
                 <th className="w-[100px]">Action</th>
               </tr>

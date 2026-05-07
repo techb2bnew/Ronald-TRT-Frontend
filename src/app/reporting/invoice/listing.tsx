@@ -29,6 +29,7 @@ import {
   uniqueNumericJobIdsFromVehicles,
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -130,7 +131,16 @@ const JobTable: React.FC = () => {
   const handleSearch = (searchTerm: string) => { console.log('Searching for:', searchTerm); };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    const startSerial = selectedCustomer || selectedJobFilter ? 1 : (currentPage - 1) * pageSize + 1;
+    const nextRows = (prev: any[]) => withSerialNo(prev.filter((c) => c.id !== deletedId), startSerial);
+    setActiveJob(nextRows);
+    setOriginalJobs(nextRows);
+    setCustomerJobs((prev) => {
+      if (!selectedCustomer || !prev.length) return prev;
+      if (!prev.some((c) => c.id === deletedId)) return prev;
+      return withSerialNo(prev.filter((c) => c.id !== deletedId), startSerial);
+    });
   };
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
@@ -461,7 +471,7 @@ const JobTable: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        toast.success('Invoice generated successfully!');
+        toast.success(' Invoice generated successfully and sent to customer via email.');
         const pdfLink = response.data.invoice.invoiceUrl;
         if (isPrint) {
           window.open(pdfLink, '_blank');
@@ -771,13 +781,13 @@ const JobTable: React.FC = () => {
       <Breadcrumb items={[{ label: 'Invoice', href: '/reporting/invoice' }]} />
 
       <div className="invoice_tab_content flex justify-end gap-3 mb-3 items-center">
-        <button onClick={() => handleGenerateInvoice(false)} disabled={isGeneratingInvoice} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center'>
+        <button onClick={() => handleGenerateInvoice(false)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'>
           {isGeneratingInvoice ? (
             <><svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...</>
           ) : ('Generate Invoice')}
         </button>
-        <button onClick={() => handleGenerateInvoice(true)} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Print</button>
-        <button onClick={handleFillAllPdr} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
+        <button onClick={() => handleGenerateInvoice(true)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Print</button>
+        <button onClick={handleFillAllPdr} disabled={selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Fill All PDR</button>
       </div>
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
@@ -803,11 +813,7 @@ const JobTable: React.FC = () => {
                 </th>
                 <th className="w-[120px]" onClick={() => handleSort('serialNo')}>
                   Serial No
-                  {sortBy === 'serialNo' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
                 <th className="w-[100px]">Job Title</th>
                 <th className="w-[160px]">VIN</th>

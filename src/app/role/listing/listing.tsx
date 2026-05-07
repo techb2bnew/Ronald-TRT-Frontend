@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Roles {
@@ -184,19 +185,11 @@ const downloadCSV = () => {
             <tr>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th> 
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Role Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]">
                 Role Type 

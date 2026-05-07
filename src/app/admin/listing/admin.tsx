@@ -10,6 +10,7 @@ import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -260,51 +261,27 @@ export default function ClientListing() {
             <tr>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('name')}>
                 Name
-                {sortBy === 'name' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'name'} direction={sortDirection} />
               </th>
               <th className="w-[200px]" onClick={() => handleSort('email')}>
                 Email
-                {sortBy === 'email' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'email'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>
                 Phone Number
-                {sortBy === 'phoneNumber' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'phoneNumber'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('address')}>
                 Address
-                {sortBy === 'address' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'address'} direction={sortDirection} />
               </th>
               <th className="w-[100px]" onClick={() => handleSort('country')}>
                 Country
-                {sortBy === 'country' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'country'} direction={sortDirection} />
               </th>
               <th className="w-[100px]">Status</th>
               <th className="w-[100px]">Account Status</th>

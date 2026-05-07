@@ -13,11 +13,13 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { Tooltip } from 'react-tooltip';
+import SortIcon from '@/app/component/sortIcon';
  
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -46,10 +48,14 @@ const VehicleTable: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
     setLoading(true);
@@ -425,86 +431,46 @@ const VehicleTable: React.FC = () => {
               </th>
               <th className="w-[90px]" onClick={() => handleSort('serialNo')}>
                 Serial No
-                {sortBy === 'serialNo' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
               </th>
               {/* <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th> */}
                 <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[120px]" onClick={() => handleSort('customerEmail')}>
                 Customer Email
-                {sortBy === 'customerEmail' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerEmail'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('vin')}>
                 VIN
-                {sortBy === 'vin' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
               </th>
               {/* <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]">
                 Technicians Name
               </th> */}
               <th className="w-[120px]" onClick={() => handleSort('vehicleDescriptor')}>
                 Vehicle Descriptor
-                {sortBy === 'vehicleDescriptor' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'vehicleDescriptor'} direction={sortDirection} />
               </th>   
               <th className="w-[100px]" onClick={() => handleSort('make')}>
                 Make
-                {sortBy === 'make' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'make'} direction={sortDirection} />
               </th>
               <th className="w-[80px]" onClick={() => handleSort('model')}>
                 Model
-                {sortBy === 'model' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'model'} direction={sortDirection} />
               </th>
               <th className="w-[60px]" onClick={() => handleSort('modelYear')}>
                 Year
-                {sortBy === 'modelYear' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'modelYear'} direction={sortDirection} />
               </th>
               {/* <th className="w-[50px]">Color</th> */}
               <th className="w-[60px]">Action</th>

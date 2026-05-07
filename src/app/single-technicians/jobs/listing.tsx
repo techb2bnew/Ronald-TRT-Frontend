@@ -13,12 +13,14 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
  
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 const SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY = 'singleTechJobsImportSerialToIdMap';
@@ -51,10 +53,14 @@ const JobTable: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -628,87 +634,47 @@ const JobTable: React.FC = () => {
                 </th>
                 <th className="w-[90px]" onClick={() => handleSort('serialNo')}>
                   Serial No
-                  {sortBy === 'serialNo' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
                   ID
-                  {sortBy === 'id' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
                 </th> */}
                 <th className="w-[140px]" onClick={() => handleSort('jobName')}>
                   Job Title
-                  {sortBy === 'jobName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
                 </th>
 
                 <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                   Customer Name
-                  {sortBy === 'fullName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
                 <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
                   Technician Name
-                  {sortBy === 'technicianName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
                 </th>
                 <th className="w-[140px]" onClick={() => handleSort('vin')}>
                   VIN
-                  {sortBy === 'vin' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('make')}>
                   Make
-                  {sortBy === 'make' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'make'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('model')}>
                   Model
-                  {sortBy === 'model' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'model'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('modelYear')}>
                   Year
-                  {sortBy === 'modelYear' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'modelYear'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
                   Vehicle Override Price
-                  {sortBy === 'labourCost' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'labourCost'} direction={sortDirection} />
                 </th> */}
                 <th className="w-[120px]">Status</th>
                 <th className="w-[100px]">Action</th>

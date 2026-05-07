@@ -21,6 +21,7 @@ import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import InvoiceGenerator from '@/app/component/invoice-genrated';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -561,19 +562,11 @@ const JobTable: React.FC = () => {
               </th> */}
                 <th onClick={() => handleSort('serialNo')}>
                   Serial No
-                  {sortBy === 'serialNo' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
                 <th onClick={() => handleSort('id')}>
                   Invoice ID
-                  {sortBy === 'id' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
                 </th>
                 <th>
                   Customer Name

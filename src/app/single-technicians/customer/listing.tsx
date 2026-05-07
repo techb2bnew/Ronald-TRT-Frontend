@@ -14,8 +14,10 @@ import Eye from '../../../../public/eye.svg';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import axios from 'axios';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Customer {
@@ -39,10 +41,14 @@ export default function ClientListing() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setCustomer((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setCustomer((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -357,43 +363,23 @@ export default function ClientListing() {
 
               <th onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               <th onClick={() => handleSort('name')}>
                 Name
-                {sortBy === 'name' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'name'} direction={sortDirection} />
               </th>
               <th onClick={() => handleSort('email')}>
                 Email
-                {sortBy === 'email' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'email'} direction={sortDirection} />
               </th>
               <th onClick={() => handleSort('phoneNumber')}>
                 Phone Number
-                {sortBy === 'phoneNumber' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'phoneNumber'} direction={sortDirection} />
               </th>
               <th onClick={() => handleSort('address')}>
                 Address
-                {sortBy === 'address' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'address'} direction={sortDirection} />
               </th>
                 <th>Action</th>
             </tr>
