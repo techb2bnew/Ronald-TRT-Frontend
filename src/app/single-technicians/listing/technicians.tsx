@@ -787,7 +787,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[120px]' : ''} ${index === 2 ? 'w-[100px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 9 ? 'w-[170px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[120px]' : ''} ${index === 2 ? 'w-[150px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 9 ? 'w-[170px]' : ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}

@@ -853,7 +853,7 @@ const Sidebar = () => {
 
               <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" className="iconify iconify--tabler" width="16" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9s-9-1.8-9-9s1.8-9 9-9"></path><path d="M6 20.05V20a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v.05"></path></g></svg>
               {/* <span className={`pl-2 transition-all duration-300 whitespace-nowrap ${isCollapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-full'} ${isCollapsed ? 'hidden group-hover:opacity-100' : 'block'}`}>Staff Management </span> */}
-              <span className="sidebar-text">Tech Repors </span>
+              <span className="sidebar-text">Tech Reports </span>
 
             </Link>
           </li>
