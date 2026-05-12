@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -316,6 +317,7 @@ export default function TechReportingDashboard() {
           shares[String(t.id)] = Number(t.payoutShare) || 0;
         }
         return {
+          vehicleId: v.id,
           vehicle: vehicleTitleLong(v),
           payout: Number(v.totalLaborPayout) || 0,
           shares,
@@ -769,7 +771,16 @@ export default function TechReportingDashboard() {
                           className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
                         >
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
-                            {r._vinModel}
+                            {r.id != null ? (
+                              <Link
+                                href={`/vehicle/view?vehicleId=${encodeURIComponent(String(r.id))}`}
+                                className="text-[#383d71]  underline font-medium"
+                              >
+                                {r._vinModel}
+                              </Link>
+                            ) : (
+                              r._vinModel
+                            )}
                           </td>
                           <td className="px-3 py-2.5 border-b border-gray-100 bg-sky-50/80 text-gray-900">
                             {r._lead}
@@ -844,7 +855,16 @@ export default function TechReportingDashboard() {
                           className={i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}
                         >
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
-                            {r.vehicle}
+                            {r.vehicleId != null ? (
+                              <Link
+                                href={`/vehicle/view?vehicleId=${encodeURIComponent(String(r.vehicleId))}`}
+                                className="text-[#383d71]  underline font-medium"
+                              >
+                                {r.vehicle}
+                              </Link>
+                            ) : (
+                              r.vehicle
+                            )}
                           </td>
                           <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
                             {money(r.payout)}

@@ -135,14 +135,36 @@ export default function ViewDetails() {
   };
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`relative mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
           { label: 'Vehicles Info', onClick: () => router.back() },
           { label: 'View Detail', href: '' },
         ]}
       />
-
+      <div className="flex justify-end absolute top-[2px] right-[2px]">
+        <button
+          type="button"
+          onClick={() => router.push(`/vehicle/create-vehicle?vahicleId=${jobData?.id}`)}
+          className="inline-flex items-center gap-2 primary-bg text-white px-4 py-2 rounded-md hover:opacity-95 transition-opacity"
+        >
+          <svg
+            className="w-4 h-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            />
+          </svg>
+          Edit
+        </button>
+      </div>
       <div className="mx-auto">
         {/* <div className="flex items-center gap-3 mb-4">
           <Link href="/vehicle/listing" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
