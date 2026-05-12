@@ -152,7 +152,14 @@ export default function TechReportingDashboard() {
         return;
       }
       const list = json?.jobs?.jobs ?? json?.data?.jobs?.jobs ?? [];
-      setJobs(Array.isArray(list) ? list : []);
+      const safeList = Array.isArray(list) ? list : [];
+      setJobs(safeList);
+      // Auto-select the first job on initial load so analytics render immediately.
+      setSelectedJobId((prev) => {
+        if (prev) return prev;
+        const firstId = safeList[0]?.id;
+        return firstId != null ? String(firstId) : "";
+      });
     } catch (e) {
       console.error(e);
       toast.error("Failed to load jobs");
@@ -287,57 +294,59 @@ export default function TechReportingDashboard() {
     return rows;
   }, [individualRows, sortInd]);
 
-  /**
-   * Per-technician group tables. One entry per technician across the loaded
-   * vehicles, each entry exposes the vehicle rows for that tech with their
-   * `payoutShare` plus the total labor payout of the vehicle.
-   */
-  const perTechGroups = useMemo(() => {
-    type TechRow = { vehicleId: number | string | undefined; vehicle: string; payout: number; share: number };
-    const map = new Map<string, { id: string; name: string; rows: TechRow[]; total: number }>();
+  /** Unique technicians (columns) across all vehicles for the combined group table. */
+  const groupTechColumns = useMemo(() => {
+    const m = new Map<string, string>();
     for (const v of filteredVehicles) {
       for (const t of v.technicians || []) {
         const id = String(t.id);
-        const entry =
-          map.get(id) ?? { id, name: techName(t), rows: [], total: 0 };
-        const share = Number(t.payoutShare) || 0;
-        entry.rows.push({
-          vehicleId: v.id,
-          vehicle: vehicleTitleLong(v),
-          payout: Number(v.totalLaborPayout) || 0,
-          share,
-        });
-        entry.total += share;
-        map.set(id, entry);
+        if (!m.has(id)) m.set(id, techName(t));
       }
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(m.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [filteredVehicles]);
 
-  const sortedPerTechGroups = useMemo(() => {
+  const groupRows = useMemo(
+    () =>
+      filteredVehicles.map((v) => {
+        const shares: Record<string, number> = {};
+        for (const t of v.technicians || []) {
+          shares[String(t.id)] = Number(t.payoutShare) || 0;
+        }
+        return {
+          vehicle: vehicleTitleLong(v),
+          payout: Number(v.totalLaborPayout) || 0,
+          shares,
+        };
+      }),
+    [filteredVehicles]
+  );
+
+  const sortedGroup = useMemo(() => {
+    const rows = [...groupRows];
     const { key, dir } = sortGroup;
     const mul = dir === "asc" ? 1 : -1;
-    return perTechGroups.map((g) => {
-      const rows = [...g.rows].sort((a, b) => {
-        let va: string | number;
-        let vb: string | number;
-        if (key === "vehicle") {
-          va = a.vehicle.toLowerCase();
-          vb = b.vehicle.toLowerCase();
-        } else if (key === "payout") {
-          va = a.payout;
-          vb = b.payout;
-        } else {
-          va = a.share;
-          vb = b.share;
-        }
-        if (va < vb) return -1 * mul;
-        if (va > vb) return 1 * mul;
-        return 0;
-      });
-      return { ...g, rows };
+    rows.sort((a, b) => {
+      let va: string | number;
+      let vb: string | number;
+      if (key === "vehicle") {
+        va = a.vehicle.toLowerCase();
+        vb = b.vehicle.toLowerCase();
+      } else if (key === "payout") {
+        va = a.payout;
+        vb = b.payout;
+      } else {
+        va = a.shares[key] ?? 0;
+        vb = b.shares[key] ?? 0;
+      }
+      if (va < vb) return -1 * mul;
+      if (va > vb) return 1 * mul;
+      return 0;
     });
-  }, [perTechGroups, sortGroup]);
+    return rows;
+  }, [groupRows, sortGroup]);
 
   const toggleSortInd = (key: string) => {
     setSortInd((prev) =>
@@ -391,29 +400,37 @@ export default function TechReportingDashboard() {
       useKeysAsHeaders: true,
     }).generateCsv(ind);
 
-    sortedPerTechGroups.forEach((g) => {
-      const rows = g.rows.map((r) => ({
+    const grp = sortedGroup.map((r) => {
+      const row: Record<string, string | number> = {
         "Vehicle VIN / Model": r.vehicle,
         "Payout (Labor)": r.payout,
-        [`${g.name} Payout Share`]: r.share,
-      }));
-      rows.push({
-        "Vehicle VIN / Model": "Total",
-        "Payout (Labor)": "" as any,
-        [`${g.name} Payout Share`]: g.total,
+      };
+      groupTechColumns.forEach((c) => {
+        row[`${c.name} Payout Share`] = r.shares[c.id] ?? 0;
       });
-      const techSlug = g.name.replace(/\s+/g, "-");
-      new ExportToCsv({
-        filename: `tech-analytics-${jobSlug}-${techSlug}`,
-        fieldSeparator: ",",
-        quoteStrings: '"',
-        showLabels: true,
-        useTextFile: false,
-        useBom: true,
-        useKeysAsHeaders: true,
-      }).generateCsv(rows);
+      return row;
     });
-    toast.success(`Downloaded ${1 + sortedPerTechGroups.length} CSV files`);
+    const totalRow: Record<string, string | number> = {
+      "Vehicle VIN / Model": "Total",
+      "Payout (Labor)": sortedGroup.reduce((acc, r) => acc + r.payout, 0),
+    };
+    groupTechColumns.forEach((c) => {
+      totalRow[`${c.name} Payout Share`] = sortedGroup.reduce(
+        (acc, r) => acc + (r.shares[c.id] ?? 0),
+        0
+      );
+    });
+    grp.push(totalRow);
+    new ExportToCsv({
+      filename: `tech-analytics-${jobSlug}-group`,
+      fieldSeparator: ",",
+      quoteStrings: '"',
+      showLabels: true,
+      useTextFile: false,
+      useBom: true,
+      useKeysAsHeaders: true,
+    }).generateCsv(grp);
+    toast.success("Downloaded 2 CSV files (individual + group)");
   };
 
   const exportPdf = () => {
@@ -438,32 +455,25 @@ export default function TechReportingDashboard() {
         money(r._payout),
       ]),
     ];
-    const groupSections: any[] = [];
-    sortedPerTechGroups.forEach((g) => {
-      groupSections.push({
-        text: `${g.name} — ${g.rows.length} vehicle${g.rows.length === 1 ? "" : "s"}`,
-        style: "h3",
-        margin: [0, 12, 0, 6],
-      });
-      const tHead = [
-        { text: "Vehicle VIN / Model", style: "th" },
-        { text: "Payout (Labor)", style: "th" },
-        { text: `${g.name} Payout Share`, style: "th" },
-      ];
-      const tBody: any[] = g.rows.map((r) => [r.vehicle, money(r.payout), money(r.share)]);
-      tBody.push([
-        { text: "Total", colSpan: 2, bold: true },
-        {},
-        { text: money(g.total), bold: true },
-      ]);
-      groupSections.push({
-        table: {
-          headerRows: 1,
-          widths: ["*", "auto", "auto"],
-          body: [tHead, ...tBody],
-        },
-      });
-    });
+    const gHead: any[] = [
+      { text: "Vehicle VIN / Model", style: "th" },
+      { text: "Payout (Labor)", style: "th" },
+      ...groupTechColumns.map((c) => ({ text: `${c.name} Payout Share`, style: "th" })),
+    ];
+    const gBody: any[] = sortedGroup.map((r) => [
+      r.vehicle,
+      money(r.payout),
+      ...groupTechColumns.map((c) => money(r.shares[c.id] ?? 0)),
+    ]);
+    const techTotals = groupTechColumns.map((c) =>
+      sortedGroup.reduce((acc, r) => acc + (r.shares[c.id] ?? 0), 0)
+    );
+    const payoutTotal = sortedGroup.reduce((acc, r) => acc + r.payout, 0);
+    gBody.push([
+      { text: "Total", bold: true },
+      { text: money(payoutTotal), bold: true },
+      ...techTotals.map((t) => ({ text: money(t), bold: true })),
+    ]);
 
     const docDefinition: any = {
       pageMargins: [28, 28, 28, 28],
@@ -472,13 +482,18 @@ export default function TechReportingDashboard() {
         { text: jobLabel, margin: [0, 4, 0, 12] },
         { text: "Individual vehicles worked", style: "h2", margin: [0, 0, 0, 6] },
         { table: { headerRows: 1, widths: ["*", "auto", "auto", "auto", "auto"], body: indBody } },
-        { text: "Group Vehicles Worked", style: "h2", margin: [0, 16, 0, 0] },
-        ...groupSections,
+        { text: "Group Vehicles Worked", style: "h2", margin: [0, 16, 0, 6] },
+        {
+          table: {
+            headerRows: 1,
+            widths: ["*", "auto", ...groupTechColumns.map(() => "auto")],
+            body: [gHead, ...gBody],
+          },
+        },
       ],
       styles: {
         h1: { fontSize: 14, bold: true },
         h2: { fontSize: 11, bold: true },
-        h3: { fontSize: 10, bold: true },
         th: { bold: true, fillColor: "#eeeeee" },
       },
       defaultStyle: { fontSize: 9 },
@@ -774,97 +789,101 @@ export default function TechReportingDashboard() {
               </div>
             </div>
 
-            {/* Group Vehicles Worked — one table per technician */}
-            <div className="space-y-6">
-              <div className="px-1">
+            {/* Group Vehicles Worked — single table, dynamic columns per technician */}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <div className="px-4 py-3 border-b border-gray-100">
                 <h2 className="text-base font-semibold text-gray-900">Group Vehicles Worked</h2>
-                {/* <p className="text-xs text-gray-500 mt-0.5">
-                  Per-vehicle labor payout share for each assigned technician.
-                </p> */}
+                <p className="text-xs text-gray-500 mt-0.5">
+                  One row per vehicle: total labor payout plus each technician&apos;s share.
+                </p>
               </div>
-
-              {sortedPerTechGroups.length === 0 ? (
-                <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-500 text-sm shadow-sm">
-                  No technicians on the loaded vehicles.
-                </div>
-              ) : (
-                sortedPerTechGroups.map((g) => (
-                  <div
-                    key={g.id}
-                    className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2 bg-sky-50/60">
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">{g.name}</h3>
-                        <p className="text-xs text-gray-500">
-                          {g.rows.length} vehicle{g.rows.length === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                      <div className="text-sm">
-                        <span className="text-gray-500 mr-2">Total share:</span>
-                        <span className="font-semibold text-gray-900">{money(g.total)}</span>
-                      </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm min-w-[480px]">
-                        <thead>
-                          <tr>
-                            <Th
-                              label="Vehicle VIN / Model"
-                              sortKey="vehicle"
-                              activeKey={sortGroup.key}
-                              direction={sortGroup.dir}
-                              onClick={() => toggleSortGroup("vehicle")}
-                            />
-                            <Th
-                              label="Payout (Labor)"
-                              sortKey="payout"
-                              activeKey={sortGroup.key}
-                              direction={sortGroup.dir}
-                              onClick={() => toggleSortGroup("payout")}
-                            />
-                            <Th
-                              label={`${g.name} Payout Share`}
-                              sortKey="share"
-                              activeKey={sortGroup.key}
-                              direction={sortGroup.dir}
-                              onClick={() => toggleSortGroup("share")}
-                            />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {g.rows.map((r, i) => (
-                            <tr
-                              key={`${g.id}-${r.vehicleId ?? i}`}
-                              className={i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}
-                            >
-                              <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
-                                {r.vehicle}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
-                                {money(r.payout)}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {money(r.share)}
-                              </td>
-                            </tr>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[480px]">
+                  <thead>
+                    <tr>
+                      <Th
+                        label="Vehicle VIN / Model"
+                        sortKey="vehicle"
+                        activeKey={sortGroup.key}
+                        direction={sortGroup.dir}
+                        onClick={() => toggleSortGroup("vehicle")}
+                      />
+                      <Th
+                        label="Payout (Labor)"
+                        sortKey="payout"
+                        activeKey={sortGroup.key}
+                        direction={sortGroup.dir}
+                        onClick={() => toggleSortGroup("payout")}
+                      />
+                      {groupTechColumns.map((col) => (
+                        <Th
+                          key={col.id}
+                          label={`${col.name} Payout Share`}
+                          sortKey={col.id}
+                          activeKey={sortGroup.key}
+                          direction={sortGroup.dir}
+                          onClick={() => toggleSortGroup(col.id)}
+                        />
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedGroup.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={Math.max(2, 2 + groupTechColumns.length)}
+                          className="px-3 py-8 text-center text-gray-500"
+                        >
+                          No vehicles to show.
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedGroup.map((r, i) => (
+                        <tr
+                          key={i}
+                          className={i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}
+                        >
+                          <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
+                            {r.vehicle}
+                          </td>
+                          <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
+                            {money(r.payout)}
+                          </td>
+                          {groupTechColumns.map((col) => (
+                            <td key={col.id} className="px-3 py-2.5 border-b border-gray-100">
+                              {money(r.shares[col.id] ?? 0)}
+                            </td>
                           ))}
-                        </tbody>
-                        <tfoot>
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2.5 text-xs font-semibold text-gray-600" colSpan={2}>
-                              Total
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                  {sortedGroup.length > 0 && (
+                    <tfoot>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2.5 text-xs font-semibold text-gray-600">Total</td>
+                        <td className="px-3 py-2.5 text-sm font-semibold text-gray-900">
+                          {money(sortedGroup.reduce((acc, row) => acc + row.payout, 0))}
+                        </td>
+                        {groupTechColumns.map((col) => {
+                          const sum = sortedGroup.reduce(
+                            (acc, row) => acc + (row.shares[col.id] ?? 0),
+                            0
+                          );
+                          return (
+                            <td
+                              key={col.id}
+                              className="px-3 py-2.5 text-sm font-semibold text-gray-900"
+                            >
+                              {money(sum)}
                             </td>
-                            <td className="px-3 py-2.5 text-sm font-semibold text-gray-900">
-                              {money(g.total)}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
-                ))
-              )}
+                          );
+                        })}
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
             </div>
           </>
         )}
