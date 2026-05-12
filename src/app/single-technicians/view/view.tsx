@@ -285,7 +285,7 @@ export default function ViewDetails() {
   const displayAddress = technician?.address ? technician.address.replace(/^,\s*/g, '').replace(/\s*,\s*/g, ', ').trim() : 'N/A';
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
@@ -326,7 +326,7 @@ export default function ViewDetails() {
       <div className="mx-auto">
         {/* Profile banner - dark blue with avatar + contact */}
         <div className="bg-[#1e3e6f] rounded-lg shadow-md overflow-hidden">
-          <div className="flex gap-6 p-6 items-center">
+          <div className="flex gap-6 p-2 px-6 items-center">
             {technician?.image ? (
               <img
                 onClick={() => setPreviewImage(technician.image)}

@@ -18,6 +18,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { Tooltip } from 'react-tooltip';
+import SortIcon from '@/app/component/sortIcon';
   
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -251,19 +252,11 @@ const VehicleTable: React.FC = () => {
               </th> */}
               <th className="w-[80px]" onClick={() => handleSort('id')}>
                 Vehicle ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[120px]">
                 Customer Email
@@ -273,11 +266,7 @@ const VehicleTable: React.FC = () => {
               </th>
               {/* <th className="w-[120px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white-500' : 'text-white'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]">
                 Technicians Name

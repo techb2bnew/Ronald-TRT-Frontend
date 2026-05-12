@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from '@/app/component/SidebarContext';
 
@@ -41,6 +41,7 @@ function fileLabelFromInsuranceUrl(url: string): string {
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -97,16 +98,13 @@ export default function ViewDetails() {
   }, 0);
 
 
-
-  const backHref = '/vehicle/listing';
-
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
         <div className="text-gray-900">{value}</div>
       </div>
     </div>
@@ -128,11 +126,11 @@ export default function ViewDetails() {
     return (item as any)?.description ?? (item as any)?.name ?? String(item);
   };
 
-  const formatTechType = (type:any) => {
+  const formatTechType = (type: any) => {
     if (!type) return 'N/A';
-  
+
     if (type === 'R/I/R/R') return 'R&I';
-  
+
     return type;
   };
 
@@ -140,14 +138,14 @@ export default function ViewDetails() {
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '/vehicle/listing' },
-          { label: 'View Detail', href: '' }
+          { label: 'Vehicles Info', onClick: () => router.back() },
+          { label: 'View Detail', href: '' },
         ]}
       />
 
       <div className="mx-auto">
         {/* <div className="flex items-center gap-3 mb-4">
-          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Link href="/vehicle/listing" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <svg className="w-8 h-8 bg-[#1e3e6f] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             <span className="font-semibold text-lg">Vehicle Detail</span>
           </Link>
@@ -240,7 +238,7 @@ export default function ViewDetails() {
             <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             <span className="font-bold">Work Order Description</span>
           </div>
-          <div className="p-6">
+          <div className="px-6 p-3">
             {(() => {
               const desc = jobData?.jobDescription;
               const hasDescriptions = Array.isArray(desc) && desc.some((item: any) => (getDescriptionText(item) || '').trim() !== '');
@@ -264,7 +262,7 @@ export default function ViewDetails() {
             <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             <span className="font-bold">Notes</span>
           </div>
-          <div className="p-6">
+          <div className="px-6 p-3">
             <p className="text-gray-500">{jobData?.notes || 'N/A'}</p>
           </div>
         </div>
@@ -274,22 +272,61 @@ export default function ViewDetails() {
             <svg className="w-7 h-7 " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             <span className="font-bold">Assigned Dent Tech</span>
           </div>
-          <div className="p-6">
+          <div className="px-6 p-3">
             {jobData?.assignedTechnicians?.length > 0 ? (
               <div className="divide-y divide-gray-200">
                 {jobData.assignedTechnicians.map((tech: any) => (
                   <div key={tech.id} className="py-4 first:pt-0">
-                    <p className="font-semibold text-gray-900 capitalize">{tech.firstName} {tech.lastName}</p>
+                    <div className="flex items-center gap-2">
+                      <p
+                        className={`font-semibold capitalize ${tech?.deletedStatus
+                            ? "text-red-600"
+                            : "text-gray-900"
+                          }`}
+                      >
+                        {tech.firstName} {tech.lastName}
+                      </p>
+
+                      {tech?.deletedStatus && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                          Deleted Tech
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mt-1">Phone: <a className="hover:underline text-[#383d71]" href={`tel:${tech.phoneNumber || ''}`}>{tech.phoneNumber || 'N/A'}</a></p>
                     <p className="text-sm text-gray-600">
                       Specialty: {formatTechType(tech?.techType)}
                     </p>
-                    {tech?.VehicleTechnician?.techPercentageCalculatedAmount && tech?.VehicleTechnician?.techPercentageCalculatedAmount !== '' && (
-                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.techPercentageCalculatedAmount ?? 'N/A'}</p>
-                    )}
-                    {tech?.VehicleTechnician?.rPercentageCalculatedAmount && tech?.VehicleTechnician?.rPercentageCalculatedAmount !== '' && (
-                      <p className="text-sm text-gray-600">Amount: ${tech?.VehicleTechnician?.rPercentageCalculatedAmount ?? 'N/A'}</p>
-                    )}
+                    {((tech?.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                      String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                      String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null') ||
+                      (tech?.VehicleTechnician?.techFlatRate != null &&
+                        String(tech?.VehicleTechnician?.techFlatRate).trim() !== '' &&
+                        String(tech?.VehicleTechnician?.techFlatRate).toLowerCase() !== 'null')) && (
+                        <p className="text-sm text-gray-600">
+                          Amount: $
+                          {(tech?.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                            String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                            String(tech?.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null')
+                            ? tech?.VehicleTechnician?.techPercentageCalculatedAmount
+                            : tech?.VehicleTechnician?.techFlatRate}
+                        </p>
+                      )}
+                    {((tech?.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                      String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                      String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null') ||
+                      (tech?.VehicleTechnician?.rRate != null &&
+                        String(tech?.VehicleTechnician?.rRate).trim() !== '' &&
+                        String(tech?.VehicleTechnician?.rRate).toLowerCase() !== 'null')) && (
+                        <p className="text-sm text-gray-600">
+                          Amount: $
+                          {(tech?.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                            String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                            String(tech?.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null')
+                            ? tech?.VehicleTechnician?.rPercentageCalculatedAmount
+                            : tech?.VehicleTechnician?.rRate}
+                        </p>
+                      )}
                   </div>
                 ))}
               </div>
@@ -305,7 +342,7 @@ export default function ViewDetails() {
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             <span className="font-bold text-gray-800">Images</span>
           </div>
-          <div className="p-6">
+          <div className="px-6 p-3">
             {jobData?.images?.length > 0 ? (
               <div className="flex flex-wrap gap-4">
                 {jobData.images.map((img: string, index: number) => (

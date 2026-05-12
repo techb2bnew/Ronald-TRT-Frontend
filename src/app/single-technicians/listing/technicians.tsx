@@ -16,10 +16,13 @@ import Image from 'next/image';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY = 'singleTechnicianImportSerialToIdMap';
 
 interface Singletechnician {
   id: string;
@@ -269,7 +272,12 @@ const TechnicianTable: React.FC = () => {
           ? data.technicians || []  // For search API response
           : data.technician?.technicians || [];  // For pagination API response
         //  const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => !SingleTechnician.deletedStatus);
-        const filteredSingleTechnician = fetchedTechnicians.filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin");
+        const filteredSingleTechnician = fetchedTechnicians
+          .filter(SingleTechnician => SingleTechnician?.Role?.name !== "super admin")
+          .map((singleTechnician: any, index: number) => ({
+            ...singleTechnician,
+            serialNo: (page - 1) * limit + index + 1,
+          }));
         setTechnicians(filteredSingleTechnician);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
@@ -307,9 +315,14 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -354,6 +367,11 @@ const TechnicianTable: React.FC = () => {
         const countA = getTotalWorkOrders(a);
         const countB = getTotalWorkOrders(b);
         return direction === 'asc' ? countA - countB : countB - countA;
+      }
+      if (column === 'serialno') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
       }
       if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
       if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
@@ -413,17 +431,24 @@ const TechnicianTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => ({
-      Id: tech.id,
-      Name: `${tech.firstName} ${tech.lastName}`,
-      Email: tech.email,
-      Phone: tech.phoneNumber,
-      Address: tech.address,
-      Status: tech.isApproved,
-      AccountStatus: tech.accountStatus,
-      DeletedStatus: tech.deletedStatus,
-      IsApproved: tech.isApproved,
-    }));
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedTechnicians.map((tech, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(tech.id);
+      return {
+        'Serial No': serialNo,
+        Name: `${tech.firstName} ${tech.lastName}`,
+        Email: tech.email,
+        Phone: tech.phoneNumber,
+        Address: tech.address,
+        Status: tech.isApproved,
+        AccountStatus: tech.accountStatus,
+        DeletedStatus: tech.deletedStatus,
+        IsApproved: tech.isApproved,
+      };
+    });
+
+    localStorage.setItem(SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     csvExporter.generateCsv(formattedData);
   };
@@ -453,9 +478,17 @@ const TechnicianTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Phone', 'Address', 'Status',
+        'Serial No', 'Name', 'Email', 'Phone', 'Address', 'Status',
         'AccountStatus', 'DeletedStatus', 'IsApproved'
       ];
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(SINGLE_TECHNICIAN_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
 
       Papa.parse(text, {
         header: false, // Don't use auto headers
@@ -478,6 +511,21 @@ const TechnicianTable: React.FC = () => {
                 }
                 obj[key] = value;
               });
+
+              // Resolve Id from Serial No map for update payload
+              const serialNoVal = obj['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              if (mappedIdFromSerial != null) {
+                obj['Id'] = !isNaN(Number(mappedIdFromSerial))
+                  ? parseInt(mappedIdFromSerial, 10)
+                  : mappedIdFromSerial;
+              }
+
+              // Do not send Serial No to backend
+              obj['Serial No'] = undefined;
               return obj;
             })
             .filter((row) => {
@@ -558,9 +606,10 @@ const TechnicianTable: React.FC = () => {
     );
   };
   // Render row function for SortableTable
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -579,7 +628,8 @@ const TechnicianTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td>
+        <td>{serialNo}</td>
+        {/* <td> <Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline'>{tech.id}</Link></td> */}
 
         <td>
           <div className="flex items-center gap-2">
@@ -693,9 +743,9 @@ const TechnicianTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician" />
+      <CommonHeader heading="Single Technicians" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='SingleTechnician' buttonLabel="Create Technician" buttonLink="/technicians/create-technician?singletechnician"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
+        headers={['', 'Serial No', 'Name', 'Email', 'Phone Number', 'Total Jobs', 'Total Work Order', 'Account Status', 'Approval Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -724,7 +774,7 @@ const TechnicianTable: React.FC = () => {
           }
 
           const headerToSortKey: Record<string, string> = {
-            'ID': 'id',
+            'Serial No': 'serialno',
             'Name': 'name',
             'Email': 'email',
             'Phone Number': 'phoneNumber',
@@ -737,14 +787,12 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[50px]' : ''} ${index === 3 ? 'w-[250px]' : ''}  ${index === 8 ? 'w-[170px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[120px]' : ''} ${index === 2 ? 'w-[150px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 9 ? 'w-[170px]' : ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}
-              {isSortable && sortBy === sortKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {isSortable && (
+                <SortIcon active={sortBy === sortKey} direction={sortDirection} />
               )}
             </th>
           );

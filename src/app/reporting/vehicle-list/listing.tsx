@@ -14,6 +14,7 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
+import SortIcon from '@/app/component/sortIcon';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -113,24 +114,62 @@ const VehicleTable: React.FC = () => {
 
   // Function to handle sorting logic
   const handleSort = (column: string) => {
-    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
+    const direction = sortBy === column && sortDirection === 'asc' ? 'desc' : 'asc';
     setSortDirection(direction);
     setSortBy(column);
 
+    const techLabel = (job: any) => {
+      const t = job?.assignedTechnicians?.[0];
+      if (!t) return '';
+      return `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim().toLowerCase();
+    };
+
+    const dateValue = (v: any) => {
+      if (!v) return 0;
+      const t = new Date(v).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'customerName') {
-        const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
-        const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
+      let valueA: string | number = '';
+      let valueB: string | number = '';
+
+      switch (column) {
+        case 'customerName':
+          valueA = (a?.customer?.fullName || `${a?.customer?.firstName ?? ''} ${a?.customer?.lastName ?? ''}`).toLowerCase().trim();
+          valueB = (b?.customer?.fullName || `${b?.customer?.firstName ?? ''} ${b?.customer?.lastName ?? ''}`).toLowerCase().trim();
+          break;
+        case 'technicianName':
+          valueA = techLabel(a);
+          valueB = techLabel(b);
+          break;
+        case 'vin':
+        case 'make':
+        case 'model':
+        case 'jobName':
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
+          break;
+        case 'modelYear':
+          valueA = Number(a?.modelYear) || 0;
+          valueB = Number(b?.modelYear) || 0;
+          break;
+        case 'startDate':
+        case 'endDate':
+          valueA = dateValue(a?.[column]);
+          valueB = dateValue(b?.[column]);
+          break;
+        case 'id':
+          valueA = Number(a?.jobId ?? a?.id) || 0;
+          valueB = Number(b?.jobId ?? b?.id) || 0;
+          break;
+        default:
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
       }
 
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -416,37 +455,47 @@ const handleImportCSV = (file: File) => {
                   </span>
                 </label>
               </th>
-              <th className="w-[80px]" onClick={() => handleSort('id')}>
+              <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('id')}>
                 Job ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
-              <th className="w-[80px]" onClick={() => handleSort('jobName')}>
+              <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('jobName')}>
                 Job Title
-                {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
               </th>
-              <th className="w-[120px]">
-                Customer Name 
+              <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('customerName')}>
+                Customer Name
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
-              <th className="w-[160px]">Assigned Dent Tech</th>
+              <th className="w-[160px] cursor-pointer select-none" onClick={() => handleSort('technicianName')}>
+                Assigned Dent Tech
+                <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
+              </th>
 
-              <th className="w-[120px]" >
+              <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('vin')}>
                 VIN
+                <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
               </th>
-              <th className="w-[60px]" >
+              <th className="w-[60px] cursor-pointer select-none" onClick={() => handleSort('make')}>
                 Make
+                <SortIcon active={sortBy === 'make'} direction={sortDirection} />
               </th>
-              <th className="w-[60px]">Model</th>
-              <th className="w-[60px]">Year</th> 
-              <th className="w-[100px]">Start Date</th>
-              <th className="w-[100px]">End Date</th> 
+              <th className="w-[60px] cursor-pointer select-none" onClick={() => handleSort('model')}>
+                Model
+                <SortIcon active={sortBy === 'model'} direction={sortDirection} />
+              </th>
+              <th className="w-[60px] cursor-pointer select-none" onClick={() => handleSort('modelYear')}>
+                Year
+                <SortIcon active={sortBy === 'modelYear'} direction={sortDirection} />
+              </th>
+              <th className="w-[100px] cursor-pointer select-none" onClick={() => handleSort('startDate')}>
+                Start Date
+                <SortIcon active={sortBy === 'startDate'} direction={sortDirection} />
+              </th>
+              <th className="w-[100px] cursor-pointer select-none" onClick={() => handleSort('endDate')}>
+                End Date
+                <SortIcon active={sortBy === 'endDate'} direction={sortDirection} />
+              </th> 
             </tr>
           </thead>
           <tbody>

@@ -273,12 +273,15 @@ export default function Technicians() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (formData.email && !emailPattern.test(formData.email)) {
+    if (formData.email && !emailPattern.test(formData.email.trim())) {
       newErrors.email = 'Please enter a valid email address';
     }
     if (formData.phoneNumber) {
       const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
-
+      const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+      if (nationalNumber.length !== 10) {
+        newErrors.phoneNumber = 'Phone number must be exactly 10 digits';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -466,30 +469,39 @@ export default function Technicians() {
         ...prev,
         phoneNumber: ''
       }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
       return;
     }
 
     const digitsOnly = value.replace(/\D/g, '');
     const nationalNumber = getNationalNumber(digitsOnly, value);
 
-    // Stop if national number exceeds 10 digits
-    // if (nationalNumber.length > 10) {
-    //   return;
-    // }
+    // Block values where national number exceeds 10 digits
+    if (nationalNumber.length > 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits (without country code)'
+      }));
+      return;
+    }
 
-    // Set error if not exactly 10 digits
-    // if (nationalNumber.length !== 10) {
-    //   setErrors(prev => ({
-    //     ...prev,
-    //     phoneNumber: 'Phone number must be exactly 10 digits'
-    //   }));
-    // } else {
-    //   setErrors(prev => {
-    //     const newErrors = { ...prev };
-    //     delete newErrors.phoneNumber;
-    //     return newErrors;
-    //   });
-    // }
+    // Optional field: only validate when value is present
+    if (nationalNumber.length > 0 && nationalNumber.length !== 10) {
+      setErrors(prev => ({
+        ...prev,
+        phoneNumber: 'Phone number must be exactly 10 digits (without country code)'
+      }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phoneNumber;
+        return newErrors;
+      });
+    }
 
     // Update form data
     setFormData(prev => ({

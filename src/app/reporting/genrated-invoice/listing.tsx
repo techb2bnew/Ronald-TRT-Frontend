@@ -14,13 +14,14 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { Tooltip } from 'react-tooltip';
- 
+
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import InvoiceGenerator from '@/app/component/invoice-genrated';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -31,7 +32,7 @@ interface VehcileInfo {
   name: string;
   email: string;
   deletedStatus?: boolean;
-  paidDate:string;
+  paidDate: string;
   Role: { name: string };
 }
 const JobTable: React.FC = () => {
@@ -54,6 +55,12 @@ const JobTable: React.FC = () => {
   const [originalJobs, setOriginalJobs] = useState<any[]>([]);
   const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
   const [pdrValues, setPdrValues] = useState<Record<string, string>>({});
+
+  const withSerialNo = (jobs: any[], start = 1) =>
+    jobs.map((job: any, index: number) => ({
+      ...job,
+      serialNo: start + index,
+    }));
 
   useEffect(() => {
     // Ensure this code runs only on the client-side (after the component mounts)
@@ -88,19 +95,20 @@ const JobTable: React.FC = () => {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.invoice.invoice || []
           : data.response.invoice || [];
- 
+
         const initialInvoiceDates: Record<string, string> = {};
         fetchedTechnicians.forEach(job => {
-          
+
           if (job.paidDate) {
             const date = new Date(job.paidDate);
             initialInvoiceDates[job.invoiceNumber] = date.toISOString().split('T')[0];
           }
-        }); 
+        });
         setInvoiceDates(initialInvoiceDates);
 
 
-        setOriginalJobs(fetchedTechnicians);
+        const jobsWithSerial = withSerialNo(fetchedTechnicians, (page - 1) * limit + 1);
+        setOriginalJobs(jobsWithSerial);
         const filteredJobs = fetchedTechnicians.filter((job: any) => {
           return selectedStatus === 'paid'
             ? job.status === true
@@ -109,7 +117,7 @@ const JobTable: React.FC = () => {
               : true;
         });
 
-        setActiveJob(fetchedTechnicians);
+        setActiveJob(jobsWithSerial);
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalVehicles || 0);
 
@@ -165,6 +173,11 @@ const JobTable: React.FC = () => {
           return direction === 'asc'
             ? nameA.localeCompare(nameB)
             : nameB.localeCompare(nameA);
+        }
+        if (column === 'serialNo') {
+          const serialA = Number(a?.serialNo ?? 0);
+          const serialB = Number(b?.serialNo ?? 0);
+          return direction === 'asc' ? serialA - serialB : serialB - serialA;
         }
 
         // Handle other columns
@@ -265,7 +278,7 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.vehicles.updatedVehicles);
+        setActiveJob(withSerialNo(response.data.vehicles.updatedVehicles || []));
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -310,7 +323,7 @@ const JobTable: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.invoice.invoices);
+        setActiveJob(withSerialNo(data.invoice.invoices || []));
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -339,7 +352,7 @@ const JobTable: React.FC = () => {
 
   useEffect(() => {
     if (selectedStatus === '') {
-      setActiveJob(originalJobs);
+      setActiveJob(withSerialNo(originalJobs));
     } else {
       const filtered = originalJobs.filter(job => {
         console.log(job.status, 'job vehicleStatus');
@@ -356,7 +369,7 @@ const JobTable: React.FC = () => {
         console.log('No jobs match the filter criteria');
       }
 
-      setActiveJob(filtered);
+      setActiveJob(withSerialNo(filtered));
     }
   }, [selectedStatus, originalJobs]);
 
@@ -422,6 +435,7 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td> */}
+        <td>{job?.serialNo}</td>
         <td> <Link href={`/reporting/view-invoice?invoiceId=${job.invoiceNumber}`} className='hover:underline'> {job?.invoiceNumber}</Link> </td>
         <td>  {job?.customer?.fullName} </td>
         <td>  {job?.job?.jobName} </td>
@@ -430,8 +444,8 @@ const JobTable: React.FC = () => {
         <td>
           <div
             className={`badge w-[80px] text-center ${job.status === 'paid'
-                ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
-                : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
+              ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow'
+              : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'
               }`}
           >
             {job.status === 'paid' ? 'Paid' : 'Unpaid'}
@@ -440,23 +454,42 @@ const JobTable: React.FC = () => {
 
         <td>
           <div className="flex gap-2 items-center">
+
             <TextField
               label=""
               variant="outlined"
               fullWidth
               color="warning"
               size="small"
-              type='date'
-              value={invoiceDates[job.invoiceNumber] || new Date().toISOString().split('T')[0]}
-              onChange={(e) => setInvoiceDates(prev => ({
-                ...prev,
-                [job.invoiceNumber]: e.target.value
-              }))}
+              type="date"
+              disabled={job.status === 'paid'}
+              value={
+                invoiceDates[job.invoiceNumber] ||
+                new Date().toISOString().split('T')[0]
+              }
+              onChange={(e) =>
+                setInvoiceDates((prev) => ({
+                  ...prev,
+                  [job.invoiceNumber]: e.target.value,
+                }))
+              }
               InputLabelProps={{
                 shrink: true,
               }}
             />
-            <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePaidDate(job.invoiceNumber)}>Save</button>
+
+            <button
+              type="button"
+              disabled={job.status === 'paid'}
+              className={`p-2 rounded text-white ${job.status === 'paid'
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "primary-bg cursor-pointer"
+                }`}
+              onClick={() => handleSavePaidDate(job.invoiceNumber)}
+            >
+              Save
+            </button>
+
           </div>
         </td>
         <td className='text-left'>
@@ -499,15 +532,15 @@ const JobTable: React.FC = () => {
           { label: 'Sent Invoice', href: '/reporting/invoice' }
         ]}
       />
-      <div className="shadow-lg p-4 bg-white rounded-lg"> 
-      <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
-        onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
+      <div className="shadow-lg p-4 bg-white rounded-lg">
+        <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
+          onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
-      <div className="overflow-auto rounded-md">
-        <table className="table w-full table-fixed">
-          <thead>
-            <tr>
-              {/* <th className="w-[50px]">
+        <div className="overflow-auto rounded-md">
+          <table className="table w-full table-fixed">
+            <thead>
+              <tr>
+                {/* <th className="w-[50px]">
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -527,53 +560,53 @@ const JobTable: React.FC = () => {
                   </span>
                 </label>
               </th> */}
-              <th onClick={() => handleSort('id')}>
-                Invoice ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
-              </th>
-              <th>
-                Customer Name
-              </th>
-              <th>
-                Job Name
-              </th>
-              {/* <th className="w-[160px]">Grand Total</th> */}
-              <th>Invoice Created Date</th>
-              <th className="w-[130px]">Status</th>
-              <th className="w-[220px]">Add Paid Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={8} className="text-center py-10">
-                  <Loader />
-                </td>
+                <th onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
+                </th>
+                <th onClick={() => handleSort('id')}>
+                  Invoice ID
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+                </th>
+                <th>
+                  Customer Name
+                </th>
+                <th>
+                  Job Name
+                </th>
+                {/* <th className="w-[160px]">Grand Total</th> */}
+                <th>Invoice Created Date</th>
+                <th className="w-[130px]">Status</th>
+                <th className="w-[220px]">Add Paid Date</th>
+                <th>Action</th>
               </tr>
-            ) : activeJob?.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="text-center py-10">
-                  <Empty />
-                </td>
-              </tr>
-            ) : (
-              activeJob?.map((job) => renderRow(job))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex justify-end gap-3 items-center">
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-10">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : activeJob?.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-10">
+                    <Empty />
+                  </td>
+                </tr>
+              ) : (
+                activeJob?.map((job) => renderRow(job))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end gap-3 items-center">
 
-        {activeJob?.length > 0 && (
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-        )}
+          {activeJob?.length > 0 && (
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          )}
+        </div>
       </div>
-    </div>
     </div>
   );
 };

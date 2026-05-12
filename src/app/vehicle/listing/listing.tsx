@@ -21,12 +21,15 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
- 
+
 import Papa from 'papaparse';
 import Link from 'next/link';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+const VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY = 'vehicleWorkOrderImportSerialToIdMap';
 
 // ─── Tab type ────────────────────────────────────────────────────────────────
 type ActiveTab = 'scanned' | 'insurance';
@@ -106,7 +109,14 @@ const JobTable: React.FC = () => {
   };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   const handlePageSizeChange = (size: number) => {
@@ -133,22 +143,26 @@ const JobTable: React.FC = () => {
       const userId = localStorage.getItem('userID');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+
       const endpoint = query.trim()
-      ? roleType === 'superadmin'
-        ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-        : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-      : roleType === 'superadmin' || roleType === 'manager'
-        ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-        : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
+        ? roleType === 'superadmin'
+          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+        : roleType === 'superadmin' || roleType === 'manager'
+          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
-  
+
       if (response.ok) {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
           : data.response.vehicles || [];
-        setActiveJob(fetchedTechnicians);
+        const vehiclesWithSerialNo = fetchedTechnicians.map((vehicle: any, index: number) => ({
+          ...vehicle,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
+        setActiveJob(vehiclesWithSerialNo);
         setTotalPages(data.response?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0);
         setTotalExpense(data.response?.totalEstimateCost || data.data?.totalEstimateCost);
@@ -266,23 +280,88 @@ const JobTable: React.FC = () => {
   }, [activeTab, currentPage, searchTerm, pageSize]);
 
   const handleSort = (column: string) => {
-    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
+    const direction = sortBy === column && sortDirection === 'asc' ? 'desc' : 'asc';
     setSortDirection(direction);
     setSortBy(column);
 
+    const techsOfType = (job: any, type: 'technician' | 'R/I/R/R') =>
+      (job?.assignedTechnicians ?? []).filter((t: any) => t?.techType === type);
+
+    const techNameLabel = (job: any, type: 'technician' | 'R/I/R/R') => {
+      const t = techsOfType(job, type)[0];
+      if (!t) return '';
+      return `${t.firstName ?? ''} ${t.lastName ?? ''}`.trim().toLowerCase();
+    };
+
+    const techRateValue = (job: any, kind: 'tech' | 'r') => {
+      const t = (job?.assignedTechnicians ?? [])[0];
+      if (!t?.VehicleTechnician) return 0;
+      const vt = t.VehicleTechnician;
+      const pct = kind === 'tech' ? vt.techPercentageCalculatedAmount : vt.rPercentageCalculatedAmount;
+      const flat = kind === 'tech' ? vt.techFlatRate : vt.rRate;
+      const pickRaw = pct != null && String(pct).trim() !== '' && String(pct).toLowerCase() !== 'null'
+        ? pct
+        : flat;
+      const num = parseFloat(String(pickRaw ?? '').replace(/[^0-9.\-]/g, ''));
+      return Number.isNaN(num) ? 0 : num;
+    };
+
+    const dateValue = (v: any) => {
+      if (!v) return 0;
+      const t = new Date(v).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
     const sortedJobs = [...activeJob].sort((a, b) => {
-      if (column === 'fullName') {
-        const nameA = `${a?.customer?.fullName}`;
-        const nameB = `${b?.customer?.fullName}`;
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      let valueA: string | number = '';
+      let valueB: string | number = '';
+
+      switch (column) {
+        case 'serialNo':
+          valueA = Number(a?.serialNo) || 0;
+          valueB = Number(b?.serialNo) || 0;
+          break;
+        case 'fullName':
+          valueA = (a?.customer?.fullName ?? '').toLowerCase().trim();
+          valueB = (b?.customer?.fullName ?? '').toLowerCase().trim();
+          break;
+        case 'technicianName':
+          valueA = techNameLabel(a, 'technician');
+          valueB = techNameLabel(b, 'technician');
+          break;
+        case 'rIName':
+          valueA = techNameLabel(a, 'R/I/R/R');
+          valueB = techNameLabel(b, 'R/I/R/R');
+          break;
+        case 'techFlatRate':
+          valueA = techRateValue(a, 'tech');
+          valueB = techRateValue(b, 'tech');
+          break;
+        case 'rRate':
+          valueA = techRateValue(a, 'r');
+          valueB = techRateValue(b, 'r');
+          break;
+        case 'startDate':
+        case 'endDate':
+          valueA = dateValue(a?.[column]);
+          valueB = dateValue(b?.[column]);
+          break;
+        case 'labourCost':
+          valueA = Number(a?.labourCost) || 0;
+          valueB = Number(b?.labourCost) || 0;
+          break;
+        case 'vin':
+        case 'jobName':
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
+          break;
+        default:
+          valueA = (a?.[column] ?? '').toString().toLowerCase();
+          valueB = (b?.[column] ?? '').toString().toLowerCase();
       }
-      if (column === 'technicianName') {
-        const nameF = `${a?.technician?.firstName} ${a?.technician?.lastName}`;
-        const nameL = `${b?.technician?.firstName} ${b?.technician?.lastName}`;
-        return direction === 'asc' ? nameF.localeCompare(nameL) : nameL.localeCompare(nameF);
-      }
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -398,13 +477,17 @@ const JobTable: React.FC = () => {
       useKeysAsHeaders: true,
     };
     const csvExporter = new ExportToCsv(csvOptions);
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
       const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
         const vt = tech.VehicleTechnician || {};
         return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}, techPercentage ${vt.techPercentage}`;
       }).join(', ');
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
       return {
-        id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,
+        'Serial No': serialNo,
+        vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName, assignCustomer: jobData?.customer?.id,
         bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
         model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
@@ -416,6 +499,7 @@ const JobTable: React.FC = () => {
         jobDescription: jobData.jobDescription.join(' '), technicianRates,
       };
     });
+    localStorage.setItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -427,8 +511,17 @@ const JobTable: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       let text = (e.target?.result as string).replace(/^\uFEFF/, '').trimStart();
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'Serial No', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'vehicleType', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
         'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates'
@@ -452,7 +545,14 @@ const JobTable: React.FC = () => {
             return !isHeaderRow && hasData;
           });
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
               const rateChunks = row.technicianRates
@@ -468,7 +568,14 @@ const JobTable: React.FC = () => {
                 return { id: technicianIds[index] || null, name, techFlatRate, rRate };
               });
               const jobDescriptions = row.jobDescription ? row.jobDescription.split(',').map((desc: any) => desc.trim()) : [];
-              return { ...row, technicians, jobDescription: jobDescriptions, assignTechnicians: undefined };
+              return {
+                ...row,
+                id: resolvedJobId,
+                technicians,
+                jobDescription: jobDescriptions,
+                ['Serial No']: undefined,
+                assignTechnicians: undefined,
+              };
             }).filter(row => !manualHeaders.some(header => row[header] === header));
             await axios.post(`/api/importVehicle`, { data: payloadData }, { headers });
             toast.success('CSV Import Successful!');
@@ -521,7 +628,11 @@ const JobTable: React.FC = () => {
       });
       const data = await response.json();
       if (response.ok && data.status) {
-        setActiveJob(data.vehicles.updatedVehicles || []);
+        const filteredVehiclesWithSerialNo = (data.vehicles.updatedVehicles || []).map((vehicle: any, index: number) => ({
+          ...vehicle,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(filteredVehiclesWithSerialNo);
         setTotalExpense(data.vehicles?.totalEstimateCost || 0);
         setTotalDantTechCost(data.vehicles?.totalDentTechCost);
 
@@ -546,9 +657,10 @@ const JobTable: React.FC = () => {
     }
   };
 
-  const renderRow = (job: any) => {
+  const renderRow = (job: any, index: number) => {
     const isChecked = selectedIds.includes(job.id);
     const roleType = localStorage.getItem('types') || "";
+    const serialNo = job.serialNo ?? ((currentPage - 1) * pageSize + index + 1);
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -566,14 +678,34 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job.id}</Link></td>
+        <td>{serialNo}</td>
+        {/* <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job.id}</Link></td> */}
         <td>{job?.jobName}</td>
         <td>{job?.customer?.fullName}</td>
         {roleType !== 'single-technician' && (
           <td>
-            {job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'technician')?.map((tech: any) => (
-              <div key={tech.id} className="capitalize">{tech.firstName} {tech.lastName}</div>
-            ))}
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="flex items-center gap-2 mb-1">
+
+                  <span
+                    className={`capitalize font-medium ${tech?.deletedStatus
+                        ? "text-red-600"
+                        : "text-gray-900"
+                      }`}
+                  >
+                    {tech.firstName} {tech.lastName}
+                  </span>
+
+                  {tech?.deletedStatus && (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[10px] font-medium text-red-700">
+                      Deleted Tech
+                    </span>
+                  )}
+
+                </div>
+              ))}
           </td>
         )}
         {roleType !== 'single-technician' && (
@@ -581,9 +713,15 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== ''
+                  {(tech.VehicleTechnician?.techPercentageCalculatedAmount != null &&
+                    String(tech.VehicleTechnician?.techPercentageCalculatedAmount).trim() !== '' &&
+                    String(tech.VehicleTechnician?.techPercentageCalculatedAmount).toLowerCase() !== 'null')
                     ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}`
-                    : <span className="text-gray-500 text-sm"></span>}
+                    : ((tech.VehicleTechnician?.techFlatRate != null &&
+                      String(tech.VehicleTechnician?.techFlatRate).trim() !== '' &&
+                      String(tech.VehicleTechnician?.techFlatRate).toLowerCase() !== 'null')
+                      ? `$${tech.VehicleTechnician?.techFlatRate}`
+                      : <span className="text-gray-500 text-sm"></span>)}
                 </div>
               ))
             ) : <span className="text-gray-500 text-sm"></span>}
@@ -601,9 +739,15 @@ const JobTable: React.FC = () => {
             {job?.assignedTechnicians?.length > 0 ? (
               job?.assignedTechnicians?.map((tech: any) => (
                 <div key={tech.id} className="capitalize">
-                  {tech.VehicleTechnician?.rPercentageCalculatedAmount && tech.VehicleTechnician?.rPercentageCalculatedAmount !== ''
+                  {(tech.VehicleTechnician?.rPercentageCalculatedAmount != null &&
+                    String(tech.VehicleTechnician?.rPercentageCalculatedAmount).trim() !== '' &&
+                    String(tech.VehicleTechnician?.rPercentageCalculatedAmount).toLowerCase() !== 'null')
                     ? `$${tech.VehicleTechnician?.rPercentageCalculatedAmount}`
-                    : <span className="text-gray-500 text-sm"></span>}
+                    : ((tech.VehicleTechnician?.rRate != null &&
+                      String(tech.VehicleTechnician?.rRate).trim() !== '' &&
+                      String(tech.VehicleTechnician?.rRate).toLowerCase() !== 'null')
+                      ? `$${tech.VehicleTechnician?.rRate}`
+                      : <span className="text-gray-500 text-sm"></span>)}
                 </div>
               ))
             ) : <span className="text-gray-500 text-sm"></span>}
@@ -633,7 +777,7 @@ const JobTable: React.FC = () => {
             </span>
           )}
         </td> */}
-        <td> 
+        <td>
           <TableActions
             editRoute={`/vehicle/create-vehicle?vahicleId=${job.id}`}
             deleteRoute={`/api/deleteVehicle`}
@@ -783,7 +927,7 @@ const JobTable: React.FC = () => {
                   insuranceVehicles.map((v: any) => (
                     <tr key={v.id}>
                       <td>{v?.job?.jobName || '–'}</td>
-                      <td>{v?.job?.customer.fullName || '–'}</td>
+                      <td>{v?.job?.customer?.fullName || '–'}</td>
                       <td>{v?.vin || '–'}</td>
                       <td>{v?.grossSettlement || '–'}</td>
                       <td>{v?.job?.insurancePercentage || '–'}%</td>
@@ -849,23 +993,65 @@ const JobTable: React.FC = () => {
                     </span>
                   </label>
                 </th>
-                <th className="w-[50px]" onClick={() => handleSort('id')}>
-                  ID
-                  {sortBy === 'id' && (
-                    <span className="ml-2 text-[#000]">{sortDirection === 'asc' ? '▲' : '▼'}</span>
-                  )}
+                <th className="w-[70px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
-                <th className="w-[120px]">Job Title</th>
-                <th className="w-[120px]">Customer Name</th>
-                {roleType !== 'single-technician' && <th className="w-[150px]">Assigned Dent Tech</th>}
-                {roleType !== 'single-technician' && <th className="w-[120px]">Tech Flat Rate</th>}
-                {roleType !== 'single-technician' && <th className="w-[130px]">Assigned R&I</th>}
-                {roleType !== 'single-technician' && <th className="w-[80px]">R&I</th>}
+                {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
+                  ID
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+                </th> */}
+                <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('jobName')}>
+                  Job Title
+                  <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
+                </th>
+                <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('fullName')}>
+                  Customer Name
+                  <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
+                </th>
+                {roleType !== 'single-technician' && (
+                  <th className="w-[150px] cursor-pointer select-none" onClick={() => handleSort('technicianName')}>
+                    Assigned Dent Tech
+                    <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[120px] cursor-pointer select-none" onClick={() => handleSort('techFlatRate')}>
+                    Tech Flat Rate
+                    <SortIcon active={sortBy === 'techFlatRate'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[130px] cursor-pointer select-none" onClick={() => handleSort('rIName')}>
+                    Assigned R&I
+                    <SortIcon active={sortBy === 'rIName'} direction={sortDirection} />
+                  </th>
+                )}
+                {roleType !== 'single-technician' && (
+                  <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('rRate')}>
+                    R&I
+                    <SortIcon active={sortBy === 'rRate'} direction={sortDirection} />
+                  </th>
+                )}
                 {/* {roleType !== 'single-technician' && <th className="w-[120px]">Total Expense</th>} */}
-                <th className="w-[150px]">VIN</th>
-                <th className="w-[100px]">Start Date</th>
-                <th className="w-[80px]">End Date</th>
-                {roleType === 'single-technician' && <th className="w-[80px]">Labour Cost</th>}
+                <th className="w-[150px] cursor-pointer select-none" onClick={() => handleSort('vin')}>
+                  VIN
+                  <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
+                </th>
+                <th className="w-[100px] cursor-pointer select-none" onClick={() => handleSort('startDate')}>
+                  Start Date
+                  <SortIcon active={sortBy === 'startDate'} direction={sortDirection} />
+                </th>
+                <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('endDate')}>
+                  End Date
+                  <SortIcon active={sortBy === 'endDate'} direction={sortDirection} />
+                </th>
+                {roleType === 'single-technician' && (
+                  <th className="w-[80px] cursor-pointer select-none" onClick={() => handleSort('labourCost')}>
+                    Labour Cost
+                    <SortIcon active={sortBy === 'labourCost'} direction={sortDirection} />
+                  </th>
+                )}
                 {/* <th className="w-[130px]">Status</th> */}
                 <th className="w-[100px]">Action</th>
               </tr>
@@ -873,18 +1059,18 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading && activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 9 : 11} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
               ) : (
-                activeJob?.map((job) => renderRow(job))
+                activeJob?.map((job, index) => renderRow(job, index))
               )}
 
               {/* {roleType !== 'single-technician' && (
@@ -926,7 +1112,7 @@ const JobTable: React.FC = () => {
           showClearFilters={true}
           onClearFilters={handleClearFilters}
           onStatusChange={(status) => {
-            setWorkOrderStatus(status);    
+            setWorkOrderStatus(status);
             fetchvehicleInfo(1, searchTerm, pageSize, { status });
           }}
           onCompareWorkOrderClick={
@@ -935,6 +1121,7 @@ const JobTable: React.FC = () => {
               : undefined
           }
           compareWorkOrderLabel="Compare work order"
+          selectedRows={selectedIds}
         />
 
         {/* ─── Tabs ─────────────────────────────────────────────────────────── */}

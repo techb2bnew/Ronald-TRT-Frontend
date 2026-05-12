@@ -16,6 +16,7 @@ import { useSidebar } from "@/app/component/SidebarContext";
 import Papa from 'papaparse';
 import { Tooltip } from 'react-tooltip';
 import Link from 'next/link';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -719,11 +720,7 @@ const CompletedJobs: React.FC = () => {
               </th>
               <th className="w-[50px]" onClick={() => handleSort('id')}>
                 ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
               </th>
               <th className="w-[120px]">Job Title</th>
 

@@ -13,14 +13,17 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
  
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY = 'singleTechJobsImportSerialToIdMap';
 
 interface VehcileInfo {
   id: string;
@@ -50,10 +53,14 @@ const JobTable: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -112,7 +119,11 @@ const JobTable: React.FC = () => {
         const fetchedTechnicians: VehcileInfo[] = query.trim()
           ? data.data.vehicles || []
           : data.jobs.vehicles || [];
-        setActiveJob(fetchedTechnicians);
+        const jobsWithSerial = fetchedTechnicians.map((job: any, index: number) => ({
+          ...job,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
+        setActiveJob(jobsWithSerial);
         setTotalPages(data.jobs.totalPages || 1);
         setTotalJobs(data.jobs.totalVehicles || 0); // Ensure totalJobs is set correctly
 
@@ -176,6 +187,11 @@ const JobTable: React.FC = () => {
         const yearB = Number(b?.modelYear ?? 0);
         return direction === 'asc' ? yearA - yearB : yearB - yearA;
       }
+      if (column === 'serialNo') {
+        const serialA = Number(a?.serialNo ?? 0);
+        const serialB = Number(b?.serialNo ?? 0);
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
       if (column === 'labourCost') {
         const parseCost = (val: any) => {
           if (val === null || val === undefined || val === '') return Number.NaN;
@@ -230,13 +246,16 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
       const firstTech = jobData.assignedTechnicians?.[0] || {};
       const vt = firstTech.VehicleTechnician || {};
 
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
 
       return {
-        id: jobData.id,
+        'Serial No': serialNo,
         vin: jobData.vin,
         customer: `${jobData?.customer?.fullName}`,
         jobName: jobData.jobName,
@@ -259,6 +278,7 @@ const JobTable: React.FC = () => {
         jobDescription: jobData.jobDescription.join(''), 
       };
     });
+    localStorage.setItem(SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -277,8 +297,17 @@ const JobTable: React.FC = () => {
         .replace(/^\uFEFF/, '') // Remove BOM
         .trimStart(); // Remove leading whitespace/newlines
 
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(SINGLE_TECH_JOBS_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
+        'Serial No', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'vehicleType',
         'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
@@ -310,7 +339,14 @@ const JobTable: React.FC = () => {
             });
 
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               // Extract technician names and IDs
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
@@ -345,8 +381,10 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
+                id: resolvedJobId,
                 technicians, 
                 jobDescription: jobDescriptions,
+                ['Serial No']: undefined,
                 assignTechnicians: undefined, // cleanup unused field
               };
             }).filter(row =>
@@ -463,7 +501,11 @@ const JobTable: React.FC = () => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.vehicles.updatedVehicles);
+        const jobsWithSerial = (data.vehicles.updatedVehicles || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(jobsWithSerial);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -502,7 +544,8 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td>{job.serialNo}</td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.jobId}&singleWorkOrder`} className='hover:underline'>{job.id}</Link></td> */}
         <td>{job?.jobName}</td>
 
 
@@ -563,7 +606,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)} />
+        <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}  selectedRows={selectedIds} />
 
         <div className="overflow-auto rounded-md">
           <table className="table w-full table-fixed">
@@ -589,81 +632,49 @@ const JobTable: React.FC = () => {
                     </span>
                   </label>
                 </th>
-                <th className="w-[100px]" onClick={() => handleSort('id')}>
-                  ID
-                  {sortBy === 'id' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                <th className="w-[90px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
+                {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
+                  ID
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+                </th> */}
                 <th className="w-[140px]" onClick={() => handleSort('jobName')}>
                   Job Title
-                  {sortBy === 'jobName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
                 </th>
 
                 <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                   Customer Name
-                  {sortBy === 'fullName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[120px]">
                 Customer Number
               </th> */}
                 <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
                   Technician Name
-                  {sortBy === 'technicianName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
                 </th>
                 <th className="w-[140px]" onClick={() => handleSort('vin')}>
                   VIN
-                  {sortBy === 'vin' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('make')}>
                   Make
-                  {sortBy === 'make' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'make'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('model')}>
                   Model
-                  {sortBy === 'model' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'model'} direction={sortDirection} />
                 </th>
                 <th className="w-[80px]" onClick={() => handleSort('modelYear')}>
                   Year
-                  {sortBy === 'modelYear' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'modelYear'} direction={sortDirection} />
                 </th>
                 {/* <th className="w-[120px]" onClick={() => handleSort('labourCost')}>
                   Vehicle Override Price
-                  {sortBy === 'labourCost' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'labourCost'} direction={sortDirection} />
                 </th> */}
                 <th className="w-[120px]">Status</th>
                 <th className="w-[100px]">Action</th>

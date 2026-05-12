@@ -14,15 +14,18 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { Country, State } from 'country-state-city';
 import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const TECHNICIAN_IMPORT_ID_MAP_KEY = 'technicianImportSerialToIdMap';
 interface Technicians {
   id: string;
   name: string;
@@ -45,6 +48,8 @@ const TechnicianTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [originalTechnicians, setOriginalTechnicians] = useState<any[]>([]);
+  const [accountStatusFilter, setAccountStatusFilter] = useState<string>('');
 
   // Fetch technicians on success
   const handleRejectionSuccess = () => {
@@ -145,8 +150,14 @@ const TechnicianTable: React.FC = () => {
         const fetchedTechnicians: Technicians[] = query.trim()
           ? data.technicians || []
           : data.technician?.technicians || [];
-        const filteredTechnicians = fetchedTechnicians.filter(technician => technician?.Role?.name !== "super admin");
+        const filteredTechnicians = fetchedTechnicians
+          .filter(technician => technician?.Role?.name !== "super admin")
+          .map((technician: any, index: number) => ({
+            ...technician,
+            serialNo: (page - 1) * limit + index + 1,
+          }));
 
+        setOriginalTechnicians(filteredTechnicians);
         setTechnicians(filteredTechnicians);
         setTotalPages(data.technician?.totalPages || 1);
       } else {
@@ -169,11 +180,34 @@ const TechnicianTable: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPage, searchTerm, pageSize]);
 
+  // Account status filter (client-side over current page) + serial renumber.
+  useEffect(() => {
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    let result = originalTechnicians;
+    if (accountStatusFilter === 'active') {
+      result = originalTechnicians.filter((t: any) => Boolean(t?.accountStatus));
+    } else if (accountStatusFilter === 'inactive') {
+      result = originalTechnicians.filter((t: any) => !t?.accountStatus);
+    }
+    setTechnicians(renumberSerialNo(result, startSerial));
+  }, [accountStatusFilter, originalTechnicians, currentPage, pageSize]);
+
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setOriginalTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech: any) => tech.id !== deletedId),
+        startSerial
+      )
+    );
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   // Function to handle sorting logic
@@ -190,6 +224,10 @@ const TechnicianTable: React.FC = () => {
 
       // Handle different column types
       switch (column) {
+        case 'serialno':
+          valueA = Number(a.serialNo) || 0;
+          valueB = Number(b.serialNo) || 0;
+          break;
         case 'type':
           valueA = a.techType ? a.techType.toString().trim().toLowerCase() : '';
           valueB = b.techType ? b.techType.toString().trim().toLowerCase() : '';
@@ -259,9 +297,10 @@ const TechnicianTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -280,7 +319,7 @@ const TechnicianTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td>{tech.id}</td>
+        <td>{serialNo}</td> 
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
@@ -430,17 +469,20 @@ const TechnicianTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => {
-      const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
-      const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedTechnicians.map((tech, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(tech.id);
       return {
-        Id: tech.id,
+        'Serial No': serialNo,
         Name: `${tech.firstName} ${tech.lastName}`,
         Email: tech.email,
         Address: tech.address,
         Type: tech.techType,
       };
     });
+
+    localStorage.setItem(TECHNICIAN_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     // Ensure no headers are included in the data when downloading
     csvExporter.generateCsv(formattedData);
@@ -469,9 +511,15 @@ const TechnicianTable: React.FC = () => {
 
       text = lines.join('\n');
 
-      const manualHeaders = [
-        'Id', 'Name', 'Email', 'Address', 'Type'
-      ];
+      const manualHeaders = ['Serial No', 'Name', 'Email', 'Address', 'Type'];
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(TECHNICIAN_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
 
       Papa.parse(text, {
         header: false,
@@ -508,6 +556,21 @@ const TechnicianTable: React.FC = () => {
                 }
                 obj[key] = value;
               });
+
+              // Resolve Id from Serial No map for update
+              const serialNoVal = obj['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              if (mappedIdFromSerial != null) {
+                obj['Id'] = !isNaN(Number(mappedIdFromSerial))
+                  ? parseInt(mappedIdFromSerial, 10)
+                  : mappedIdFromSerial;
+              }
+
+              // Don't send Serial No to backend
+              obj['Serial No'] = undefined;
 
               return obj;
             })
@@ -589,9 +652,9 @@ const TechnicianTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician" />
+      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} onAccountStatusChange={(status) => setAccountStatusFilter(status)} showClearFilters={true} onClearFilters={() => setAccountStatusFilter('')} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
+        headers={['', 'Serial No',   'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -620,19 +683,17 @@ const TechnicianTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'type'];
+          const sortableColumns = ['serialno', 'name', 'email', 'type'];
 
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[60px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? ' ' : ''}`}
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)} // Ensure the column is passed correctly
             >
               {header}
-              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {sortableColumns.includes(columnKey) && (
+                <SortIcon active={sortBy === columnKey} direction={sortDirection} />
               )}
             </th>
 

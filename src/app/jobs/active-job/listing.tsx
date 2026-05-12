@@ -13,12 +13,15 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
  
 import Papa from 'papaparse';
 import Link from 'next/link';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const ACTIVE_JOB_IMPORT_ID_MAP_KEY = 'activeJobImportSerialToIdMap';
 interface Jobs {
   id: string;
   name: string;
@@ -54,10 +57,14 @@ const JobTable: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -103,9 +110,10 @@ const JobTable: React.FC = () => {
 
       if (response.ok) {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
-        const jobsWithVehicleCount = fetchedJobs.map(job => ({
+        const jobsWithVehicleCount = fetchedJobs.map((job, index) => ({
           ...job,
-          vehicleCount: job.vehicles ? job.vehicles.length : 0  // Count vehicles for each job
+          vehicleCount: job.vehicles ? job.vehicles.length : 0,  // Count vehicles for each job
+          serialNo: (page - 1) * limit + index + 1,
         }));
 
         setActiveJob(jobsWithVehicleCount);
@@ -148,6 +156,11 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
       if (column === 'customerName') {
         const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
@@ -286,7 +299,8 @@ const JobTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedJobs.map((jobData) => {
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedJobs.map((jobData, index) => {
 
 
       const technician = jobData.technicians?.[0] || {};
@@ -316,9 +330,11 @@ const JobTable: React.FC = () => {
           return rate;
         }
       };
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(jobData.id);
       return {
-        id: jobData.id,
-        customer: `${jobData?.customer?.fullName}`,
+        'Serial No': serialNo,
+        customer: `${jobData?.customer?.fullName || ''}`,
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,
         technicians: jobData.technicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
@@ -329,6 +345,7 @@ const JobTable: React.FC = () => {
 
     });
 
+    localStorage.setItem(ACTIVE_JOB_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 
@@ -390,8 +407,17 @@ const JobTable: React.FC = () => {
         .replace(/^\uFEFF/, '')
         .trimStart();
 
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(ACTIVE_JOB_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
+
       const manualHeaders = [
-        'id', 'customer', 'assignCustomer', 'jobTitle',
+        'Serial No', 'customer', 'assignCustomer', 'jobTitle',
         'technicians', 'assignTechnicians', 'manager', 'assignManager'
       ];
 
@@ -419,7 +445,14 @@ const JobTable: React.FC = () => {
             });
 
           try {
-            const payloadData = cleanedData.map(row => {
+            const payloadData = cleanedData.map((row) => {
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const resolvedJobId = mappedIdFromSerial ?? row.id;
+
               const technicianNames = row.technicians ? row.technicians.split(',').map((name: any) => name.trim()) : [];
               const technicianIds = row.assignTechnicians ? row.assignTechnicians.split(',').map((id: any) => id.trim()) : [];
 
@@ -435,7 +468,9 @@ const JobTable: React.FC = () => {
 
               return {
                 ...row,
+                id: resolvedJobId,
                 technicians: technicians,
+                ['Serial No']: undefined,
                 assignTechnicians: undefined,
                 jobName: undefined,
               };
@@ -476,8 +511,9 @@ const JobTable: React.FC = () => {
     );
   };
 
-  const renderRow = (job: any) => {
+  const renderRow = (job: any, index: number) => {
     const isChecked = selectedIds.includes(job.id);
+    const serialNo = job.serialNo ?? ((currentPage - 1) * pageSize + index + 1);
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -495,14 +531,20 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td>
+        <td>{serialNo}</td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className='hover:underline'>{job.id}</Link></td> */}
         <td> {job?.jobName}</td>
 
 
         <td> {job?.customer?.fullName}  </td>
 
         {roleType !== 'single-technician' && (
-          <td>{job?.manager?.firstName} {job?.manager?.lastName}</td>
+          <td >
+            <span className={job?.manager?.deletedStatus ? 'text-red-600' : ''}>  {job?.manager?.firstName} {job?.manager?.lastName}</span>
+            {job?.manager?.deletedStatus && (
+              <span className="d-block ml-2 text-xs text-red-600 bg-red-100 p-2 rounded shadow">Deleted</span>
+            )}
+          </td>
         )}
         <td>{job.vehicleCount || 0}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
@@ -572,7 +614,11 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.jobs.jobs); // Update the jobs with filtered data
+        const filteredJobsWithSerialNo = (response.data.jobs.jobs || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(filteredJobsWithSerialNo); // Update the jobs with filtered data
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -600,7 +646,7 @@ const JobTable: React.FC = () => {
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
-          onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters} />
+          onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters}  selectedRows={selectedIds} />
 
         <div className="overflow-auto rounded-md">
           <table className="table w-full table-fixed">
@@ -626,21 +672,17 @@ const JobTable: React.FC = () => {
                     </span>
                   </label>
                 </th>
-                <th className="w-[100px]" onClick={() => handleSort('id')}>
-                  Job Id
-                  {sortBy === 'id' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                <th className="w-[90px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
                 </th>
+                {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
+                  Job Id
+                  <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+                </th> */}
                 <th className="w-[150px]" onClick={() => handleSort('jobName')}>
                   Job Title
-                  {sortBy === 'jobName' && (
-                    <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                      {sortDirection === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
+                  <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
                 </th>
                 <th className="w-[150px]">
                   Customer Name
@@ -662,18 +704,18 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 9} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 9} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 9} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 9} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
               ) : (
-                activeJob.map((job) => renderRow(job))
+                activeJob.map((job, index) => renderRow(job, index))
               )} 
             </tbody>
           </table>

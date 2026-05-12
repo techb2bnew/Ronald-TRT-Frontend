@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
 import Breadcrumb from '@/app/component/breadcrumb';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
 
 import Link from 'next/link';
@@ -203,6 +203,7 @@ export default function ViewDetails() {
   const [assignmentSortKey, setAssignmentSortKey] = useState<AssignmentSortKey>('techName');
   const [assignmentSortDir, setAssignmentSortDir] = useState<'asc' | 'desc'>('asc');
 
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -344,35 +345,33 @@ export default function ViewDetails() {
     const isCompletedJob = searchParams!.has('completedJob');
     const isActiveJob = searchParams!.has('activeJob');
     const isJobStatus = searchParams!.has('jobStatus');
+    const goBack = () => router.back();
 
     if (isCompletedJob) {
-      return { label: 'Completed Work Orders', href: '/jobs/complete-job/listing' };
+      return { label: 'Completed Work Orders', onClick: goBack };
     }
 
     if (isActiveJob) {
-      return { label: 'Job Detail', href: '/jobs/active-job' };
+      return { label: 'Job Detail', onClick: goBack };
     }
 
     if (isJobStatus) {
       const jobStatus = searchParams!.get('jobStatus');
       return {
         label: `${jobStatus?.charAt(0).toUpperCase()}${jobStatus?.slice(1)} All IFS Work Orders`,
-        href: `/reporting/job-status`,
+        onClick: goBack,
       };
     }
 
     if (pathname!.includes('/reporting/job-status')) {
-      return { label: 'All Work Orders', href: '/reporting/job-status' };
+      return { label: 'All Work Orders', onClick: goBack };
     }
 
     return {
       label: isSingleTechnician ? 'Job List' : 'Single Technician Work Order',
-      href: isSingleTechnician ? '/jobs/active-job' : '/single-technicians/jobs',
+      onClick: goBack,
     };
   };
-
-  const baseBreadcrumb = getBaseBreadcrumb();
-  const backHref = baseBreadcrumb.href;
 
   const assignmentRowKeys = displayedAssignmentRows.map((row, index) =>
     assignmentRowKey(row.tech, row.vehicle, index),
@@ -574,12 +573,12 @@ export default function ViewDetails() {
   );
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
         <div className="text-gray-900">{value}</div>
       </div>
     </div>
@@ -590,14 +589,14 @@ export default function ViewDetails() {
       <Breadcrumb
         items={[
           getBaseBreadcrumb(),
-          isEdit ? { label: 'View Details' } : { label: 'Create Technician', href: '/technicians/create-technician' },
+          isEdit ? { label: 'View Details' } : { label: 'Create Technician' },
         ]}
       />
 
       <div className="mx-auto">
         {/* Header: back + View Details */}
         {/* <div className="flex items-center gap-3 mb-4">
-          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Link href="/jobs/active-job" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <svg className="w-8 h-8 bg-[#383d71] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             <span className="font-semibold text-lg">View Details</span>
           </Link>
@@ -640,7 +639,18 @@ export default function ViewDetails() {
               <InfoCard
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
                 label="Manager Name"
-                value={<span className="capitalize">{`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}</span>}
+                value={
+                  <span className="inline-flex items-center gap-2">
+                    <span className={`capitalize ${jobData?.manager?.deletedStatus ? 'text-red-600' : ''}`}>
+                      {`${jobData?.manager?.firstName || ''} ${jobData?.manager?.lastName || ''}`.trim() || 'N/A'}
+                    </span>
+                    {jobData?.manager?.deletedStatus && (
+                      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                        Deleted manager
+                      </span>
+                    )}
+                  </span>
+                }
               />
             )}
             {isSingleTechnician && (
@@ -826,9 +836,24 @@ export default function ViewDetails() {
                             />
                           </td>
                           <td className="px-6 py-4">
-                            <span className="capitalize">
-                              {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
-                            </span>
+                            <div className="flex items-center gap-2">
+
+                              <span
+                                className={`capitalize font-medium ${tech?.deletedStatus
+                                    ? "text-red-600"
+                                    : "text-gray-900"
+                                  }`}
+                              >
+                                {`${tech?.firstName ?? ''} ${tech?.lastName ?? ''}`.trim() || '–'}
+                              </span>
+
+                              {tech?.deletedStatus && (
+                                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                                  Deleted Tech
+                                </span>
+                              )}
+
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             {vt?.techPercentageCalculatedAmount != null && vt.techPercentageCalculatedAmount !== '' ? (
@@ -874,8 +899,8 @@ export default function ViewDetails() {
                               return (
                                 <span
                                   className={`inline-flex items-center rounded px-3 py-1.5 text-sm font-medium ${isPaid
-                                      ? 'bg-green-100 text-green-700'
-                                      : 'bg-red-100 text-red-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'
                                     }`}
                                 >
                                   {isPaid ? 'Paid' : 'Unpaid'}

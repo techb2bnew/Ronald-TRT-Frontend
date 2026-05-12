@@ -7,8 +7,15 @@ interface PaginationProps {
   onPageChange: (selectedItem: { selected: number }) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
-  
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange
+}) => {
+  if (totalPages <= 1) {
+    return null;
+  }
+
   return (
     <ReactPaginate
       previousLabel={'«'}
@@ -21,7 +28,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
       onPageChange={onPageChange}
       containerClassName={'pagination'}
       activeClassName={'active'}
-      forcePage={currentPage - 1}  // react-paginate uses zero indexing for the page count
+      forcePage={currentPage - 1}
     />
   );
 };

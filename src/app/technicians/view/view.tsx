@@ -292,7 +292,7 @@ export default function ViewDetails() {
   const displayAddress = technician?.address ? technician.address.replace(/^,\s*/g, '').replace(/\s*,\s*/g, ', ').trim() : 'N/A';
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
@@ -322,7 +322,7 @@ export default function ViewDetails() {
 
         {/* Profile banner - dark blue with avatar + contact */}
         <div className="bg-[#1e3e6f] rounded-lg shadow-md overflow-hidden">
-          <div className="flex gap-6 p-6 items-center">
+          <div className="flex gap-6 p-3 px-6 items-center">
             {technician?.image ? (
               <img
                 onClick={() => setPreviewImage(technician.image)}
@@ -354,9 +354,9 @@ export default function ViewDetails() {
         </div>
 
         {/* Technician Details - 2x3 InfoCard grid */}
-        <div className="  overflow-hidden mt-4">
+        <div className="  overflow-hidden mt-4 pb-4">
           <h3 className="font-bold text-lg  mb-4 ">Technician Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>}
               label="Secondary Phone"

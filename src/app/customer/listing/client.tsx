@@ -11,13 +11,16 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Link from 'next/link';
 import Papa from 'papaparse';
 import axios from 'axios';
+import SortIcon from '@/app/component/sortIcon';
 
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const CUSTOMER_IMPORT_ID_MAP_KEY = 'customerImportSerialToIdMap';
 interface Customer {
   id: string;
   name: string;
@@ -39,10 +42,14 @@ export default function ClientListing() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setCustomer((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setCustomer((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -78,7 +85,11 @@ export default function ClientListing() {
           : data.customers?.customers || [];
         //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
 
-        setCustomer(fetchedCustomers);
+        const customersWithSerialNo = fetchedCustomers.map((cust: any, index: number) => ({
+          ...cust,
+          serialNo: (page - 1) * limit + index + 1,
+        }));
+        setCustomer(customersWithSerialNo);
         setTotalPages(data.customers?.totalPages || 1);
       } else {
         if (data.error === 'Invalid Token') {
@@ -102,14 +113,22 @@ export default function ClientListing() {
     setSortBy(column);
 
     const sortedCustomers = [...customer].sort((a, b) => {
-      if (column === 'name') {
-        const nameA = `${a.firstName} ${a.lastName}`;
-        const nameB = `${b.firstName} ${b.lastName}`;
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
+
+      if (column === 'fullName') {
+        const nameA = `${a.firstName ?? ''} ${a.lastName ?? ''}`.trim();
+        const nameB = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim();
         return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
       }
 
-      if (a[column] < b[column]) return direction === 'asc' ? -1 : 1;
-      if (a[column] > b[column]) return direction === 'asc' ? 1 : -1;
+      const valueA = a[column] ?? '';
+      const valueB = b[column] ?? '';
+      if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
 
@@ -175,12 +194,19 @@ export default function ClientListing() {
       alert("Please select at least one customer to export.");
       return;
     }
-    const formattedData = selectedCustomers.map((customerData) => ({
-      Id: customerData.id,
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedCustomers.map((customerData, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(customerData.id);
+      return {
+      'Serial No': serialNo,
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
       Address: customerData.address || 'N/A',
-    }));
+      };
+    });
+
+    localStorage.setItem(CUSTOMER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     csvExporter.generateCsv(formattedData);
   };
@@ -208,9 +234,19 @@ export default function ClientListing() {
 
       text = lines.join('\n');
 
-      // CSV columns: Id, Name, Email, Phone, Address (5 cols; 4th = Phone, 5th = Address)
-      // Id, Name, Email, Address (4 cols) or Id, Name, Email, Phone, Address (5 cols)
-      const manualHeaders = ['Id', 'Name', 'Email', 'Address'];
+      // Expected exported columns:
+      // Serial No, Name, Email, Address
+      // Older format fallback:
+      // Id, Name, Email, Address
+      const manualHeaders = ['Serial No', 'Name', 'Email', 'Address'];
+      const savedSerialToIdMap: Record<string, string> = (() => {
+        try {
+          const raw = localStorage.getItem(CUSTOMER_IMPORT_ID_MAP_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch {
+          return {};
+        }
+      })();
 
       Papa.parse(text, {
         header: false,
@@ -221,7 +257,7 @@ export default function ClientListing() {
           const cleanedData = rawRows
             .filter((row) => {
               const firstCell = String(row[0] ?? '').trim().toLowerCase();
-              if (firstCell === 'id') return false;
+              if (firstCell === 'id' || firstCell === 'serial no') return false;
               return true;
             })
             .map((row) => {
@@ -251,9 +287,19 @@ export default function ClientListing() {
               return hasRealData;
             })
             .map((row) => {
-              const idVal = row.Id;
-              const numId = idVal != null && idVal !== '' && !isNaN(Number(idVal)) ? Number(idVal) : null;
-              const { Id, ...rest } = row;
+              // Resolve customer id from saved Serial No -> Id map.
+              // If import file is older and includes Id directly, keep fallback.
+              const serialNoVal = row['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+              const customerIdVal = mappedIdFromSerial ?? row['Customer Id'] ?? row['Id'];
+              const numId = customerIdVal != null && customerIdVal !== '' && !isNaN(Number(customerIdVal))
+                ? Number(customerIdVal)
+                : null;
+
+              const { ['Serial No']: _serialNo, ['Customer Id']: _customerId, Id: _legacyId, ...rest } = row;
               return numId !== null ? { ...rest, Id: numId } : rest;
             })
             .filter((row) => {
@@ -319,7 +365,7 @@ export default function ClientListing() {
   };
 
 
-  const renderRow = (cust: any) => {
+  const renderRow = (cust: any, index: number) => {
     const isChecked = selectedIds.includes(cust.id);
     return (
       <tr key={cust.id}>
@@ -338,7 +384,8 @@ export default function ClientListing() {
             </span>
           </label>
         </td>
-        <td>{cust.id}</td>
+        <td>{cust.serialNo}</td>
+        {/* <td>{cust.id}</td> */}
         <td>
           <div className="flex items-center gap-2">
 
@@ -382,7 +429,7 @@ export default function ClientListing() {
       />
       
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create" />
+      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create"  selectedRows={selectedIds}/>
       
 
       <div className="overflow-x-auto rounded-md">
@@ -408,45 +455,29 @@ export default function ClientListing() {
                   </span>
                 </label>
               </th>
-              <th className="w-[50px]" onClick={() => handleSort('id')}>
-                ID
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+              <th className="w-[80px]" onClick={() => handleSort('serialNo')}>
+                Serial No
+                <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
               </th>
+              {/* <th className="w-[50px]" onClick={() => handleSort('id')}>
+                ID
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+              </th> */}
               <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Name
-                {sortBy === 'fullName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
               </th>
               <th className="w-[200px]" onClick={() => handleSort('email')}>
                 Email
-                {sortBy === 'email' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'email'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('phoneNumber')}>
                 Phone Number
-                {sortBy === 'phoneNumber' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'phoneNumber'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('address')}>
                 Address
-                {sortBy === 'address' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'address'} direction={sortDirection} />
               </th>
               <th className="w-[160px]">Action</th>
             </tr>
@@ -465,7 +496,7 @@ export default function ClientListing() {
                 </td>
               </tr>
             ) : (
-              customer.map((cust) => renderRow(cust))
+              customer.map((cust, index) => renderRow(cust, index))
             )}
           </tbody>
         </table>

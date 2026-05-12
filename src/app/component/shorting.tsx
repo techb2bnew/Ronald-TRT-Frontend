@@ -1,6 +1,7 @@
 import React from 'react';
 import Loader from '@/app/component/loader';
 import Empty from '@/app/component/empty';
+import SortIcon from '@/app/component/sortIcon';
 
 interface SortableTableProps {
   headers: string[];
@@ -24,7 +25,7 @@ const SortableTable: React.FC<SortableTableProps> = ({
   renderHeaderCell,
 }) => {
   // Define sortable columns
-  const sortableColumns = ['id', 'name', 'email', 'type'];
+  const sortableColumns = ['serialNo', 'name', 'email', 'type'];
 
   return (
     <div className="overflow-x-auto rounded-md">
@@ -44,10 +45,8 @@ const SortableTable: React.FC<SortableTableProps> = ({
           onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
         >
           {header}
-          {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-            <span className={`ml-2 ${sortDirection === 'asc' ? 'text-white' : 'text-white'}`}>
-              {sortDirection === 'asc' ? '▲' : '▼'}
-            </span>
+          {sortableColumns.includes(columnKey) && (
+            <SortIcon active={sortBy === columnKey} direction={sortDirection} />
           )}
         </th>
       );

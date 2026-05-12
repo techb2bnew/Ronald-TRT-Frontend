@@ -6,6 +6,8 @@ import AuthCheck from './AuthCheck';
 interface BreadcrumbItem {
   label: string;
   href?: string;
+  /** When set on a non-final segment, invokes this instead of navigating to href (e.g. router.back()). */
+  onClick?: () => void;
 }
 
 interface BreadcrumbProps {
@@ -32,10 +34,24 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
               <svg className="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400" fill="none" viewBox="0 0 6 10">
                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 9 4-4-4-4" />
               </svg>
-              {item.href && index !== items.length - 1 ? (
-                <Link href={item.href} className="ms-1 text-sm font-medium text-gray-700 hover:text-[#383d71] md:ms-2 hover:underline" >
-                  {item.label}
-                </Link>
+              {index !== items.length - 1 ? (
+                item.onClick ? (
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className="ms-1 text-sm font-medium text-gray-700 hover:text-[#383d71] md:ms-2 hover:underline bg-transparent border-0 p-0 cursor-pointer font-inherit text-left"
+                  >
+                    {item.label}
+                  </button>
+                ) : item.href ? (
+                  <Link href={item.href} className="ms-1 text-sm font-medium text-gray-700 hover:text-[#383d71] md:ms-2 hover:underline" >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="ms-1 text-sm font-medium text-gray-500 md:ms-2">
+                    {item.label}
+                  </span>
+                )
               ) : (
                 <span className="ms-1 text-sm font-medium text-gray-500 md:ms-2">
                   {item.label}

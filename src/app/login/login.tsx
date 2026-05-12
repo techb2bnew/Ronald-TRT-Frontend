@@ -137,7 +137,7 @@ export default function Login() {
           });
         }
       } else {
-          router.push('/vehicle/listing');
+          router.push('/dashboard');
         }  
       }
     } catch (error) {
@@ -166,7 +166,7 @@ export default function Login() {
         <div className="bg-white flex items-center gap-8 w-full ">
 
           <div className="w-1/2 md:block hidden  ">
-            <img src='https://jdp-jan.s3.us-east-1.amazonaws.com/image+(27).png' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
+            <img src='https://jdp.nyc3.cdn.digitaloceanspaces.com/logo/image+(27).avif' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
           </div>
           <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
             <div className="text-center mb-5 w-full">

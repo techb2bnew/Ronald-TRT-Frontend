@@ -13,12 +13,14 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import { Tooltip } from 'react-tooltip';
  
 import Papa from 'papaparse';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg'
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 interface Jobs {
@@ -56,10 +58,14 @@ const JobTable: React.FC = () => {
     // Implement search logic here
   };
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully');
-
-    // ✅ Remove the deleted technician from the table
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setActiveJob((prev) =>
+      renumberSerialNo(
+        prev.filter((cust) => cust.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
 
@@ -106,9 +112,10 @@ const JobTable: React.FC = () => {
 
       if (response.ok) {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
-        const jobsWithVehicleCount = fetchedJobs.map(job => ({
+        const jobsWithVehicleCount = fetchedJobs.map((job, index) => ({
           ...job,
-          vehicleCount: job.vehicles ? job.vehicles.length : 0  // Count vehicles for each job
+          vehicleCount: job.vehicles ? job.vehicles.length : 0,  // Count vehicles for each job
+          serialNo: (page - 1) * limit + index + 1,
         }));
 
         setActiveJob(jobsWithVehicleCount);
@@ -150,6 +157,11 @@ const JobTable: React.FC = () => {
     setSortBy(column);
 
     const sortedJobs = [...activeJob].sort((a, b) => {
+      if (column === 'serialNo') {
+        const serialA = Number(a.serialNo) || 0;
+        const serialB = Number(b.serialNo) || 0;
+        return direction === 'asc' ? serialA - serialB : serialB - serialA;
+      }
       if (column === 'customerName') {
         const nameA = `${a?.customer?.firstName} ${a?.customer?.lastName}`;
         const nameB = `${b?.customer?.firstName} ${b?.customer?.lastName}`;
@@ -341,7 +353,7 @@ const JobTable: React.FC = () => {
         }
       };
       return {
-        id: jobData.id,
+        // id: jobData.id,
         customer: `${jobData?.customer?.fullName}`,
         assignCustomer: jobData.assignCustomer,
         jobTitle: jobData.jobName,
@@ -504,8 +516,9 @@ const JobTable: React.FC = () => {
     );
   };
 
-  const renderRow = (job: any) => {
+  const renderRow = (job: any, index: number) => {
     const isChecked = selectedIds.includes(job.id);
+    const serialNo = job.serialNo ?? ((currentPage - 1) * pageSize + index + 1);
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -523,7 +536,8 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td>
+        <td>{serialNo}</td>
+        {/* <td> <Link href={`/jobs/view?jobId=${job.id}&workorder`} className='hover:underline'>{job.id}</Link></td> */}
         <td> {job?.jobName}</td>
 
 
@@ -614,7 +628,11 @@ const JobTable: React.FC = () => {
           },
         });
 
-        setActiveJob(response.data.jobs.jobs); // Update the jobs with filtered data
+        const filteredJobsWithSerialNo = (response.data.jobs.jobs || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(filteredJobsWithSerialNo); // Update the jobs with filtered data
       } catch (error) {
         console.error("Error fetching filtered jobs:", error);
       } finally {
@@ -654,7 +672,11 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
 
       // Handle success or failure based on the API response
       if (response.ok) {
-        setActiveJob(data.jobs.jobs);
+        const jobsWithSerialNo = (data.jobs.jobs || []).map((job: any, index: number) => ({
+          ...job,
+          serialNo: (currentPage - 1) * pageSize + index + 1,
+        }));
+        setActiveJob(jobsWithSerialNo);
         // You can update state or perform further operations based on the response
       } else {
         console.error("Failed to apply filter:", data.error || 'Unknown error');
@@ -676,8 +698,8 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
-        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"  onCustomerChange={(customerId) => handleCustomerChange(customerId)} showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}/>
+      <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV}  userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true}
+        onDateChange={handleDateChange} onNewTechClick={handleNewTechClick} roleType="single-technician"  onCustomerChange={(customerId) => handleCustomerChange(customerId)} showClearFilters={true} onClearFilters={() => {setSearchTerm("");}}  selectedRows={selectedIds}/>
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">
@@ -703,56 +725,36 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
                   </span>
                 </label>
               </th>
-              <th className="w-[100px]" onClick={() => handleSort('id')}>
-                Job Id
-                {sortBy === 'id' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+              <th className="w-[100px]" onClick={() => handleSort('serialNo')}>
+                Serial No
+                <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
               </th>
+              {/* <th className="w-[100px]" onClick={() => handleSort('id')}>
+                Job Id
+                <SortIcon active={sortBy === 'id'} direction={sortDirection} />
+              </th> */}
               <th className="w-[100px]" onClick={() => handleSort('jobName')}>
                 Job Title
-                {sortBy === 'jobName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
               </th>
               <th className="w-[160px]" onClick={() => handleSort('customerName')}>
                 Customer Name
-                {sortBy === 'customerName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'customerName'} direction={sortDirection} />
               </th>
                 <th className="w-[150px]" onClick={() => handleSort('technicianName')}>
                 Technician Name
-                {sortBy === 'technicianName' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'technicianName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('vehicleCount')}>
                 Vehicle / Work Order
-                {sortBy === 'vehicleCount' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'vehicleCount'} direction={sortDirection} />
               </th>
               {/* <th className="w-[100px]">Sub Total Cost</th>*/}
               <th className="w-[120px]">Start Date</th>
               <th className="w-[120px]">End Date</th>
               <th className="w-[120px]" onClick={() => handleSort('estimatedCost')}>
                 Vehicle Price
-                {sortBy === 'estimatedCost' && (
-                  <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'estimatedCost'} direction={sortDirection} />
               </th>
               <th className="w-[120px]">Status</th>
               <th className="w-[100px]">Action</th>
@@ -761,18 +763,18 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Loader />
                 </td>
               </tr>
             ) : activeJob?.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-10">
+                <td colSpan={11} className="text-center py-10">
                   <Empty />
                 </td>
               </tr>
             ) : (
-              activeJob?.map((job) => renderRow(job))
+              activeJob?.map((job, index) => renderRow(job, index))
             )}
           </tbody>
         </table>

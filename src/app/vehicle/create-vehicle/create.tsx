@@ -217,6 +217,7 @@ export default function Technicians() {
   const [jobDropdownPage, setJobDropdownPage] = useState(1);
   const [jobHasMore, setJobHasMore] = useState(true);
   const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
   const jobFetchInFlightRef = useRef(false);
 
   const [technicianPayRates, setTechnicianPayRates] = useState<{
@@ -230,6 +231,12 @@ export default function Technicians() {
     };
   }>({});
   const [buttonVisible, setButtonVisible] = useState<{ [techId: string]: boolean }>({});
+
+  // Per-form percentage state (cohorts split by techType within each jobForm)
+  const [techPercentages, setTechPercentages] = useState<Record<number, Record<string, number>>>({});
+  const [rPercentages, setRPercentages] = useState<Record<number, Record<string, number>>>({});
+  const [techManualLocks, setTechManualLocks] = useState<Record<number, Record<string, boolean>>>({});
+  const [rManualLocks, setRManualLocks] = useState<Record<number, Record<string, boolean>>>({});
 
   // Function to toggle visibility
   const [CustomerData, setCustomerData] = useState<any>(null);
@@ -436,43 +443,30 @@ export default function Technicians() {
     if (roleType !== 'single-technician') {
       jobForms.forEach((form, formIndex) => {
         if (Array.isArray(form.technicianDetails)) {
+          const formTechPcts = techPercentages[formIndex] || {};
+          const formRPcts = rPercentages[formIndex] || {};
+
           form.technicianDetails.forEach((techDetail, techIndex) => {
-            formDataObj.append(`technicians[${techIndex}][id]`, String(techDetail.id));
+            const tid = String(techDetail.id);
+            formDataObj.append(`technicians[${techIndex}][id]`, tid);
             formDataObj.append(`technicians[${techIndex}][techType]`, techDetail.techType || '');
 
-            const techRow = technicians.find((t) => String(t.id) === String(techDetail.id));
+            const isTechType = techDetail.techType === 'technician';
+            const pctValueRaw = isTechType ? formTechPcts[tid] : formRPcts[tid];
+            const pctValue =
+              pctValueRaw !== undefined && pctValueRaw !== null
+                ? Number(pctValueRaw).toFixed(2)
+                : '';
 
-            // Get rates from technicianPayRates first, then fall back to techDetail
-            const rates = technicianPayRates[String(techDetail.id)] || technicianPayRates[techDetail.id] || {};
-            const rRateValue = rates.rRate || techDetail.rRate || '';
-            const techFlatRateValue = rates.techFlatRate || techDetail.techFlatRate || '';
-            const techPctVal = rates.techPercentageCalculatedAmount ?? techDetail.techPercentageCalculatedAmount ?? '';
-            const rPctVal = rates.rPercentageCalculatedAmount ?? techDetail.rPercentageCalculatedAmount ?? '';
-            const techPercentageVal = getTechnicianPercentageField(
-              rates,
-              techDetail,
-              'techPercentage',
-              techRow
+            // Always send both percentage keys so the backend payload shape stays consistent.
+            formDataObj.append(
+              `technicians[${techIndex}][techPercentage]`,
+              isTechType ? pctValue : ''
             );
-            const rPercentageVal = getTechnicianPercentageField(rates, techDetail, 'rPercentage', techRow);
-
-            // Append both rates (if available)
-            if (techFlatRateValue && techFlatRateValue !== '{}' && techFlatRateValue !== '') {
-              formDataObj.append(`technicians[${techIndex}][techFlatRate]`, techFlatRateValue);
-            }
-
-            if (rRateValue && rRateValue !== '{}' && rRateValue !== '') {
-              formDataObj.append(`technicians[${techIndex}][rRate]`, rRateValue);
-            }
-            if (techPctVal !== '' && techPctVal != null && String(techPctVal).trim() !== '') {
-              formDataObj.append(`technicians[${techIndex}][techPercentageCalculatedAmount]`, String(techPctVal));
-            }
-            if (rPctVal !== '' && rPctVal != null && String(rPctVal).trim() !== '') {
-              formDataObj.append(`technicians[${techIndex}][rPercentageCalculatedAmount]`, String(rPctVal));
-            }
-            // Always send percentage keys so create/update payload matches backend (empty string if unset)
-            formDataObj.append(`technicians[${techIndex}][techPercentage]`, techPercentageVal || '');
-            formDataObj.append(`technicians[${techIndex}][rPercentage]`, rPercentageVal || '');
+            formDataObj.append(
+              `technicians[${techIndex}][rPercentage]`,
+              !isTechType ? pctValue : ''
+            );
           });
         }
       });
@@ -661,21 +655,25 @@ export default function Technicians() {
 
       const data = await response.json();
 
-      if (response.ok) {
+        if (response.ok) {
         const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        const normalizedJobs = jobs.map((j: any) => ({
+          ...j,
+          jobName: String(j?.jobName ?? '').trim(),
+        }));
         const totalPages = Number(data.totalPages ?? 1) || 1;
         const currentPg = Number(data.currentPage ?? page) || page;
 
         if (append) {
           setJobNames((prev) => {
-            const merged = [...prev, ...jobs];
+            const merged = [...prev, ...normalizedJobs];
             return Array.from(new Map(merged.map((j: any) => [j.id, j])).values()) as Job[];
           });
         } else {
-          setJobNames(jobs as Job[]);
+          setJobNames(normalizedJobs as Job[]);
         }
 
-        const newTechs = jobs.flatMap((job: any) => job.technicians || []);
+        const newTechs = normalizedJobs.flatMap((job: any) => job.technicians || []);
         setAllTechnicians((prev) => {
           if (append) {
             const merged = [...prev, ...newTechs];
@@ -710,9 +708,19 @@ export default function Technicians() {
     const q = jobSearchTerm.trim().toLowerCase();
     if (!q) return jobNames;
     return jobNames.filter((job) =>
-      String(job.jobName || '').toLowerCase().includes(q)
+      String(job.jobName || '').trim().toLowerCase().includes(q)
     );
   }, [jobNames, jobSearchTerm]);
+
+  const filteredTechnicians = useMemo(() => {
+    const q = technicianSearchTerm.trim().toLowerCase();
+    if (!q) return technicians;
+    return technicians.filter((tech: any) => {
+      const fullName = `${tech?.firstName || ''} ${tech?.lastName || ''}`.toLowerCase();
+      const techType = String(tech?.techType || '').toLowerCase();
+      return fullName.includes(q) || techType.includes(q);
+    });
+  }, [technicians, technicianSearchTerm]);
 
   const handleJobSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setJobSearchTerm(e.target.value);
@@ -826,7 +834,7 @@ export default function Technicians() {
         setTechnicianPayRates(initialPayRates);
 
         const formData: JobPayload = {
-          jobName: getValidValue(vehicleData.jobName),
+          jobName: String(getValidValue(vehicleData.jobName) ?? '').trim(),
           jobId: getValidValue(vehicleData.jobId),
           id: getValidValue(vehicleData.id),
           vin: getValidValue(vehicleData.vin),
@@ -890,6 +898,33 @@ export default function Technicians() {
           : [{ id: crypto.randomUUID(), jobDescription: '' }]
         );
         setTechnicians(vehicleData.assignedTechnicians || []);
+
+        // Seed per-form percentage state from the loaded vehicle so existing
+        // values are preserved and won't be auto-redistributed on first render.
+        const seedTechPcts: Record<string, number> = {};
+        const seedRPcts: Record<string, number> = {};
+        const seedTechLocks: Record<string, boolean> = {};
+        const seedRLocks: Record<string, boolean> = {};
+        technicianDetails.forEach((td: any) => {
+          const tid = String(td.id);
+          if (td.techType === 'technician') {
+            const v = Number(td.techPercentage);
+            if (Number.isFinite(v) && v > 0) {
+              seedTechPcts[tid] = v;
+              seedTechLocks[tid] = true;
+            }
+          } else if (td.techType === 'R/I/R/R') {
+            const v = Number(td.rPercentage);
+            if (Number.isFinite(v) && v > 0) {
+              seedRPcts[tid] = v;
+              seedRLocks[tid] = true;
+            }
+          }
+        });
+        setTechPercentages({ 0: seedTechPcts });
+        setRPercentages({ 0: seedRPcts });
+        setTechManualLocks({ 0: seedTechLocks });
+        setRManualLocks({ 0: seedRLocks });
 
         const editJobId = getValidValue(vehicleData.jobId);
         const editJobName = getValidValue(vehicleData.jobName).trim();
@@ -993,6 +1028,7 @@ export default function Technicians() {
   const fetchTechniciansOnClick = () => {
     const roleType = localStorage.getItem('types') || ''; // Get roleType from localStorage
     if (roleType) {
+      setTechnicianSearchTerm('');
       // Call fetchData for technicians on button click
       fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
         endpoint: 'fetchTechnicianJob',
@@ -1353,6 +1389,166 @@ export default function Technicians() {
       setSubmitting(false);
     }
   };
+
+  /**
+   * Auto-distribute 100% across `ids` while preserving manually-locked rows.
+   * Same logic as create-job: locked rows keep their values, the remainder
+   * is split evenly across unlocked rows, and any rounding diff is absorbed
+   * by the first unlocked row so the total stays exactly 100.
+   */
+  const computeDistributionWithLocks = (
+    ids: string[],
+    percentages: Record<string, number>,
+    locks: Record<string, boolean>
+  ): Record<string, number> => {
+    if (ids.length === 0) return {};
+    if (ids.length === 1) return { [ids[0]]: 100 };
+
+    const lockedIds = ids.filter((id) => Boolean(locks[id]));
+    const unlockedIds = ids.filter((id) => !Boolean(locks[id]));
+
+    const lockedSum = lockedIds.reduce((acc, id) => acc + Number(percentages[id] || 0), 0);
+    const remaining = Math.max(0, Number((100 - lockedSum).toFixed(2)));
+
+    const next: Record<string, number> = {};
+    lockedIds.forEach((id) => {
+      next[id] = Number((percentages[id] || 0).toFixed(2));
+    });
+
+    if (unlockedIds.length > 0) {
+      const even = Number((remaining / unlockedIds.length).toFixed(2));
+      unlockedIds.forEach((id) => {
+        next[id] = even;
+      });
+
+      const currentSum = ids.reduce((acc, id) => acc + (next[id] || 0), 0);
+      const diff = Number((100 - currentSum).toFixed(2));
+      if (Math.abs(diff) > 0) {
+        next[unlockedIds[0]] = Number(((next[unlockedIds[0]] || 0) + diff).toFixed(2));
+      }
+    }
+
+    return next;
+  };
+
+  const getTechCohort = (formIndex: number): string[] => {
+    const form = jobForms[formIndex];
+    if (!form?.technicianDetails) return [];
+    return form.technicianDetails
+      .filter((t: any) => t.techType === 'technician')
+      .map((t: any) => String(t.id));
+  };
+
+  const getRCohort = (formIndex: number): string[] => {
+    const form = jobForms[formIndex];
+    if (!form?.technicianDetails) return [];
+    return form.technicianDetails
+      .filter((t: any) => t.techType === 'R/I/R/R')
+      .map((t: any) => String(t.id));
+  };
+
+  const handleTechPercentageChange = (techId: string, rawValue: string, formIndex: number) => {
+    const cohort = getTechCohort(formIndex);
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const formLocks = techManualLocks[formIndex] || {};
+    const formPcts = techPercentages[formIndex] || {};
+
+    const nextLocks = { ...formLocks, [editedId]: true };
+    const otherLockedSum = cohort
+      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
+      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
+
+    setTechManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
+    setTechPercentages((prev) => ({ ...prev, [formIndex]: distributed }));
+  };
+
+  const handleRPercentageChange = (techId: string, rawValue: string, formIndex: number) => {
+    const cohort = getRCohort(formIndex);
+    const editedId = String(techId);
+    const parsed = Number(rawValue);
+    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+
+    const formLocks = rManualLocks[formIndex] || {};
+    const formPcts = rPercentages[formIndex] || {};
+
+    const nextLocks = { ...formLocks, [editedId]: true };
+    const otherLockedSum = cohort
+      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
+      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
+    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
+    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
+
+    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
+
+    setRManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
+    setRPercentages((prev) => ({ ...prev, [formIndex]: distributed }));
+  };
+
+  /**
+   * Whenever the technicians assigned to any jobForm change, re-balance
+   * percentages within each cohort (technician / R&I) for that form.
+   * Locked rows keep their values; new rows get the auto-calculated share.
+   */
+  useEffect(() => {
+    jobForms.forEach((_form, formIndex) => {
+      const techCohort = getTechCohort(formIndex);
+      const rCohort = getRCohort(formIndex);
+
+      setTechManualLocks((prev) => {
+        const cur = prev[formIndex] || {};
+        const next: Record<string, boolean> = {};
+        techCohort.forEach((id) => {
+          next[id] = Boolean(cur[id]);
+        });
+        return { ...prev, [formIndex]: next };
+      });
+      setTechPercentages((prev) => {
+        const cur = prev[formIndex] || {};
+        const filtered: Record<string, number> = {};
+        techCohort.forEach((id) => {
+          if (cur[id] !== undefined) filtered[id] = cur[id];
+        });
+        const locks = (techManualLocks[formIndex] || {}) as Record<string, boolean>;
+        const lockSubset: Record<string, boolean> = {};
+        techCohort.forEach((id) => {
+          lockSubset[id] = Boolean(locks[id]);
+        });
+        return { ...prev, [formIndex]: computeDistributionWithLocks(techCohort, filtered, lockSubset) };
+      });
+
+      setRManualLocks((prev) => {
+        const cur = prev[formIndex] || {};
+        const next: Record<string, boolean> = {};
+        rCohort.forEach((id) => {
+          next[id] = Boolean(cur[id]);
+        });
+        return { ...prev, [formIndex]: next };
+      });
+      setRPercentages((prev) => {
+        const cur = prev[formIndex] || {};
+        const filtered: Record<string, number> = {};
+        rCohort.forEach((id) => {
+          if (cur[id] !== undefined) filtered[id] = cur[id];
+        });
+        const locks = (rManualLocks[formIndex] || {}) as Record<string, boolean>;
+        const lockSubset: Record<string, boolean> = {};
+        rCohort.forEach((id) => {
+          lockSubset[id] = Boolean(locks[id]);
+        });
+        return { ...prev, [formIndex]: computeDistributionWithLocks(rCohort, filtered, lockSubset) };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobForms]);
 
   const handlePayRateInput = (
     techId: string,
@@ -1723,7 +1919,13 @@ export default function Technicians() {
 
 
 
+  const MAX_VEHICLE_IMAGES = 5;
+  const MAX_IMAGE_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per file (before compression)
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const resetInput = () => {
+      e.target.value = '';
+    };
     const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const files = e.target.files ? Array.from(e.target.files) : [];
 
@@ -1732,16 +1934,32 @@ export default function Technicians() {
 
     if (validImageFiles.length === 0) {
       toast.error("Please upload only JPEG, PNG, or WEBP images.");
+      resetInput();
       return;
     }
 
-    // Check total images won't exceed 5
-    const currentImageCount = jobForms[index]?.images?.length || 0;
-    const newImageCount = validImageFiles.length;
-
-    if (currentImageCount + newImageCount > 5) {
-      toast.error(`You can only upload up to 5 images. You already have ${currentImageCount} images.`);
+    const oversized = validImageFiles.filter((file) => file.size > MAX_IMAGE_FILE_BYTES);
+    if (oversized.length > 0) {
+      toast.error(
+        `Each image must be 5 MB or smaller. ${oversized.length} file(s) exceed the limit.`,
+      );
+      resetInput();
       return;
+    }
+
+    const currentImageCount = jobForms[index]?.images?.length || 0;
+    const remainingSlots = MAX_VEHICLE_IMAGES - currentImageCount;
+    if (remainingSlots <= 0) {
+      toast.error(`You can only upload up to ${MAX_VEHICLE_IMAGES} images.`);
+      resetInput();
+      return;
+    }
+
+    const filesToAdd = validImageFiles.slice(0, remainingSlots);
+    if (validImageFiles.length > remainingSlots) {
+      toast.error(
+        `You can upload at most ${MAX_VEHICLE_IMAGES} images total (${remainingSlots} slot(s) left; extra files were not added).`,
+      );
     }
 
     const maxWidth = 800;
@@ -1749,27 +1967,29 @@ export default function Technicians() {
     const quality = 0.7;
 
     // Compress each valid image and ensure the result is typed as File
-    const compressions: Promise<File>[] = validImageFiles.map(file =>
-      compressImage(file, maxWidth, maxHeight, quality)
+    const compressions: Promise<File>[] = filesToAdd.map((file) =>
+      compressImage(file, maxWidth, maxHeight, quality),
     );
 
     Promise.all(compressions)
       .then((compressedFiles) => {
-        setJobForms(prev => {
+        setJobForms((prev) => {
           const updatedForms = [...prev];
           updatedForms[index] = {
             ...updatedForms[index],
             images: [
               ...(updatedForms[index].images || []),
-              ...compressedFiles
-            ].slice(0, 5) // Ensure max 5 images
+              ...compressedFiles,
+            ].slice(0, MAX_VEHICLE_IMAGES),
           };
           return updatedForms;
         });
+        resetInput();
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Compression error:', error);
         toast.error('Failed to compress images.');
+        resetInput();
       });
   };
 
@@ -1983,8 +2203,8 @@ export default function Technicians() {
         setTotalPages(data.jobs?.totalPages || 1);
         setTotalJobs(data.jobs?.totalJobs || 0);
         const jobObjects: Job[] = fetchedJobs.map(job => ({
-          id: job.id,           // Correct id mapping
-          jobName: job.jobName  // Correct jobName mapping
+          id: job.id,
+          jobName: String(job.jobName ?? '').trim(),
         }));
         setJobNames(jobObjects);
       } else {
@@ -2023,10 +2243,13 @@ export default function Technicians() {
 
 
   const handleJobNameSelect = async (selectedName: string) => {
-    setSelectedJobName(selectedName);
+    const trimmedName = String(selectedName ?? '').trim();
+    setSelectedJobName(trimmedName);
     setTechnicians([]); // Clear technicians first to avoid showing old ones
 
-    const selectedJob = jobNames.find(job => job.jobName === selectedName);
+    const selectedJob = jobNames.find(
+      (job) => String(job.jobName ?? '').trim() === trimmedName
+    );
     console.log('selectedJob:', selectedJob);
 
     if (selectedJob) {
@@ -2058,7 +2281,7 @@ export default function Technicians() {
         updatedForms[0] = {
           ...updatedForms[0],
           jobId: selectedJob.id.toString(),
-          jobName: selectedName,
+          jobName: trimmedName,
           assignTechnicians: uniqueTechnicians.map((tech: any) => String(tech.id)),
           technicianDetails: uniqueTechnicians.map((tech: any) => ({
             id: tech.id,
@@ -2079,6 +2302,34 @@ export default function Technicians() {
         };
         return updatedForms;
       });
+
+      // Seed per-form percentage state for form 0 from API-supplied values
+      // so any pre-existing splits are preserved (and locked) on selection.
+      const seedTechPcts: Record<string, number> = {};
+      const seedRPcts: Record<string, number> = {};
+      const seedTechLocks: Record<string, boolean> = {};
+      const seedRLocks: Record<string, boolean> = {};
+      uniqueTechnicians.forEach((tech: any) => {
+        const tid = String(tech.id);
+        const techType = tech.techType || 'technician';
+        if (techType === 'technician') {
+          const v = Number(tech.techPercentage ?? tech.UserJob?.techPercentage);
+          if (Number.isFinite(v) && v > 0) {
+            seedTechPcts[tid] = v;
+            seedTechLocks[tid] = true;
+          }
+        } else {
+          const v = Number(tech.rPercentage ?? tech.UserJob?.rPercentage);
+          if (Number.isFinite(v) && v > 0) {
+            seedRPcts[tid] = v;
+            seedRLocks[tid] = true;
+          }
+        }
+      });
+      setTechPercentages((prev) => ({ ...prev, 0: seedTechPcts }));
+      setRPercentages((prev) => ({ ...prev, 0: seedRPcts }));
+      setTechManualLocks((prev) => ({ ...prev, 0: seedTechLocks }));
+      setRManualLocks((prev) => ({ ...prev, 0: seedRLocks }));
     } else {
       // If no job selected, clear everything
       setSelectedCustomerJobType('');
@@ -2094,6 +2345,10 @@ export default function Technicians() {
         };
         return updatedForms;
       });
+      setTechPercentages((prev) => ({ ...prev, 0: {} }));
+      setRPercentages((prev) => ({ ...prev, 0: {} }));
+      setTechManualLocks((prev) => ({ ...prev, 0: {} }));
+      setRManualLocks((prev) => ({ ...prev, 0: {} }));
     }
   };
 
@@ -2245,8 +2500,8 @@ export default function Technicians() {
                         </MenuItem>
                       ) : (
                         filteredJobNames.map((job) => (
-                          <MenuItem key={job.id} value={job.jobName}>
-                            {job.jobName}
+                          <MenuItem key={job.id} value={String(job.jobName ?? '').trim()}>
+                            {String(job.jobName ?? '').trim()}
                           </MenuItem>
                         ))
                       )}
@@ -2685,7 +2940,10 @@ export default function Technicians() {
                       <path d="M21.953 15.7599C22.3011 15.7599 22.5895 15.8644 22.9124 16.1544L29.2453 22.2609C29.5218 22.5367 29.6876 22.8314 29.6876 23.2368C29.6876 23.9911 29.1353 24.5254 28.3621 24.5254C27.9928 24.5254 27.607 24.3784 27.3485 24.0838L24.5506 21.1201L23.2982 19.8127L23.427 22.5564V36.7479C23.427 37.5219 22.7458 38.1662 21.9538 38.1662C21.1626 38.1662 20.4995 37.5219 20.4995 36.7479V22.5556L20.6095 19.8119L19.3578 21.1193L16.5764 24.0838C16.4507 24.2228 16.2974 24.3339 16.1262 24.4101C15.955 24.4863 15.7698 24.5258 15.5825 24.5262C14.8093 24.5262 14.2389 23.9919 14.2389 23.2368C14.2389 22.8314 14.3858 22.5375 14.6616 22.2609L20.886 16.2581C21.2545 15.8888 21.5853 15.7599 21.9546 15.7599M25.6765 2.96301C32.3606 2.96301 37.7789 8.3813 37.7789 15.0646C37.7789 15.4449 37.7608 15.8212 37.727 16.1921C41.108 16.9888 43.6246 20.0264 43.6246 23.6501C43.6246 27.8819 40.1942 31.3124 35.9623 31.3124H27.123V28.3659H35.9608C36.58 28.3659 37.1933 28.244 37.7654 28.007C38.3376 27.77 38.8575 27.4226 39.2954 26.9847C39.7333 26.5468 40.0806 26.0269 40.3176 25.4548C40.5546 24.8826 40.6766 24.2694 40.6766 23.6501C40.6764 22.5885 40.3182 21.5579 39.66 20.725C39.0017 19.8921 38.0818 19.3055 37.049 19.0599L34.5551 18.4722L34.7908 15.921C34.8175 15.6382 34.8301 15.3522 34.8301 15.0646C34.8301 10.0085 30.7318 5.90944 25.675 5.90944C24.148 5.90809 22.645 6.2892 21.3031 7.01798C19.9612 7.74676 18.8233 8.8 17.993 10.0816L16.7948 11.9233L14.6883 11.301C14.1166 11.1316 13.5137 11.0948 12.9255 11.1933C12.3374 11.2918 11.7794 11.5231 11.2941 11.8695C10.8087 12.216 10.4087 12.6685 10.1244 13.1927C9.84011 13.717 9.67906 14.2991 9.65347 14.8949L9.65033 15.1251L9.7234 17.6001L7.36861 18.143C6.22908 18.4081 5.21281 19.051 4.48522 19.9672C3.75763 20.8834 3.36156 22.0189 3.36147 23.1889C3.36147 24.5621 3.90699 25.8791 4.87803 26.8502C5.84906 27.8212 7.16607 28.3667 8.53933 28.3667H16.9088V31.3132H8.53933C4.0529 31.3132 0.415039 27.6753 0.415039 23.1889C0.415039 19.3326 3.10218 16.1033 6.70625 15.272L6.70311 15.0646C6.70282 13.9956 6.95199 12.9413 7.4308 11.9855C7.90961 11.0297 8.60484 10.1989 9.46119 9.55904C10.3176 8.91919 11.3114 8.48801 12.3637 8.29978C13.416 8.11156 14.4977 8.17148 15.5228 8.4748C17.6811 5.15673 21.4219 2.96301 25.675 2.96301" fill="#383d71" />
                     </svg>
                     <p className='text-sm mb-1 mt-1'>Upload File</p>
-                    <span className="text-center m-auto text-xs block"> (Only 'JPEG, WEBP, PNG and GIF' images will be accepted)</span>
+                    <span className="text-center m-auto text-xs block">
+                      {' '}
+                      (JPEG, PNG, WEBP — max {MAX_VEHICLE_IMAGES} images, 5 MB each)
+                    </span>
                   </label>
                   <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="input input-bordered w-full opacity-0 absolute inset-0" onChange={(e) => handleFileChange(e, index)} />
                   {/* onChange={handleFileChange} */}
@@ -2766,37 +3024,26 @@ export default function Technicians() {
                   <div className='mb-4 flex items-start gap-3 relative mt-3'>
                     <FormControl fullWidth size="small">
                       <FormLabel color="warning" className="mb-1">Assign Technicians to this vehicle*</FormLabel>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        color="warning"
+                        placeholder="Search technician..."
+                        value={technicianSearchTerm}
+                        onChange={(e) => setTechnicianSearchTerm(e.target.value)}
+                        className="mb-2"
+                      />
                       <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
                         <List dense>
-                          {technicians.length > 0 ? (
-                            technicians.map((tech) => {
+                          {filteredTechnicians.length > 0 ? (
+                            filteredTechnicians.map((tech) => {
                               const tid = String(tech.id);
                               const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
-                              const techDetails =
-                                jobForms[index]?.technicianDetails?.find((t: any) => String(t.id) === tid) || tech;
-
-                              const rateType = tech.techType === 'technician' ? 'techFlatRate' : 'rRate';
-                              const rateValue =
-                                technicianPayRates[tid]?.[rateType] || techDetails[rateType] || '';
-                              const techPctAmt =
-                                technicianPayRates[tid]?.techPercentageCalculatedAmount ??
-                                techDetails.techPercentageCalculatedAmount ??
-                                (tech as any).VehicleTechnician?.techPercentageCalculatedAmount ??
-                                (tech as any).techPercentageCalculatedAmount;
-                              const rPctAmt =
-                                technicianPayRates[tid]?.rPercentageCalculatedAmount ??
-                                techDetails.rPercentageCalculatedAmount ??
-                                (tech as any).VehicleTechnician?.rPercentageCalculatedAmount ??
-                                (tech as any).rPercentageCalculatedAmount;
-
-                              const hasTechPct =
-                                techPctAmt != null &&
-                                String(techPctAmt).trim() !== '' &&
-                                String(techPctAmt).toLowerCase() !== 'null';
-                              const hasRPct =
-                                rPctAmt != null &&
-                                String(rPctAmt).trim() !== '' &&
-                                String(rPctAmt).toLowerCase() !== 'null';
+                              const isTechType = tech.techType === 'technician';
+                              const formPcts = isTechType
+                                ? techPercentages[index] || {}
+                                : rPercentages[index] || {};
+                              const percentage = isChecked ? (formPcts[tid] ?? 0) : 0;
 
                               return (
                                 <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
@@ -2809,66 +3056,35 @@ export default function Technicians() {
                                       tabIndex={-1}
                                       disableRipple
                                     />
-                                    <ListItemText primary={`${tech.firstName} ${tech.lastName} (${tech.techType})`} />
+                                    <ListItemText
+                                      primary={`${tech.firstName} ${tech.lastName} (${tech.techType === 'R/I/R/R' ? 'R&I' : tech.techType})`}
+                                    />
                                   </div>
-                                  {tech.techType === 'technician' ? (
+                                  {isChecked && (
                                     <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
                                       <TextField
                                         size="small"
                                         type="number"
-                                        name="techFlatRate"
-                                        label={hasTechPct ? 'Flat Rate ($)' : 'Flat Rate ($)'}
+                                        label="Per Tech %"
                                         color="warning"
-                                        value={hasTechPct ? String(techPctAmt) : rateValue}
+                                        value={Number.isFinite(percentage) ? percentage : ''}
                                         onChange={(e) =>
-                                          hasTechPct
-                                            ? handlePctCalculatedInput(
-                                              tid,
-                                              e.target.value,
-                                              'techPercentageCalculatedAmount',
-                                              index
-                                            )
-                                            : handlePayRateInput(tid, e.target.value, 'techFlatRate', index)
+                                          isTechType
+                                            ? handleTechPercentageChange(tid, e.target.value, index)
+                                            : handleRPercentageChange(tid, e.target.value, index)
                                         }
-                                        onClick={() => setActiveInput(tid)}
-                                        style={{ maxWidth: '280px' }}
+                                        inputProps={{ min: 0, max: 100, step: 0.01 }}
+                                        sx={{ width: 130 }}
                                       />
-                                    </div>
-                                  ) : (
-                                    <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
-                                      <TextField
-                                        size="small"
-                                        type="number"
-                                        label={hasRPct ? 'R Rate ($)' : 'R Rate ($)'}
-                                        name="rRate"
-                                        color="warning"
-                                        value={hasRPct ? String(rPctAmt) : rateValue}
-                                        onChange={(e) =>
-                                          hasRPct
-                                            ? handlePctCalculatedInput(
-                                              tid,
-                                              e.target.value,
-                                              'rPercentageCalculatedAmount',
-                                              index
-                                            )
-                                            : handlePayRateInput(tid, e.target.value, 'rRate', index)
-                                        }
-                                        onClick={() => setActiveInput(tid)}
-                                        style={{ maxWidth: '280px' }}
-                                      />
-                                    </div>
-                                  )}
-                                  {activeInput === tid && buttonVisible[tid] !== false && (
-                                    <div
-                                      onClick={() => handlePayRateCheckbox(tid)}
-                                      className='index-2 bg-blue p-2 text-xs rounded text-white cursor-pointer'
-                                    >
-                                      Save
                                     </div>
                                   )}
                                 </ListItem>
                               );
                             })
+                          ) : technicians.length > 0 ? (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              No matching technician found
+                            </div>
                           ) : (
                             <div className="p-4 text-center text-gray-500 text-sm">
                               No technicians available

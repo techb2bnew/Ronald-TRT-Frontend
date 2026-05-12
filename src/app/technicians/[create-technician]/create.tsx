@@ -644,17 +644,16 @@ export default function Technicians() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
-    const digitsOnly = (formData.phoneNumber || "").replace(/\D/g, "");
-    const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber || "");
-
-    if (!formData.phoneNumber?.trim()) {
-      newErrors.phoneNumber = "Phone Number is required";
-    } else if (nationalNumber.length !== 10) {
-      newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+    // Last name, phone number and address are optional now.
+    // Only validate the phone number's format when one is actually entered.
+    if (formData.phoneNumber?.trim()) {
+      const digitsOnly = formData.phoneNumber.replace(/\D/g, "");
+      const nationalNumber = getNationalNumber(digitsOnly, formData.phoneNumber);
+      if (nationalNumber.length !== 10) {
+        newErrors.phoneNumber = "Phone number must be exactly 10 digits";
+      }
     }
     if (!formData.email?.trim()) newErrors.email = 'Email is required';
-    if (!formData.address?.trim()) newErrors.address = 'Address is required';
     if (!isEdit) {
       if (!formData.password?.trim()) newErrors.password = 'Password is required';
     }
@@ -1229,7 +1228,7 @@ export default function Technicians() {
                 <circle cx="10" cy="6" r="3" stroke="#5B5B99" strokeWidth="1.5" />
                 <path d="M5 16C5 13.8 7 12 10 12C13 12 15 13.8 15 16" stroke="#5B5B99" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <TextField fullWidth name="lastName" id="outlined-basic" color="warning" label="Last name *" size="small" value={formData.lastName} onChange={handleChange} />
+              <TextField fullWidth name="lastName" id="outlined-basic" color="warning" label="Last name" size="small" value={formData.lastName} onChange={handleChange} />
               {errors.lastName && (
                 <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                   {errors.lastName}
@@ -1387,7 +1386,7 @@ export default function Technicians() {
             <GooglePlacesAutocomplete
               apiKey=" AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M"
               selectProps={{
-                placeholder: 'Search for an address*',
+                placeholder: 'Search for an address',
                 value: address,
                 onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                   if (newValue) {

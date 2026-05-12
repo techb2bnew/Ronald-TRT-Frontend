@@ -15,6 +15,7 @@ import { useSidebar } from '@/app/component/SidebarContext';
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
+  const router = useRouter();
   const [CustomerData, setCustomerData] = useState<any>(null);  // Using `any` type for flexibility
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const searchParams = useSearchParams();
@@ -100,14 +101,12 @@ export default function ViewDetails() {
     navigator.clipboard.writeText(text).then(() => toast.success(`${label} copied`)).catch(() => toast.error('Failed to copy'));
   };
 
-  const backHref = isSingleTechnician ? '/single-technicians/listing' : '/customer/listing';
-
   if (!CustomerData) {
     return <div><Loading /></div>;
   }
 
   const InfoCard = ({ icon, label, value, copyValue }: { icon: React.ReactNode; label: string; value: React.ReactNode; copyValue?: string }) => (
-    <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#383d71]">
         {icon}
       </div>
@@ -139,10 +138,9 @@ export default function ViewDetails() {
 
       <Breadcrumb
         items={[
-          {
-            label: isSingleTechnician ? 'All Customer' : 'Customer',
-            href: isSingleTechnician ? '/single-technicians/listing' : '/customer/listing',
-          },
+          isSingleTechnician
+            ? { label: 'All Customer', onClick: () => router.back() }
+            : { label: 'Customer', href: '/customer/listing' },
           { label: 'View Detail', href: '' }
         ]}
       />

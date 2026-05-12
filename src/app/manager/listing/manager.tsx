@@ -14,15 +14,18 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { renumberSerialNo } from '@/lib/renumberSerialNo';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { Country, State } from 'country-state-city';
 import TechnicianApprovalActions from '@/app/component/technicianApprovalActions';
 import RejectReasonModal from '@/app/component/rejectReasonModal';
+import SortIcon from '@/app/component/sortIcon';
 
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
+const MANAGER_IMPORT_ID_MAP_KEY = 'managerImportSerialToIdMap';
 interface Technicians {
   id: string;
   name: string;
@@ -147,9 +150,10 @@ const ManagerTable: React.FC = () => {
         : data.data?.managers || [];
 
       // Add job count for each manager
-      const techniciansWithJobCount = fetchedTechnicians.map((tech: any) => ({
+      const techniciansWithJobCount = fetchedTechnicians.map((tech: any, index: number) => ({
         ...tech,
         jobCount: tech.managedJobs ? tech.managedJobs.length : 0, // Count jobs for each manager
+        serialNo: (page - 1) * limit + index + 1,
       })); 
         
         setTechnicians(techniciansWithJobCount);
@@ -176,9 +180,14 @@ const ManagerTable: React.FC = () => {
 
 
   const handleDeleteSuccess = (deletedId: string) => {
-    // toast.success('Technician deleted successfully'); 
-    // ✅ Remove the deleted technician from the table
-    setTechnicians((prev) => prev.filter((tech) => tech.id !== deletedId));
+    const startSerial = (currentPage - 1) * pageSize + 1;
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    setTechnicians((prev) =>
+      renumberSerialNo(
+        prev.filter((tech) => tech.id !== deletedId),
+        startSerial
+      )
+    );
   };
 
   // Function to handle sorting logic
@@ -197,6 +206,9 @@ const ManagerTable: React.FC = () => {
       if (column === 'name') {
         valueA = `${a.firstName} ${a.lastName}`.toLowerCase(); // Combine firstName and lastName
         valueB = `${b.firstName} ${b.lastName}`.toLowerCase();
+      } else if (column === 'serialno') {
+        valueA = Number(a.serialNo) || 0;
+        valueB = Number(b.serialNo) || 0;
       } else {
         valueA = a[column]?.toString().toLowerCase() || ''; // Handle undefined
         valueB = b[column]?.toString().toLowerCase() || '';
@@ -245,9 +257,10 @@ const ManagerTable: React.FC = () => {
     setCurrentPage(newPage); // Set the current page to the last valid page
   };
 
-  const renderRow = (tech: any) => {
+  const renderRow = (tech: any, index?: number) => {
     const status = statuses[tech.id] || "Accept";
     const isChecked = selectedIds.includes(tech.id);
+    const serialNo = tech.serialNo ?? ((currentPage - 1) * pageSize + (index ?? 0) + 1);
 
     return (
       <tr key={tech.id}>
@@ -266,7 +279,8 @@ const ManagerTable: React.FC = () => {
             </span>
           </label>
         </td>
-        <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td>
+        <td>{serialNo}</td>
+        {/* <td><Link href={`/technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech.id}</Link></td> */}
         <td>
           <div className="flex items-center gap-2">
             {tech?.image ? (
@@ -417,16 +431,19 @@ const ManagerTable: React.FC = () => {
 
     const csvExporter = new ExportToCsv(csvOptions);
 
-    const formattedData = selectedTechnicians.map((tech) => {
-      const countryName = Country.getCountryByCode(tech.country)?.name || tech.country;
-      const stateName = State.getStateByCodeAndCountry(tech.state, tech.country)?.name || tech.state;
+    const serialToIdMap: Record<string, string> = {};
+    const formattedData = selectedTechnicians.map((tech, index) => {
+      const serialNo = index + 1;
+      serialToIdMap[String(serialNo)] = String(tech.id);
       return {
-        Id: tech.id,
+        'Serial No': serialNo,
         Name: `${tech.firstName} ${tech.lastName}`,
         Email: tech.email,
         Address: tech.address,
       };
     });
+
+    localStorage.setItem(MANAGER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
 
     // Ensure no headers are included in the data when downloading
     csvExporter.generateCsv(formattedData);
@@ -456,7 +473,7 @@ const ManagerTable: React.FC = () => {
       text = lines.join('\n');
 
       const manualHeaders = [
-        'Id', 'Name', 'Email', 'Address'
+        'Serial No', 'Name', 'Email', 'Address'
       ];
 
       Papa.parse(text, {
@@ -464,6 +481,15 @@ const ManagerTable: React.FC = () => {
         skipEmptyLines: true,
         complete: async (result) => {
           const rows = result.data as string[][];
+
+          const savedSerialToIdMap: Record<string, string> = (() => {
+            try {
+              const raw = localStorage.getItem(MANAGER_IMPORT_ID_MAP_KEY);
+              return raw ? JSON.parse(raw) : {};
+            } catch {
+              return {};
+            }
+          })();
 
           // Log raw data for debugging
           console.log("Raw CSV data:", rows);
@@ -488,12 +514,24 @@ const ManagerTable: React.FC = () => {
                   else if (lower === 'false') value = false;
                   else if (lower === 'null') value = null;
                 }
-
-                if (key.toLowerCase() === 'id' && !isNaN(Number(value))) {
-                  value = parseInt(value, 10);
-                }
                 obj[key] = value;
               });
+
+              // Resolve Id from Serial No map for backend update payload
+              const serialNoVal = obj['Serial No'];
+              const mappedIdFromSerial =
+                serialNoVal != null && serialNoVal !== ''
+                  ? savedSerialToIdMap[String(serialNoVal).trim()]
+                  : null;
+
+              if (mappedIdFromSerial != null) {
+                obj['Id'] = !isNaN(Number(mappedIdFromSerial))
+                  ? parseInt(mappedIdFromSerial, 10)
+                  : mappedIdFromSerial;
+              }
+
+              // Do not send Serial No to backend
+              obj['Serial No'] = undefined;
 
               return obj;
             })
@@ -575,9 +613,9 @@ const ManagerTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg"> 
-      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager" />
+      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager"  selectedRows={selectedIds} />
       <SortableTable
-        headers={['', 'ID', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
+        headers={['', 'Serial No', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}
         renderRow={renderRow}
         sortBy={sortBy}
@@ -606,7 +644,7 @@ const ManagerTable: React.FC = () => {
             );
           }
           const columnKey = header.toLowerCase().replace(' ', '');
-          const sortableColumns = ['id', 'name', 'email', 'phone number', 'status'];
+          const sortableColumns = ['serialno', 'id', 'name', 'email'];
 
           return (
             <th
@@ -615,10 +653,8 @@ const ManagerTable: React.FC = () => {
               onClick={() => sortableColumns.includes(columnKey) && handleSort(columnKey)}
             >
               {header}
-              {sortableColumns.includes(columnKey) && sortBy === columnKey && (
-                <span className={`ml-2 ${sortDirection === 'asc' ? 'text-[#000]' : 'text-[#000]'}`}>
-                  {sortDirection === 'asc' ? '▲' : '▼'}
-                </span>
+              {sortableColumns.includes(columnKey) && (
+                <SortIcon active={sortBy === columnKey} direction={sortDirection} />
               )}
             </th>
           );

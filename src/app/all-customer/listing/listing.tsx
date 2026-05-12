@@ -464,8 +464,9 @@ export default function ClientListing() {
     });
   };
 
-  const renderRow = (cust: any) => {
+  const renderRow = (cust: any, index: number) => {
     const isChecked = selectedIds.includes(cust.id);
+    const serialNo = (currentPage - 1) * pageSize + index + 1;
     return (
       <tr key={cust.id}>
         <td key="checkbox">
@@ -494,6 +495,7 @@ export default function ClientListing() {
             </span>
           </label>
         </td>
+        <td>{serialNo}</td>
         {selectedColumn.includes("Customer Name") && (
           <td>
             {cust.customer.firstName} {cust.customer.lastName}
@@ -804,6 +806,12 @@ export default function ClientListing() {
                 {/* )} */}
                 <th
                   className="w-[150px]"
+                  onClick={() => handleSort("Serial No")}
+                >
+                  Serial No
+                </th>
+                <th
+                  className="w-[150px]"
                   onClick={() => handleSort("Customer Name")}
                 >
                   Customer Name
@@ -952,7 +960,7 @@ export default function ClientListing() {
                   </td>
                 </tr>
               ) : (
-                reoprts.map((cust) => renderRow(cust))
+                reoprts.map((cust, index) => renderRow(cust, index))
               )}
             </tbody>
           </table>

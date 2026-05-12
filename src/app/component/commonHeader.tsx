@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { addDays } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
 import toast from 'react-hot-toast';
-
+import { Tooltip } from 'react-tooltip';
 interface CommonHeaderProps {
   heading: string;
   // title: string;
@@ -25,7 +25,7 @@ interface CommonHeaderProps {
   onCompletedJobClick?: () => void;
   onInProgressJobClick?: () => void;
   onAllJobsClick?: () => void;
-  onColumnSelect?: (column: string[]) => void;
+  selectedRows?: string[];
   additionalComponents?: React.ReactNode;
   showDatePicker?: boolean;
   onDateChange?: (newValue: [any, any]) => void;
@@ -36,6 +36,8 @@ interface CommonHeaderProps {
   fetchCustomerData?: (customerId: string) => Promise<any>;
   onStatusChange?: (status: string) => void;
   onInvoiceStatueChange?: (status: string) => void;
+  /** When provided, a condition-based Account Status filter dropdown is shown. */
+  onAccountStatusChange?: (status: string) => void;
   onClearFilters?: () => void;
   showClearFilters?: boolean;
   /** Work order list: compare scanned vs insurance VINs (superadmin). */
@@ -45,7 +47,7 @@ interface CommonHeaderProps {
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, onColumnSelect, onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, selectedRows = [], onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onAccountStatusChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -91,6 +93,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const [customerJobs, setCustomerJobs] = useState<any[]>([]);
   const [workOrderStatus, setWorkOrderStatus] = useState<string>("");
   const [invoiceStatus, setInvoiceStatus] = useState<string>("");
+  const [accountStatusFilter, setAccountStatusFilter] = useState<string>("");
   const [searchValue, setSearchValue] = useState("");
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isCustomerSearching, setIsCustomerSearching] = useState<boolean>(false);
@@ -169,7 +172,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
   const [activeFilter, setActiveFilter] = useState<"" | "completed" | "inProgress" | "all">("all");
   const [selectedColumn, setSelectedColumn] = useState<string[]>([]); // Default is an array
-
+  const isRowSelected = selectedRows.length > 0;
 
   useEffect(() => {
     const storedPermissions = localStorage.getItem("permissions");
@@ -598,6 +601,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     onSearch?.("");
     setWorkOrderStatus("");
     setInvoiceStatus("");
+    setAccountStatusFilter("");
 
     setDates({ startDate: null, endDate: null });
     setShowDatePicker(false);
@@ -612,6 +616,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     onCustomerChange?.("", "single-technician");
     onStatusChange?.("");
     onInvoiceStatueChange?.("");
+    onAccountStatusChange?.("");
     onClearFilters?.();
   };
 
@@ -622,7 +627,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     <div className="px-1 mb-4">
       <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
         <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1> 
+          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
         </div>
         <div className='mobile_listing_item  flex flex-wrap items-center gap-2'>
           {onSearch && (
@@ -845,6 +850,23 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
               <option value="unPaid">Unpaid</option>
             </select>
           )}
+          {onAccountStatusChange && (
+            <select
+              id="accountStatus-dropdown"
+              value={accountStatusFilter}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAccountStatusFilter(val);
+                onAccountStatusChange?.(val);
+              }}
+              className="w-[150px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 appearance-none cursor-pointer"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' strokeLinejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1.25rem' }}
+            >
+              <option value="">Account Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Deactive</option>
+            </select>
+          )}
           {onNewTechClick && (
             <select
               id="tech-dropdown"
@@ -873,10 +895,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
           {showDatePicker && (
             <div className="relative" ref={datePickerRef}>
               <button
-                className="p-3 bg-white text-[12px] rounded-lg w-[100px] border border-gray-300"
+                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300"
                 onClick={handleDateFilterClick}
               >
-                Date Filter
+                {dates.startDate && dates.endDate
+                  ? `${format(dates.startDate, "dd MMM")} - ${format(
+                    dates.endDate,
+                    "dd MMM"
+                  )}`
+                  : "Date Filter"}
               </button>
               {showDatePickers && (
                 <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
@@ -913,7 +940,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             dates.endDate ||
             searchValue ||
             workOrderStatus ||
-            invoiceStatus
+            invoiceStatus ||
+            accountStatusFilter
           ) && (
               <button
                 type="button"
@@ -929,7 +957,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
 
           {onPageSizeChange && (
             <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
-              <option value="">Show 10</option>
+              <option value="10">Show 10</option>
               <option value="10">10</option>
               <option value="20">20</option>
               <option value="30">30</option>
@@ -993,9 +1021,15 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
             </button>
           )}
           {onImport && (
-
-            <label className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-
+            <>
+            <label
+              data-tooltip-id="common-header-import-csv"
+              data-tooltip-content="Import updates existing records from CSV only."
+              className={`flex items-center gap-2 px-3 py-2  rounded-lg  transition-colors
+                ${isRowSelected
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`} >
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
                 <polyline points="3 4 5 6 7 4" />
@@ -1008,6 +1042,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                 type="file"
                 accept=".csv"
                 style={{ display: 'none' }}
+                disabled={!isRowSelected}
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
                     onImport?.(e.target.files[0]);
@@ -1015,12 +1050,19 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
                   }
                 }}
               />
+
             </label>
+            <Tooltip id="common-header-import-csv" place="top" />
+            </>
           )}
 
           {onExport && (
 
-            <button className="flex items-center gap-2 px-3 py-2 bg-[#383d71] text-white rounded-lg hover:bg-[#2d3159] transition-colors" onClick={onExport}>
+            <button disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+                ${isRowSelected
+                ? "bg-[#383d71] text-white hover:bg-[#2d3159]"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`} onClick={onExport}>
 
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" transform="rotate(180)">
                 <path d="M1 7v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />

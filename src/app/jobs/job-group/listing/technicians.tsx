@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import SortIcon from '@/app/component/sortIcon';
 
 interface Job {
   id: string;
@@ -281,36 +282,20 @@ function JobTListing() {
             <tr>
               <th className="w-[100px]" onClick={() => handleSort('jobName')}>
                 Job Title
-                {sortBy === 'jobName' && (
-                  <span className="ml-2">
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'jobName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]" onClick={() => handleSort('fullName')}>
                 Customer Name
-                {sortBy === 'fullName' && (
-                  <span className="ml-2">
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'fullName'} direction={sortDirection} />
               </th>
               <th className="w-[150px]">Dent Tech Name</th>
               <th className="w-[150px]" onClick={() => handleSort('vin')}>
                 VIN
-                {sortBy === 'vin' && (
-                  <span className="ml-2">
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
               </th>
               <th className="w-[100px]" onClick={() => handleSort('groupStatus')}>
                 Status
-                {sortBy === 'groupStatus' && (
-                  <span className="ml-2">
-                    {sortDirection === 'asc' ? '▲' : '▼'}
-                  </span>
-                )}
+                <SortIcon active={sortBy === 'groupStatus'} direction={sortDirection} />
               </th>
               <th className="w-[100px]">Work Order</th>
               <th className="w-[100px]">Action</th>

@@ -29,6 +29,7 @@ import {
   uniqueNumericJobIdsFromVehicles,
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
+import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -101,9 +102,23 @@ const JobTable: React.FC = () => {
   /** When true, "View Missing Vehicles" refetches insurance vehicles and recomputes VIN mismatch. */
   const [mismatchUseInsuranceCompare, setMismatchUseInsuranceCompare] = useState(false);
 
+  const withSerialNo = (jobs: any[], start = 1) =>
+    jobs.map((job: any, index: number) => ({
+      ...job,
+      serialNo: start + index,
+    }));
+
   const handlePdrChange = (jobId: string, value: string) => {
+    if (value === '') {
+      setPdrValues(prev => ({ ...prev, [jobId]: '' }));
+      return;
+    }
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue) || numericValue < 0) {
+      return;
+    }
     setPdrValues(prev => ({ ...prev, [jobId]: value }));
-    if (value && !isNaN(Number(value))) {
+    if (!Number.isNaN(numericValue)) {
       setPdrErrors(prev => ({ ...prev, [jobId]: '' }));
     }
   };
@@ -116,7 +131,16 @@ const JobTable: React.FC = () => {
   const handleSearch = (searchTerm: string) => { console.log('Searching for:', searchTerm); };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setActiveJob((prev) => prev.filter((cust) => cust.id !== deletedId));
+    setSelectedIds((ids) => ids.filter((id) => id !== deletedId));
+    const startSerial = selectedCustomer || selectedJobFilter ? 1 : (currentPage - 1) * pageSize + 1;
+    const nextRows = (prev: any[]) => withSerialNo(prev.filter((c) => c.id !== deletedId), startSerial);
+    setActiveJob(nextRows);
+    setOriginalJobs(nextRows);
+    setCustomerJobs((prev) => {
+      if (!selectedCustomer || !prev.length) return prev;
+      if (!prev.some((c) => c.id === deletedId)) return prev;
+      return withSerialNo(prev.filter((c) => c.id !== deletedId), startSerial);
+    });
   };
 
   const fetchJobs = async (page = 1, query = '', limit = pageSize) => {
@@ -158,8 +182,9 @@ const JobTable: React.FC = () => {
         setInvoiceDates(initialInvoiceDates);
 
         const updatedJobs = customerFilter ? [...fetchedTechnicians, ...customerJobs] : fetchedTechnicians;
-        setOriginalJobs(updatedJobs);
-        setActiveJob(updatedJobs);
+        const jobsWithSerial = withSerialNo(updatedJobs, (page - 1) * limit + 1);
+        setOriginalJobs(jobsWithSerial);
+        setActiveJob(jobsWithSerial);
         setDentTechTotalAmount(data.response?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
         setRRTotalAmount(data.response?.totalRrCost ?? data.data.totalRrCost ?? '0');
         setTotalEstimateAmount(data.response?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
@@ -195,6 +220,11 @@ const JobTable: React.FC = () => {
         if (column === 'fullName') {
           const nameA = a?.customer?.fullName || ''; const nameB = b?.customer?.fullName || '';
           return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        }
+        if (column === 'serialNo') {
+          const serialA = Number(a?.serialNo ?? 0);
+          const serialB = Number(b?.serialNo ?? 0);
+          return direction === 'asc' ? serialA - serialB : serialB - serialA;
         }
         const valueA = a[column] || ''; const valueB = b[column] || '';
         if (typeof valueA === 'string' && typeof valueB === 'string') {
@@ -237,7 +267,7 @@ const JobTable: React.FC = () => {
         return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
       }).join(', ');
       return {
-        id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`, jobName: jobData.jobName,
+        // id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`, jobName: jobData.jobName,
         assignCustomer: jobData?.customer?.id, bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
         model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
         vehicleDescriptor: jobData.vehicleDescriptor, manufacturerName: jobData.manufacturerName,
@@ -316,7 +346,7 @@ const JobTable: React.FC = () => {
         const requestBody: { [key: string]: any } = { startDate, endDate, roleType, vehicleStatus: 'false' };
         if (roleType !== 'superadmin' && roleType !== 'manager') requestBody.technicianId = userId;
         const response = await axios.post(apiPoint, requestBody, { headers: { 'Authorization': `Bearer ${token}` } });
-        setActiveJob(response.data.vehicles.updatedVehicles);
+        setActiveJob(withSerialNo(response.data.vehicles.updatedVehicles || []));
       } catch (error) { console.error("Error fetching filtered jobs:", error); } finally { setLoading(false); }
     }
   };
@@ -333,13 +363,13 @@ const JobTable: React.FC = () => {
       const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (response.ok) {
-        setOriginalJobs(data.vehicles.updatedVehicles);
+        setOriginalJobs(withSerialNo(data.vehicles.updatedVehicles || []));
         const filteredJobs = data.vehicles.updatedVehicles.filter((job: any) => selectedStatus === 'completed' ? job.vehicleStatus === true : selectedStatus === 'inProgress' ? job.vehicleStatus === false : true);
         setDentTechTotalAmount(data.vehicles?.totalDantTechCost);
         setRRTotalAmount(data.vehicles?.totalRrCost);
         setTotalEstimateAmount(data.vehicles?.totalEstimateCost);
         setTotalJobAmount(data.vehicles?.totalJobEstimateCost || '0');
-        setActiveJob(filteredJobs);
+        setActiveJob(withSerialNo(filteredJobs));
       }
     } catch (error) { console.error("Error during API request:", error); }
   };
@@ -363,7 +393,8 @@ const JobTable: React.FC = () => {
     try {
       setLoading(true);
       const { jobs, vehicles } = await fetchCustomerData(customerId);
-      setCustomerJobs(vehicles); setActiveJob(vehicles);
+      const vehiclesWithSerial = withSerialNo(vehicles);
+      setCustomerJobs(vehiclesWithSerial); setActiveJob(vehiclesWithSerial);
     } catch (error) { toast.error("Failed to load customer data"); } finally { setLoading(false); }
   };
 
@@ -375,14 +406,14 @@ const JobTable: React.FC = () => {
   };
 
   useEffect(() => {
-    if (selectedStatus === '') { setActiveJob(originalJobs); }
+    if (selectedStatus === '') { setActiveJob(withSerialNo(originalJobs)); }
     else {
       const filtered = originalJobs.filter(job => {
         if (selectedStatus === 'completed') return job.vehicleStatus === true;
         else if (selectedStatus === 'inProgress') return job.vehicleStatus === false;
         return true;
       });
-      setActiveJob(filtered);
+      setActiveJob(withSerialNo(filtered));
     }
   }, [selectedStatus, originalJobs]);
 
@@ -440,7 +471,7 @@ const JobTable: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        toast.success('Invoice generated successfully!');
+        toast.success(' Invoice generated successfully and sent to customer via email.');
         const pdfLink = response.data.invoice.invoiceUrl;
         if (isPrint) {
           window.open(pdfLink, '_blank');
@@ -514,10 +545,10 @@ const JobTable: React.FC = () => {
           buttonsStyling: false,
           customClass: {
             popup: 'swal-invoice-email-popup',
-            title: '!text-[#0f172a] !text-xl !font-bold !pb-2 !pt-0', 
+            title: '!text-[#0f172a] !text-xl !font-bold !pb-2 !pt-0',
             cancelButton:
               '!bg-[#f1f5f9] hover:!bg-[#e2e8f0] !text-[#475569] !rounded-xl !px-5 !py-3 !text-sm !font-semibold !border !border-slate-200 !m-1',
-              confirmButton:
+            confirmButton:
               '!bg-[#383d71] hover:!bg-[#2d3159] !text-white !rounded-xl !px-5 !py-3 !text-sm !font-semibold !shadow-lg !shadow-[#383d71]/25 !m-1 !min-w-[200px]',
             actions: '!gap-2 !mt-2',
             htmlContainer: '!m-0 !pt-0',
@@ -674,11 +705,36 @@ const JobTable: React.FC = () => {
             </span>
           </label>
         </td>
+        <td>{job?.serialNo}</td>
         <td><Link href={`/jobs/view?jobId=${job?.job?.id}&ActiveWorkOrder`} className='hover:underline'>{job?.jobName}</Link></td>
         <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job?.vin}</Link></td>
         <td><Link href={`/client/view?customerId=${job?.customer?.id}`} className='hover:underline'>{job?.customer?.fullName}</Link></td>
         {roleType !== 'single-technician' && (
-          <td>{job?.assignedTechnicians?.filter((tech: any) => tech.techType === 'technician')?.map((tech: any) => (<div key={tech.id} className="capitalize"><Link href={`/technicians/view?technicianId=${tech?.id}`} className='hover:underline'>{tech.firstName} {tech.lastName}</Link></div>))}</td>
+          <td>
+            {job?.assignedTechnicians
+              ?.filter((tech: any) => tech.techType === 'technician')
+              ?.map((tech: any) => (
+                <div key={tech.id} className="flex items-center gap-2 mb-1">
+
+                  <Link
+                    href={`/technicians/view?technicianId=${tech?.id}`}
+                    className={`hover:underline capitalize font-medium ${tech?.deletedStatus
+                        ? "text-red-600"
+                        : "text-gray-900"
+                      }`}
+                  >
+                    {tech.firstName} {tech.lastName}
+                  </Link>
+
+                  {tech?.deletedStatus && (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-[10px] font-medium text-red-700">
+                      Deleted Tech
+                    </span>
+                  )}
+
+                </div>
+              ))}
+          </td>
         )}
         {roleType !== 'single-technician' && (
           <td>{job?.assignedTechnicians?.length > 0 ? job?.assignedTechnicians?.map((tech: any) => (<div key={tech.id} className="capitalize">{tech.VehicleTechnician?.techPercentageCalculatedAmount && tech.VehicleTechnician?.techPercentageCalculatedAmount !== '' ? `$${tech.VehicleTechnician?.techPercentageCalculatedAmount}` : <span className="text-gray-400 text-sm"></span>}</div>)) : <span className="text-gray-400 text-sm"></span>}</td>
@@ -696,13 +752,13 @@ const JobTable: React.FC = () => {
         <td>
           <TextField label="" variant="outlined" fullWidth color="warning" size="small" type='date' value={invoiceDates[job.id] || ''} onChange={(e) => handleDateAutoSave(job.id, e.target.value)} InputLabelProps={{ shrink: true }} />
         </td>
-        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Generated' : 'Pending'}</span>)}</td>
+        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Sent' : 'Pending'}</span>)}</td>
         <td>{canCreate && (<span className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.vehicleStatus ? 'Completed' : 'In Progress'}</span>)}</td>
         {roleType !== 'single-technician' && (
           <td>
             <div className="flex gap-2 items-center">
               <FormControl fullWidth size="small">
-                <TextField label="PDR" variant="outlined" fullWidth color="warning" size="small" type='number' value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
+                <TextField label="PDR" variant="outlined" fullWidth color="warning" size="small" type='number' inputProps={{ min: 0 }} value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
               </FormControl>
               <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
             </div>
@@ -725,17 +781,17 @@ const JobTable: React.FC = () => {
       <Breadcrumb items={[{ label: 'Invoice', href: '/reporting/invoice' }]} />
 
       <div className="invoice_tab_content flex justify-end gap-3 mb-3 items-center">
-        <button onClick={() => handleGenerateInvoice(false)} disabled={isGeneratingInvoice} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center'>
+        <button onClick={() => handleGenerateInvoice(false)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'>
           {isGeneratingInvoice ? (
             <><svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...</>
           ) : ('Generate Invoice')}
         </button>
-        <button onClick={() => handleGenerateInvoice(true)} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Print</button>
-        <button onClick={handleFillAllPdr} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2'>Fill All PDR</button>
+        <button onClick={() => handleGenerateInvoice(true)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Print</button>
+        <button onClick={handleFillAllPdr} disabled={selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Fill All PDR</button>
       </div>
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} />
+        <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} selectedRows={selectedIds} />
 
         {/* <div className="flex mb-2 shadow-lg p-2 flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
           <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>
@@ -745,7 +801,7 @@ const JobTable: React.FC = () => {
           {roleType !== 'single-technician' && (<div className='total_expense title_sdev'><b>Total Expense </b>: ${totalEstimateAmount}</div>)}
         </div> */}
 
-        <div className="overflow-auto rounded-md">
+        <div className="custom-table-scroll rounded-md">
           <table className="table w-full table-fixed sdev_table">
             <thead>
               <tr>
@@ -755,10 +811,14 @@ const JobTable: React.FC = () => {
                     <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-[10px] transform -translate-x-1/2 -translate-y-1/2"><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg></span>
                   </label>
                 </th>
+                <th className="w-[120px]" onClick={() => handleSort('serialNo')}>
+                  Serial No
+                  <SortIcon active={sortBy === 'serialNo'} direction={sortDirection} />
+                </th>
                 <th className="w-[100px]">Job Title</th>
                 <th className="w-[160px]">VIN</th>
                 <th className="w-[120px]">Customer Name</th>
-                {roleType !== 'single-technician' && (<th className="w-[150px]">Assigned Dent Tech</th>)}
+                {roleType !== 'single-technician' && (<th className="w-[200px]">Assigned Dent Tech</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[100px]">Dent Tech Rate</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[130px]">Assigned R&I</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[80px]">R&I</th>)}
@@ -775,9 +835,9 @@ const JobTable: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Loader /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Loader /></td></tr>
               ) : activeJob.length === 0 ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 14 : 9} className="text-center py-10"><Empty /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Empty /></td></tr>
               ) : (
                 activeJob.map((job) => renderRow(job))
               )}

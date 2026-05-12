@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
  
@@ -47,6 +47,7 @@ export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [jobsLoading, setJobsLoading] = useState<boolean>(false);
     const [roleType, setRoleType] = useState<string | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
      const { isCollapsed } = useSidebar();
 
 
@@ -183,6 +184,87 @@ export default function Dashboard() {
     };
 
     const currentDate = getCurrentDate();
+
+    const handleSort = (key: string) => {
+        setSortConfig((prev) => {
+            if (prev && prev.key === key) {
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            }
+            return { key, direction: 'asc' };
+        });
+    };
+
+    const getSortValue = (job: Job, key: string): string | number => {
+        switch (key) {
+            case 'id': {
+                const numeric = Number(job.id);
+                return Number.isNaN(numeric) ? String(job.id ?? '').toLowerCase() : numeric;
+            }
+            case 'jobName':
+                return (job.jobName || '').toLowerCase();
+            case 'customer':
+                return (job.customer?.fullName || '').toLowerCase();
+            case 'manager':
+                return job.manager
+                    ? `${job.manager.firstName || ''} ${job.manager.lastName || ''}`.trim().toLowerCase()
+                    : '';
+            case 'vehicleCount':
+                return job.vehicleCount || 0;
+            case 'startDate':
+                return job.startDate ? new Date(job.startDate).getTime() : 0;
+            case 'endDate':
+                return job.endDate ? new Date(job.endDate).getTime() : 0;
+            case 'estimatedCost':
+                return parseFloat(job.estimatedCost || '0') || 0;
+            case 'status':
+                return job.jobStatus ? 1 : 0;
+            default:
+                return '';
+        }
+    };
+
+    const sortedJobs = useMemo(() => {
+        if (!sortConfig) return jobs;
+        const sorted = [...jobs].sort((a, b) => {
+            const aVal = getSortValue(a, sortConfig.key);
+            const bVal = getSortValue(b, sortConfig.key);
+            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return sorted;
+    }, [jobs, sortConfig]);
+
+    const SortableHeader = ({ label, sortKey }: { label: string; sortKey: string }) => {
+        const isActive = sortConfig?.key === sortKey;
+        const direction = isActive ? sortConfig?.direction : null;
+        return (
+            <th
+                onClick={() => handleSort(sortKey)}
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors"
+            >
+                <div className="flex items-center gap-1">
+                    <span>{label}</span>
+                    <span className="flex flex-col leading-none">
+                        <svg
+                            className={`w-2.5 h-2.5 ${isActive && direction === 'asc' ? 'text-blue-600' : 'text-gray-400'}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M5 12l5-5 5 5H5z" />
+                        </svg>
+                        <svg
+                            className={`w-2.5 h-2.5 -mt-0.5 ${isActive && direction === 'desc' ? 'text-blue-600' : 'text-gray-400'}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M5 8l5 5 5-5H5z" />
+                        </svg>
+                    </span>
+                </div>
+            </th>
+        );
+    };
 
     return (
         <main  className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container pl-[2rem]'}`}>
@@ -480,9 +562,20 @@ export default function Dashboard() {
 
             {/* Jobs Table Section */}
             <div className="space-y-6 mt-4 shadow-lg p-5 bg-white rounded-lg mb-5">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-1.5 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
-                    <h2 className="text-2xl font-bold text-gray-800">IFS - Recent Jobs</h2>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-1.5 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
+                        <h2 className="text-2xl font-bold text-gray-800">IFS - Recent Jobs</h2>
+                    </div>
+                    <Link
+                        href="/jobs/active-job"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-800 transition-all"
+                    >
+                        <span>View All</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </Link>
                 </div>
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                     {jobsLoading ? (
@@ -499,21 +592,21 @@ export default function Dashboard() {
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100 border-b-2 border-gray-300">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Name</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                        <SortableHeader label="ID" sortKey="id" />
+                                        <SortableHeader label="Job Name" sortKey="jobName" />
+                                        <SortableHeader label="Customer" sortKey="customer" />
                                         {roleType !== 'single-technician' && (
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                                            <SortableHeader label="Manager" sortKey="manager" />
                                         )}
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicles</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Cost</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <SortableHeader label="Vehicles" sortKey="vehicleCount" />
+                                        <SortableHeader label="Start Date" sortKey="startDate" />
+                                        <SortableHeader label="End Date" sortKey="endDate" />
+                                        <SortableHeader label="Estimated Cost" sortKey="estimatedCost" />
+                                        <SortableHeader label="Status" sortKey="status" />
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {jobs.map((job) => (
+                                    {sortedJobs.map((job) => (
                                         <tr key={job.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="text-blue-600 hover:underline">
