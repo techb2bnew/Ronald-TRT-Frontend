@@ -331,6 +331,7 @@ export default function TechReportingDashboard() {
         }
         return {
           vehicleId: v.id,
+          vin: v.vin,
           vehicle: vehicleTitleLong(v),
           payout: Number(v.totalLaborPayout) || 0,
           shares,
@@ -773,9 +774,9 @@ export default function TechReportingDashboard() {
                           className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
                         >
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
-                            {r.id != null ? (
+                            {r.vin ? (
                               <Link
-                                href={`/vehicle/view?vehicleId=${encodeURIComponent(String(r.id))}`}
+                                href={`/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`}
                                 className="text-[#383d71]  underline font-medium"
                               >
                                 {r._vinModel}
@@ -854,9 +855,9 @@ export default function TechReportingDashboard() {
                           className={i % 2 === 0 ? "bg-white" : "bg-gray-50/40"}
                         >
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
-                            {r.vehicleId != null ? (
+                            {r.vin ? (
                               <Link
-                                href={`/vehicle/view?vehicleId=${encodeURIComponent(String(r.vehicleId))}`}
+                                href={`/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`}
                                 className="text-[#383d71]  underline font-medium"
                               >
                                 {r.vehicle}
