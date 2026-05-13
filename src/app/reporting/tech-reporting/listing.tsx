@@ -42,7 +42,10 @@ type AnalyticsPayload = {
   activeTechniciansCount?: number;
   jobStatus?: string;
   jobName?: string;
-  vehicles?: AnalyticsVehicle[];
+  /** Vehicles for the top "Individual vehicles worked" table. */
+  individualVehiclesWorked?: AnalyticsVehicle[];
+  /** Vehicles for the bottom "Group Vehicles Worked" table. */
+  groupVehiclesWorked?: AnalyticsVehicle[];
 };
 
 function money(n: number | string | undefined | null) {
@@ -214,13 +217,27 @@ export default function TechReportingDashboard() {
         return;
       }
       const payload = json?.data ?? json;
+      // Backend may return either the new split shape
+      // ({ individualVehiclesWorked, groupVehiclesWorked }) or the older flat
+      // `vehicles` array — accept both so we don't break on rollouts.
+      const legacyVehicles: AnalyticsVehicle[] = Array.isArray(payload?.vehicles)
+        ? payload.vehicles
+        : [];
+      const individual: AnalyticsVehicle[] = Array.isArray(payload?.individualVehiclesWorked)
+        ? payload.individualVehiclesWorked
+        : legacyVehicles;
+      const group: AnalyticsVehicle[] = Array.isArray(payload?.groupVehiclesWorked)
+        ? payload.groupVehiclesWorked
+        : legacyVehicles;
+
       setAnalytics({
         totalCars: payload?.totalCars,
         totalTechPayout: payload?.totalTechPayout,
         activeTechniciansCount: payload?.activeTechniciansCount,
         jobStatus: payload?.jobStatus,
         jobName: payload?.jobName,
-        vehicles: Array.isArray(payload?.vehicles) ? payload.vehicles : [],
+        individualVehiclesWorked: individual,
+        groupVehiclesWorked: group,
       });
     } catch (e) {
       console.error(e);
@@ -246,23 +263,22 @@ export default function TechReportingDashboard() {
     fetchAnalytics(selectedJobId, { searchQuery: debouncedSearch });
   }, [selectedJobId, startDate, endDate, debouncedSearch]);
 
-  const vehicles = analytics?.vehicles ?? [];
-  const filteredVehicles = vehicles;
+  const individualVehicles = analytics?.individualVehiclesWorked ?? [];
+  const groupVehicles = analytics?.groupVehiclesWorked ?? [];
 
   const individualRows = useMemo(
     () =>
-      filteredVehicles.map((v) => {
-        const { lead, tag } = leadAndTag(v.technicians);
+      individualVehicles.map((v) => {
+        const { lead } = leadAndTag(v.technicians);
         return {
           ...v,
           _vinModel: vehicleTitleShort(v),
           _lead: lead,
-          _tag: tag,
           _type: v.vehicleType || "—",
           _payout: Number(v.totalLaborPayout) || 0,
         };
       }),
-    [filteredVehicles]
+    [individualVehicles]
   );
 
   const sortedIndividual = useMemo(() => {
@@ -278,9 +294,6 @@ export default function TechReportingDashboard() {
       } else if (key === "lead") {
         va = a._lead.toLowerCase();
         vb = b._lead.toLowerCase();
-      } else if (key === "tag") {
-        va = a._tag.toLowerCase();
-        vb = b._tag.toLowerCase();
       } else if (key === "type") {
         va = a._type.toLowerCase();
         vb = b._type.toLowerCase();
@@ -295,10 +308,10 @@ export default function TechReportingDashboard() {
     return rows;
   }, [individualRows, sortInd]);
 
-  /** Unique technicians (columns) across all vehicles for the combined group table. */
+  /** Unique technicians (columns) across the Group Vehicles Worked array. */
   const groupTechColumns = useMemo(() => {
     const m = new Map<string, string>();
-    for (const v of filteredVehicles) {
+    for (const v of groupVehicles) {
       for (const t of v.technicians || []) {
         const id = String(t.id);
         if (!m.has(id)) m.set(id, techName(t));
@@ -307,11 +320,11 @@ export default function TechReportingDashboard() {
     return Array.from(m.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredVehicles]);
+  }, [groupVehicles]);
 
   const groupRows = useMemo(
     () =>
-      filteredVehicles.map((v) => {
+      groupVehicles.map((v) => {
         const shares: Record<string, number> = {};
         for (const t of v.technicians || []) {
           shares[String(t.id)] = Number(t.payoutShare) || 0;
@@ -323,7 +336,7 @@ export default function TechReportingDashboard() {
           shares,
         };
       }),
-    [filteredVehicles]
+    [groupVehicles]
   );
 
   const sortedGroup = useMemo(() => {
@@ -387,8 +400,7 @@ export default function TechReportingDashboard() {
     const jobSlug = String(analytics.jobName || selectedJobId).replace(/\s+/g, "-");
     const ind = sortedIndividual.map((r) => ({
       "Vehicle VIN / Model": r._vinModel,
-      "Lead Technician": r._lead,
-      "Tag Partner": r._tag,
+      "Technician": r._lead,
       "Vehicle Type": r._type,
       "Payout (Labor)": r._payout,
     }));
@@ -444,15 +456,13 @@ export default function TechReportingDashboard() {
     const indBody: any[] = [
       [
         { text: "Vehicle VIN / Model", style: "th" },
-        { text: "Lead Tech", style: "th" },
-        { text: "Tag Partner", style: "th" },
+        { text: "Technician", style: "th" },
         { text: "Type", style: "th" },
         { text: "Payout", style: "th" },
       ],
       ...sortedIndividual.map((r) => [
         r._vinModel,
         r._lead,
-        r._tag,
         r._type,
         money(r._payout),
       ]),
@@ -483,7 +493,7 @@ export default function TechReportingDashboard() {
         { text: "Comprehensive Job & Technician Analytics", style: "h1" },
         { text: jobLabel, margin: [0, 4, 0, 12] },
         { text: "Individual vehicles worked", style: "h2", margin: [0, 0, 0, 6] },
-        { table: { headerRows: 1, widths: ["*", "auto", "auto", "auto", "auto"], body: indBody } },
+        { table: { headerRows: 1, widths: ["*", "auto", "auto", "auto"], body: indBody } },
         { text: "Group Vehicles Worked", style: "h2", margin: [0, 16, 0, 6] },
         {
           table: {
@@ -643,7 +653,7 @@ export default function TechReportingDashboard() {
               </span>
               <input
                 type="search"
-                placeholder={selectedJobId ? "Search Tech / Tag Partner…" : "Select a job first"}
+                placeholder={selectedJobId ? "Search Technician / VIN…" : "Select a job first"}
                 className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -734,14 +744,6 @@ export default function TechReportingDashboard() {
                         highlight
                       />
                       <Th
-                        label="Tag Partner"
-                        sortKey="tag"
-                        activeKey={sortInd.key}
-                        direction={sortInd.dir}
-                        onClick={() => toggleSortInd("tag")}
-                        highlight
-                      />
-                      <Th
                         label="Vehicle Type"
                         sortKey="type"
                         activeKey={sortInd.key}
@@ -760,7 +762,7 @@ export default function TechReportingDashboard() {
                   <tbody>
                     {sortedIndividual.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-3 py-8 text-center text-gray-500">
+                        <td colSpan={4} className="px-3 py-8 text-center text-gray-500">
                           No vehicles match your search.
                         </td>
                       </tr>
@@ -784,9 +786,6 @@ export default function TechReportingDashboard() {
                           </td>
                           <td className="px-3 py-2.5 border-b border-gray-100 bg-sky-50/80 text-gray-900">
                             {r._lead}
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-gray-100 bg-sky-50/80 text-gray-900">
-                            {r._tag}
                           </td>
                           <td className="px-3 py-2.5 border-b border-gray-100">{r._type}</td>
                           <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
