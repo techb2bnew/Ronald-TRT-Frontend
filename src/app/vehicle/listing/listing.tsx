@@ -1109,6 +1109,7 @@ const JobTable: React.FC = () => {
           showDatePicker={activeTab === 'scanned'}
           onDateChange={activeTab === 'scanned' ? handleDateChange : undefined}
           onNewJobClick={handleNewJobClick}
+          autoSelectFirstJob
           showClearFilters={true}
           onClearFilters={handleClearFilters}
           onStatusChange={(status) => {

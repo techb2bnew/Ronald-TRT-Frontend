@@ -42,6 +42,8 @@ const JobTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  /** When set, table data comes from `vehicleJobNameFilter` only — do not overwrite with `fetchJobs`. */
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
   const { isCollapsed } = useSidebar();
   const [pageSize, setPageSize] = useState(10);
   const [totalJobs, setTotalJobs] = useState(10);
@@ -144,14 +146,16 @@ const JobTable: React.FC = () => {
 
 
   useEffect(() => {
+    if (selectedJobId) return;
     const timeoutId = setTimeout(() => {
-      fetchJobs(currentPage, searchTerm, pageSize); // Make sure currentPage and pageSize are used
+      fetchJobs(currentPage, searchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize, selectedCustomerId]);
+  }, [currentPage, searchTerm, pageSize, selectedCustomerId, selectedJobId]);
 
   const handleCustomerChange = (customerId: string) => {
     setSelectedCustomerId(customerId);
+    setSelectedJobId('');
     setCurrentPage(1);
   };
 
@@ -469,49 +473,57 @@ const JobTable: React.FC = () => {
   };
 
   const handleNewJobClick = async (jobId: string, roleType: string) => {
+    const normalized =
+      jobId != null && String(jobId).trim() !== '' && String(jobId).toLowerCase() !== 'undefined'
+        ? String(jobId).trim()
+        : '';
+    setSelectedJobId(normalized);
+
+    if (!normalized) {
+      return;
+    }
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('token');
-    console.log(jobId, 'jobId');
-
-    // Prepare the payload dynamically
+    const resolvedRole = roleType || localStorage.getItem('types') || 'single-technician';
     const payload = {
-      roleType: roleType,  // Dynamic roleType from localStorage
-      jobId: jobId,        // Dynamic jobId passed from the selected job 
+      roleType: resolvedRole,
+      jobId: normalized,
     };
-    console.log(payload, 'payload');
 
     try {
-      // Check if the token is available
       if (!token) {
-        console.error("No token found");
-        return; // Stop if the token is missing
+        console.error('No token found');
+        return;
       }
 
-      // Make the POST request to the vehicleJobNameFilter API endpoint
+      setLoading(true);
       const response = await fetch(`${apiUrl}/vehicleJobNameFilter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Include token in the headers
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload), // Send the payload as JSON
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json(); // Parse the JSON response
+      const data = await response.json();
 
-      // Handle success or failure based on the API response
       if (response.ok) {
         const jobsWithSerial = (data.vehicles.updatedVehicles || []).map((job: any, index: number) => ({
           ...job,
           serialNo: (currentPage - 1) * pageSize + index + 1,
         }));
         setActiveJob(jobsWithSerial);
-        // You can update state or perform further operations based on the response
       } else {
-        console.error("Failed to apply filter:", data.error || 'Unknown error');
+        console.error('Failed to apply filter:', data.error || 'Unknown error');
+        toast.error(data?.message || data?.error || 'Failed to load vehicles for this job');
       }
     } catch (error) {
-      console.error("Error during API request:", error);
+      console.error('Error during API request:', error);
+      toast.error('Error loading job vehicles');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -606,7 +618,7 @@ const JobTable: React.FC = () => {
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}  selectedRows={selectedIds} />
+        <CommonHeader heading="All Work Order List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="" buttonLink="" onNewJobClick={handleNewJobClick} roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)} selectedRows={selectedIds} autoSelectFirstCustomerAndJob />
 
         <div className="overflow-auto rounded-md">
           <table className="table w-full table-fixed">

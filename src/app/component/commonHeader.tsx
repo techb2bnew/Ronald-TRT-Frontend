@@ -43,11 +43,53 @@ interface CommonHeaderProps {
   /** Work order list: compare scanned vs insurance VINs (superadmin). */
   onCompareWorkOrderClick?: () => void;
   compareWorkOrderLabel?: string;
+  /**
+   * Single-technician list with customer + job filters: on first load, select the first
+   * customer, load their jobs, then select the first job and call `onCustomerChange` /
+   * `onNewJobClick` so the parent API runs.
+   */
+  autoSelectFirstCustomerAndJob?: boolean;
+  /**
+   * Lists that only show the job dropdown (no customer filter): after jobs load, select
+   * the first job once and call `onNewJobClick`. Ignored when `onCustomerChange` is set.
+   */
+  autoSelectFirstJob?: boolean;
 }
 
 
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLabel, buttonLink, userRole, additionalComponents, selectedRows = [], onExport, onImport, onPageSizeChange, onCompletedClick, onInProgressClick, onCompletedJobClick, onInProgressJobClick, onAllJobsClick, showDatePicker, onDateChange, onNewJobClick, onNewTechClick, roleType, onCustomerChange, onStatusChange, onInvoiceStatueChange, onAccountStatusChange, onClearFilters, showClearFilters = false, onCompareWorkOrderClick, compareWorkOrderLabel = 'Compare work order', }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({
+  heading,
+  onSearch,
+  buttonLabel,
+  buttonLink,
+  userRole,
+  additionalComponents,
+  selectedRows = [],
+  onExport,
+  onImport,
+  onPageSizeChange,
+  onCompletedClick,
+  onInProgressClick,
+  onCompletedJobClick,
+  onInProgressJobClick,
+  onAllJobsClick,
+  showDatePicker,
+  onDateChange,
+  onNewJobClick,
+  onNewTechClick,
+  roleType,
+  onCustomerChange,
+  onStatusChange,
+  onInvoiceStatueChange,
+  onAccountStatusChange,
+  onClearFilters,
+  showClearFilters = false,
+  onCompareWorkOrderClick,
+  compareWorkOrderLabel = 'Compare work order',
+  autoSelectFirstCustomerAndJob = false,
+  autoSelectFirstJob = false,
+}) => {
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
@@ -102,6 +144,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
   const jobDropdownRef = useRef<HTMLDivElement>(null);
   const jobSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const jobFetchInFlightRef = useRef(false);
+  /** One-time auto: first customer → first job (single-technician jobs list). */
+  const autoCustomerJobRef = useRef({ customerDone: false, jobDone: false });
+  /** One-time auto: first job when no customer filter (vehicle work order list). */
+  const autoFirstJobOnlyRef = useRef(false);
   const [jobSearchTerm, setJobSearchTerm] = useState('');
   const [debouncedJobSearch, setDebouncedJobSearch] = useState('');
 
@@ -619,6 +665,57 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({ heading, onSearch, buttonLa
     onAccountStatusChange?.("");
     onClearFilters?.();
   };
+
+  useEffect(() => {
+    if (!autoSelectFirstCustomerAndJob) {
+      autoCustomerJobRef.current = { customerDone: false, jobDone: false };
+    }
+  }, [autoSelectFirstCustomerAndJob]);
+
+  useEffect(() => {
+    if (!autoSelectFirstJob) {
+      autoFirstJobOnlyRef.current = false;
+    }
+  }, [autoSelectFirstJob]);
+
+  useEffect(() => {
+    if (!autoSelectFirstCustomerAndJob || !onCustomerChange || !onNewJobClick) return;
+    if (autoCustomerJobRef.current.customerDone) return;
+    if (!Array.isArray(customer) || customer.length === 0) return;
+    const first = customer.find((c: any) => c && c.id != null && String(c.id).trim() !== "");
+    if (!first) return;
+    autoCustomerJobRef.current.customerDone = true;
+    const label =
+      first.fullName ||
+      `${first.firstName || ""} ${first.lastName || ""}`.trim() ||
+      `#${first.id}`;
+    void applyCustomerSelection(String(first.id), label);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run when customer list first populates for auto-pick
+  }, [autoSelectFirstCustomerAndJob, customer, onCustomerChange, onNewJobClick]);
+
+  useEffect(() => {
+    if (!autoSelectFirstCustomerAndJob || !onNewJobClick) return;
+    if (!autoCustomerJobRef.current.customerDone) return;
+    if (autoCustomerJobRef.current.jobDone) return;
+    if (!customerFilter) return;
+    if (!Array.isArray(customerJobs) || customerJobs.length === 0) return;
+    const firstJob = customerJobs.find((j: any) => j && j.id != null && String(j.id).trim() !== "");
+    if (!firstJob) return;
+    autoCustomerJobRef.current.jobDone = true;
+    handleJobFilterChange({ target: { value: String(firstJob.id) } } as SelectChangeEvent<string>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelectFirstCustomerAndJob, customerFilter, customerJobs, onNewJobClick]);
+
+  useEffect(() => {
+    if (!autoSelectFirstJob || !onNewJobClick || onCustomerChange) return;
+    if (autoFirstJobOnlyRef.current) return;
+    if (!Array.isArray(jobs) || jobs.length === 0) return;
+    const firstJob = jobs.find((j: any) => j && j.id != null && String(j.id).trim() !== "");
+    if (!firstJob) return;
+    autoFirstJobOnlyRef.current = true;
+    handleJobFilterChange({ target: { value: String(firstJob.id) } } as SelectChangeEvent<string>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelectFirstJob, onNewJobClick, onCustomerChange, jobs]);
 
 
 

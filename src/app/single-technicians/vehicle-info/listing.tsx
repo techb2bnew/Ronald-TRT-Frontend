@@ -340,6 +340,22 @@ const VehicleTable: React.FC = () => {
 
   const renderRow = (job: any) => {
     const isChecked = selectedIds.includes(job.id);
+    const vin = String(job?.vin ?? "").trim();
+    const parentJobId =
+      job?.jobId ??
+      job?.JobId ??
+      job?.job?.id ??
+      job?.Job?.id;
+    const jobIdStr =
+      parentJobId != null && String(parentJobId).trim() !== "" && String(parentJobId).toLowerCase() !== "null"
+        ? String(parentJobId).trim()
+        : "";
+    const techViewHref =
+      vin.length > 0
+        ? `/reporting/tech-view?vin=${encodeURIComponent(vin)}${
+            jobIdStr ? `&jobId=${encodeURIComponent(jobIdStr)}` : ""
+          }`
+        : "";
     return (
       <tr key={job.id}>
         <td key="checkbox">
@@ -376,20 +392,25 @@ const VehicleTable: React.FC = () => {
         <td>{job.modelYear}</td>
         {/* <td>{job.color}</td> */}
         <td>
-          {/* <TableActions
-            editRoute={`/jobs/create-job/create?jobId=${job.id}&vehicleInfo`}
-            deleteRoute={`${apiUrl}/deleteJobs`}  // Pass the correct endpoint
-            viewRoute={`/reporting/view?vehicalId=${job.vehicalId}`}
-            idKey="jobid"
-            userRole='Vehicleinfo'
-            itemId={job.id}  // Pass the technician ID
-            onDeleteSuccess={() => handleDeleteSuccess(job.id)}
-          /> */}
-
-           <Link href={`/reporting/view?vehicleId=${job.id}`} >
-            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-              data-tooltip-content="View" />
-          </Link>
+          {techViewHref ? (
+            <Link href={techViewHref}>
+              <Image
+                alt="eye"
+                src={Eye}
+                className="w-[16px]"
+                data-tooltip-id="view"
+                data-tooltip-content="View"
+              />
+            </Link>
+          ) : (
+            <span
+              className="inline-block opacity-40 cursor-not-allowed"
+              title="VIN missing — cannot open technician view"
+              aria-hidden
+            >
+              <Image alt="" src={Eye} className="w-[16px]" />
+            </span>
+          )}
           <Tooltip id="view" place="top" />
         </td>
       </tr>
