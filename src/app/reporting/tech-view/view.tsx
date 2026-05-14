@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Swal from "sweetalert2";
 import Loading from "@/app/component/loader";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -294,6 +295,7 @@ export default function TechView() {
   const [loading, setLoading] = useState<boolean>(true);
   const [vin, setVin] = useState<string>("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null);
 
   const fetchVehicleByVin = async (vinValue: string, jobIdValue?: string) => {
     setLoading(true);
@@ -357,6 +359,49 @@ export default function TechView() {
     fetchVehicleByVin(v, jobId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  const handleDeleteVehicle = async (vehicleId: string) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You can't undo this action!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+    if (!result.isConfirmed) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please sign in again.");
+      return;
+    }
+
+    setDeletingVehicleId(vehicleId);
+    try {
+      const res = await fetch("/api/deleteVehicle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ vehicleId, deletedStatus: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success(typeof data?.message === "string" ? data.message : "Vehicle deleted successfully");
+        setVehicles((prev) => prev.filter((x) => String(x?.id) !== String(vehicleId)));
+      } else {
+        toast.error(data?.error || data?.message || "Failed to delete vehicle");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("An error occurred while deleting the vehicle");
+    } finally {
+      setDeletingVehicleId(null);
+    }
+  };
 
   const totalTechs = useMemo(() => {
     let count = 0;
@@ -783,25 +828,44 @@ export default function TechView() {
                 </span>
               </div>
               {v?.id != null && String(v.id).trim() !== "" && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
-                    )
-                  }
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Edit vehicle
-                </button>
+                <div className="shrink-0 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    disabled={deletingVehicleId === String(v.id)}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    Edit vehicle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteVehicle(String(v.id))}
+                    disabled={deletingVehicleId === String(v.id)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-red-600 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    {deletingVehicleId === String(v.id) ? "Deleting…" : "Delete vehicle"}
+                  </button>
+                </div>
               )}
             </div>
 

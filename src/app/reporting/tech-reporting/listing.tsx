@@ -266,6 +266,25 @@ export default function TechReportingDashboard() {
   const individualVehicles = analytics?.individualVehiclesWorked ?? [];
   const groupVehicles = analytics?.groupVehiclesWorked ?? [];
 
+  /**
+   * Backend `totalTechPayout` can double-count when both individual and group
+   * vehicle lists are present. Prefer summing group rows (one row per vehicle, matches
+   * "Group Vehicles Worked" footer); otherwise individual; else fall back to API.
+   */
+  const displayedTotalTechPayout = useMemo(() => {
+    if (!analytics) return null;
+    const group = Array.isArray(analytics.groupVehiclesWorked) ? analytics.groupVehiclesWorked : [];
+    const groupSum = group.reduce((acc, v) => acc + (Number(v.totalLaborPayout) || 0), 0);
+    if (group.length > 0) return groupSum;
+    const ind = Array.isArray(analytics.individualVehiclesWorked)
+      ? analytics.individualVehiclesWorked
+      : [];
+    const indSum = ind.reduce((acc, v) => acc + (Number(v.totalLaborPayout) || 0), 0);
+    if (ind.length > 0) return indSum;
+    const n = Number(analytics.totalTechPayout);
+    return Number.isFinite(n) ? n : 0;
+  }, [analytics]);
+
   const individualRows = useMemo(
     () =>
       individualVehicles.map((v) => {
@@ -385,12 +404,12 @@ export default function TechReportingDashboard() {
       : "Optional date range";
 
   const clearFilters = () => {
-    setSelectedJobId("");
+    // setSelectedJobId("");
     setStartDate("");
     setEndDate("");
     setSearch("");
-    setAnalytics(null);
-    setDatePopoverOpen(false);
+    // setAnalytics(null);
+    // setDatePopoverOpen(false);
   };
 
   const exportCsv = () => {
@@ -454,20 +473,29 @@ export default function TechReportingDashboard() {
       return;
     }
     const jobLabel = analytics.jobName || `Job ${selectedJobId}`;
-    const indBody: any[] = [
-      [
-        { text: "Vehicle VIN / Model", style: "th" },
-        { text: "Technician", style: "th" },
-        { text: "Type", style: "th" },
-        { text: "Payout", style: "th" },
-      ],
-      ...sortedIndividual.map((r) => [
-        r._vinModel,
-        r._lead,
-        r._type,
-        money(r._payout),
-      ]),
-    ];
+
+    const individualPdfBlocks: any[] = [];
+    if (sortedIndividual.length > 0) {
+      const indBody: any[] = [
+        [
+          { text: "Vehicle VIN / Model", style: "th" },
+          { text: "Technician", style: "th" },
+          { text: "Type", style: "th" },
+          { text: "Payout", style: "th" },
+        ],
+        ...sortedIndividual.map((r) => [
+          r._vinModel,
+          r._lead,
+          r._type,
+          money(r._payout),
+        ]),
+      ];
+      individualPdfBlocks.push(
+        { text: "Individual vehicles worked", style: "h2", margin: [0, 0, 0, 6] },
+        { table: { headerRows: 1, widths: ["*", "auto", "auto", "auto"], body: indBody } }
+      );
+    }
+
     const gHead: any[] = [
       { text: "Vehicle VIN / Model", style: "th" },
       { text: "Payout (Labor)", style: "th" },
@@ -493,9 +521,12 @@ export default function TechReportingDashboard() {
       content: [
         { text: "Comprehensive Job & Technician Analytics", style: "h1" },
         { text: jobLabel, margin: [0, 4, 0, 12] },
-        { text: "Individual vehicles worked", style: "h2", margin: [0, 0, 0, 6] },
-        { table: { headerRows: 1, widths: ["*", "auto", "auto", "auto"], body: indBody } },
-        { text: "Group Vehicles Worked", style: "h2", margin: [0, 16, 0, 6] },
+        ...individualPdfBlocks,
+        {
+          text: "Group Vehicles Worked",
+          style: "h2",
+          margin: [0, sortedIndividual.length > 0 ? 16 : 0, 0, 6],
+        },
         {
           table: {
             headerRows: 1,
@@ -678,7 +709,7 @@ export default function TechReportingDashboard() {
             { label: "Total Cars in Job", value: analytics != null ? String(analytics.totalCars ?? 0) : "—" },
             {
               label: "Total Tech Payout",
-              value: analytics != null ? money(analytics.totalTechPayout) : "—",
+              value: displayedTotalTechPayout != null ? money(displayedTotalTechPayout) : "—",
             },
             {
               label: "Active Technicians",
