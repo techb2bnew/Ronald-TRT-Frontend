@@ -295,7 +295,7 @@ export default function TechView() {
   const [vin, setVin] = useState<string>("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const fetchVehicleByVin = async (vinValue: string) => {
+  const fetchVehicleByVin = async (vinValue: string, jobIdValue?: string) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -304,10 +304,15 @@ export default function TechView() {
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await fetch(
-        `/api/fetchSingleVehicleInfoByVin?vin=${encodeURIComponent(vinValue)}`,
-        { method: "GET", headers }
-      );
+      const jid = jobIdValue != null ? String(jobIdValue).trim() : "";
+      const query =
+        `vin=${encodeURIComponent(vinValue)}` +
+        (jid ? `&jobId=${encodeURIComponent(jid)}` : "");
+
+      const res = await fetch(`/api/fetchSingleVehicleInfoByVin?${query}`, {
+        method: "GET",
+        headers,
+      });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -342,13 +347,14 @@ export default function TechView() {
 
   useEffect(() => {
     const v = searchParams?.get("vin") || "";
+    const jobId = searchParams?.get("jobId") || "";
     setVin(v);
     if (!v) {
       toast.error("Missing VIN");
       setLoading(false);
       return;
     }
-    fetchVehicleByVin(v);
+    fetchVehicleByVin(v, jobId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -446,7 +452,7 @@ export default function TechView() {
         </div>
 
         {/* Stepper */}
-        <div className="flex items-center justify-between gap-2">
+        {/* <div className="flex items-center justify-between gap-2">
           <StepBadge number={1} label="Job & Vehicle" done />
           <StepConnector done />
           <StepBadge number={2} label="Work / Images" done />
@@ -457,7 +463,7 @@ export default function TechView() {
             active={totalTechs === 0}
             done={totalTechs > 0}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Job — once (primary work order) */}
@@ -750,6 +756,11 @@ export default function TechView() {
           : [];
         const ymm =
           [v?.modelYear, v?.make, v?.model].filter(Boolean).join(" ") || "Vehicle";
+        const notesRaw = v?.notes ?? job?.notes;
+        const notesStr =
+          notesRaw != null && String(notesRaw).trim() !== "" && String(notesRaw).toLowerCase() !== "null"
+            ? String(notesRaw).trim()
+            : "";
         return (
           <div
             key={v.id ?? i}
@@ -779,7 +790,7 @@ export default function TechView() {
                       `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
                     )
                   }
-                  className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path
@@ -802,10 +813,34 @@ export default function TechView() {
                   <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Work Order Description</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">Work Description</h4>
                 </div>
                 <div className="p-3">
                   <JobDescriptionBlock items={v?.jobDescription} />
+                </div>
+              </div>
+
+              {/* Notes (vehicle or job) */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+                  <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                    />
+                  </svg>
+                  <h4 className="text-sm font-semibold text-gray-900">Notes</h4>
+                </div>
+                <div className="p-3">
+                  {notesStr ? (
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap" style={{ wordBreak: "break-word" }}>
+                      {notesStr}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic px-3 py-2 bg-gray-50 rounded-md">No notes added.</p>
+                  )}
                 </div>
               </div>
 

@@ -776,7 +776,11 @@ export default function TechReportingDashboard() {
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
                             {r.vin ? (
                               <Link
-                                href={`/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`}
+                                href={
+                                  selectedJobId
+                                    ? `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
+                                    : `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
+                                }
                                 className="text-[#383d71]  underline font-medium"
                               >
                                 {r._vinModel}
@@ -857,7 +861,11 @@ export default function TechReportingDashboard() {
                           <td className="px-3 py-2.5 border-b border-gray-100 text-gray-800">
                             {r.vin ? (
                               <Link
-                                href={`/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`}
+                                href={
+                                  selectedJobId
+                                    ? `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
+                                    : `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
+                                }
                                 className="text-[#383d71]  underline font-medium"
                               >
                                 {r.vehicle}

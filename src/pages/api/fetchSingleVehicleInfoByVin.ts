@@ -21,10 +21,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'vin parameter is required' });
     }
 
+    const jobId = toSingleString(req.query.jobId);
+    const jobQuery = jobId ? `&jobId=${encodeURIComponent(jobId)}` : '';
+
     const token = req.headers.authorization || '';
 
     const backendResponse = await fetch(
-      `${apiBaseUrl}/fetchSingleVehicleInfoByVin?vin=${encodeURIComponent(vin)}`,
+      `${apiBaseUrl}/fetchSingleVehicleInfoByVin?vin=${encodeURIComponent(vin)}${jobQuery}`,
       {
         method: 'GET',
         headers: {
