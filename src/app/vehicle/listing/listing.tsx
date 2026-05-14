@@ -1085,7 +1085,7 @@ const JobTable: React.FC = () => {
           </table>
         </div>
 
-        {activeJob?.length > 0 && (
+        {activeJob?.length > 0 && !normalizeJobId(selectedJobId) && (
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
         )}
       </>

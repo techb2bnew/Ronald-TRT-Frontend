@@ -49,6 +49,13 @@ const JobTable: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  const normalizeJobId = (value: unknown) => {
+    if (value === undefined || value === null) return '';
+    const str = String(value).trim();
+    if (!str || str === 'undefined' || str === 'null') return '';
+    return str;
+  };
+
 
   const handleSearch = (searchTerm: string) => {
     console.log('Searching for:', searchTerm);
@@ -711,7 +718,7 @@ const JobTable: React.FC = () => {
             </tbody>
           </table>
         </div>
-        {activeJob.length > 0 && (
+        {activeJob.length > 0 && !normalizeJobId(selectedJobId) && (
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
         )}
       </div>
