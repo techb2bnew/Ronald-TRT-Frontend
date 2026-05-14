@@ -354,7 +354,7 @@ const VehicleTable: React.FC = () => {
       vin.length > 0
         ? `/reporting/tech-view?vin=${encodeURIComponent(vin)}${
             jobIdStr ? `&jobId=${encodeURIComponent(jobIdStr)}` : ""
-          }`
+          }&hideActions=1`
         : "";
     return (
       <tr key={job.id}>

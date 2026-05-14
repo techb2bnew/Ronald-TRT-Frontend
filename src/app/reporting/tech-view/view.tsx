@@ -105,14 +105,14 @@ const StepBadge = ({
         done
           ? "bg-[#1e3e6f] text-white border-[#1e3e6f]"
           : active
-          ? "bg-white text-[#1e3e6f] border-[#1e3e6f]"
+          ? "bg-white text-[#3a3a3a] border-[#1e3e6f]"
           : "bg-white text-gray-400 border-gray-300"
       }`}
     >
       {done ? "✓" : number}
     </div>
     <span
-      className={`text-sm font-medium ${done || active ? "text-gray-900" : "text-gray-400"}`}
+      className={`text-base font-medium ${done || active ? "text-gray-900" : "text-gray-400"}`}
     >
       {label}
     </span>
@@ -149,7 +149,7 @@ const TechniciansBlock = ({ techs }: { techs: any[] }) => {
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 shrink-0 rounded-full bg-blue-100 text-[#383d71] flex items-center justify-center font-semibold text-sm uppercase">
+                <div className="w-10 h-10 shrink-0 rounded-full bg-blue-100 text-[#383d71] flex items-center justify-center font-semibold text-base uppercase">
                   {String(tech?.firstName || "?").slice(0, 1)}
                   {String(tech?.lastName || "").slice(0, 1)}
                 </div>
@@ -234,7 +234,7 @@ const JobDescriptionBlock = ({ items }: { items: any[] }) => {
     );
   }
   return (
-    <ol className="list-decimal list-inside space-y-1.5 text-sm text-gray-800 marker:text-gray-400">
+    <ol className="list-decimal list-inside space-y-1.5 text-base text-gray-800 marker:text-gray-400">
       {valid.map((t, i) => (
         <li key={i} style={{ wordBreak: "break-word" }}>
           {t}
@@ -291,6 +291,12 @@ export default function TechView() {
   const { isCollapsed } = useSidebar();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hideEditDelete = useMemo(() => {
+    const raw = searchParams?.get("hideActions");
+    if (raw == null || raw === "") return false;
+    const s = String(raw).trim().toLowerCase();
+    return s === "1" || s === "true" || s === "yes";
+  }, [searchParams]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [vin, setVin] = useState<string>("");
@@ -438,7 +444,7 @@ export default function TechView() {
             { label: "Technician View", href: "" },
           ]}
         />
-        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-500 text-sm">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-500 text-base">
           No vehicles found for VIN <span className="font-mono">{vin || "—"}</span>.
         </div>
       </div>
@@ -473,7 +479,7 @@ export default function TechView() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-[#1e3e6f] text-xs font-medium px-3 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-[#3a3a3a] text-xs font-medium px-3 py-1 rounded-full">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -529,7 +535,7 @@ export default function TechView() {
             label="Job Title"
             value={na(fv?.jobName || fj?.jobName)}
           />
-          <InfoCard icon={<span className="text-sm font-bold">#</span>} label="Job ID" value={na(fv?.jobId || fj?.id)} />
+          <InfoCard icon={<span className="text-base font-bold">#</span>} label="Job ID" value={na(fv?.jobId || fj?.id)} />
           <InfoCard
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -626,8 +632,8 @@ export default function TechView() {
           </p>
         )} */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-          {/* <InfoCard icon={<span className="text-sm font-bold">#</span>} label="Vehicle ID" value={na(fv?.id)} /> */}
-          <InfoCard icon={<span className="text-sm font-bold">#</span>} label="VIN" value={<span className="font-mono text-sm break-all">{na(fv?.vin)}</span>} />
+          {/* <InfoCard icon={<span className="text-base font-bold">#</span>} label="Vehicle ID" value={na(fv?.id)} /> */}
+          <InfoCard icon={<span className="text-base font-bold">#</span>} label="VIN" value={<span className="font-mono text-base break-all">{na(fv?.vin)}</span>} />
           <InfoCard
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -812,8 +818,8 @@ export default function TechView() {
             className="bg-white rounded-lg shadow-md overflow-hidden mb-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-gray-200 bg-gray-50">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-800 min-w-0">
-                <span className="font-semibold text-[#1e3e6f]">Record #{i + 1}</span>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-gray-800 min-w-0">
+                <span className="font-semibold text-[#3a3a3a]">Record #{i + 1}</span>
                 <span className="text-gray-400 hidden sm:inline">|</span>
                 <span>
                   Vehicle ID <span className="font-mono font-medium">#{na(v?.id)}</span>
@@ -827,7 +833,9 @@ export default function TechView() {
                   {ymm}
                 </span>
               </div>
-              {v?.id != null && String(v.id).trim() !== "" && (
+              {!hideEditDelete &&
+                v?.id != null &&
+                String(v.id).trim() !== "" && (
                 <div className="shrink-0 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -836,7 +844,7 @@ export default function TechView() {
                         `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
                       )
                     }
-                    className="inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-base font-medium text-[#3a3a3a] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     disabled={deletingVehicleId === String(v.id)}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -853,7 +861,7 @@ export default function TechView() {
                     type="button"
                     onClick={() => handleDeleteVehicle(String(v.id))}
                     disabled={deletingVehicleId === String(v.id)}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-red-600 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-red-600 bg-white px-3 py-1.5 text-base font-medium text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                       <path
@@ -874,10 +882,10 @@ export default function TechView() {
               {/* Job Description */}
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-                  <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <svg className="w-4 h-4 text-[#3a3a3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Work Description</h4>
+                  <h4 className="text-base font-semibold text-gray-900">Work Description</h4>
                 </div>
                 <div className="p-3">
                   <JobDescriptionBlock items={v?.jobDescription} />
@@ -887,7 +895,7 @@ export default function TechView() {
               {/* Notes (vehicle or job) */}
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-                  <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <svg className="w-4 h-4 text-[#3a3a3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -895,11 +903,11 @@ export default function TechView() {
                       d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
                     />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Notes</h4>
+                  <h4 className="text-base font-semibold text-gray-900">Notes</h4>
                 </div>
                 <div className="p-3">
                   {notesStr ? (
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap" style={{ wordBreak: "break-word" }}>
+                    <p className="text-base text-gray-800 whitespace-pre-wrap" style={{ wordBreak: "break-word" }}>
                       {notesStr}
                     </p>
                   ) : (
@@ -911,12 +919,12 @@ export default function TechView() {
               {/* Images */}
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-                  <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <svg className="w-4 h-4 text-[#3a3a3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Images</h4>
+                  <h4 className="text-base font-semibold text-gray-900">Images</h4>
                   {Array.isArray(v?.images) && v.images.length > 0 && (
-                    <span className="text-[10px] bg-blue-100 text-[#1e3e6f] rounded-full px-2 py-0.5">
+                    <span className="text-[10px] bg-blue-100 text-[#3a3a3a] rounded-full px-2 py-0.5">
                       {v.images.length}
                     </span>
                   )}
@@ -929,11 +937,11 @@ export default function TechView() {
               {/* Assigned Technicians */}
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
-                  <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <svg className="w-4 h-4 text-[#3a3a3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 5.87a4 4 0 10-8 0m8 0a4 4 0 108 0m-8 0v.01" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Assigned Dent Tech</h4>
-                  <span className="text-[10px] bg-blue-100 text-[#1e3e6f] rounded-full px-2 py-0.5">
+                  <h4 className="text-base font-semibold text-gray-900">Assigned Dent Tech</h4>
+                  <span className="text-[10px] bg-blue-100 text-[#3a3a3a] rounded-full px-2 py-0.5">
                     {techs.length}
                   </span>
                 </div>
