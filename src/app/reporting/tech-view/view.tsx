@@ -129,7 +129,7 @@ const TechniciansBlock = ({ techs }: { techs: any[] }) => {
   if (!techs || techs.length === 0) {
     return (
       <p className="text-xs text-gray-500 italic px-3 py-2 bg-gray-50 rounded-md">
-        No technicians assigned.
+        No Dent Tech assigned.
       </p>
     );
   }
@@ -154,24 +154,24 @@ const TechniciansBlock = ({ techs }: { techs: any[] }) => {
                 </div>
                 <div className="min-w-0">
                   <p
-                    className={`font-semibold text-sm capitalize truncate ${
+                    className={`font-semibold text-md capitalize truncate ${
                       isDeleted ? "text-red-600" : "text-gray-900"
                     }`}
                   >
                     {tech.firstName} {tech.lastName}
                   </p>
-                  <p className="text-[11px] text-gray-500">{formatTechType(techType)}</p>
+                  {/* <p className="text-[12px] text-gray-500">{formatTechType(techType)}</p> */}
                 </div>
               </div>
               <span
-                className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium ${
                   isRI ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700"
                 }`}
               >
                 {isRI ? "R&I" : "Dent Tech"}
               </span>
             </div>
-            <div className="space-y-1 text-xs">
+            <div className="space-y-1 text-md">
               {tech?.email && (
                 <p className="text-gray-700 truncate">
                   <span className="text-gray-500 mr-1">Email:</span>
@@ -490,8 +490,8 @@ export default function TechView() {
               <span
                 className={
                   String(fj?.jobStatus).toLowerCase() === "completed" || fj?.jobStatus === true
-                    ? "bg-[#E6F9DD] text-[#1A932E] px-3 py-1 rounded font-medium"
-                    : "bg-[#FFF4D6] text-[#9A6300] px-3 py-1 rounded font-medium"
+                    ? "bg-[#E6F9DD] text-[#1A932E] px-2 py-1 rounded font-medium mt-1 block w-fit"
+                    : "bg-[#FFF4D6] text-[#9A6300] px-2 py-1 rounded font-medium mt-1 block w-fit"
                 }
               >
                 {typeof fj?.jobStatus === "boolean"
@@ -575,7 +575,7 @@ export default function TechView() {
           </p>
         )} */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-          <InfoCard icon={<span className="text-sm font-bold">#</span>} label="Vehicle ID" value={na(fv?.id)} />
+          {/* <InfoCard icon={<span className="text-sm font-bold">#</span>} label="Vehicle ID" value={na(fv?.id)} /> */}
           <InfoCard icon={<span className="text-sm font-bold">#</span>} label="VIN" value={<span className="font-mono text-sm break-all">{na(fv?.vin)}</span>} />
           <InfoCard
             icon={
@@ -659,7 +659,7 @@ export default function TechView() {
             label="Plant Country"
             value={na(fv?.plantCountry)}
           />
-          <InfoCard
+          {/* <InfoCard
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -668,7 +668,7 @@ export default function TechView() {
             }
             label="Plant State"
             value={na(fv?.plantState)}
-          />
+          /> */}
           <InfoCard
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -771,15 +771,27 @@ export default function TechView() {
                   {ymm}
                 </span>
               </div>
-              {/* <span
-                className={`shrink-0 text-[11px] font-medium px-2.5 py-1 rounded-full ${
-                  v?.vehicleStatus
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {v?.vehicleStatus ? "Completed" : "In Progress"}
-              </span> */}
+              {v?.id != null && String(v.id).trim() !== "" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
+                    )
+                  }
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-sm font-medium text-[#1e3e6f] hover:bg-[#1e3e6f] hover:text-white transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit vehicle
+                </button>
+              )}
             </div>
 
             {/* Job Description + Images + Technicians */}
@@ -821,7 +833,7 @@ export default function TechView() {
                   <svg className="w-4 h-4 text-[#1e3e6f]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 5.87a4 4 0 10-8 0m8 0a4 4 0 108 0m-8 0v.01" />
                   </svg>
-                  <h4 className="text-sm font-semibold text-gray-900">Assigned Technicians</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">Assigned Dent Tech</h4>
                   <span className="text-[10px] bg-blue-100 text-[#1e3e6f] rounded-full px-2 py-0.5">
                     {techs.length}
                   </span>
