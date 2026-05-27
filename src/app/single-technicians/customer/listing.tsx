@@ -66,11 +66,17 @@ export default function ClientListing() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const finalUserId = techId || userId;
+      const finalUserId = techId || userId || '';
+      if (!finalUserId) {
+        setCustomer([]);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/fetchIndividualTechnicianCustomers?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&userId=${finalUserId}`
-        : `/api/fetchIndividualTechnicianCustomers?page=${page}&userId=${finalUserId}&limit=${limit}`;
+        ? `/api/fetchIndividualTechnicianCustomers?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&userId=${encodeURIComponent(finalUserId)}&page=${page}&limit=${limit}`
+        : `/api/fetchIndividualTechnicianCustomers?page=${page}&userId=${encodeURIComponent(finalUserId)}&limit=${limit}&roleType=single-technician`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
       if (response.status == 400) {
@@ -79,14 +85,16 @@ export default function ClientListing() {
       }
       const data = await response.json();
       if (response.ok) {
-        // Handle customers array for both APIs correctly
-        const fetchedCustomers: Customer[] = query.trim()
-          ? data.IndividualTechnicianCustomers || []
-          : data.IndividualTechnicianCustomers || [];
-        //  const filteredCustomers = fetchedCustomers.filter(customer => !customer.deletedStatus);
+        const fetchedCustomers: Customer[] = Array.isArray(data.IndividualTechnicianCustomers)
+          ? data.IndividualTechnicianCustomers
+          : Array.isArray(data.customers?.customers)
+          ? data.customers.customers
+          : [];
 
         setCustomer(fetchedCustomers);
-        setTotalPages(data.customers?.totalPages || 1);
+        const pages = Number(data.totalPages ?? data.customers?.totalPages ?? 1);
+        setTotalPages(Math.max(1, pages) || 1);
+        setTotalJobs(Number(data.totalCustomers ?? data.customers?.totalCustomers ?? fetchedCustomers.length) || 0);
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -127,7 +135,10 @@ export default function ClientListing() {
     setCurrentPage(data.selected + 1);
   };
 
-  // Unified useEffect to handle both search and pagination
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchCustomer(currentPage, searchTerm, pageSize);
@@ -403,7 +414,7 @@ export default function ClientListing() {
           </tbody>
         </table>
       </div>
-      {customer.length > 0 && (
+      {customer.length > 0 && totalPages > 1 && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
 

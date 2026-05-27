@@ -100,6 +100,8 @@ export default function TechReportingDashboard() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState("");
+  const [jobSearch, setJobSearch] = useState("");
+  const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
@@ -118,6 +120,18 @@ export default function TechReportingDashboard() {
 
   const datePopoverRef = useRef<HTMLDivElement>(null);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const jobDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isJobDropdownOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (jobDropdownRef.current && !jobDropdownRef.current.contains(e.target as Node)) {
+        setIsJobDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [isJobDropdownOpen]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -285,6 +299,25 @@ export default function TechReportingDashboard() {
     return Number.isFinite(n) ? n : 0;
   }, [analytics]);
 
+  const selectedJob = useMemo(() => {
+    return jobs.find((j) => String(j?.id) === String(selectedJobId)) ?? null;
+  }, [jobs, selectedJobId]);
+
+  const filteredJobs = useMemo(() => {
+    const q = jobSearch.trim().toLowerCase();
+    if (!q) return jobs;
+    const base = jobs.filter((j) => {
+      const name = String(j?.jobName ?? "").toLowerCase();
+      return name.includes(q);
+    });
+
+    // Always keep the currently selected job in the list.
+    if (selectedJob && !base.some((x) => String(x?.id) === String(selectedJob?.id))) {
+      return [selectedJob, ...base];
+    }
+    return base;
+  }, [jobs, jobSearch, selectedJob]);
+
   const individualRows = useMemo(
     () =>
       individualVehicles.map((v) => {
@@ -408,6 +441,7 @@ export default function TechReportingDashboard() {
     setStartDate("");
     setEndDate("");
     setSearch("");
+    setJobSearch("");
     // setAnalytics(null);
     // setDatePopoverOpen(false);
   };
@@ -610,21 +644,85 @@ export default function TechReportingDashboard() {
 
         {/* Filters */}
         <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
-          <div className="min-w-[220px] flex-1">
+          <div className="min-w-[220px] flex-1 relative" ref={jobDropdownRef}>
             <label className="block text-xs font-medium text-gray-500 mb-1">Select Job</label>
-            <select
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#383d71]/30"
-              value={selectedJobId}
-              onChange={(e) => setSelectedJobId(e.target.value)}
+
+            <button
+              type="button"
+              className="w-full h-[44px] min-h-[44px] px-3 pr-10 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-[#383d71]/30 cursor-pointer text-left truncate flex items-center justify-between"
+              onClick={() => setIsJobDropdownOpen((o) => !o)}
               disabled={jobsLoading}
             >
-              <option value="">— Choose a job —</option>
-              {jobs.map((j) => (
-                <option key={j.id} value={String(j.id)}>
-                  {j.jobName || "Untitled"} (#{j.id})
-                </option>
-              ))}
-            </select>
+              <span className="truncate">
+                {selectedJob
+                  ? `${selectedJob.jobName || "Untitled"} (#${selectedJob.id})`
+                  : "— Choose a job —"}
+              </span>
+              <svg
+                className={`w-4 h-4 shrink-0 transition-transform ${isJobDropdownOpen ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {isJobDropdownOpen && (
+              <div className="absolute left-0 right-0 z-[9999] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                <div className="p-2 border-b border-gray-100">
+                  <input
+                    type="search"
+                    value={jobSearch}
+                    onChange={(e) => setJobSearch(e.target.value)}
+                    placeholder="Search job name..."
+                    autoFocus
+                    className="w-full h-[38px] px-3 text-sm border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-[#383d71]/30"
+                  />
+                </div>
+
+                <div className="max-h-[260px] overflow-auto">
+                  <button
+                    type="button"
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${!selectedJobId ? "bg-gray-50" : ""}`}
+                    onClick={() => {
+                      setSelectedJobId("");
+                      setIsJobDropdownOpen(false);
+                      setJobSearch("");
+                    }}
+                  >
+                    — Choose a job —
+                  </button>
+
+                  {filteredJobs.length > 0 ? (
+                    filteredJobs.map((j) => (
+                      <button
+                        key={j.id}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${
+                          String(j.id) === String(selectedJobId) ? "bg-gray-50" : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedJobId(String(j.id));
+                          setIsJobDropdownOpen(false);
+                          setJobSearch("");
+                        }}
+                      >
+                        {j.jobName || "Untitled"} (#{j.id})
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-3 text-sm text-gray-500">
+                      No matching jobs
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="min-w-[220px] relative" ref={datePopoverRef}>

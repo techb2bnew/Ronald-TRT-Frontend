@@ -144,13 +144,15 @@ const JobTable: React.FC = () => {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const statusParam = status ? `&vehicleStatus=${encodeURIComponent(status)}` : '';
+      const paginationParams = `&page=${page}&limit=${limit}`;
       const endpoint = query.trim()
         ? roleType === 'superadmin'
-          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
+          ? `/api/vehicleInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${paginationParams}${statusParam}`
+          : `/api/vehicleInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${paginationParams}${statusParam}`
         : roleType === 'superadmin' || roleType === 'manager'
-          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`
-          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${status ? `&vehicleStatus=${encodeURIComponent(status)}` : ''}`;
+          ? `/api/vehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${statusParam}`
+          : `/api/vehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}${statusParam}`;
       const response = await fetch(endpoint, { method: 'GET', headers });
       const data = await response.json();
 
@@ -163,8 +165,15 @@ const JobTable: React.FC = () => {
           serialNo: (page - 1) * limit + index + 1,
         }));
         setActiveJob(vehiclesWithSerialNo);
-        setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0);
+        const pages = query.trim()
+          ? Number(data?.data?.totalPages ?? 1)
+          : Number(data?.response?.totalPages ?? data?.data?.totalPages ?? 1);
+        setTotalPages(pages > 0 ? pages : 1);
+        setTotalJobs(
+          query.trim()
+            ? Number(data?.data?.totalVehicles ?? 0)
+            : Number(data?.jobs?.totalJobs ?? data?.response?.totalVehicles ?? 0)
+        );
         setTotalExpense(data.response?.totalEstimateCost || data.data?.totalEstimateCost);
         setTotalDantTechCost(data.response?.totalDantTechCost || data.data?.totalDentTechCost);
       } else {
@@ -1100,7 +1109,7 @@ const JobTable: React.FC = () => {
         <CommonHeader
           heading="Work Order List"
           onPageSizeChange={handlePageSizeChange}
-          onSearch={(term) => setSearchTerm(term)}
+          onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }}
           onExport={activeTab === 'scanned' ? downloadCSV : undefined}
           onImport={activeTab === 'scanned' ? handleImportCSV : undefined}
           userRole='Activejobs'

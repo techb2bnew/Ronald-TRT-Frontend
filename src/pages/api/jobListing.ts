@@ -85,6 +85,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const data = await response.json();
+
+    // Search responses may return totalMatching without totalPages — expose both for the client.
+    if (searchQuery && searchQuery.trim() !== '') {
+      const limitNum = Math.max(1, Number(limit) || 10);
+      const pageNum = Math.max(1, Number(page) || 1);
+      const totalMatching = Number(
+        data?.totalMatching ?? data?.totalJobs ?? data?.jobs?.totalJobs ?? 0
+      );
+      if (!data.totalPages && totalMatching > 0) {
+        data.totalPages = Math.ceil(totalMatching / limitNum);
+      }
+      if (!data.totalJobs && totalMatching > 0) {
+        data.totalJobs = totalMatching;
+      }
+      if (!data.jobs && Array.isArray(data.ActiveJob)) {
+        data.jobs = { jobs: data.ActiveJob, totalPages: data.totalPages, totalJobs: totalMatching };
+      }
+    }
+
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error in job fetch API:', error);

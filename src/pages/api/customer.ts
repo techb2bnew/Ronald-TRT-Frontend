@@ -23,7 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Build backend URL conditionally (search or normal listing)
     let backendUrl = '';
     if (typeof searchQuery === 'string' && searchQuery.trim() !== '') {
-      backendUrl = `${apiBaseUrl}/searchCustomers?userId=${encodeURIComponent(userId as string)}&searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType as string)}`;
+      backendUrl =
+        `${apiBaseUrl}/searchCustomers?userId=${encodeURIComponent(userId as string)}` +
+        `&searchQuery=${encodeURIComponent(searchQuery)}` +
+        `&roleType=${encodeURIComponent(roleType as string)}` +
+        `&page=${encodeURIComponent(page as string)}` +
+        `&limit=${encodeURIComponent(limit as string)}`;
     } else {
       backendUrl = `${apiBaseUrl}/fetchCustomer?userId=${encodeURIComponent(userId as string)}&page=${encodeURIComponent(page as string)}&limit=${encodeURIComponent(limit as string)}&roleType=${encodeURIComponent(roleType as string)}`;
     }

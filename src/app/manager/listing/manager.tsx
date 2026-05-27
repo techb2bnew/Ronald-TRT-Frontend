@@ -157,7 +157,13 @@ const ManagerTable: React.FC = () => {
       })); 
         
         setTechnicians(techniciansWithJobCount);
-        setTotalPages(data.technician?.totalPages || 1);
+        const pages = query.trim()
+          ? Number(data?.totalPages ?? 1)
+          : Number(data?.data?.totalPages ?? data?.totalPages ?? 1);
+        setTotalPages(pages > 0 ? pages : 1);
+        if (!query.trim() && data?.data?.totalManagers != null) {
+          setTotalJobs(Number(data.data.totalManagers) || 0);
+        }
       } else {
         console.error('Error fetching technicians:',);
       }

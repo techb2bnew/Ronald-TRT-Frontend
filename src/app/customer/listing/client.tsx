@@ -69,7 +69,7 @@ export default function ClientListing() {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/customer?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        ? `/api/customer?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&page=${page}&limit=${limit}`
         : `/api/customer?userId=${userId}&page=${page}&limit=${limit}&roleType=${encodeURIComponent(roleType)}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -90,7 +90,15 @@ export default function ClientListing() {
           serialNo: (page - 1) * limit + index + 1,
         }));
         setCustomer(customersWithSerialNo);
-        setTotalPages(data.customers?.totalPages || 1);
+        const pages = query.trim()
+          ? Number(data?.totalPages ?? 1)
+          : Number(data?.customers?.totalPages ?? data?.totalPages ?? 1);
+        setTotalPages(pages > 0 ? pages : 1);
+        setTotalJobs(
+          query.trim()
+            ? Number(data?.totalMatching ?? data?.totalCustomers ?? fetchedCustomers.length)
+            : Number(data?.customers?.totalCustomers ?? data?.totalCustomers ?? fetchedCustomers.length)
+        );
       } else {
         if (data.error === 'Invalid Token') {
           router.push('/');
@@ -429,7 +437,7 @@ export default function ClientListing() {
       />
       
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create"  selectedRows={selectedIds}/>
+      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create"  selectedRows={selectedIds}/>
       
 
       <div className="overflow-x-auto rounded-md">

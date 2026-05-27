@@ -46,6 +46,7 @@ interface JobPayload {
   jobDescription: JobDescriptionItem[];
   labourCost: string;
   color: string;
+  stockNumber?: string;
   assignTechnicians: string[];
   technicianId: string[];
   notes: string;
@@ -96,6 +97,18 @@ interface Job {
 
 // Define the actual map based on your fields
 const JOB_LIST_PAGE_SIZE = 10;
+const TECH_LIST_LIMIT = 10;
+const SCROLL_LOAD_THRESHOLD_PX = 40;
+
+function mergeUniqueTechnicians(prev: any[], incoming: any[]): any[] {
+  const map = new Map(prev.map((t) => [String(t.id), t]));
+  incoming.forEach((t) => map.set(String(t.id), t));
+  return Array.from(map.values());
+}
+
+function isNearScrollBottom(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_LOAD_THRESHOLD_PX;
+}
 
 /** True when job is insurance percentage (API may send snake_case or camelCase). */
 function isInsurancePercentageJobType(jobType: string): boolean {
@@ -218,6 +231,12 @@ export default function Technicians() {
   const [jobHasMore, setJobHasMore] = useState(true);
   const [jobSearchTerm, setJobSearchTerm] = useState('');
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
+  const [techListPage, setTechListPage] = useState(1);
+  const [techListTotalPages, setTechListTotalPages] = useState(1);
+  const [techListLoading, setTechListLoading] = useState(false);
+  const [techListSearching, setTechListSearching] = useState(false);
+  const [techPanelOpen, setTechPanelOpen] = useState(false);
+  const techListFetchInFlightRef = useRef(false);
   const jobFetchInFlightRef = useRef(false);
 
   const [technicianPayRates, setTechnicianPayRates] = useState<{
@@ -268,6 +287,7 @@ export default function Technicians() {
     labourCost: '',
     notes: '',
     color: '',
+    stockNumber: '',
     assignTechnicians: [],
     technicianId: [],
     assignCustomer: '',
@@ -303,6 +323,7 @@ export default function Technicians() {
       labourCost: '',
       notes: '',
       color: '',
+      stockNumber: '',
       assignTechnicians: [],
       technicianId: [],
       assignCustomer: '',
@@ -376,14 +397,15 @@ export default function Technicians() {
     // Append vehicle-related fields - use jobForms[0] instead of formData
     const vehicleFields = [
       'vin', 'vehicleDescriptor', 'make', 'manufacturerName', 'model', 'modelYear',
-      'plantCountry', 'plantCompanyName', 'plantState', 'bodyClass', 'color', 'createdBy', 'notes'
+      'plantCountry', 'plantCompanyName', 'plantState', 'bodyClass', 'color', 'createdBy', 'notes',
+      'stockNumber',
     ];
 
     vehicleFields.forEach((field) => {
-      const value = jobForms[0][field] || ''; // Changed from formData to jobForms[0]
+      const value = jobForms[0][field];
       console.log(`${field}: ${value}`);
-      if (value) {
-        formDataObj.append(field, value);
+      if (value !== '' && value != null && value !== undefined) {
+        formDataObj.append(field, String(value));
       } else {
         console.log(`${field} not provided`);
       }
@@ -552,6 +574,7 @@ export default function Technicians() {
           labourCost: '', // Reset labour cost
           notes: '', // Reset notes
           color: '', // Reset color
+          stockNumber: '',
           assignTechnicians: [], // Keep assigned technicians
           technicianId: [], // Reset technician IDs
           assignCustomer: jobForms[0].assignCustomer, // Keep assignCustomer
@@ -712,15 +735,94 @@ export default function Technicians() {
     );
   }, [jobNames, jobSearchTerm]);
 
-  const filteredTechnicians = useMemo(() => {
-    const q = technicianSearchTerm.trim().toLowerCase();
-    if (!q) return technicians;
-    return technicians.filter((tech: any) => {
-      const fullName = `${tech?.firstName || ''} ${tech?.lastName || ''}`.toLowerCase();
-      const techType = String(tech?.techType || '').toLowerCase();
-      return fullName.includes(q) || techType.includes(q);
+  const fetchJobTechnicians = async (
+    page = 1,
+    options: { append?: boolean; searchQuery?: string } = {}
+  ) => {
+    const { append = false, searchQuery = '' } = options;
+    if (techListFetchInFlightRef.current) return;
+    techListFetchInFlightRef.current = true;
+    setTechListLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || '';
+      const trimmedQuery = searchQuery.trim();
+      let url: string;
+
+      if (trimmedQuery) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        url =
+          `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
+          `&roleType=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      } else {
+        url =
+          `/api/fetchJobCustomerTechnician?endpoint=fetchTechnicianJob` +
+          `&types=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      }
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(url, { method: 'GET', headers });
+      if (response.status === 400) {
+        localStorage.removeItem('token');
+        router.push('/');
+        return;
+      }
+
+      const data = await response.json();
+      const incoming: any[] =
+        trimmedQuery && data.status && Array.isArray(data.technicians)
+          ? data.technicians
+          : data.technician?.technicians || [];
+
+      const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
+
+      setTechnicians((prev) => (append ? mergeUniqueTechnicians(prev, incoming) : incoming));
+      setTechListTotalPages(totalPages);
+      setTechListPage(page);
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+    } finally {
+      setTechListLoading(false);
+      techListFetchInFlightRef.current = false;
+    }
+  };
+
+  const displayTechnicians = useMemo(() => {
+    const assignedDetails = jobForms.flatMap((f) =>
+      Array.isArray(f.technicianDetails) ? f.technicianDetails : []
+    );
+    const missingAssigned = assignedDetails.filter(
+      (s: any) => s?.id && !technicians.some((t) => String(t.id) === String(s.id))
+    );
+    return mergeUniqueTechnicians(missingAssigned, technicians);
+  }, [technicians, jobForms]);
+
+  useEffect(() => {
+    if (userType === 'single-technician' || !techPanelOpen) return;
+    const timeoutId = setTimeout(() => {
+      const q = technicianSearchTerm.trim();
+      setTechListSearching(!!q);
+      setTechListPage(1);
+      void fetchJobTechnicians(1, { searchQuery: technicianSearchTerm });
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [technicianSearchTerm, userType, techPanelOpen]);
+
+  const handleTechnicianListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!techPanelOpen) return;
+    if (!isNearScrollBottom(e.currentTarget)) return;
+    if (techListLoading || techListPage >= techListTotalPages) return;
+    const nextPage = techListPage + 1;
+    void fetchJobTechnicians(nextPage, {
+      append: true,
+      searchQuery: technicianSearchTerm,
     });
-  }, [technicians, technicianSearchTerm]);
+  };
 
   const handleJobSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setJobSearchTerm(e.target.value);
@@ -849,6 +951,7 @@ export default function Technicians() {
           labourCost: getValidValue(vehicleData.labourCost),
           notes: getValidValue(vehicleData.notes),
           color: getValidValue(vehicleData.color),
+          stockNumber: getValidValue(vehicleData.stockNumber) ?? '',
           assignTechnicians: technicianDetails.map((tech: any) => String(tech.id)),
           technicianDetails: technicianDetails,
           technicianId: technicianDetails.map((tech: any) => String(tech.id)),
@@ -1026,17 +1129,15 @@ export default function Technicians() {
   };
 
   const fetchTechniciansOnClick = () => {
-    const roleType = localStorage.getItem('types') || ''; // Get roleType from localStorage
-    if (roleType) {
-      setTechnicianSearchTerm('');
-      // Call fetchData for technicians on button click
-      fetchData('/api/fetchJobCustomerTechnician', setTechnicians, {
-        endpoint: 'fetchTechnicianJob',
-        types: roleType,
-      });
-    } else {
-      console.error("Role type is missing for fetching technicians!");
+    const roleType = localStorage.getItem('types') || '';
+    if (!roleType) {
+      console.error('Role type is missing for fetching technicians!');
+      return;
     }
+    setTechPanelOpen(true);
+    setTechnicianSearchTerm('');
+    setTechListSearching(false);
+    setTechListPage(1);
   };
 
   useEffect(() => {
@@ -1854,8 +1955,9 @@ export default function Technicians() {
       const techIndex = currentAssignTechs.indexOf(techId);
       const isAlreadyAssigned = techIndex !== -1;
 
-      // Find technician data
-      const tech = technicians.find(t => String(t.id) === techId);
+      const tech =
+        technicians.find((t) => String(t.id) === techId) ||
+        currentTechDetails.find((t: any) => String(t.id) === techId);
       if (!tech) return prevForms;
 
       if (isAlreadyAssigned) {
@@ -2720,6 +2822,36 @@ export default function Technicians() {
 
                           />
                         </div>
+
+                        <div className="text-xs relative">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech" aria-hidden="true">
+                            <path
+                              d="M5 8V5.5A1.5 1.5 0 0 1 6.5 4H9l6 6-5.5 5.5L5 11V8z"
+                              stroke="#5B5B99"
+                              strokeWidth="1.2"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="7.5" cy="5.5" r="1" fill="#5B5B99" />
+                            <path
+                              d="M10.2 9h1.8M10.2 11h1.8M11.3 8.2v4.6"
+                              stroke="#5B5B99"
+                              strokeWidth="0.95"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+
+                          <TextField
+                            fullWidth
+                            label="Stock Number"
+                            type='number'
+                            size="small"
+                            color="warning"
+                            value={form.stockNumber || ''}
+                            onChange={(e) => handleChange(e, 'stockNumber', index)}
+
+                          />
+                        </div>
+
                         {isInsurancePercentageJobType(selectedCustomerJobType) && (
                           <div className="text-xs relative">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="icon__tech">
@@ -3033,10 +3165,14 @@ export default function Technicians() {
                         onChange={(e) => setTechnicianSearchTerm(e.target.value)}
                         className="mb-2"
                       />
-                      <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
+                      <Paper
+                        variant="outlined"
+                        style={{ maxHeight: 200, overflowY: "auto" }}
+                        onScroll={handleTechnicianListScroll}
+                      >
                         <List dense>
-                          {filteredTechnicians.length > 0 ? (
-                            filteredTechnicians.map((tech) => {
+                          {displayTechnicians.length > 0 ? (
+                            displayTechnicians.map((tech) => {
                               const tid = String(tech.id);
                               const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
                               const isTechType = tech.techType === 'technician';
@@ -3081,14 +3217,21 @@ export default function Technicians() {
                                 </ListItem>
                               );
                             })
-                          ) : technicians.length > 0 ? (
+                          ) : techListLoading ? (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              Loading...
+                            </div>
+                          ) : techPanelOpen ? (
                             <div className="p-4 text-center text-gray-500 text-sm">
                               No matching technician found
                             </div>
                           ) : (
                             <div className="p-4 text-center text-gray-500 text-sm">
-                              No technicians available
+                              Click &quot;Add More Technicians?&quot; to load the list
                             </div>
+                          )}
+                          {techListLoading && displayTechnicians.length > 0 && (
+                            <div className="p-2 text-center text-gray-500 text-xs">Loading more...</div>
                           )}
                         </List>
                       </Paper>

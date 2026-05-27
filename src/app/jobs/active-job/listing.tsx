@@ -27,7 +27,9 @@ interface Jobs {
   name: string;
   email: string;
   deletedStatus?: boolean;
-  vehicles: [];
+  vehicles: any[];
+  /** Search API can return vehicleCount directly. */
+  vehicleCount?: number;
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
@@ -112,7 +114,13 @@ const JobTable: React.FC = () => {
         const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
         const jobsWithVehicleCount = fetchedJobs.map((job, index) => ({
           ...job,
-          vehicleCount: job.vehicles ? job.vehicles.length : 0,  // Count vehicles for each job
+          // Search API may already return `vehicleCount`. Prefer that; otherwise fall back to vehicles array length.
+          vehicleCount:
+            job.vehicleCount != null
+              ? Number(job.vehicleCount) || 0
+              : Array.isArray((job as any).vehicles)
+              ? (job as any).vehicles.length
+              : 0,
           serialNo: (page - 1) * limit + index + 1,
         }));
 
@@ -546,7 +554,7 @@ const JobTable: React.FC = () => {
             )}
           </td>
         )}
-        <td>{job.vehicleCount || 0}</td>
+        <td>{job.vehicleCount ?? 0}</td>
         <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
         <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td> 
         {/* <td>

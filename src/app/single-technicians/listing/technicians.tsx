@@ -256,7 +256,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&roleType=single-technician`
+        ? `/api/fetchIndividualTechnician?searchQuery=${encodeURIComponent(query)}&roleType=single-technician&page=${page}&limit=${limit}`
         : `/api/fetchIndividualTechnician?page=${page}&limit=${limit}`;
 
       const response = await fetch(endpoint, { method: 'GET', headers });
@@ -279,7 +279,7 @@ const TechnicianTable: React.FC = () => {
             serialNo: (page - 1) * limit + index + 1,
           }));
         setTechnicians(filteredSingleTechnician);
-        setTotalPages(data.technician?.totalPages || 1);
+        setTotalPages(Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1);
       } else {
         console.error('Error fetching technicians:',);
       }
@@ -291,6 +291,10 @@ const TechnicianTable: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // Unified useEffect to handle both search and pagination
   useEffect(() => {
@@ -647,8 +651,8 @@ const TechnicianTable: React.FC = () => {
         </td>
         <td><a className="hover:underline" href={`mailto:${tech?.email}`}> {tech.email}</a></td>
         <td><a className="hover:underline" href={`tel:${tech?.phoneNumber}`}>{tech.phoneNumber}</a></td>
-        <td>{tech?.jobs?.length || 0}</td>
-        <td> <div>{tech.jobs?.reduce((total:any, job:any) => total + (job?.vehicles?.length || 0), 0) || 0}</div></td>
+        <td>{tech?.totalJobs || 0}</td>
+        <td> <div>{tech.totalWorkOrder || 0}</div></td>
 
         {/* <td>{tech.payRate}</td> */}
         <td
@@ -787,7 +791,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[120px]' : ''} ${index === 2 ? 'w-[200px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 7 ? 'w-[120px]' : ''} ${index === 8 ? 'w-[230px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[100px]' : ''} ${index === 2 ? 'w-[180px]' : ''} ${index === 3 ? 'w-[220px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 7 ? 'w-[120px]' : ''} ${index === 8 ? 'w-[230px]' : ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}

@@ -134,7 +134,7 @@ const TechnicianTable: React.FC = () => {
 
       // Determine correct endpoint
       const endpoint = query.trim()
-        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+        ? `/api/technician?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}&page=${page}&limit=${limit}`
         : `/api/technician?page=${page}&limit=${limit}`;
 
 
@@ -159,7 +159,7 @@ const TechnicianTable: React.FC = () => {
 
         setOriginalTechnicians(filteredTechnicians);
         setTechnicians(filteredTechnicians);
-        setTotalPages(data.technician?.totalPages || 1);
+        setTotalPages(Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1);
       } else {
         console.error('Error fetching technicians:',);
       }

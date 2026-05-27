@@ -3,98 +3,172 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import Empty from '@/app/component/empty';
+import Pagination from '@/app/component/pagination';
 import { useRouter, useSearchParams } from "next/navigation";
 import Breadcrumb from '@/app/component/breadcrumb';
-import { Country, State } from 'country-state-city';
 import Link from 'next/link';
 import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import { Tooltip } from 'react-tooltip';
- 
+
 import { useSidebar } from '@/app/component/SidebarContext';
+
+const LIST_PAGE_SIZE = 10;
+
+function parseJobsPayload(data: any): { items: any[]; totalPages: number } {
+  const items: any[] = Array.isArray(data?.jobs)
+    ? data.jobs
+    : Array.isArray(data?.jobs?.jobs)
+    ? data.jobs.jobs
+    : Array.isArray(data?.data?.jobs)
+    ? data.data.jobs
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  const totalPages = Number(
+    data?.totalPages ?? data?.jobs?.totalPages ?? data?.pagination?.totalPages ?? 1
+  );
+  return { items, totalPages: Math.max(1, totalPages) || 1 };
+}
+
+function parseVehiclesPayload(data: any): { items: any[]; totalPages: number } {
+  const items: any[] = Array.isArray(data?.vehicles)
+    ? data.vehicles
+    : Array.isArray(data?.vehicles?.vehicles)
+    ? data.vehicles.vehicles
+    : Array.isArray(data?.data?.vehicles)
+    ? data.data.vehicles
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  const totalPages = Number(
+    data?.totalPages ?? data?.vehicles?.totalPages ?? data?.pagination?.totalPages ?? 1
+  );
+  return { items, totalPages: Math.max(1, totalPages) || 1 };
+}
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
   const router = useRouter();
-  const [CustomerData, setCustomerData] = useState<any>(null);  // Using `any` type for flexibility
-  const [isEdit, setIsEdit] = useState<boolean>(false);
   const searchParams = useSearchParams();
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [userType, setUserType] = useState<string | null>(null);
+  const [CustomerData, setCustomerData] = useState<any>(null);
+  const [customerId, setCustomerId] = useState<string>('');
+  const [customerJobs, setCustomerJobs] = useState<any[]>([]);
+  const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
+  const [jobsPage, setJobsPage] = useState(1);
+  const [vehiclesPage, setVehiclesPage] = useState(1);
+  const [jobsTotalPages, setJobsTotalPages] = useState(1);
+  const [vehiclesTotalPages, setVehiclesTotalPages] = useState(1);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const isSingleTechnician = searchParams?.has('allTrtCustomer') ?? false;
 
-  const isSingleTechnician = searchParams!.has('allTrtCustomer');
-
-  React.useEffect(() => {
-    const type = localStorage.getItem('types');
-    setUserType(type);
-  });
-
-  const fetchCustomerData = async (customerId: string) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-
+  const fetchCustomerData = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const response = await fetch('/api/fetchSingleCustomer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ customerId }),
+        body: JSON.stringify({ customerId: id }),
       });
-
 
       const data = await response.json();
 
       if (response.ok) {
-        setCustomerData(data.customers.customer);  // Set the  CustomerData data
+        setCustomerData(data.customers.customer);
       } else {
-        toast.error(data.error || 'Error fetching technician data');
+        toast.error(data.error || 'Error fetching customer data');
       }
-    } catch (error) {
-      toast.error('An error occurred while fetching technician data');
+    } catch {
+      toast.error('An error occurred while fetching customer data');
+    }
+  };
+
+  const fetchCustomerJobsList = async (id: string, page = 1) => {
+    setJobsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(
+        `/api/fetchCustomerJobs?customerId=${encodeURIComponent(id)}&page=${page}&limit=${LIST_PAGE_SIZE}`,
+        { method: 'GET', headers }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || data?.message || 'Failed to load jobs');
+        setCustomerJobs([]);
+        setJobsTotalPages(1);
+        return;
+      }
+      const { items, totalPages } = parseJobsPayload(data);
+      setCustomerJobs(items);
+      setJobsTotalPages(totalPages);
+    } catch {
+      toast.error('An error occurred while fetching jobs');
+      setCustomerJobs([]);
+      setJobsTotalPages(1);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  const fetchCustomerVehiclesList = async (id: string, page = 1) => {
+    setVehiclesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(
+        `/api/fetchCustomerVehicles?customerId=${encodeURIComponent(id)}&page=${page}&limit=${LIST_PAGE_SIZE}`,
+        { method: 'GET', headers }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || data?.message || 'Failed to load vehicles');
+        setCustomerVehicles([]);
+        setVehiclesTotalPages(1);
+        return;
+      }
+      const { items, totalPages } = parseVehiclesPayload(data);
+      setCustomerVehicles(items);
+      setVehiclesTotalPages(totalPages);
+    } catch {
+      toast.error('An error occurred while fetching vehicles');
+      setCustomerVehicles([]);
+      setVehiclesTotalPages(1);
+    } finally {
+      setVehiclesLoading(false);
     }
   };
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const techId = searchParams.get('customerId') || '';
-
-    if (techId) {
-      setIsEdit(true);  // Set to true if `fetchCustomerData` exists in the URL
-      fetchCustomerData(techId);
+    const id = searchParams?.get('customerId') || '';
+    if (id) {
+      setCustomerId(id);
+      fetchCustomerData(id);
+      setJobsPage(1);
+      setVehiclesPage(1);
     } else {
-      setIsEdit(false);
+      setCustomerId('');
     }
-  }, []);
+  }, [searchParams]);
 
-  const getCountryName = (isoCode: string) => {
-    if (!isoCode) return 'No country selected';
-    const country = Country.getCountryByCode(isoCode);
-    return country?.name || isoCode; // Fallback to ISO code if country not found
-  };
-  const getStateName = (countryCode: string, stateCode: string) => {
-    if (!countryCode || !stateCode) return 'No state selected';
-    const state = State.getStateByCodeAndCountry(stateCode, countryCode);
-    return state?.name || stateCode; // Fallback to code if name not found
-  };
+  useEffect(() => {
+    if (!customerId) return;
+    fetchCustomerJobsList(customerId, jobsPage);
+  }, [customerId, jobsPage]);
 
-  const allVehicles = Array.isArray(CustomerData?.jobs)
-    ? CustomerData.jobs.flatMap((job: any) =>
-      Array.isArray(job.vehicles) ? job.vehicles : []
-    )
-    : [];
-
-  const completedVehicles = allVehicles.filter((v: any) => v.vehicleStatus === true).length;
-  const totalVehicles = allVehicles.length;
+  useEffect(() => {
+    if (!customerId) return;
+    fetchCustomerVehiclesList(customerId, vehiclesPage);
+  }, [customerId, vehiclesPage]);
 
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
@@ -104,6 +178,11 @@ export default function ViewDetails() {
   if (!CustomerData) {
     return <div><Loading /></div>;
   }
+
+  const completedVehicles = Number(CustomerData?.completedVehicles ?? CustomerData?.completedWorkOrders ?? 0);
+  const totalVehicles = Number(
+    CustomerData?.totalVehicles ?? CustomerData?.totalWorkOrders ?? CustomerData?.vehicleCount ?? 0
+  );
 
   const InfoCard = ({ icon, label, value, copyValue }: { icon: React.ReactNode; label: string; value: React.ReactNode; copyValue?: string }) => (
     <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-xl shadow-sm border border-gray-100">
@@ -121,7 +200,6 @@ export default function ViewDetails() {
               className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg p-1 bg-gray-100 hover:bg-[#383d71] text-[#383d71] hover:text-white transition-colors border border-gray-300 hover:border-[#383d71]"
               aria-label={`Copy ${label}`}
             >
-              {/* Copy icon: two overlapping rounded squares */}
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
@@ -146,15 +224,6 @@ export default function ViewDetails() {
       />
 
       <div className="mx-auto">
-        {/* Header: back + Customer Detail */}
-        {/* <div className="flex items-center gap-3 mb-4">
-          <Link href={backHref} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <svg className="w-8 h-8 bg-[#1e3e6f] text-white rounded-lg p-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            <span className="font-semibold">Customer Detail</span>
-          </Link>
-        </div> */}
-
-        {/* Customer Information section */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="flex items-center gap-2 bg-[#1e3e6f] text-white px-6 py-3">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -191,204 +260,134 @@ export default function ViewDetails() {
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>}
               label="Work Orders"
-              value={<><span className="text-green-600 font-medium">{completedVehicles}</span> / {totalVehicles} <span className="text-gray-500">(Completed / Total)</span></>}
+              value={
+                totalVehicles > 0 || completedVehicles > 0 ? (
+                  <><span className="text-green-600 font-medium">{completedVehicles}</span> / {totalVehicles} <span className="text-gray-500">(Completed / Total)</span></>
+                ) : (
+                  '–'
+                )
+              }
             />
           </div>
         </div>
 
         {/* Job List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
-        <h3 className="font-bold rounded-t-lg mb-4">Job List</h3>
-        <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-100 border-b-2 border-gray-300">
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Id</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
-                <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {Array.isArray(CustomerData.jobs) && CustomerData.jobs.length > 0 ? (
-                CustomerData.jobs.map((jobs: any, index: number) => (
-                  <tr key={jobs.id ?? index} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4 text-gray-900">{jobs.id || '–'}</td>
-                    <td className="px-6 py-4"><span className="capitalize">{jobs.jobName || '–'}</span></td>
-                    <td className="px-6 py-4">{jobs.estimatedCost ? `$${jobs.estimatedCost}` : '–'}</td>
-                    <td className="px-6 py-4 text-gray-700">{jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '–'}</td>
-                    <td className="px-6 py-4 text-gray-700">{jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '–'}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/jobs/view?jobId=${jobs.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
-                        <Image alt="View" src={Eye} className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">No jobs found</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        </div>
-        <Tooltip id="view-job" place="top" />
-        {/* {userType !== 'single-technician' && (
-          <div className="overflow-x-auto bg-white pt-3">
-            <h3 className='bg-white text-[#000] p-3 font-bold'>Assign Technician</h3>
-
-            <table className="table w-full table-fixed">
-              <thead className=" ">
-                <tr>
-                  <th scope="col">
-                    Name
-                  </th>
-                  <th scope="col">
-                    Type
-                  </th>
-                  <th scope="col">
-                    Email
-                  </th>
-                  <th scope="col">
-                    Phone
-                  </th>
-                  <th scope="col">
-                    R/I/R/R
-                  </th>
-                  <th scope="col">
-                    Flat Rate
-                  </th>
-                  <th>
-                    Action
-                  </th>
+          <h3 className="font-bold rounded-t-lg mb-4">Job List</h3>
+          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100 border-b-2 border-gray-300">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Id</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {(() => {
-                  // Flatten all assignedTechnicians into a single array
-                  const allTechnicians =
-                    Array.isArray(CustomerData.vehicles)
-                      ? CustomerData.vehicles.flatMap((vehicle: any) =>
-                        Array.isArray(vehicle.assignedTechnicians) ? vehicle.assignedTechnicians : []
-                      )
-                      : [];
-
-                  return allTechnicians.length > 0 ? (
-                    allTechnicians.map((tech: any, index: number) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 ">
-                          <div className="flex items-center gap-3">
-                            {tech.image ? (
-                              <img
-                                onClick={() => setPreviewImage(tech.image)}
-                                src={tech.image}
-                                alt={`${tech.firstName} ${tech.lastName}`}
-                                className="w-8 h-8 rounded-full object-cover cursor-pointer"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-blue text-white flex items-center justify-center text-sm font-semibold">
-                                {tech.firstName?.trim()?.[0]?.toUpperCase() || "?"}
-                              </div>
-                            )}
-                            <span className="capitalize">{`${tech.firstName} ${tech.lastName}`}</span>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-4 ">
-                          {tech.techType || "N/A"}
-                        </td>
-
-                        <td className="px-6 py-4 ">
-                          <a className="hover:underline" href={`mailto:${tech.email}`}>
-                            {tech.email || "N/A"}
-                          </a>
-                        </td>
-
-                        <td className="px-6 py-4 ">
-                          <a className="hover:underline" href={`tel:${tech.phoneNumber}`}>
-                            {tech.phoneNumber || "N/A"}
-                          </a>
-                        </td>
-
-                        <td className="px-6 py-4 ">
-                          {tech.VehicleTechnician?.rRate ? `$${tech.VehicleTechnician.rRate}` : "N/A"}
-                        </td>
-
-                        <td className="px-6 py-4 ">
-                          {tech.VehicleTechnician?.techFlatRate ? `$${tech.VehicleTechnician.techFlatRate}` : "N/A"}
-                        </td>
-                        <td>
-                          <Link href={`/technicians/view?technicianId=${tech.id}`} >
-                            <Image alt='eye' src={Eye} className='w-[16px] ' data-tooltip-id="view"
-                              data-tooltip-content="View" />
-                          </Link>
-                          <Tooltip id="view" place="top" />
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="text-center py-4 text-gray-500">
-                        No technician found
-                      </td>
-                    </tr>
-                  );
-                })()}
-              </tbody>
-
-
-
-            </table>
-          </div>
-        )} */}
-        <div className="shadow-lg p-4 bg-white rounded-lg mt-4"> 
-        <h3 className="font-bold rounded-t-lg mb-4">Vehicle List</h3>
-        <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-100 border-b-2 border-gray-300">
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Dent Tech Name</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
-                <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
-                <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {Array.isArray(CustomerData.vehicles) && CustomerData.vehicles.length > 0 ? (
-                CustomerData.vehicles.map((vehicles: any, index: number) => (
-                  <tr key={vehicles.id ?? index} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4">
-                      <span className="capitalize">
-                        {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
-                          ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
-                          : '–'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4"><span className="capitalize">{vehicles.vin || '–'}</span></td>
-                    <td className="px-6 py-4">{vehicles.make || 'N/A'}</td>
-                    <td className="px-6 py-4">{vehicles.model || '–'}</td>
-                    <td className="px-6 py-4">{vehicles.modelYear || '–'}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link href={`/vehicle/view?vehicleId=${vehicles.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
-                        <Image alt="View" src={Eye} className="w-4 h-4" />
-                      </Link>
+              <tbody className="divide-y divide-gray-200">
+                {jobsLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Loading />
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-500">No vehicle found</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ) : customerJobs.length > 0 ? (
+                  customerJobs.map((job: any, index: number) => (
+                    <tr key={job.id ?? index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4 text-gray-900">{job.id || '–'}</td>
+                      <td className="px-6 py-4"><span className="capitalize">{job.jobName || '–'}</span></td>
+                      <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
+                          <Image alt="View" src={Eye} className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      <Empty />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {customerJobs.length > 0 && jobsTotalPages > 1 && (
+            <Pagination
+              currentPage={jobsPage}
+              totalPages={jobsTotalPages}
+              onPageChange={(data) => setJobsPage(data.selected + 1)}
+            />
+          )}
         </div>
+        <Tooltip id="view-job" place="top" />
+
+        {/* Vehicle List */}
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
+          <h3 className="font-bold rounded-t-lg mb-4">Vehicle List</h3>
+          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100 border-b-2 border-gray-300">
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Dent Tech Name</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {vehiclesLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Loading />
+                    </td>
+                  </tr>
+                ) : customerVehicles.length > 0 ? (
+                  customerVehicles.map((vehicle: any, index: number) => (
+                    <tr key={vehicle.id ?? index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4">
+                        <span className="capitalize">
+                          {Array.isArray(vehicle.assignedTechnicians) && vehicle.assignedTechnicians.length > 0
+                            ? vehicle.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
+                            : '–'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4"><span className="capitalize">{vehicle.vin || '–'}</span></td>
+                      <td className="px-6 py-4">{vehicle.make || 'N/A'}</td>
+                      <td className="px-6 py-4">{vehicle.model || '–'}</td>
+                      <td className="px-6 py-4">{vehicle.modelYear || '–'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
+                          <Image alt="View" src={Eye} className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      <Empty />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {customerVehicles.length > 0 && vehiclesTotalPages > 1 && (
+            <Pagination
+              currentPage={vehiclesPage}
+              totalPages={vehiclesTotalPages}
+              onPageChange={(data) => setVehiclesPage(data.selected + 1)}
+            />
+          )}
         </div>
         <Tooltip id="view-vehicle" place="top" />
         <ToastContainer />

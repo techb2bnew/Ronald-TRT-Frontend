@@ -28,7 +28,9 @@ interface Jobs {
   name: string;
   email: string;
   deletedStatus?: boolean;
-  vehicles: [];
+  vehicles: any[];
+  /** Search / list API may return count directly (without vehicles array). */
+  vehicleCount?: number;
 }
 const JobTable: React.FC = () => {
   const [activeJob, setActiveJob] = useState<any[]>([]);
@@ -111,16 +113,47 @@ const JobTable: React.FC = () => {
       console.log('API response data:', data);  // Debugging API response
 
       if (response.ok) {
-        const fetchedJobs: Jobs[] = query.trim() ? data.ActiveJob || [] : data.jobs?.jobs || [];
+        const fetchedJobs: Jobs[] = query.trim()
+          ? data.ActiveJob || data.jobs || data.data?.jobs || []
+          : data.jobs?.jobs || data.data?.jobs || [];
         const jobsWithVehicleCount = fetchedJobs.map((job, index) => ({
           ...job,
-          vehicleCount: job.vehicles ? job.vehicles.length : 0,  // Count vehicles for each job
+          vehicleCount:
+            job.vehicleCount != null
+              ? Number(job.vehicleCount) || 0
+              : Array.isArray(job.vehicles)
+              ? job.vehicles.length
+              : 0,
           serialNo: (page - 1) * limit + index + 1,
         }));
 
         setActiveJob(jobsWithVehicleCount);
-        setTotalPages(data.jobs?.totalPages || 1);
-        setTotalJobs(data.jobs?.totalJobs || 0); // Ensure totalJobs is set correctly
+
+        const limitNum = Math.max(1, Number(limit) || 10);
+        const totalMatching = Number(
+          data?.totalMatching ??
+            data?.totalJobs ??
+            data?.jobs?.totalJobs ??
+            data?.data?.totalMatching ??
+            0
+        );
+        const pagesFromApi = Number(
+          data?.totalPages ??
+            data?.jobs?.totalPages ??
+            data?.data?.totalPages ??
+            0
+        );
+        const pages =
+          pagesFromApi > 0
+            ? pagesFromApi
+            : totalMatching > limitNum
+              ? Math.ceil(totalMatching / limitNum)
+              : jobsWithVehicleCount.length > 0
+                ? 1
+                : 0;
+
+        setTotalPages(Math.max(1, pages));
+        setTotalJobs(totalMatching > 0 ? totalMatching : jobsWithVehicleCount.length);
 
       } else {
         if (data.error === 'Invalid Token') {
@@ -137,6 +170,10 @@ const JobTable: React.FC = () => {
   };
 
 
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -779,7 +816,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
           </tbody>
         </table>
       </div>
-      {activeJob?.length > 0 && (
+      {(activeJob?.length > 0 || totalPages > 1) && (
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       )}
     </div>  

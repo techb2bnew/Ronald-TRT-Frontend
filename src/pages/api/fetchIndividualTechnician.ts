@@ -32,8 +32,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Build backend URL based on presence of searchQuery
     let backendUrl = '';
     if (searchQuery && searchQuery.trim() !== '') {
-      // Search technicians endpoint
-      backendUrl = `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType)}`;
+      backendUrl =
+        `${apiBaseUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchQuery)}` +
+        `&roleType=${encodeURIComponent(roleType)}` +
+        `&page=${encodeURIComponent(page)}` +
+        `&limit=${encodeURIComponent(limit)}`;
     } else {
       // Pagination fetch endpoint
       backendUrl = `${apiBaseUrl}/fetchIndividualTechnician?page=${page}&limit=${limit}`;

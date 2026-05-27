@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import Pagination from '@/app/component/pagination';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
 import Swal from 'sweetalert2';
@@ -18,10 +19,52 @@ import Empty from '@/app/component/empty';
 import { useSidebar } from '@/app/component/SidebarContext';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+const LIST_PAGE_SIZE = 10;
+
+function parseJobsPayload(data: any): { items: any[]; totalPages: number } {
+  const items: any[] = Array.isArray(data?.jobs)
+    ? data.jobs
+    : Array.isArray(data?.jobs?.jobs)
+    ? data.jobs.jobs
+    : Array.isArray(data?.data?.jobs)
+    ? data.data.jobs
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  const totalPages = Number(
+    data?.totalPages ?? data?.jobs?.totalPages ?? data?.pagination?.totalPages ?? 1
+  );
+  return { items, totalPages: Math.max(1, totalPages) || 1 };
+}
+
+function parseVehiclesPayload(data: any): { items: any[]; totalPages: number } {
+  const items: any[] = Array.isArray(data?.vehicles)
+    ? data.vehicles
+    : Array.isArray(data?.vehicles?.vehicles)
+    ? data.vehicles.vehicles
+    : Array.isArray(data?.data?.vehicles)
+    ? data.data.vehicles
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  const totalPages = Number(
+    data?.totalPages ?? data?.vehicles?.totalPages ?? data?.pagination?.totalPages ?? 1
+  );
+  return { items, totalPages: Math.max(1, totalPages) || 1 };
+}
 
 export default function ViewDetails() {
   const { isCollapsed } = useSidebar();
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
+  const [technicianId, setTechnicianId] = useState<string>('');
+  const [technicianJobs, setTechnicianJobs] = useState<any[]>([]);
+  const [technicianVehicles, setTechnicianVehicles] = useState<any[]>([]);
+  const [jobsPage, setJobsPage] = useState(1);
+  const [vehiclesPage, setVehiclesPage] = useState(1);
+  const [jobsTotalPages, setJobsTotalPages] = useState(1);
+  const [vehiclesTotalPages, setVehiclesTotalPages] = useState(1);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -65,17 +108,93 @@ export default function ViewDetails() {
     }
   };
 
+  const fetchTechnicianJobsList = async (techId: string, page = 1) => {
+    setJobsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(
+        `/api/fetchTechnicianJobs?technicianId=${encodeURIComponent(techId)}&page=${page}&limit=${LIST_PAGE_SIZE}`,
+        { method: 'GET', headers }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || data?.message || 'Failed to load jobs');
+        setTechnicianJobs([]);
+        setJobsTotalPages(1);
+        return;
+      }
+      const { items, totalPages } = parseJobsPayload(data);
+      setTechnicianJobs(items);
+      setJobsTotalPages(totalPages);
+    } catch {
+      toast.error('An error occurred while fetching jobs');
+      setTechnicianJobs([]);
+      setJobsTotalPages(1);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  const fetchTechnicianVehiclesList = async (techId: string, page = 1) => {
+    setVehiclesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(
+        `/api/fetchTechnicianVehicles?technicianId=${encodeURIComponent(techId)}&page=${page}&limit=${LIST_PAGE_SIZE}`,
+        { method: 'GET', headers }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data?.error || data?.message || 'Failed to load vehicles');
+        setTechnicianVehicles([]);
+        setVehiclesTotalPages(1);
+        return;
+      }
+      const { items, totalPages } = parseVehiclesPayload(data);
+      setTechnicianVehicles(items);
+      setVehiclesTotalPages(totalPages);
+    } catch {
+      toast.error('An error occurred while fetching vehicles');
+      setTechnicianVehicles([]);
+      setVehiclesTotalPages(1);
+    } finally {
+      setVehiclesLoading(false);
+    }
+  };
+
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const techId = searchParams.get('technicianId') || '';
 
     if (techId) {
-      setIsEdit(true);  // Set to true if `technicianId` exists in the URL
+      setTechnicianId(techId);
+      setIsEdit(true);
       fetchTechnicianData(techId);
+      setJobsPage(1);
+      setVehiclesPage(1);
     } else {
       setIsEdit(false);
+      setTechnicianId('');
     }
   }, []);
+
+  useEffect(() => {
+    if (!technicianId) return;
+    fetchTechnicianJobsList(technicianId, jobsPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [technicianId, jobsPage]);
+
+  useEffect(() => {
+    if (!technicianId) return;
+    fetchTechnicianVehiclesList(technicianId, vehiclesPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [technicianId, vehiclesPage]);
 
 
   const getCountryName = (isoCode: string) => {
@@ -360,7 +479,7 @@ export default function ViewDetails() {
         {/* Single Technician Details - InfoCard grid */}
         <div className="overflow-hidden mt-4">
           <h3 className="font-bold text-lg mb-4">Technician Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100 pb-4">
             <InfoCard icon={<HashIcon />} label="Technician Id" value={technician?.id ?? 'N/A'} />
             <InfoCard icon={<UserIcon />} label="Technician Name" value={<span className="capitalize">{technician?.firstName} {technician?.lastName}</span>} />
             <InfoCard icon={<MailIcon />} label="Email" value={technician?.email ? <a href={`mailto:${technician.email}`} className="hover:underline text-[#383d71]">{technician.email}</a> : 'N/A'} />
@@ -477,29 +596,57 @@ export default function ViewDetails() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {Array.isArray(technician.jobs) && technician.jobs.length > 0 ? (
-                  technician.jobs.map((jobs: any, index: number) => (
-                    <tr key={index} className="hover:bg-gray-50/50">
-                      <td className="px-6 py-4 whitespace-nowrap">{jobs.id || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap"><span className="capitalize">{jobs.jobName || '-'}</span></td>
-                      <td className="px-6 py-4 whitespace-nowrap">{jobs.startDate ? new Date(jobs.startDate).toLocaleDateString() : '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{jobs.endDate ? new Date(jobs.endDate).toLocaleDateString() : '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{jobs.estimatedCost ? `$${jobs.estimatedCost}` : '-'}</td>
+                {jobsLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Loading />
+                    </td>
+                  </tr>
+                ) : technicianJobs.length > 0 ? (
+                  technicianJobs.map((job: any, index: number) => (
+                    <tr key={job.id ?? index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap">{job.id || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="capitalize">{job.jobName || '-'}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {job.startDate ? new Date(job.startDate).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {job.endDate ? new Date(job.endDate).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {job.estimatedCost ? `$${job.estimatedCost}` : '-'}
+                      </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/jobs/view?jobId=${jobs.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
-                          <Image alt="View" src={Eye} className="w-4 h-4  " />
+                        <Link
+                          href={`/jobs/view?jobId=${job.id}`}
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+                          data-tooltip-id="view-job"
+                          data-tooltip-content="View"
+                        >
+                          <Image alt="View" src={Eye} className="w-4 h-4" />
                         </Link>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500"><Empty /></td>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      <Empty />
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+          {technicianJobs.length > 0 && jobsTotalPages > 1 && (
+            <Pagination
+              currentPage={jobsPage}
+              totalPages={jobsTotalPages}
+              onPageChange={(data) => setJobsPage(data.selected + 1)}
+            />
+          )}
         </div>
         <Tooltip id="view-job" place="top" />
 
@@ -520,32 +667,49 @@ export default function ViewDetails() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {technician?.jobs?.flatMap((job: any) => job.vehicles || []).length > 0 ? (
-                  technician.jobs.flatMap((job: any, jobIndex: number) =>
-                    (job.vehicles || []).map((vehicle: any, vehicleIndex: number) => (
-                      <tr key={`${jobIndex}-${vehicleIndex}`} className="hover:bg-gray-50/50">
-                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.jobName || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="capitalize">{vehicle.vin || '-'}</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.make || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.model || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{vehicle.modelYear || '-'}</td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap">${vehicle.labourCost || '-'}</td> */}
-                        <td className="px-6 py-4 text-right">
-                          <Link href={`/vehicle/view?vehicleId=${vehicle.id}`} className="inline-flex items-center justify-center w-9 h-9 rounded-full  transition-colors" data-tooltip-id="view-vehicle" data-tooltip-content="View">
-                            <Image alt="View" src={Eye} className="w-4 h-4  " />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )
+                {vehiclesLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10">
+                      <Loading />
+                    </td>
+                  </tr>
+                ) : technicianVehicles.length > 0 ? (
+                  technicianVehicles.map((vehicle: any, index: number) => (
+                    <tr key={vehicle.id ?? index} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap">{vehicle.jobName || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">{vehicle.vin || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{vehicle.make || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{vehicle.model || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{vehicle.modelYear || '-'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/vehicle/view?vehicleId=${vehicle.id}`}
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-full transition-colors"
+                          data-tooltip-id="view-vehicle"
+                          data-tooltip-content="View"
+                        >
+                          <Image alt="View" src={Eye} className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-gray-500"><Empty /></td>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      <Empty />
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+          {technicianVehicles.length > 0 && vehiclesTotalPages > 1 && (
+            <Pagination
+              currentPage={vehiclesPage}
+              totalPages={vehiclesTotalPages}
+              onPageChange={(data) => setVehiclesPage(data.selected + 1)}
+            />
+          )}
         </div>
         <Tooltip id="view-vehicle" place="top" />
       </div>

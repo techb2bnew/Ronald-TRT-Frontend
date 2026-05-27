@@ -153,10 +153,11 @@ const JobTable: React.FC = () => {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const paginationParams = `&page=${page}&limit=${limit}`;
       const endpoint = query.trim()
         ? roleType === 'superadmin' || roleType === 'manager'
-          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
-          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}`
+          ? `${apiUrl}/searchVehicalInfo?searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${paginationParams}`
+          : `${apiUrl}/searchVehicalInfo?userId=${userId}&searchQuery=${encodeURIComponent(query)}&roleType=${encodeURIComponent(roleType)}${paginationParams}`
         : roleType === 'superadmin' || roleType === 'manager'
           ? `${apiUrl}/fetchInVoiceVehicleInfo?page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`
           : `${apiUrl}/fetchInVoiceVehicleInfo?userId=${userId}&page=${page}&roleType=${encodeURIComponent(roleType)}&limit=${limit}`;
@@ -189,8 +190,11 @@ const JobTable: React.FC = () => {
         setRRTotalAmount(data.response?.totalRrCost ?? data.data.totalRrCost ?? '0');
         setTotalEstimateAmount(data.response?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
         setTotalJobAmount(data.response?.totalJobEstimateCost ?? data.data.totalJobEstimateCost ?? '0');
-        setTotalPages(data.response?.totalPages || 1);
-        setTotalJobs(data.response?.totalVehicles ?? data.data.totalVehicles ?? '0');
+        const pages = query.trim()
+          ? Number(data?.data?.totalPages ?? 1)
+          : Number(data?.response?.totalPages ?? data?.data?.totalPages ?? 1);
+        setTotalPages(pages > 0 ? pages : 1);
+        setTotalJobs(data.response?.totalVehicles ?? data.data?.totalVehicles ?? '0');
       } else {
         if (data.error === 'Invalid Token') router.push('/');
         else console.error('Error fetching job data:', data.error);
@@ -791,7 +795,7 @@ const JobTable: React.FC = () => {
       </div>
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="Invoice" onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} selectedRows={selectedIds} />
+        <CommonHeader heading="Invoice" onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} selectedRows={selectedIds} />
 
         {/* <div className="flex mb-2 shadow-lg p-2 flex gap-0 sm:gap-4 md:gap-8 lg:gap-[3rem] mb-2 shadow-lg p-2">
           <div className='total_work title_sdev'><b>Total Work Order </b>: ${totalJobs}</div>

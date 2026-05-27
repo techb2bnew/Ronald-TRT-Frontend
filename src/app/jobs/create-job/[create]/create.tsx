@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -84,6 +84,21 @@ interface Technician {
   techType: string;
 }
 
+const TECH_LIST_LIMIT = 10;
+const SCROLL_LOAD_THRESHOLD_PX = 40;
+
+type JobTechType = 'technician' | 'R/I/R/R';
+
+function mergeUniqueTechnicians(prev: Technician[], incoming: Technician[]): Technician[] {
+  const map = new Map(prev.map((t) => [String(t.id), t]));
+  incoming.forEach((t) => map.set(String(t.id), t));
+  return Array.from(map.values());
+}
+
+function isNearScrollBottom(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_LOAD_THRESHOLD_PX;
+}
+
 interface JobPayload {
   id?: string;
   jobName: string;
@@ -145,7 +160,6 @@ export default function JobForm() {
     insuranceFiles: [],
   });
 
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [manager, setManager] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any[]>([]);
   const [descriptionCostFields, setDescriptionCostFields] = useState<any[]>([]);
@@ -154,8 +168,20 @@ export default function JobForm() {
   const [isEdit, setIsEdit] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [userType, setUserType] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchTechTerm, setTechSearchTerm] = useState('');
+  const [dentTechList, setDentTechList] = useState<Technician[]>([]);
+  const [dentTechPage, setDentTechPage] = useState(1);
+  const [dentTechTotalPages, setDentTechTotalPages] = useState(1);
+  const [dentTechLoading, setDentTechLoading] = useState(false);
+  const [dentTechSearching, setDentTechSearching] = useState(false);
+  const [dentTechSearchTerm, setDentTechSearchTerm] = useState('');
+  const [riTechList, setRiTechList] = useState<Technician[]>([]);
+  const [riTechPage, setRiTechPage] = useState(1);
+  const [riTechTotalPages, setRiTechTotalPages] = useState(1);
+  const [riTechLoading, setRiTechLoading] = useState(false);
+  const [riTechSearching, setRiTechSearching] = useState(false);
+  const [riTechSearchTerm, setRiTechSearchTerm] = useState('');
+  const dentTechFetchInFlight = useRef(false);
+  const riTechFetchInFlight = useRef(false);
   const router = useRouter();
   const [totalPages, setTotalPages] = useState(1);
   const searchParams = useSearchParams();
@@ -197,28 +223,96 @@ export default function JobForm() {
       }
     }
 
-    fetchTechnicians();
     fetchCustomers(page);
   }, [searchParams]);
 
-  const fetchTechnicians = async (page = 1) => {
+  const fetchJobTechnicians = async (
+    techType: JobTechType,
+    page = 1,
+    options: { append?: boolean; searchQuery?: string } = {}
+  ) => {
+    const { append = false, searchQuery = '' } = options;
+    const inFlightRef = techType === 'technician' ? dentTechFetchInFlight : riTechFetchInFlight;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+
+    const setLoading = techType === 'technician' ? setDentTechLoading : setRiTechLoading;
+    const setList = techType === 'technician' ? setDentTechList : setRiTechList;
+    const setTotalPagesState = techType === 'technician' ? setDentTechTotalPages : setRiTechTotalPages;
+
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const roleType = localStorage.getItem('types');
-      const response = await fetch(`/api/fetchJobCustomerTechnician?endpoint=fetchTechnicianJob&types=${roleType}&page=${page}`, {
+      const roleType = localStorage.getItem('types') || '';
+      const trimmedQuery = searchQuery.trim();
+      let url: string;
+
+      if (trimmedQuery) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        url =
+          `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
+          `&roleType=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      } else {
+        url =
+          `/api/fetchJobCustomerTechnician?endpoint=fetchTechnicianJob` +
+          `&types=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      }
+
+      const response = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
-      const allTechs = data.technician?.technicians || [];
-      setTechnicians(allTechs.filter((tech: any) =>
-        tech.techType === "technician" || tech.techType === "R/I/R/R"
-      ));
+
+      const allTechs: Technician[] =
+        trimmedQuery && data.status && Array.isArray(data.technicians)
+          ? data.technicians
+          : data.technician?.technicians || [];
+
+      const filtered = allTechs.filter((tech: Technician) => tech.techType === techType);
+      const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
+
+      setList((prev) => (append ? mergeUniqueTechnicians(prev, filtered) : filtered));
+      setTotalPagesState(totalPages);
+      if (techType === 'technician') {
+        setDentTechPage(page);
+      } else {
+        setRiTechPage(page);
+      }
     } catch (error) {
       console.error('Error fetching technicians:', error);
+    } finally {
+      setLoading(false);
+      inFlightRef.current = false;
     }
   };
+
+  useEffect(() => {
+    if (userType === 'single-technician') return;
+    const timeoutId = setTimeout(() => {
+      const q = dentTechSearchTerm.trim();
+      setDentTechSearching(!!q);
+      setDentTechPage(1);
+      setDentTechList([]);
+      void fetchJobTechnicians('technician', 1, { searchQuery: dentTechSearchTerm });
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [dentTechSearchTerm, userType]);
+
+  useEffect(() => {
+    if (userType === 'single-technician') return;
+    const timeoutId = setTimeout(() => {
+      const q = riTechSearchTerm.trim();
+      setRiTechSearching(!!q);
+      setRiTechPage(1);
+      setRiTechList([]);
+      void fetchJobTechnicians('R/I/R/R', 1, { searchQuery: riTechSearchTerm });
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [riTechSearchTerm, userType]);
 
   const fetchCustomers = async (page = 1) => {
     try {
@@ -379,23 +473,40 @@ export default function JobForm() {
     }
   };
 
-  const handleTechnicianChange = (techId: string, techType: string) => {
-    const tech = technicians.find(t => String(t.id) === String(techId));
-    if (!tech) return;
-
+  const handleTechnicianChange = (tech: Technician, techType: string) => {
     if (techType === "technician") {
       setSelectedNormalTechnicians(prev =>
-        prev.some(t => String(t.id) === String(techId))
-          ? prev.filter(t => String(t.id) !== String(techId))
+        prev.some(t => String(t.id) === String(tech.id))
+          ? prev.filter(t => String(t.id) !== String(tech.id))
           : [...prev, tech]
       );
     } else if (techType === "R/I/R/R") {
       setSelectedRrTechnicians(prev =>
-        prev.some(t => String(t.id) === String(techId))
-          ? prev.filter(t => String(t.id) !== String(techId))
+        prev.some(t => String(t.id) === String(tech.id))
+          ? prev.filter(t => String(t.id) !== String(tech.id))
           : [...prev, tech]
       );
     }
+  };
+
+  const handleDentTechScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!isNearScrollBottom(e.currentTarget)) return;
+    if (dentTechLoading || dentTechSearching || dentTechPage >= dentTechTotalPages) return;
+    const nextPage = dentTechPage + 1;
+    void fetchJobTechnicians('technician', nextPage, {
+      append: true,
+      searchQuery: dentTechSearchTerm,
+    });
+  };
+
+  const handleRiTechScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!isNearScrollBottom(e.currentTarget)) return;
+    if (riTechLoading || riTechSearching || riTechPage >= riTechTotalPages) return;
+    const nextPage = riTechPage + 1;
+    void fetchJobTechnicians('R/I/R/R', nextPage, {
+      append: true,
+      searchQuery: riTechSearchTerm,
+    });
   };
 
   const handleJobTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -771,22 +882,24 @@ export default function JobForm() {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchManager(currentPage, searchTerm, pageSize);
+      fetchManager(currentPage, managerSearchTerm, pageSize);
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [currentPage, searchTerm, pageSize]);
+  }, [currentPage, managerSearchTerm, pageSize]);
 
-  const regularTechnicians = technicians
-    .filter(tech => tech.techType === "technician")
-    .filter(tech =>
-      `${tech.firstName} ${tech.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const displayDentTechnicians = useMemo(() => {
+    const selectedMissing = selectedNormalTechnicians.filter(
+      (s) => !dentTechList.some((t) => String(t.id) === String(s.id))
     );
+    return mergeUniqueTechnicians(selectedMissing, dentTechList);
+  }, [dentTechList, selectedNormalTechnicians]);
 
-  const rirrTechnicians = technicians
-    .filter(tech => tech.techType === "R/I/R/R")
-    .filter(tech =>
-      `${tech.firstName} ${tech.lastName}`.toLowerCase().includes(searchTechTerm.toLowerCase())
+  const displayRiTechnicians = useMemo(() => {
+    const selectedMissing = selectedRrTechnicians.filter(
+      (s) => !riTechList.some((t) => String(t.id) === String(s.id))
     );
+    return mergeUniqueTechnicians(selectedMissing, riTechList);
+  }, [riTechList, selectedRrTechnicians]);
 
   return (
     <div className='w-[60%] m-auto mb-5 max-md:w-full'>
@@ -1260,8 +1373,8 @@ export default function JobForm() {
                   color="warning"
                   size="small"
                   type='search'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={dentTechSearchTerm}
+                  onChange={(e) => setDentTechSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1270,18 +1383,22 @@ export default function JobForm() {
                     ),
                   }}
                 />
-                <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
+                <Paper
+                  variant="outlined"
+                  style={{ maxHeight: 160, overflowY: "auto" }}
+                  onScroll={handleDentTechScroll}
+                >
                   <List dense>
-                    {regularTechnicians.length > 0 ? (
+                    {displayDentTechnicians.length > 0 ? (
                       <div className='grid grid-cols-3'>
-                        {regularTechnicians.map((tech) => {
+                        {displayDentTechnicians.map((tech) => {
                           const value = String(tech.id);
                           const isSelected = selectedNormalTechnicians.some(t => String(t.id) === String(tech.id));
                           return (
                             <ListItem
                               key={value}
                               component="div"
-                              onClick={() => handleTechnicianChange(tech.id, "technician")}
+                              onClick={() => handleTechnicianChange(tech, "technician")}
                               sx={{
                                 cursor: 'pointer',
                                 '&:hover': {
@@ -1301,10 +1418,17 @@ export default function JobForm() {
                           );
                         })}
                       </div>
+                    ) : dentTechLoading ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
                         No Dent Tech available
                       </div>
+                    )}
+                    {dentTechLoading && displayDentTechnicians.length > 0 && (
+                      <div className="p-2 text-center text-gray-500 text-xs">Loading more...</div>
                     )}
                   </List>
                 </Paper>
@@ -1323,8 +1447,8 @@ export default function JobForm() {
                   color="warning"
                   size="small"
                   type='search'
-                  value={searchTechTerm}
-                  onChange={(e) => setTechSearchTerm(e.target.value)}
+                  value={riTechSearchTerm}
+                  onChange={(e) => setRiTechSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1333,18 +1457,22 @@ export default function JobForm() {
                     ),
                   }}
                 />
-                <Paper variant="outlined" style={{ maxHeight: 200, overflowY: "auto" }}>
+                <Paper
+                  variant="outlined"
+                  style={{ maxHeight: 160, overflowY: "auto" }}
+                  onScroll={handleRiTechScroll}
+                >
                   <List dense>
-                    {rirrTechnicians.length > 0 ? (
+                    {displayRiTechnicians.length > 0 ? (
                       <div className='grid grid-cols-3'>
-                        {rirrTechnicians.map((tech) => {
+                        {displayRiTechnicians.map((tech) => {
                           const value = String(tech.id);
                           const isSelected = selectedRrTechnicians.some(t => String(t.id) === String(tech.id));
                           return (
                             <ListItem
                               key={value}
                               component="div"
-                              onClick={() => handleTechnicianChange(tech.id, "R/I/R/R")}
+                              onClick={() => handleTechnicianChange(tech, "R/I/R/R")}
                               sx={{
                                 cursor: 'pointer',
                                 '&:hover': {
@@ -1364,10 +1492,17 @@ export default function JobForm() {
                           );
                         })}
                       </div>
+                    ) : riTechLoading ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
                     ) : (
                       <div className="p-4 text-center text-gray-500 text-sm">
                         No R&I Dent Tech Available
                       </div>
+                    )}
+                    {riTechLoading && displayRiTechnicians.length > 0 && (
+                      <div className="p-2 text-center text-gray-500 text-xs">Loading more...</div>
                     )}
                   </List>
                 </Paper>

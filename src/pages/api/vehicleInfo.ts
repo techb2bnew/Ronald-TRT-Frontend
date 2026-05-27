@@ -40,7 +40,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (searchQuery.trim() !== '') {
       // Use VehicleInfoSearch API for search queries
-      backendUrl = `${apiBaseUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(searchQuery)}&roleType=${encodeURIComponent(roleType)}`;
+      backendUrl =
+        `${apiBaseUrl}/VehicleInfoSearch?searchQuery=${encodeURIComponent(searchQuery)}` +
+        `&roleType=${encodeURIComponent(roleType)}` +
+        `&page=${encodeURIComponent(page)}` +
+        `&limit=${encodeURIComponent(limit)}`;
       if (roleType !== 'superadmin' && userId) {
         backendUrl += `&userId=${encodeURIComponent(userId)}`;
       }
