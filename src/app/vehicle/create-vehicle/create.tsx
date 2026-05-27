@@ -2838,8 +2838,7 @@ export default function Technicians() {
                               strokeWidth="0.95"
                               strokeLinecap="round"
                             />
-                          </svg>
-
+                          </svg> 
                           <TextField
                             fullWidth
                             label="Stock Number"
