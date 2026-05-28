@@ -280,7 +280,7 @@ export default function ViewDetails() {
                 <tr className="bg-gray-100 border-b-2 border-gray-300">
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Id</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Job Name</th>
-                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th>
+                  {/* <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Estimated Cost</th> */}
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Start Date</th>
                   <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">End Date</th>
                   <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
@@ -289,7 +289,7 @@ export default function ViewDetails() {
               <tbody className="divide-y divide-gray-200">
                 {jobsLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-10">
+                    <td colSpan={5} className="text-center py-10">
                       <Loading />
                     </td>
                   </tr>
@@ -298,7 +298,7 @@ export default function ViewDetails() {
                     <tr key={job.id ?? index} className="hover:bg-gray-50/50">
                       <td className="px-6 py-4 text-gray-900">{job.id || '–'}</td>
                       <td className="px-6 py-4"><span className="capitalize">{job.jobName || '–'}</span></td>
-                      <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td>
+                      {/* <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td> */}
                       <td className="px-6 py-4 text-gray-700">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
                       <td className="px-6 py-4 text-gray-700">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
                       <td className="px-6 py-4 text-right">
@@ -310,7 +310,7 @@ export default function ViewDetails() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                    <td colSpan={5} className="text-center py-8 text-gray-500">
                       <Empty />
                     </td>
                   </tr>

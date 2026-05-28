@@ -216,6 +216,81 @@ export default function TechReportingDashboard() {
     fetchJobs();
   }, []);
 
+  useEffect(() => {
+    if (!isJobDropdownOpen) return;
+
+    const t = setTimeout(() => {
+      if (jobSearch.trim()) {
+        // search query hai → search API
+        fetchJobsBySearch(jobSearch.trim());
+      } else {
+        // search clear → wapas normal list load karo
+        fetchJobs(1, false);
+      }
+    }, 400);
+
+    return () => clearTimeout(t);
+  }, [jobSearch, isJobDropdownOpen]);
+
+  const fetchJobsBySearch = async (query: string, page = 1) => {
+    setJobsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const roleType = localStorage.getItem("types") || "";
+      const userId = localStorage.getItem("userID");
+      const customerId = localStorage.getItem("customerId") || "";
+
+      if (!token) { router.push("/"); return; }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const params = new URLSearchParams({
+        searchQuery: query,
+        roleType,
+        limit: "50",
+        page: String(page),
+      });
+      if (customerId) params.set("customerId", customerId);
+
+      // superadmin ko userId nahi chahiye
+      if (roleType !== "superadmin" && roleType !== "manager" && userId) {
+        params.set("userId", userId);
+      }
+
+      const res = await fetch(`/api/jobListing?${params.toString()}`, {
+        method: "GET",
+        headers,
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        if (json?.error === "Invalid Token") { router.push("/"); return; }
+        toast.error(json?.error || "Search failed");
+        setJobs([]);
+        return;
+      }
+
+      // /api/jobListing normalize karke data.jobs.jobs mein deta hai
+      const list = json?.jobs?.jobs ?? json?.ActiveJob ?? [];
+      const safeList = Array.isArray(list) ? list : [];
+      const totalPages = Number(json?.jobs?.totalPages ?? 1) || 1;
+
+      setJobs(safeList);
+      setJobDropdownTotalPages(Math.max(1, totalPages));
+      setJobDropdownPage(page);
+    } catch (e) {
+      console.error(e);
+      toast.error("Search failed");
+      setJobs([]);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
   const handleJobDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
@@ -485,9 +560,9 @@ export default function TechReportingDashboard() {
   const dateRangeLabel =
     startDate && endDate
       ? `${format(new Date(startDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-          new Date(endDate + "T12:00:00"),
-          "MMM d, yyyy"
-        )}`
+        new Date(endDate + "T12:00:00"),
+        "MMM d, yyyy"
+      )}`
       : "Optional date range";
 
   const clearFilters = () => {
@@ -650,9 +725,8 @@ export default function TechReportingDashboard() {
     highlight?: boolean;
   }) => (
     <th
-      className={`text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-200 cursor-pointer select-none whitespace-nowrap ${
-        highlight ? "bg-sky-50" : "bg-gray-50"
-      }`}
+      className={`text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-200 cursor-pointer select-none whitespace-nowrap ${highlight ? "bg-sky-50" : "bg-gray-50"
+        }`}
       onClick={onClick}
     >
       <span className="inline-flex items-center gap-1">
@@ -664,9 +738,8 @@ export default function TechReportingDashboard() {
 
   return (
     <div
-      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${
-        isCollapsed ? "w-full pl-20" : "container max-w-7xl"
-      }`}
+      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${isCollapsed ? "w-full pl-20" : "container max-w-7xl"
+        }`}
     >
       <Breadcrumb items={[{ label: "Tech Reporting", href: "/reporting/tech-reporting" }]} />
 
@@ -757,9 +830,8 @@ export default function TechReportingDashboard() {
                       <button
                         key={j.id}
                         type="button"
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${
-                          String(j.id) === String(selectedJobId) ? "bg-gray-50" : ""
-                        }`}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${String(j.id) === String(selectedJobId) ? "bg-gray-50" : ""
+                          }`}
                         onClick={() => {
                           setSelectedJobId(String(j.id));
                           setIsJobDropdownOpen(false);
@@ -792,9 +864,9 @@ export default function TechReportingDashboard() {
               className="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
             >
               <span className="text-gray-800">{dateRangeLabel}</span>
-                <span className="text-gray-400" aria-hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                </span>
+              <span className="text-gray-400" aria-hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </span>
             </button>
             {selectedJobId && datePopoverOpen && (
               <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
@@ -836,7 +908,7 @@ export default function TechReportingDashboard() {
             <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
             <div className="relative" title={!selectedJobId ? "Select a job first" : undefined}>
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" aria-hidden>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               </span>
               <input
                 type="search"

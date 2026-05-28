@@ -684,11 +684,7 @@ export default function ViewDetails() {
               label="Customer Ph. Number"
               value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.customer?.phoneNumber}`}>{jobData?.customer?.phoneNumber || 'N/A'}</a>}
             />
-            <InfoCard
-              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-              label="Technician Name"
-              value={<span className="capitalize">{`${jobData?.technician?.firstName || ''} ${jobData?.technician?.lastName || ''}`.trim() || 'N/A'}</span>}
-            />
+            
             {isSingleTechnician && (
               <InfoCard
                 icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}

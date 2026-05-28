@@ -211,6 +211,7 @@ export default function ClientListing() {
       Name: `${customerData.fullName}`,
       Email: customerData.email || 'N/A',
       Address: customerData.address || 'N/A',
+      'Phone Number': customerData.phoneNumber || 'N/A',
       };
     });
 
@@ -246,7 +247,7 @@ export default function ClientListing() {
       // Serial No, Name, Email, Address
       // Older format fallback:
       // Id, Name, Email, Address
-      const manualHeaders = ['Serial No', 'Name', 'Email', 'Address'];
+      const manualHeaders = ['Serial No', 'Name', 'Email', 'Address', 'Phone Number'];
       const savedSerialToIdMap: Record<string, string> = (() => {
         try {
           const raw = localStorage.getItem(CUSTOMER_IMPORT_ID_MAP_KEY);
