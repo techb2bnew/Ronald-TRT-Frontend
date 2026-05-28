@@ -9,6 +9,7 @@ import Loader from "@/app/component/loader";
 import toast from "react-hot-toast";
 import { ExportToCsv } from "export-to-csv-file";
 import SortIcon from "@/app/component/sortIcon";
+import Pagination from "@/app/component/pagination";
 import { format } from "date-fns";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
@@ -102,12 +103,19 @@ export default function TechReportingDashboard() {
   const [selectedJobId, setSelectedJobId] = useState("");
   const [jobSearch, setJobSearch] = useState("");
   const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
+  const [jobDropdownPage, setJobDropdownPage] = useState(1);
+  const [jobDropdownTotalPages, setJobDropdownTotalPages] = useState(1);
+  const [jobDropdownLoadingMore, setJobDropdownLoadingMore] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
 
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsPayload | null>(null);
+  const [individualPage, setIndividualPage] = useState(1);
+  const [groupPage, setGroupPage] = useState(1);
+  const [individualTotalPages, setIndividualTotalPages] = useState(1);
+  const [groupTotalPages, setGroupTotalPages] = useState(1);
 
   const [sortInd, setSortInd] = useState<{ key: string; dir: "asc" | "desc" }>({
     key: "vin",
@@ -143,15 +151,16 @@ export default function TechReportingDashboard() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const fetchJobs = async () => {
-    setJobsLoading(true);
+  const fetchJobs = async (page = 1, append = false) => {
+    if (append) setJobDropdownLoadingMore(true);
+    else setJobsLoading(true);
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         router.push("/");
         return;
       }
-      const res = await fetch(`${baseUrl}/fetchAllTypesJobs?page=1&limit=200`, {
+      const res = await fetch(`${baseUrl}/fetchAllTypesJobs?page=${page}&limit=50`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -166,12 +175,23 @@ export default function TechReportingDashboard() {
       const json = await res.json();
       if (!res.ok) {
         toast.error(json?.message || "Failed to load jobs");
-        setJobs([]);
+        if (!append) {
+          setJobs([]);
+          setJobDropdownTotalPages(1);
+          setJobDropdownPage(1);
+        }
         return;
       }
       const list = json?.jobs?.jobs ?? json?.data?.jobs?.jobs ?? [];
       const safeList = Array.isArray(list) ? list : [];
-      setJobs(safeList);
+      const totalPages = Number(json?.jobs?.totalPages ?? json?.data?.jobs?.totalPages ?? 1) || 1;
+      setJobDropdownTotalPages(Math.max(1, totalPages));
+      setJobDropdownPage(page);
+      setJobs((prev) => {
+        if (!append) return safeList;
+        const merged = [...prev, ...safeList];
+        return Array.from(new Map(merged.map((j) => [String(j?.id), j])).values());
+      });
       // Auto-select the first job on initial load so analytics render immediately.
       setSelectedJobId((prev) => {
         if (prev) return prev;
@@ -181,15 +201,29 @@ export default function TechReportingDashboard() {
     } catch (e) {
       console.error(e);
       toast.error("Failed to load jobs");
-      setJobs([]);
+      if (!append) {
+        setJobs([]);
+        setJobDropdownTotalPages(1);
+        setJobDropdownPage(1);
+      }
     } finally {
-      setJobsLoading(false);
+      if (append) setJobDropdownLoadingMore(false);
+      else setJobsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchJobs();
   }, []);
+
+  const handleJobDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
+    if (!nearBottom) return;
+    if (jobDropdownLoadingMore || jobsLoading) return;
+    if (jobDropdownPage >= jobDropdownTotalPages) return;
+    void fetchJobs(jobDropdownPage + 1, true);
+  };
 
   const fetchAnalytics = async (
     jobId: string,
@@ -206,7 +240,13 @@ export default function TechReportingDashboard() {
         router.push("/");
         return;
       }
-      const params = new URLSearchParams({ jobId: String(jobId), page: "1", limit: "500" });
+      const params = new URLSearchParams({
+        jobId: String(jobId),
+        page: "1",
+        limit: "10",
+        pageIndividual: String(individualPage),
+        pageGroup: String(groupPage),
+      });
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       const q = (opts?.searchQuery ?? "").trim();
@@ -253,10 +293,16 @@ export default function TechReportingDashboard() {
         individualVehiclesWorked: individual,
         groupVehiclesWorked: group,
       });
+      const totalIndPages = Number(payload?.totalPagesIndividual ?? 1) || 1;
+      const totalGrpPages = Number(payload?.totalPagesGroup ?? 1) || 1;
+      setIndividualTotalPages(Math.max(1, totalIndPages));
+      setGroupTotalPages(Math.max(1, totalGrpPages));
     } catch (e) {
       console.error(e);
       toast.error("Failed to load analytics");
       setAnalytics(null);
+      setIndividualTotalPages(1);
+      setGroupTotalPages(1);
     } finally {
       setAnalyticsLoading(false);
     }
@@ -272,9 +318,17 @@ export default function TechReportingDashboard() {
   useEffect(() => {
     if (!selectedJobId) {
       setAnalytics(null);
+      setIndividualTotalPages(1);
+      setGroupTotalPages(1);
       return;
     }
     fetchAnalytics(selectedJobId, { searchQuery: debouncedSearch });
+  }, [selectedJobId, startDate, endDate, debouncedSearch, individualPage, groupPage]);
+
+  useEffect(() => {
+    // reset table pages when filters/job change
+    setIndividualPage(1);
+    setGroupPage(1);
   }, [selectedJobId, startDate, endDate, debouncedSearch]);
 
   const individualVehicles = analytics?.individualVehiclesWorked ?? [];
@@ -685,7 +739,7 @@ export default function TechReportingDashboard() {
                   />
                 </div>
 
-                <div className="max-h-[260px] overflow-auto">
+                <div className="max-h-[260px] overflow-auto" onScroll={handleJobDropdownScroll}>
                   <button
                     type="button"
                     className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${!selectedJobId ? "bg-gray-50" : ""}`}
@@ -719,6 +773,9 @@ export default function TechReportingDashboard() {
                     <div className="px-3 py-3 text-sm text-gray-500">
                       No matching jobs
                     </div>
+                  )}
+                  {jobDropdownLoadingMore && (
+                    <div className="px-3 py-3 text-xs text-gray-500">Loading more jobs...</div>
                   )}
                 </div>
               </div>
@@ -931,6 +988,15 @@ export default function TechReportingDashboard() {
                   </tbody>
                 </table>
               </div>
+              {sortedIndividual.length > 0 && individualTotalPages > 1 && (
+                <div className="px-4 py-3">
+                  <Pagination
+                    currentPage={individualPage}
+                    totalPages={individualTotalPages}
+                    onPageChange={(data) => setIndividualPage(data.selected + 1)}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Group Vehicles Worked — single table, dynamic columns per technician */}
@@ -1041,6 +1107,15 @@ export default function TechReportingDashboard() {
                   )}
                 </table>
               </div>
+              {sortedGroup.length > 0 && groupTotalPages > 1 && (
+                <div className="px-4 py-3">
+                  <Pagination
+                    currentPage={groupPage}
+                    totalPages={groupTotalPages}
+                    onPageChange={(data) => setGroupPage(data.selected + 1)}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}

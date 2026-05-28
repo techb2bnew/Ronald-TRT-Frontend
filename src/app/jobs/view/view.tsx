@@ -13,6 +13,7 @@ import Eye from '../../../../public/eye.svg';
 import Empty from '@/app/component/empty';
 import { useSidebar } from '@/app/component/SidebarContext';
 import Swal from 'sweetalert2';
+import Pagination from '@/app/component/pagination';
 
 /** Single URL or JSON string array from API */
 function parseInsuranceFileUrls(raw: unknown): string[] {
@@ -191,6 +192,7 @@ async function downloadInsuranceFile(url: string) {
 }
 
 export default function ViewDetails() {
+  const VEHICLE_LIST_PAGE_SIZE = 10;
   const { isCollapsed } = useSidebar();
   const [jobData, setJobsData] = useState<any>(null);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -202,6 +204,10 @@ export default function ViewDetails() {
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState('');
   const [assignmentSortKey, setAssignmentSortKey] = useState<AssignmentSortKey>('techName');
   const [assignmentSortDir, setAssignmentSortDir] = useState<'asc' | 'desc'>('asc');
+  const [assignmentVehicles, setAssignmentVehicles] = useState<any[]>([]);
+  const [assignmentVehiclesPage, setAssignmentVehiclesPage] = useState(1);
+  const [assignmentVehiclesTotalPages, setAssignmentVehiclesTotalPages] = useState(1);
+  const [assignmentVehiclesLoading, setAssignmentVehiclesLoading] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -240,6 +246,51 @@ export default function ViewDetails() {
     }
   };
 
+  const fetchJobVehicles = async (jobId: string, page = 1) => {
+    setAssignmentVehiclesLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `/api/fetchJobVehicles?jobId=${encodeURIComponent(jobId)}&page=${page}&limit=${VEHICLE_LIST_PAGE_SIZE}`,
+        { method: 'GET', headers }
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        toast.error(data?.error || data?.message || 'Error fetching job vehicles');
+        setAssignmentVehicles([]);
+        setAssignmentVehiclesTotalPages(1);
+        return;
+      }
+
+      const items: any[] = Array.isArray(data?.vehicles)
+        ? data.vehicles
+        : Array.isArray(data?.data?.vehicles)
+          ? data.data.vehicles
+          : Array.isArray(data?.jobVehicles)
+            ? data.jobVehicles
+            : [];
+      const totalPages = Number(
+        data?.totalPages ?? data?.vehicles?.totalPages ?? data?.pagination?.totalPages ?? 1
+      );
+
+      setAssignmentVehicles(items);
+      setAssignmentVehiclesTotalPages(Math.max(1, totalPages) || 1);
+    } catch {
+      toast.error('An error occurred while fetching job vehicles');
+      setAssignmentVehicles([]);
+      setAssignmentVehiclesTotalPages(1);
+    } finally {
+      setAssignmentVehiclesLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     const type = localStorage.getItem('types');
     setUserType(type);
@@ -252,10 +303,16 @@ export default function ViewDetails() {
     if (jobId) {
       setIsEdit(true);  // Set to true if `fetchCustomerData` exists in the URL
       fetchCustomerData(jobId);
+      setAssignmentVehiclesPage(1);
     } else {
       setIsEdit(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!jobData?.id) return;
+    fetchJobVehicles(String(jobData.id), assignmentVehiclesPage);
+  }, [jobData?.id, assignmentVehiclesPage]);
 
   useEffect(() => {
     setSelectedAssignmentKeys([]);
@@ -320,13 +377,13 @@ export default function ViewDetails() {
   const technicianVehicleAssignmentRows = useMemo(() => {
     if (!jobData) return [];
     const vehiclesRaw =
-      Array.isArray(jobData.vehicles)
-        ? jobData.vehicles
+      Array.isArray(assignmentVehicles)
+        ? assignmentVehicles
         : Array.isArray(jobData.technicians)
           ? jobData.technicians
           : [];
     return buildTechnicianVehicleAssignmentRows(vehiclesRaw);
-  }, [jobData?.vehicles, jobData?.technicians, jobData]);
+  }, [assignmentVehicles, jobData?.technicians, jobData]);
 
   const displayedAssignmentRows = useMemo(() => {
     const filtered = filterAssignmentRows(technicianVehicleAssignmentRows, assignmentSearchQuery);
@@ -410,27 +467,23 @@ export default function ViewDetails() {
   const applyPaidStatusToLocalRows = (rows: TechnicianVehicleAssignmentRow[]) => {
     const vehicleIds = new Set(rows.map((r) => Number(r.vehicle?.id)).filter((id) => !Number.isNaN(id)));
     const technicianIds = new Set(rows.map((r) => Number(r.tech?.id)).filter((id) => !Number.isNaN(id)));
-    setJobsData((prev: any) => {
-      if (!prev || !Array.isArray(prev.vehicles)) return prev;
-      return {
-        ...prev,
-        vehicles: prev.vehicles.map((vehicle: any) => {
-          const vehicleMatched = vehicleIds.has(Number(vehicle?.id));
-          if (!vehicleMatched || !Array.isArray(vehicle.assignedTechnicians)) return vehicle;
-          return {
-            ...vehicle,
-            assignedTechnicians: vehicle.assignedTechnicians.map((tech: any) => {
-              if (!technicianIds.has(Number(tech?.id))) return tech;
-              return {
-                ...tech,
-                VehicleTechnician: { ...(tech?.VehicleTechnician || {}), paidStatus: true, paidAt: new Date().toISOString() },
-                UserJob: { ...(tech?.UserJob || {}), paidStatus: true, paidAt: new Date().toISOString() },
-              };
-            }),
-          };
-        }),
-      };
-    });
+    setAssignmentVehicles((prev: any[]) =>
+      prev.map((vehicle: any) => {
+        const vehicleMatched = vehicleIds.has(Number(vehicle?.id));
+        if (!vehicleMatched || !Array.isArray(vehicle.assignedTechnicians)) return vehicle;
+        return {
+          ...vehicle,
+          assignedTechnicians: vehicle.assignedTechnicians.map((tech: any) => {
+            if (!technicianIds.has(Number(tech?.id))) return tech;
+            return {
+              ...tech,
+              VehicleTechnician: { ...(tech?.VehicleTechnician || {}), paidStatus: true, paidAt: new Date().toISOString() },
+              UserJob: { ...(tech?.UserJob || {}), paidStatus: true, paidAt: new Date().toISOString() },
+            };
+          }),
+        };
+      })
+    );
   };
 
   const markRowsAsPaid = async (rows: TechnicianVehicleAssignmentRow[]) => {
@@ -483,6 +536,7 @@ export default function ViewDetails() {
 
       applyPaidStatusToLocalRows(rows);
       await fetchCustomerData(String(jobId));
+      await fetchJobVehicles(String(jobId), assignmentVehiclesPage);
       toast.success('Payment marked as paid successfully.');
       return true;
     } catch (error: any) {
@@ -817,7 +871,11 @@ export default function ViewDetails() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {technicianVehicleAssignmentRows.length > 0 ? (
+                {assignmentVehiclesLoading ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-8 text-gray-500"><Loading /></td>
+                  </tr>
+                ) : technicianVehicleAssignmentRows.length > 0 ? (
                   displayedAssignmentRows.length > 0 ? (
                     displayedAssignmentRows.map((row, index) => {
                       const { tech, vehicle, vt } = row;
@@ -936,6 +994,13 @@ export default function ViewDetails() {
               </tbody>
             </table>
           </div>
+          {technicianVehicleAssignmentRows.length > 0 && assignmentVehiclesTotalPages > 1 && (
+            <Pagination
+              currentPage={assignmentVehiclesPage}
+              totalPages={assignmentVehiclesTotalPages}
+              onPageChange={(data) => setAssignmentVehiclesPage(data.selected + 1)}
+            />
+          )}
         </div>
         <Tooltip id="view-vehicle" place="top" />
         <ToastContainer />
