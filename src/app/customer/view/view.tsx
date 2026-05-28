@@ -20,12 +20,12 @@ function parseJobsPayload(data: any): { items: any[]; totalPages: number } {
   const items: any[] = Array.isArray(data?.jobs)
     ? data.jobs
     : Array.isArray(data?.jobs?.jobs)
-    ? data.jobs.jobs
-    : Array.isArray(data?.data?.jobs)
-    ? data.data.jobs
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+      ? data.jobs.jobs
+      : Array.isArray(data?.data?.jobs)
+        ? data.data.jobs
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
   const totalPages = Number(
     data?.totalPages ?? data?.jobs?.totalPages ?? data?.pagination?.totalPages ?? 1
   );
@@ -36,12 +36,12 @@ function parseVehiclesPayload(data: any): { items: any[]; totalPages: number } {
   const items: any[] = Array.isArray(data?.vehicles)
     ? data.vehicles
     : Array.isArray(data?.vehicles?.vehicles)
-    ? data.vehicles.vehicles
-    : Array.isArray(data?.data?.vehicles)
-    ? data.data.vehicles
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+      ? data.vehicles.vehicles
+      : Array.isArray(data?.data?.vehicles)
+        ? data.data.vehicles
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
   const totalPages = Number(
     data?.totalPages ?? data?.vehicles?.totalPages ?? data?.pagination?.totalPages ?? 1
   );
@@ -354,10 +354,17 @@ export default function ViewDetails() {
                   customerVehicles.map((vehicle: any, index: number) => (
                     <tr key={vehicle.id ?? index} className="hover:bg-gray-50/50">
                       <td className="px-6 py-4">
-                        <span className="capitalize">
-                          {Array.isArray(vehicle.assignedTechnicians) && vehicle.assignedTechnicians.length > 0
-                            ? vehicle.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
-                            : '–'}
+                        <span className="capitalize d-block">
+                          {Array.isArray(vehicle.assignedTechnicians) &&
+                            vehicle.assignedTechnicians.length > 0 ? (
+                            vehicle.assignedTechnicians.map((tech: any, index: number) => (
+                              <div key={index}>
+                                {tech.firstName} {tech.lastName}
+                              </div>
+                            ))
+                          ) : (
+                            '–'
+                          )}
                         </span>
                       </td>
                       <td className="px-6 py-4"><span className="capitalize">{vehicle.vin || '–'}</span></td>
