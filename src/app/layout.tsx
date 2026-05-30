@@ -47,7 +47,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>Prorevv</title>
-      <link rel="icon" href="/fav.ico" sizes="any" />
+        <link rel="icon" href="/fav.ico" sizes="any" />
+        <meta name="google-site-verification" content="TI9S-RwsdSzigXTp9Rl4mc7npcJrnbyXZwqF82_nRRg" />
+        <meta name="robots" content="noindex, nofollow" />
       </head>
       <body
         className={` antialiased`}
