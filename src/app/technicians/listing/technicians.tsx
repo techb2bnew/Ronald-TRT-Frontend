@@ -56,7 +56,25 @@ const TechnicianTable: React.FC = () => {
     fetchTechnicians(currentPage, searchTerm, pageSize);
   };
 
-  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+  const isAccountActive = (tech: { accountStatus?: unknown }) =>
+    tech.accountStatus === true ||
+    tech.accountStatus === 1 ||
+    tech.accountStatus === '1';
+
+  const isTechnicianApproved = (tech: { isApproved?: unknown }) =>
+    tech.isApproved === 'accept' || tech.isApproved === true;
+
+  const handleAccountStatusClick = (tech: any) => {
+    const nextStatus = !isAccountActive(tech);
+    if (!nextStatus && !isTechnicianApproved(tech)) return;
+    void handleAccountStatusChanges(tech.id, nextStatus, tech);
+  };
+
+  const handleAccountStatusChanges = async (
+    techId: number,
+    accountStatus: boolean,
+    tech?: any
+  ) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
     try {
@@ -84,10 +102,23 @@ const TechnicianTable: React.FC = () => {
         `${apiUrl}/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
-          accountStatus: accountStatus,
+          accountStatus: Boolean(accountStatus),
         },
         config
       );
+
+      if (
+        response.data.status &&
+        accountStatus &&
+        tech &&
+        !isTechnicianApproved(tech)
+      ) {
+        await axios.post(
+          `${apiUrl}/technicianActiveUnactiveAccount`,
+          { technicianId: techId, isApproved: 'accept' },
+          config
+        );
+      }
 
       if (response.data.status) {
         await Swal.fire({
@@ -352,20 +383,21 @@ const TechnicianTable: React.FC = () => {
         {/* <td>{tech.payRate}</td> */}
 
         <td
-          onClick={() => {
-            if (tech.isApproved === 'accept') {
-              handleAccountStatusChanges(tech.id, !tech.accountStatus);
-            }
-          }} // Corrected here
-          style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
+          onClick={() => handleAccountStatusClick(tech)}
+          style={{
+            cursor:
+              isTechnicianApproved(tech) || !isAccountActive(tech)
+                ? 'pointer'
+                : 'not-allowed',
+          }}
         >
           <span
-            className={`badge ${tech.accountStatus
+            className={`badge ${isAccountActive(tech)
               ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
-            {tech.accountStatus ? 'Active' : 'Inactive'}
+            {isAccountActive(tech) ? 'Active' : 'Inactive'}
           </span>
         </td>
         <td className='capitalize'>{tech.techType === 'technician' ? 'Dent Tech' : tech.techType === 'R/I/R/R' ? 'R&I' : tech.techType}</td>

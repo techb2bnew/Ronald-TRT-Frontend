@@ -53,6 +53,20 @@ const TechnicianTable: React.FC = () => {
     fetchTechnicians(currentPage, searchTerm, pageSize);
   };
 
+  const isAccountActive = (tech: { accountStatus?: unknown }) =>
+    tech.accountStatus === true ||
+    tech.accountStatus === 1 ||
+    tech.accountStatus === '1';
+
+  const isTechnicianApproved = (tech: { isApproved?: unknown }) =>
+    tech.isApproved === 'accept' || tech.isApproved === true;
+
+  const handleAccountStatusClick = (tech: any) => {
+    const nextStatus = !isAccountActive(tech);
+    if (!nextStatus && !isTechnicianApproved(tech)) return;
+    void handleAccountStatusChanges(tech.id, nextStatus, tech);
+  };
+
   const handleAccountStatusChange = async (techId: number, accountStatus: boolean) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
@@ -98,7 +112,11 @@ const TechnicianTable: React.FC = () => {
     }
   };
 
-  const handleAccountStatusChanges = async (techId: number, accountStatus: boolean) => {
+  const handleAccountStatusChanges = async (
+    techId: number,
+    accountStatus: boolean,
+    tech?: any
+  ) => {
     const newStatus = accountStatus ? 'Active' : 'Inactive';
 
     try {
@@ -126,10 +144,23 @@ const TechnicianTable: React.FC = () => {
         `/api/updateTechnicianAccountStatus`,
         {
           technicianId: techId,
-          accountStatus: accountStatus,
+          accountStatus: Boolean(accountStatus),
         },
         config
       );
+
+      if (
+        response.data.status &&
+        accountStatus &&
+        tech &&
+        !isTechnicianApproved(tech)
+      ) {
+        await axios.post(
+          `/api/technicianActiveUnactiveAccount`,
+          { technicianId: techId, isApproved: 'accept' },
+          config
+        );
+      }
 
       if (response.data.status) {
         await Swal.fire({
@@ -649,27 +680,44 @@ const TechnicianTable: React.FC = () => {
             <span><Link href={`/single-technicians/view?technicianId=${tech.id}`} className='hover:underline capitalize'>{tech?.firstName} {tech?.lastName}</Link> </span>
           </div>
         </td>
-        <td><a className="hover:underline" href={`mailto:${tech?.email}`}> {tech.email}</a></td>
-        <td><a className="hover:underline" href={`tel:${tech?.phoneNumber}`}>{tech.phoneNumber}</a></td>
+        <td className="w-[220px] max-w-[220px] overflow-hidden">
+          <a
+            href={`mailto:${tech?.email}`}
+            className="block truncate text-[#383d71] hover:underline"
+            title={tech?.email}
+          >
+            {tech?.email}
+          </a>
+        </td>
+        <td className="w-[150px] max-w-[150px] overflow-hidden">
+          <a
+            href={`tel:${tech?.phoneNumber}`}
+            className="block truncate text-[#383d71] hover:underline whitespace-nowrap"
+            title={tech?.phoneNumber}
+          >
+            {tech?.phoneNumber}
+          </a>
+        </td>
         <td>{tech?.totalJobs || 0}</td>
         <td> <div>{tech.totalWorkOrder || 0}</div></td>
 
         {/* <td>{tech.payRate}</td> */}
         <td
-          onClick={() => {
-            if (tech.isApproved === 'accept') {
-              handleAccountStatusChanges(tech.id, !tech.accountStatus);
-            }
-          }} // Corrected here
-          style={{ cursor: tech.isApproved || tech.accountStatus ? 'pointer' : 'not-allowed' }}
+          onClick={() => handleAccountStatusClick(tech)}
+          style={{
+            cursor:
+              isTechnicianApproved(tech) || !isAccountActive(tech)
+                ? 'pointer'
+                : 'not-allowed',
+          }}
         >
           <span
-            className={`badge ${tech.accountStatus
+            className={`badge ${isAccountActive(tech)
               ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow block text-center w-[100px]'
               }`}
           >
-            {tech.accountStatus ? 'Active' : 'Inactive'}
+            {isAccountActive(tech) ? 'Active' : 'Inactive'}
           </span>
         </td>
 
@@ -717,7 +765,7 @@ const TechnicianTable: React.FC = () => {
 
         </td>
 
-        <td>
+        <td className="w-[110px] whitespace-nowrap">
           <TableActions
             editRoute={`/technicians/create-technician?technicianId=${tech.id}&singletechnician`}
             viewRoute={`/single-technicians/view?technicianId=${tech.id}`}
@@ -791,7 +839,7 @@ const TechnicianTable: React.FC = () => {
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[100px]' : ''} ${index === 2 ? 'w-[180px]' : ''} ${index === 3 ? 'w-[220px]' : ''} ${index === 4 ? 'w-[150px]' : ''}  ${index === 7 ? 'w-[120px]' : ''} ${index === 8 ? 'w-[230px]' : ''}`}
+              className={`cursor-pointer ${index === 1 ? 'w-[100px]' : ''} ${index === 2 ? 'w-[180px]' : ''} ${index === 3 ? 'w-[220px]' : ''} ${index === 4 ? 'w-[150px]' : ''} ${index === 7 ? 'w-[120px]' : ''} ${index === 8 ? 'w-[230px]' : ''} ${index === 9 ? 'w-[110px]' : ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}

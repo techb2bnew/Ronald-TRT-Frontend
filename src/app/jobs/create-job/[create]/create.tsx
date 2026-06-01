@@ -87,8 +87,6 @@ interface Technician {
 const TECH_LIST_LIMIT = 10;
 const SCROLL_LOAD_THRESHOLD_PX = 40;
 
-type JobTechType = 'technician' | 'R/I/R/R';
-
 function mergeUniqueTechnicians(prev: Technician[], incoming: Technician[]): Technician[] {
   const map = new Map(prev.map((t) => [String(t.id), t]));
   incoming.forEach((t) => map.set(String(t.id), t));
@@ -226,38 +224,29 @@ export default function JobForm() {
     fetchCustomers(page);
   }, [searchParams]);
 
-  const fetchJobTechnicians = async (
-    techType: JobTechType,
+  const fetchDentTechnicians = async (
     page = 1,
     options: { append?: boolean; searchQuery?: string } = {}
   ) => {
     const { append = false, searchQuery = '' } = options;
-    const inFlightRef = techType === 'technician' ? dentTechFetchInFlight : riTechFetchInFlight;
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
+    if (dentTechFetchInFlight.current) return;
+    dentTechFetchInFlight.current = true;
 
-    const setLoading = techType === 'technician' ? setDentTechLoading : setRiTechLoading;
-    const setList = techType === 'technician' ? setDentTechList : setRiTechList;
-    const setTotalPagesState = techType === 'technician' ? setDentTechTotalPages : setRiTechTotalPages;
-
-    setLoading(true);
+    setDentTechLoading(true);
     try {
       const token = localStorage.getItem('token');
       const roleType = localStorage.getItem('types') || '';
       const trimmedQuery = searchQuery.trim();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       let url: string;
 
       if (trimmedQuery) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
         url =
           `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
           `&roleType=${encodeURIComponent(roleType)}` +
           `&page=${page}&limit=${TECH_LIST_LIMIT}`;
       } else {
-        url =
-          `/api/fetchJobCustomerTechnician?endpoint=fetchTechnicianJob` +
-          `&types=${encodeURIComponent(roleType)}` +
-          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+        url = `${apiUrl}/fetchDentTech?page=${page}&limit=${TECH_LIST_LIMIT}`;
       }
 
       const response = await fetch(url, {
@@ -270,23 +259,78 @@ export default function JobForm() {
       const allTechs: Technician[] =
         trimmedQuery && data.status && Array.isArray(data.technicians)
           ? data.technicians
-          : data.technician?.technicians || [];
+          : Array.isArray(data?.technicians)
+            ? data.technicians
+            : data.technician?.technicians || [];
 
-      const filtered = allTechs.filter((tech: Technician) => tech.techType === techType);
+      const technicians = trimmedQuery
+        ? allTechs.filter((tech: Technician) => tech.techType === 'technician')
+        : allTechs;
       const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
 
-      setList((prev) => (append ? mergeUniqueTechnicians(prev, filtered) : filtered));
-      setTotalPagesState(totalPages);
-      if (techType === 'technician') {
-        setDentTechPage(page);
-      } else {
-        setRiTechPage(page);
-      }
+      setDentTechList((prev) => (append ? mergeUniqueTechnicians(prev, technicians) : technicians));
+      setDentTechTotalPages(totalPages);
+      setDentTechPage(page);
     } catch (error) {
-      console.error('Error fetching technicians:', error);
+      console.error('Error fetching dent technicians:', error);
     } finally {
-      setLoading(false);
-      inFlightRef.current = false;
+      setDentTechLoading(false);
+      dentTechFetchInFlight.current = false;
+    }
+  };
+
+  const fetchRiTechnicians = async (
+    page = 1,
+    options: { append?: boolean; searchQuery?: string } = {}
+  ) => {
+    const { append = false, searchQuery = '' } = options;
+    if (riTechFetchInFlight.current) return;
+    riTechFetchInFlight.current = true;
+
+    setRiTechLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || '';
+      const trimmedQuery = searchQuery.trim();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      let url: string;
+
+      if (trimmedQuery) {
+        url =
+          `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
+          `&roleType=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      } else {
+        url = `${apiUrl}/fetchRandIR?page=${page}&limit=${TECH_LIST_LIMIT}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      const allTechs: Technician[] =
+        trimmedQuery && data.status && Array.isArray(data.technicians)
+          ? data.technicians
+          : Array.isArray(data?.technicians)
+            ? data.technicians
+            : data.technician?.technicians || [];
+
+      const technicians = trimmedQuery
+        ? allTechs.filter((tech: Technician) => tech.techType === 'R/I/R/R')
+        : allTechs;
+      const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
+
+      setRiTechList((prev) => (append ? mergeUniqueTechnicians(prev, technicians) : technicians));
+      setRiTechTotalPages(totalPages);
+      setRiTechPage(page);
+    } catch (error) {
+      console.error('Error fetching R&I technicians:', error);
+    } finally {
+      setRiTechLoading(false);
+      riTechFetchInFlight.current = false;
     }
   };
 
@@ -297,7 +341,7 @@ export default function JobForm() {
       setDentTechSearching(!!q);
       setDentTechPage(1);
       setDentTechList([]);
-      void fetchJobTechnicians('technician', 1, { searchQuery: dentTechSearchTerm });
+      void fetchDentTechnicians(1, { searchQuery: dentTechSearchTerm });
     }, 350);
     return () => clearTimeout(timeoutId);
   }, [dentTechSearchTerm, userType]);
@@ -309,7 +353,7 @@ export default function JobForm() {
       setRiTechSearching(!!q);
       setRiTechPage(1);
       setRiTechList([]);
-      void fetchJobTechnicians('R/I/R/R', 1, { searchQuery: riTechSearchTerm });
+      void fetchRiTechnicians(1, { searchQuery: riTechSearchTerm });
     }, 350);
     return () => clearTimeout(timeoutId);
   }, [riTechSearchTerm, userType]);
@@ -475,15 +519,21 @@ export default function JobForm() {
 
   const handleTechnicianChange = (tech: Technician, techType: string) => {
     if (techType === "technician") {
-      setSelectedNormalTechnicians(prev =>
-        prev.some(t => String(t.id) === String(tech.id))
-          ? prev.filter(t => String(t.id) !== String(tech.id))
+      const isAlreadySelected = selectedNormalTechnicians.some(
+        (t) => String(t.id) === String(tech.id)
+      );
+      setSelectedNormalTechnicians((prev) =>
+        isAlreadySelected
+          ? prev.filter((t) => String(t.id) !== String(tech.id))
           : [...prev, tech]
       );
     } else if (techType === "R/I/R/R") {
-      setSelectedRrTechnicians(prev =>
-        prev.some(t => String(t.id) === String(tech.id))
-          ? prev.filter(t => String(t.id) !== String(tech.id))
+      const isAlreadySelected = selectedRrTechnicians.some(
+        (t) => String(t.id) === String(tech.id)
+      );
+      setSelectedRrTechnicians((prev) =>
+        isAlreadySelected
+          ? prev.filter((t) => String(t.id) !== String(tech.id))
           : [...prev, tech]
       );
     }
@@ -493,7 +543,7 @@ export default function JobForm() {
     if (!isNearScrollBottom(e.currentTarget)) return;
     if (dentTechLoading || dentTechSearching || dentTechPage >= dentTechTotalPages) return;
     const nextPage = dentTechPage + 1;
-    void fetchJobTechnicians('technician', nextPage, {
+    void fetchDentTechnicians(nextPage, {
       append: true,
       searchQuery: dentTechSearchTerm,
     });
@@ -503,7 +553,7 @@ export default function JobForm() {
     if (!isNearScrollBottom(e.currentTarget)) return;
     if (riTechLoading || riTechSearching || riTechPage >= riTechTotalPages) return;
     const nextPage = riTechPage + 1;
-    void fetchJobTechnicians('R/I/R/R', nextPage, {
+    void fetchRiTechnicians(nextPage, {
       append: true,
       searchQuery: riTechSearchTerm,
     });
@@ -574,6 +624,25 @@ export default function JobForm() {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
+    }
+
+    if (userType !== 'single-technician') {
+      if (selectedNormalTechnicians.length > 0 && !simpleFlatRate.trim()) {
+        toast.error('Please fill the Dent Tech Flat Rate ($)');
+        return;
+      }
+      if (selectedRrTechnicians.length > 0 && !rirValue.trim()) {
+        toast.error('Please fill the R&I Flat Rate ($)');
+        return;
+      }
+      // if (simpleFlatRate.trim() && selectedNormalTechnicians.length === 0) {
+      //   toast.error('Please assign at least one Dent Tech');
+      //   return;
+      // }
+      // if (rirValue.trim() && selectedRrTechnicians.length === 0) {
+      //   toast.error('Please assign at least one R&I technician');
+      //   return;
+      // }
     }
 
     try {
