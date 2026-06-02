@@ -511,25 +511,28 @@ export default function TechPayTotalsReporting() {
 
         {selectedJobId && !loading && jobDetails && (
           <>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 shadow-sm">
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-700">
-                <p>
-                  <span className="font-semibold text-gray-900">Job ID:</span>{" "}
-                  <span className="text-[#383d71]">{displayJobId}</span>
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-900">Total:</span>{" "}
-                  {money(jobDetails.overallTotalPay)}
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-900">Pay Status:</span> {displayedPayStatus}
-                </p>
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden mb-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-[#1e3e6f] text-white px-4 py-3">
+                <span className="font-bold text-sm md:text-base">Job Summary</span>
+                <span className="text-xs font-mono opacity-90">Job ID: {displayJobId}</span>
               </div>
-              {jobDetails.jobTitle && (
-                <p className="mt-2 text-sm text-gray-600">
-                  <span className="font-semibold text-gray-800">Job:</span> {jobDetails.jobTitle}
-                </p>
-              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:col-span-1">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Job</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                    {jobDetails.jobTitle || jobDetails.jobName || "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Total Pay</p>
+                  <p className="text-xl font-bold text-gray-900">{money(jobDetails.overallTotalPay)}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Pay Status</p>
+                  <p className="text-sm font-semibold text-gray-900">{displayedPayStatus}</p>
+                </div>
+                
+              </div>
             </div>
 
             <div className="rounded-lg border border-gray-200 bg-white overflow-hidden mb-6 shadow-sm">

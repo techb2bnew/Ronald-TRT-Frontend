@@ -115,7 +115,7 @@ export default function TechPayDetailView() {
     return (
       <div className="text-center py-12 text-gray-500 text-sm">
         <p>Missing job or technician.</p>
-        <Link href={backHref} className="text-[#383d71] underline mt-2 inline-block">
+        <Link href={backHref} className="text-[#383d71] hover:underline mt-2 inline-block font-medium">
           Back to Tech Reporting
         </Link>
       </div>
@@ -136,17 +136,13 @@ export default function TechPayDetailView() {
       />
 
       <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 md:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Tech Cars Detail Per JobID</h1>
-            <p className="text-sm text-gray-500 mt-1">Vehicle-level pay breakdown for the selected technician</p>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Tech Cars Detail Per JobID</h1>
           <Link
             href={backHref}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#383d71] px-4 py-2.5 text-sm font-medium text-white hover:opacity-95 shrink-0 shadow-sm"
+            className="primary-bg inline-flex items-center justify-center gap-2 pl-5 pr-5 p-2 rounded text-sm shrink-0"
           >
-            <span aria-hidden>←</span>
-            Back to list
+            ← Back to list
           </Link>
         </div>
 
@@ -156,80 +152,57 @@ export default function TechPayDetailView() {
           </div>
         ) : (
           <>
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 bg-gradient-to-r from-[#383d71] to-[#4a5089]">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-                    Job ID
-                  </p>
-                  <p className="text-lg font-bold text-white mt-0.5 font-mono">{displayJobId}</p>
-                </div>
-                <span className="inline-flex w-fit items-center rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm border border-white/20">
-                  {detailMeta?.technicianType || "Technician"}
+            <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm mb-6">
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-[#1e3e6f] text-white px-4 py-3 md:px-5">
+                <span className="font-bold text-base">Job &amp; Technician Summary</span>
+                <span className="text-xs md:text-sm font-mono opacity-90">
+                  Job ID: {displayJobId}
                 </span>
               </div>
 
-              <div className="p-5 md:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-                  <div className="lg:col-span-7 space-y-5">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                        Job
-                      </p>
-                      <p className="text-base font-semibold text-gray-900 leading-snug">
-                        {detailMeta?.jobTitle || detailMeta?.jobName || "—"}
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-4">
-                      <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#383d71]/10 text-[#383d71] text-sm font-bold"
-                        aria-hidden
-                      >
-                        {(detailMeta?.technicianName || "?")
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                          {detailMeta?.technicianType || "Dent Tech"}
-                        </p>
-                        <p className="text-base font-semibold text-[#383d71] mt-0.5 truncate">
-                          {detailMeta?.technicianName || "—"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="lg:col-span-5">
-                    <div className="h-full rounded-xl border-2 border-[#383d71]/15 bg-gradient-to-br from-[#383d71]/5 to-white p-5 flex flex-col justify-center">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Tech Total
-                      </p>
-                      <p className="text-3xl md:text-4xl font-bold text-[#383d71] mt-2 tabular-nums">
-                        {money(detailMeta?.techTotalPay)}
-                      </p>
-                      <div className="mt-4 pt-4 border-t border-[#383d71]/10 flex items-center justify-between gap-2">
-                        <span className="text-sm text-gray-600">Vehicles worked</span>
-                        <span className="inline-flex items-center rounded-md bg-white px-2.5 py-1 text-sm font-semibold text-gray-900 shadow-sm border border-gray-200">
-                          {detailMeta?.totalCars ?? 0}{" "}
-                          {(detailMeta?.totalCars ?? 0) === 1 ? "car" : "cars"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 md:p-5">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">
+                    {detailMeta?.technicianType || "Dent Tech"}
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 truncate">
+                    {detailMeta?.technicianName || "—"}
+                  </p>
                 </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Tech Total</p>
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums">
+                    {money(detailMeta?.techTotalPay)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {detailMeta?.totalCars ?? 0}{" "}
+                    {(detailMeta?.totalCars ?? 0) === 1 ? "car" : "cars"}
+                  </p>
+                </div>
+               
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:col-span-1 lg:col-span-1">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Job</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                    {detailMeta?.jobTitle || detailMeta?.jobName || "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Job ID</p>
+                  <p className="text-lg font-bold text-[#383d71] font-mono">{displayJobId}</p>
+                </div>
+                
               </div>
             </div>
 
             <div className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-              <div className="px-4 py-3 border-b border-gray-100">
+              <div className="px-4 py-3 border-b border-gray-100 bg-white">
                 <h2 className="text-base font-semibold text-gray-900">
                   Tech Cars Detail per JobID
                   {displayJobId ? `: ${displayJobId}` : ""}
                 </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Vehicles worked by {detailMeta?.technicianName || "technician"}
+                </p>
               </div>
 
               {loading ? (
