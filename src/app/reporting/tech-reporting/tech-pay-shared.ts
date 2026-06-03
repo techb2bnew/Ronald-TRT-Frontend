@@ -71,6 +71,62 @@ export function buildFilterParams(
   return params;
 }
 
+/** Which detail filter was applied last when both date range and pay status are set in the UI. */
+export type DetailActiveFilter = "dateRange" | "payStatus";
+
+/**
+ * Detail work-order API query: never send date range together with pay status.
+ * - Pay status only (or pay status won "most recent") → payStatus param only
+ * - Date range only (pay status "all", or date range won "most recent") → startDate + endDate only
+ */
+export function getDetailFilterQuery(
+  payStatus: PayStatusFilter,
+  startDate: string,
+  endDate: string,
+  activeFilter: DetailActiveFilter | null
+): { startDate?: string; endDate?: string; payStatus?: Exclude<PayStatusFilter, "all"> } | null {
+  const hasDateRange = Boolean(startDate.trim() && endDate.trim());
+  const hasPayStatus = payStatus !== "all";
+
+  if (!hasDateRange && !hasPayStatus) return null;
+
+  if (hasDateRange && hasPayStatus) {
+    if (activeFilter === "dateRange") return { startDate, endDate };
+    return { payStatus };
+  }
+
+  if (hasPayStatus) return { payStatus };
+  return { startDate, endDate };
+}
+
+export function buildDetailFilterParams(
+  payStatus: PayStatusFilter,
+  startDate: string,
+  endDate: string,
+  activeFilter: DetailActiveFilter | null
+) {
+  const params = new URLSearchParams();
+  const q = getDetailFilterQuery(payStatus, startDate, endDate, activeFilter);
+  if (!q) return params;
+  if (q.startDate) params.set("startDate", q.startDate);
+  if (q.endDate) params.set("endDate", q.endDate);
+  if (q.payStatus) params.set("payStatus", q.payStatus);
+  return params;
+}
+
+/** Detail work orders: filter API when an active filter applies. */
+export function workOrdersApiPath(
+  startDate: string,
+  endDate: string,
+  payStatus: PayStatusFilter,
+  activeFilter: DetailActiveFilter | null = null
+): string {
+  if (getDetailFilterQuery(payStatus, startDate, endDate, activeFilter)) {
+    return `${baseUrl}/filterJobTechWorkOrders`;
+  }
+  return `${baseUrl}/fetchJobTechWorkOrders`;
+}
+
 export function techReportingListUrl(filters?: {
   jobId?: string;
   payStatus?: string;
@@ -84,4 +140,104 @@ export function techReportingListUrl(filters?: {
   if (filters?.endDate) q.set("endDate", filters.endDate);
   const qs = q.toString();
   return `/reporting/tech-reporting${qs ? `?${qs}` : ""}`;
+}
+
+export type MarkPaidItem = {
+  vehicleId: number;
+  technicianId: number;
+  paidAt?: string;
+};
+
+/** Format API / input date as yyyy-MM-dd for type="date" inputs. */
+export function toDateInputValue(raw: string | null | undefined): string {
+  if (!raw) return "";
+  try {
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) {
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+      return "";
+    }
+    return format(d, "yyyy-MM-dd");
+  } catch {
+    return "";
+  }
+}
+
+export function todayDateInputValue(): string {
+  return format(new Date(), "yyyy-MM-dd");
+}
+
+/** Whether this vehicle already has a payment date (draft or saved). */
+export function vehicleHasPaidDate(
+  wo: WorkOrderRow,
+  dateDrafts: Record<number, string>
+): boolean {
+  const id = wo.vehicleId;
+  if (id == null) return false;
+  return Boolean((dateDrafts[id] ?? "").trim() || toDateInputValue(wo.paidAt));
+}
+
+/**
+ * Date to apply to empty vehicles when using Fill All Dates:
+ * - No paid dates on any vehicle → today
+ * - One or more paid dates → most recent among vehicles that already have a date
+ */
+export function resolveFillAllPaidAt(
+  rows: WorkOrderRow[],
+  dateDrafts: Record<number, string>
+): string {
+  const parsed: Date[] = [];
+
+  for (const wo of rows) {
+    const id = wo.vehicleId;
+    if (id == null) continue;
+    const draft = (dateDrafts[id] ?? "").trim();
+    const fromRow = toDateInputValue(wo.paidAt);
+    const value = draft || fromRow;
+    if (!value) continue;
+
+    const d = new Date(`${value}T12:00:00`);
+    if (!Number.isNaN(d.getTime())) parsed.push(d);
+  }
+
+  if (parsed.length === 0) return todayDateInputValue();
+
+  const latest = parsed.reduce((max, d) => (d > max ? d : max), parsed[0]);
+  return format(latest, "yyyy-MM-dd");
+}
+
+export async function markVehicleTechnicianPaid(payload: {
+  jobId: number | string;
+  paid: boolean;
+  items: MarkPaidItem[];
+  token?: string | null;
+}) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (payload.token) headers.Authorization = `Bearer ${payload.token}`;
+
+  const items = payload.items.map((item) => {
+    const base = {
+      vehicleId: item.vehicleId,
+      technicianId: item.technicianId,
+    };
+    if (payload.paid && item.paidAt) {
+      return { ...base, paidAt: item.paidAt };
+    }
+    return base;
+  });
+
+  const res = await fetch("/api/markVehicleTechnicianPaid", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      jobId: Number(payload.jobId),
+      paid: payload.paid,
+      items,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data?.status === false) {
+    throw new Error(data?.message || data?.error || "Failed to update payment date");
+  }
+  return data;
 }
