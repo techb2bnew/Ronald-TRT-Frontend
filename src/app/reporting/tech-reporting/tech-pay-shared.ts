@@ -59,6 +59,11 @@ export function payStatusLabel(value: PayStatusFilter) {
   return "All";
 }
 
+/** Backend expects `paidStatus=Paid` | `Unpaid`, not `payStatus=paid`. */
+export function payStatusToApiValue(value: Exclude<PayStatusFilter, "all">): "Paid" | "Unpaid" {
+  return value === "paid" ? "Paid" : "Unpaid";
+}
+
 export function buildFilterParams(
   payStatus: PayStatusFilter,
   startDate: string,
@@ -67,7 +72,7 @@ export function buildFilterParams(
   const params = new URLSearchParams();
   if (startDate) params.set("startDate", startDate);
   if (endDate) params.set("endDate", endDate);
-  if (payStatus !== "all") params.set("payStatus", payStatus);
+  if (payStatus !== "all") params.set("paidStatus", payStatusToApiValue(payStatus));
   return params;
 }
 
@@ -76,7 +81,7 @@ export type DetailActiveFilter = "dateRange" | "payStatus";
 
 /**
  * Detail work-order API query: never send date range together with pay status.
- * - Pay status only (or pay status won "most recent") → payStatus param only
+ * - Pay status only (or pay status won "most recent") → paidStatus param only
  * - Date range only (pay status "all", or date range won "most recent") → startDate + endDate only
  */
 export function getDetailFilterQuery(
@@ -110,7 +115,7 @@ export function buildDetailFilterParams(
   if (!q) return params;
   if (q.startDate) params.set("startDate", q.startDate);
   if (q.endDate) params.set("endDate", q.endDate);
-  if (q.payStatus) params.set("payStatus", q.payStatus);
+  if (q.payStatus) params.set("paidStatus", payStatusToApiValue(q.payStatus));
   return params;
 }
 
