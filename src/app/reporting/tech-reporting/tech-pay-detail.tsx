@@ -70,7 +70,7 @@ export default function TechPayDetailView() {
           new Date(filterEndDate + "T12:00:00"),
           "MMM d, yyyy"
         )}`
-      : "Date Paid From – To";
+      : "From – To";
 
   useEffect(() => {
     const sd = searchParams?.get("startDate") || "";
@@ -494,7 +494,7 @@ export default function TechPayDetailView() {
                 <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
                   <div className="flex flex-col gap-2">
                     <div>
-                      <label className="text-xs text-gray-500">Date Paid From</label>
+                      <label className="text-xs text-gray-500">Date From</label>
                       <input
                         type="date"
                         className="w-full mt-0.5 rounded border border-gray-300 px-2 py-1.5 text-sm"
