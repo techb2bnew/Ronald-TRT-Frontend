@@ -70,7 +70,7 @@ export default function TechPayDetailView() {
           new Date(filterEndDate + "T12:00:00"),
           "MMM d, yyyy"
         )}`
-      : "Date Paid From – To";
+      : "From – To";
 
   useEffect(() => {
     const sd = searchParams?.get("startDate") || "";
