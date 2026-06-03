@@ -1,11 +1,11 @@
 "use client";
-// import TechReportingListing from './listing';
+
 import React, { Suspense } from "react";
-import TechPayTotalsReporting from "./tech-pay-totals";
 import { useSidebar } from "@/app/component/SidebarContext";
 import Loading from "@/app/component/loader";
+import TechPayDetailView from "../tech-pay-detail";
 
-export default function Technicians() {
+export default function TechPayDetailPage() {
   const { isCollapsed } = useSidebar();
   return (
     <div className="main-container">
@@ -14,7 +14,6 @@ export default function Technicians() {
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}
       >
-        {/* <TechReportingListing /> */}
         <Suspense
           fallback={
             <div className="flex justify-center py-16">
@@ -22,7 +21,7 @@ export default function Technicians() {
             </div>
           }
         >
-          <TechPayTotalsReporting />
+          <TechPayDetailView />
         </Suspense>
       </div>
     </div>
