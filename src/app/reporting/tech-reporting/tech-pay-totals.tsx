@@ -555,7 +555,7 @@ export default function TechPayTotalsReporting() {
                       <Th label="Tech" sortKey="name" />
                       <Th label="Type" sortKey="type" />
                       <Th label="Work Order(s) Total" sortKey="workOrderCount" />
-                      <Th label={`Total Tech Pay / JobID: ${displayJobId}`} sortKey="totalTechPay" />
+                      <Th label={`Total Tech Pay`} sortKey="totalTechPay" />
                     </tr>
                   </thead>
                   <tbody>

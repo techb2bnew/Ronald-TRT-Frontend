@@ -470,8 +470,8 @@ export default function JobForm() {
         }, 0);
 
         // Prefill totals from API edit payload
-        setSimpleFlatRate(totalNormal ? String(totalNormal) : (normalTechs[0]?.UserJob?.techFlatRate || ""));
-        setRirValue(totalRr ? String(totalRr) : (rirrTechs[0]?.UserJob?.rRate || ""));
+        setSimpleFlatRate(jobData.techFlatRate || "");
+        setRirValue(jobData?.rRate || "");
 
         const startDateValue = jobData.startDate ? dayjs(jobData.startDate) : null;
         const endDateValue = jobData.endDate ? dayjs(jobData.endDate) : null;
@@ -489,8 +489,8 @@ export default function JobForm() {
           labourCost: jobData.labourCost || '',
           estimatedCost: jobData.estimatedCost || '',
           notes: jobData.notes || '',
-          techFlatRate: normalTechs[0]?.UserJob?.techFlatRate || '',
-          rRate: rirrTechs[0]?.UserJob?.rRate || '',
+          techFlatRate: jobData.techFlatRate || '',
+          rRate: jobData.rRate || '',
           assignTechnicians: technicians.map((tech: any) => String(tech.id)),
           technicianId: technicians.map((tech: any) => String(tech.id)),
           createdBy: jobData.createdBy || 'admin',
@@ -708,6 +708,8 @@ export default function JobForm() {
         jobName: formData.jobName,
         assignCustomer: formData.assignCustomer,
         assignTechnician: selectedTechnicianIds,
+        techFlatRate: simpleFlatRate || '0',
+        rRate: rirValue || '0',
         assignManager: managerId,
         createdBy: formData.createdBy,
         notes: formData.notes,
