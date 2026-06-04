@@ -25,6 +25,7 @@ import {
   vehicleHasPaidDate,
   workOrdersApiPath,
 } from "./tech-pay-shared";
+import { downloadWorkOrdersPdf, exportWorkOrdersCsv } from "./tech-pay-export";
 import { format } from "date-fns";
 
 export default function TechPayDetailView() {
@@ -52,6 +53,7 @@ export default function TechPayDetailView() {
   const [dateDrafts, setDateDrafts] = useState<Record<number, string>>({});
   const [isSubmittingPaid, setIsSubmittingPaid] = useState(false);
   const [submittingVehicleId, setSubmittingVehicleId] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const backHref = useMemo(
     () =>
@@ -269,6 +271,59 @@ export default function TechPayDetailView() {
     const json = await res.json();
     if (!res.ok || !json?.status) return workOrders;
     return Array.isArray(json.workOrders) ? json.workOrders : [];
+  };
+
+  const workOrderExportMeta = () => ({
+    displayJobId,
+    technicianName: detailMeta?.technicianName,
+    technicianType: detailMeta?.technicianType,
+    techTotalPay: detailMeta?.techTotalPay,
+    jobTitle: detailMeta?.jobTitle,
+    jobName: detailMeta?.jobName,
+  });
+
+  const handleExportCsv = async () => {
+    if (!detailMeta) {
+      toast.error("Load detail data first.");
+      return;
+    }
+    setExporting(true);
+    try {
+      const rows = await fetchAllWorkOrders();
+      if (!rows.length) {
+        toast.error("No data to export.");
+        return;
+      }
+      exportWorkOrdersCsv(rows, workOrderExportMeta(), dateDrafts);
+      toast.success("CSV downloaded.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to export CSV.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrintPdf = async () => {
+    if (!detailMeta) {
+      toast.error("Load detail data first.");
+      return;
+    }
+    setExporting(true);
+    try {
+      const rows = await fetchAllWorkOrders();
+      if (!rows.length) {
+        toast.error("No data to print.");
+        return;
+      }
+      downloadWorkOrdersPdf(rows, workOrderExportMeta(), dateDrafts);
+      toast.success("PDF downloaded.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to download PDF.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const submitPaidUpdate = async (
@@ -608,14 +663,32 @@ export default function TechPayDetailView() {
                     Vehicles worked by {detailMeta?.technicianName || "technician"}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleFillAllDates}
-                  disabled={isSubmittingPaid || workOrders.length === 0}
-                  className="primary-bg pl-5 pr-5 p-2 rounded text-sm shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSubmittingPaid ? "Updating..." : "Fill All Dates"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => void handleExportCsv()}
+                    disabled={exporting || workOrders.length === 0}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#383d71] px-4 py-2 text-sm font-medium text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Export
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handlePrintPdf()}
+                    disabled={exporting || workOrders.length === 0}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#383d71] px-4 py-2 text-sm font-medium text-[#383d71] bg-white hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Print
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFillAllDates}
+                    disabled={isSubmittingPaid || workOrders.length === 0 || exporting}
+                    className="primary-bg pl-5 pr-5 p-2 rounded text-sm shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmittingPaid ? "Updating..." : "Fill All Dates"}
+                  </button>
+                </div>
               </div>
 
               {loading ? (
