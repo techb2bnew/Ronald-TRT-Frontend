@@ -18,6 +18,10 @@ import {
   money,
   payStatusLabel,
 } from "./tech-pay-shared";
+import {
+  downloadTechPayTotalsPdf,
+  exportTechPayTotalsCsv,
+} from "./tech-pay-export";
 
 type TechPayRow = {
   technicianId: number;
@@ -60,6 +64,7 @@ export default function TechPayTotalsReporting() {
   const [listPage, setListPage] = useState(1);
   const [listTotalPages, setListTotalPages] = useState(1);
   const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({
     key: "name",
@@ -241,11 +246,14 @@ export default function TechPayTotalsReporting() {
 
   const displayedPayStatus = jobDetails?.payStatus?.trim() || payStatusLabel(payStatus);
 
-  const sortedTechRows = useMemo(() => {
-    const rows = [...techPayTotals];
-    const { key, dir } = sort;
+  const sortTechRows = (
+    rows: TechPayRow[],
+    sortState: { key: string; dir: "asc" | "desc" }
+  ) => {
+    const copy = [...rows];
+    const { key, dir } = sortState;
     const mul = dir === "asc" ? 1 : -1;
-    rows.sort((a, b) => {
+    copy.sort((a, b) => {
       let va: string | number = "";
       let vb: string | number = "";
       if (key === "name") {
@@ -265,8 +273,10 @@ export default function TechPayTotalsReporting() {
       if (va > vb) return 1 * mul;
       return 0;
     });
-    return rows;
-  }, [techPayTotals, sort]);
+    return copy;
+  };
+
+  const sortedTechRows = useMemo(() => sortTechRows(techPayTotals, sort), [techPayTotals, sort]);
 
   const dateRangeLabel =
     startDate && endDate
@@ -298,6 +308,86 @@ export default function TechPayTotalsReporting() {
 
   const handleListPageChange = (selectedItem: { selected: number }) => {
     setListPage(selectedItem.selected + 1);
+  };
+
+  const fetchAllTechPayTotals = async (): Promise<TechPayRow[]> => {
+    const token = localStorage.getItem("token");
+    if (!token || !selectedJobId) return [];
+    const limit = Math.max(
+      jobDetails?.totalTechnicians ?? techPayTotals.length,
+      techPayTotals.length,
+      PAGE_LIMIT
+    );
+    const params = new URLSearchParams({
+      jobId: String(selectedJobId),
+      page: "1",
+      limit: String(Math.min(limit, 500)),
+    });
+    const filters = buildFilterParams(payStatus, startDate, endDate);
+    filters.forEach((value, key) => params.set(key, value));
+
+    const res = await fetch(`${baseUrl}/fetchJobTechPayTotals?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok || !json?.status) return techPayTotals;
+    return Array.isArray(json.techPayTotals) ? json.techPayTotals : [];
+  };
+
+  const exportSummary = () => ({
+    displayJobId,
+    jobTitle: jobDetails?.jobTitle,
+    jobName: jobDetails?.jobName,
+    overallTotalPay: jobDetails?.overallTotalPay,
+    payStatusLabel: displayedPayStatus,
+  });
+
+  const handleExportCsv = async () => {
+    if (!jobDetails) {
+      toast.error("Select a job and load data first.");
+      return;
+    }
+    setExporting(true);
+    try {
+      const rows = sortTechRows(await fetchAllTechPayTotals(), sort);
+      if (!rows.length) {
+        toast.error("No data to export.");
+        return;
+      }
+      exportTechPayTotalsCsv(rows, exportSummary());
+      toast.success("CSV downloaded.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to export CSV.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrintPdf = async () => {
+    if (!jobDetails) {
+      toast.error("Select a job and load data first.");
+      return;
+    }
+    setExporting(true);
+    try {
+      const rows = sortTechRows(await fetchAllTechPayTotals(), sort);
+      if (!rows.length) {
+        toast.error("No data to print.");
+        return;
+      }
+      downloadTechPayTotalsPdf(rows, exportSummary());
+      toast.success("PDF downloaded.");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to download PDF.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const toggleSort = (key: string) => {
@@ -536,17 +626,37 @@ export default function TechPayTotalsReporting() {
             </div>
 
             <div className="rounded-lg border border-gray-200 bg-white overflow-hidden mb-6 shadow-sm">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h2 className="text-base font-semibold text-gray-900">
-                  Tech Pay Totals per JobID
-                  {displayJobId !== "—" ? `: ${displayJobId}` : ""}
-                </h2>
-                {jobDetails.totalTechnicians != null && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {jobDetails.totalTechnicians} technician
-                    {jobDetails.totalTechnicians === 1 ? "" : "s"} assigned
-                  </p>
-                )}
+              <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">
+                    Tech Pay Totals per JobID
+                    {displayJobId !== "—" ? `: ${displayJobId}` : ""}
+                  </h2>
+                  {jobDetails.totalTechnicians != null && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {jobDetails.totalTechnicians} technician
+                      {jobDetails.totalTechnicians === 1 ? "" : "s"} assigned
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => void handleExportCsv()}
+                    disabled={exporting || sortedTechRows.length === 0}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#383d71] px-4 py-2 text-sm font-medium text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Export
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handlePrintPdf()}
+                    disabled={exporting || sortedTechRows.length === 0}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#383d71] px-4 py-2 text-sm font-medium text-[#383d71] bg-white hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Print
+                  </button>
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[520px]">
