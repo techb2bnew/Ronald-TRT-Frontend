@@ -8,8 +8,7 @@ export default function TechniciansCreate() {
   const { isCollapsed } = useSidebar();
   return (
     // <AuthCheck>
-    <div className='container m-auto'>
-        {/* <Sidebar /> */}
+    <div className='main-container'>
         <div  className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
         } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}> 

@@ -1,5 +1,6 @@
 // components/CommonHeader.tsx
 import Link from 'next/link';
+import AdminSelect from './AdminSelect';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
@@ -93,6 +94,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const customerDropdownRef = useRef<HTMLDivElement>(null);
@@ -100,6 +102,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
   const [selectedCustomerLabel, setSelectedCustomerLabel] = useState<string>('');
 
   // Close date picker when clicking outside
+  useEffect(() => {
+    const handleViewport = () => setIsMobileView(window.innerWidth <= 991);
+    handleViewport();
+    window.addEventListener('resize', handleViewport);
+    return () => window.removeEventListener('resize', handleViewport);
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
@@ -722,11 +731,11 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
   return (
     <div className="px-1 mb-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
+      <div className="admin-page-header flex flex-col sm:flex-row items-center justify-between w-full ">
         <div>
           <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
         </div>
-        <div className='mobile_listing_item  flex flex-wrap items-center gap-2'>
+        <div className='admin-filters-bar mobile_listing_item flex flex-wrap items-center gap-2'>
           {onSearch && (
 
             <div className="flex w-[200px] relative search__input border border-gray-300 rounded-lg">
@@ -749,7 +758,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
           {onCustomerChange && (
-            <div className="relative" ref={customerDropdownRef}>
+            <div className="relative admin-filter-dropdown-wrap" ref={customerDropdownRef}>
               <button
                 type="button"
                 className="w-[160px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
@@ -768,7 +777,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               </button>
 
               {isCustomerDropdownOpen && (
-                <div className="absolute z-[9999] mt-1 w-[300px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="admin-filter-dropdown absolute z-[9999] mt-1 w-[300px] bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="p-2 border-b border-gray-100">
                     <input
                       value={customerSearchTerm}
@@ -822,7 +831,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
 
           {onNewJobClick && (
-            <div className="relative" ref={jobDropdownRef}>
+            <div className="relative admin-filter-dropdown-wrap" ref={jobDropdownRef}>
               <button
                 type="button"
                 id="job-dropdown"
@@ -841,7 +850,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               </button>
 
               {isJobDropdownOpen && (
-                <div className="absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="admin-filter-dropdown absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="p-2 border-b border-gray-100">
                     <input
                       value={jobSearchTerm}
@@ -922,7 +931,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             </div>
           )}
           {onStatusChange && (
-            <select
+            <AdminSelect
               id="status-dropdown"
               defaultValue=""
               onChange={(e) => onStatusChange?.(e.target.value)}
@@ -932,10 +941,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">All Status</option>
               <option value="completed">Completed</option>
               <option value="inProgress">In Progress</option>
-            </select>
+            </AdminSelect>
           )}
           {onInvoiceStatueChange && (
-            <select
+            <AdminSelect
               id="invoiceStatus-dropdown"
               defaultValue=""
               onChange={(e) => onInvoiceStatueChange?.(e.target.value)}
@@ -945,10 +954,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">Invoice Status</option>
               <option value="paid">Paid</option>
               <option value="unPaid">Unpaid</option>
-            </select>
+            </AdminSelect>
           )}
           {onAccountStatusChange && (
-            <select
+            <AdminSelect
               id="accountStatus-dropdown"
               value={accountStatusFilter}
               onChange={(e) => {
@@ -962,10 +971,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">Account Status</option>
               <option value="active">Active</option>
               <option value="inactive">Deactive</option>
-            </select>
+            </AdminSelect>
           )}
           {onNewTechClick && (
-            <select
+            <AdminSelect
               id="tech-dropdown"
               value={techFilter}
               onChange={(e) => handleTechFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
@@ -980,7 +989,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               ) : (
                 <option value="">No Technician Available</option>
               )}
-            </select>
+            </AdminSelect>
           )}
 
           {additionalComponents && (
@@ -990,9 +999,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
           {showDatePicker && (
-            <div className="relative" ref={datePickerRef}>
+            <div className="relative admin-date-filter-wrap" ref={datePickerRef}>
               <button
-                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300"
+                type="button"
+                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300 w-full"
                 onClick={handleDateFilterClick}
               >
                 {dates.startDate && dates.endDate
@@ -1003,7 +1013,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                   : "Date Filter"}
               </button>
               {showDatePickers && (
-                <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
+                <div className="absolute z-[99999] sdev_date_picker admin-date-picker">
                   <DateRange
                     editableDateInputs={true}
                     onChange={handleDateChange}
@@ -1011,8 +1021,8 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                     ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
                     rangeColors={["#383d71"]}
                     locale={enUS}
-                    months={2}
-                    direction="horizontal"
+                    months={isMobileView ? 1 : 2}
+                    direction={isMobileView ? 'vertical' : 'horizontal'}
                     showDateDisplay={false}
                   />
                   <div className="text-right">
@@ -1053,7 +1063,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             )}
 
           {onPageSizeChange && (
-            <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+            <AdminSelect className='admin-filter-select border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
               <option value="10">Show 10</option>
               <option value="10">10</option>
               <option value="20">20</option>
@@ -1061,10 +1071,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="40">40</option>
               <option value="50">50</option>
               <option value="100">100</option>
-            </select>
+            </AdminSelect>
           )}
           {(onCompletedJobClick || onInProgressJobClick) && (
-            <select
+            <AdminSelect
               id="job-status-select"
               value={activeFilter}
               onChange={(e) => handleFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
@@ -1074,7 +1084,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="all">All Jobs</option>
               <option value="completed">Completed Jobs</option>
               <option value="inProgress">In Progress Jobs</option>
-            </select>
+            </AdminSelect>
           )}
           {onCompletedClick && (
             <button
@@ -1155,7 +1165,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
           {onExport && (
 
-            <button disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+            <button type="button" disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
                 ${isRowSelected
                 ? "bg-[#383d71] text-white hover:bg-[#2d3159]"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -1179,7 +1189,6 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                 <path d="M12 8.5V16.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M8 12.5H16" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-
             </Link>
           )}
         </div>

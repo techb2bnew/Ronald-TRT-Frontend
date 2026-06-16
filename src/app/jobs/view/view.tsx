@@ -639,7 +639,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
           getBaseBreadcrumb(),
@@ -809,10 +809,10 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-5">
           <div className="flex flex-col gap-3 mb-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="admin-job-report-toolbar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-bold rounded-t-lg m-0">Tech and assigned vehicles report</h3>
-              <div className="flex flex-row gap-3">
-                <div className="w-[500px]">
+              <div className="admin-job-report-actions flex flex-row gap-3">
+                <div className="admin-job-report-search w-full sm:w-[500px]">
                   <label htmlFor="assignment-table-search" className="sr-only">
                     Search tech and vehicles
                   </label>
@@ -830,7 +830,7 @@ export default function ViewDetails() {
                   type="button"
                   onClick={handleMarkTechniciansPaid}
                   disabled={isSubmittingPaid}
-                  className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                  className="admin-job-report-pay-btn primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmittingPaid ? 'Updating...' : 'Mark as paid'}
                 </button>
@@ -839,7 +839,7 @@ export default function ViewDetails() {
             </div>
 
           </div>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">

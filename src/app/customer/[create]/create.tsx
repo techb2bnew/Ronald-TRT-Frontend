@@ -64,6 +64,7 @@ export default function Technicians() {
   const [isEdit, setIsEdit] = useState<boolean>(false); // To differentiate between create and edit 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
+  const [addressMenuOpen, setAddressMenuOpen] = useState(false);
 
   const handleSelectChange = (
     event: SelectChangeEvent<string>,
@@ -511,7 +512,7 @@ export default function Technicians() {
   };
 
   return (
-    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
+    <div className='admin-form-shell w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
           { label: 'Customers', href: '/customer/listing' },
@@ -524,10 +525,10 @@ export default function Technicians() {
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create IFS Customer</h1> */}
       <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{isEdit ? 'Edit Customer' : 'Create New Customer'}</h1>
       {/* <p className='text-sm'>Onboard clients effortlessly for seamless collaboration!</p> */}
-      <div className='bg-white p-4 mt-5 '>
+      <div className='admin-form-card bg-white p-4 mt-5 '>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="admin-form-grid grid grid-cols-2 gap-4">
             {/* Client Name and Business Name */}
             <div className='mb-4 relative'>
 
@@ -570,7 +571,7 @@ export default function Technicians() {
 
             </div> */}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="admin-form-grid grid grid-cols-2 gap-4">
             {/* Client Phone and Email */}
             <div className='mb-4 relative'>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="icon__tech" xmlns="http://www.w3.org/2000/svg">
@@ -620,12 +621,15 @@ export default function Technicians() {
             </div>
 
             {/* Address */}
-            <div className='mb-4 relative'>
+            <div className={`mb-4 relative admin-address-field${addressMenuOpen ? ' admin-address-field--open' : ''}`}>
               <GooglePlacesAutocomplete
                 apiKey=" AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M"
                 selectProps={{
                   placeholder: 'Search for an address...',
                   value: address,
+                  onMenuOpen: () => setAddressMenuOpen(true),
+                  onMenuClose: () => setAddressMenuOpen(false),
+                  menuPlacement: 'auto',
                   onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                     if (newValue) {
                       handleAddressSelect(newValue);
@@ -654,6 +658,14 @@ export default function Technicians() {
                       '&:focus': {
                         borderColor: errors.address ? 'orange' : 'orange',
                       },
+                    }),
+                    menu: (provided) => ({
+                      ...provided,
+                      zIndex: 40,
+                    }),
+                    menuPortal: (provided) => ({
+                      ...provided,
+                      zIndex: 40,
                     }),
                   }
                 }}
@@ -785,7 +797,7 @@ export default function Technicians() {
             </div>
           </div> */}
           {/* Submit Button */}
-          <div className="text-left mt-5">
+          <div className="text-left mt-5 admin-form-actions">
             <button
               type="submit"
               className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"

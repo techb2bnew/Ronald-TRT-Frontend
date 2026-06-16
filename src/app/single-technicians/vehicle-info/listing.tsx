@@ -376,8 +376,10 @@ const VehicleTable: React.FC = () => {
         <td>{job?.serialNo}</td>
         {/* <td> <Link href={`/reporting/view?vehicleId=${job.id}`} className='hover:underline'>{job?.id}</Link></td> */}
         <td>{job.customer.fullName}</td>
-        <td> <a className="hover:underline" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a></td>
-        <td>{job.vin}</td>
+        <td title={job.customer.email || 'N/A'}>
+          <a className="hover:underline block truncate max-w-full" href={`mailto:${job?.customer.email}`}>{job.customer.email || 'N/A'}</a>
+        </td>
+        <td title={job.vin}>{job.vin}</td>
 
         {/* <td> <Link href={`/reporting/view?vehicalId=${job.vehicalId}&completedJob`} className='hover:underline capitalize'>{job?.customer?.firstName} {job?.customer?.lastName}</Link></td>
  
@@ -386,7 +388,7 @@ const VehicleTable: React.FC = () => {
             {tech.firstName} {tech.lastName}
           </div>
         ))}</td> */}
-        <td>{job.vehicleDescriptor}</td> 
+        <td title={job.vehicleDescriptor}>{job.vehicleDescriptor}</td>
         <td>{job.make} </td>
         <td>{job.model}</td>
         <td>{job.modelYear}</td>
@@ -424,10 +426,10 @@ const VehicleTable: React.FC = () => {
           { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
         ]}
       />
-      <div className="shadow-lg p-4 bg-white rounded-lg">
+      <div className="shadow-lg p-4 bg-white rounded-lg admin-vehicle-info-table">
       <CommonHeader heading="Vehicles Info" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} userRole='' onExport={downloadCSV} buttonLabel="" buttonLink="" roleType="single-technician" onCustomerChange={(customerId) => handleCustomerChange(customerId)}  selectedRows={selectedIds}/>
  
-      <div className="overflow-auto rounded-md">
+      <div className="admin-table-wrap overflow-x-auto rounded-md">
         <table className="table w-full table-fixed">
           <thead>
             <tr>

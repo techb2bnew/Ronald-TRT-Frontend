@@ -212,7 +212,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full' : 'w-full lg:container'}`}>
 
       <Breadcrumb
         items={[
@@ -274,7 +274,7 @@ export default function ViewDetails() {
         {/* Job List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold rounded-t-lg mb-4">Job List</h3>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-300">
@@ -331,7 +331,7 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold rounded-t-lg mb-4">Vehicle List</h3>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
+          <div className="admin-table-wrap admin-view-table-wrap admin-vehicle-table overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-300">

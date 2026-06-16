@@ -9,6 +9,7 @@ import Loader from "@/app/component/loader";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import Pagination from "@/app/component/pagination";
+import AdminSelect from "@/app/component/AdminSelect";
 import {
   baseUrl,
   PAGE_LIMIT,
@@ -520,15 +521,18 @@ export default function TechPayDetailView() {
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-4">
-            <div className="min-w-[180px] flex-1">
+          <div className="admin-filters-bar flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-4">
+            <div className="min-w-[180px] flex-1 admin-filter-field-wrap">
               <label className="block text-xs font-medium text-gray-500 mb-1">Job ID</label>
               <div className="h-[44px] flex items-center px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm font-mono text-[#383d71]">
                 {displayJobId || "—"}
               </div>
             </div>
 
-            <div className="min-w-[220px] flex-1 relative" ref={datePopoverRef}>
+            <div
+              className={`min-w-[220px] flex-1 relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
+              ref={datePopoverRef}
+            >
               <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
               <button
                 type="button"
@@ -546,7 +550,7 @@ export default function TechPayDetailView() {
                 </span>
               </button>
               {datePopoverOpen && (
-                <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
+                <div className="admin-date-popover absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
                   <div className="flex flex-col gap-2">
                     <div>
                       <label className="text-xs text-gray-500">Date From</label>
@@ -582,9 +586,9 @@ export default function TechPayDetailView() {
               )}
             </div>
 
-            <div className="min-w-[160px]">
+            <div className="min-w-[160px] admin-filter-field-wrap admin-select-wrap">
               <label className="block text-xs font-medium text-gray-500 mb-1">Pay Status</label>
-              <select
+              <AdminSelect
                 value={filterPayStatus}
                 onChange={(e) => applyPayStatus(e.target.value as PayStatusFilter)}
                 className="w-full h-[44px] px-3 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-[#383d71]/30"
@@ -592,7 +596,7 @@ export default function TechPayDetailView() {
                 <option value="all">All</option>
                 <option value="paid">Paid</option>
                 <option value="unpaid">Unpaid</option>
-              </select>
+              </AdminSelect>
             </div>
 
             <button

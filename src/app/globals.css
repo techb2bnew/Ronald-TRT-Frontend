@@ -568,6 +568,12 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
   height: 90vh;
   overflow: auto;
 }
+
+/* Date range picker — desktop default position */
+.sdev_date_picker {
+  top: 3rem;
+  right: 0;
+}
 /* .MuiSelect-select{
       padding: 14px 14px !important;
 } */
@@ -1056,4 +1062,980 @@ p.mb-4.border-b.border-gray-500.mb-3.pb-4.flex {
 }
 .swal2-popup.swal-job-paid-confirm .swal2-cancel:hover {
   background: #f9fafb !important;
+}
+
+/* ============================================
+   Admin Panel — Responsive (Tablet & Mobile)
+   Desktop (>991px) is NOT affected
+   ============================================ */
+
+@media screen and (min-width: 992px) {
+  .admin-mobile-menu-btn {
+    display: none !important;
+  }
+
+  .admin-page-toolbar {
+    position: relative;
+  }
+
+  .admin-page-toolbar .admin-page-actions {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+  }
+
+  .admin-form-shell {
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .admin-login-form-wrap {
+    padding: 0 5rem;
+  }
+
+  /* Vehicle info listing — prevent column overlap on desktop */
+  .admin-vehicle-info-table table.table.w-full.table-fixed {
+    table-layout: auto;
+    width: 100%;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th,
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:first-child,
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:first-child {
+    width: 44px;
+    max-width: 44px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(2),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(2) {
+    width: 80px;
+    min-width: 80px;
+    max-width: 90px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(3),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(3) {
+    min-width: 110px;
+    max-width: 160px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(4),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(4) {
+    min-width: 150px;
+    max-width: 220px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(5),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(5) {
+    min-width: 150px;
+    max-width: 190px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(6),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(6) {
+    min-width: 120px;
+    max-width: 180px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(7),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(7),
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(8),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(8) {
+    min-width: 80px;
+    max-width: 120px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:nth-child(9),
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:nth-child(9) {
+    width: 70px;
+    min-width: 70px;
+    max-width: 80px;
+  }
+
+  .admin-vehicle-info-table table.table.w-full.table-fixed thead tr th:last-child,
+  .admin-vehicle-info-table table.table.w-full.table-fixed tbody tr td:last-child {
+    width: 72px;
+    min-width: 72px;
+    max-width: 72px;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  /* --- Login page --- */
+  .admin-login-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #eceef6;
+    padding: 20px 16px;
+    box-sizing: border-box;
+  }
+
+  .admin-login-page .admin-login-shell {
+    min-height: auto !important;
+    height: auto !important;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    background: transparent !important;
+    gap: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .admin-login-form-wrap {
+    width: 100% !important;
+    max-width: 100%;
+    padding: 28px 20px 32px !important;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(56, 61, 113, 0.1);
+    box-sizing: border-box;
+  }
+
+  .admin-login-form-wrap h2 {
+    font-size: 1.35rem;
+  }
+
+  .admin-login-form-wrap > p,
+  .admin-login-form-wrap .text-center p {
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .admin-login-submit {
+    width: 100% !important;
+  }
+
+  .admin-login-page .admin-login-banner {
+    display: none !important;
+  }
+
+  /* --- Page layout --- */
+  .right_section,
+  .right_section.w-\[85\%\],
+  .right_section.w-\[86\%\] {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    margin-left: 0 !important;
+    margin-top: 4.5rem !important;
+  }
+
+  .admin-listing-wrap,
+  .mobile_listing {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+  }
+
+  .admin-listing-wrap.pl-\[5rem\],
+  .mobile_listing.pl-\[5rem\],
+  .mx-auto.mt-4.transition-all.duration-300.w-full.pl-\[5rem\] {
+    padding-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* --- Filters toolbar (CommonHeader & similar) --- */
+  .admin-filters-bar,
+  .mobile_listing_item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .admin-filters-bar > *,
+  .admin-filter-control,
+  .mobile_listing_item > *,
+  .mobile_listing_item .w-\[150px\],
+  .mobile_listing_item label,
+  .mobile_listing_item button:not(.admin-mobile-menu-btn),
+  .mobile_listing_item .primary-bg,
+  .search__input,
+  .flex.w-\[200px\].relative.search__input,
+  .admin-filters-bar select,
+  .admin-filters-bar .w-\[110px\],
+  .admin-filters-bar .w-\[130px\],
+  .admin-filters-bar .w-\[160px\],
+  .admin-filters-bar .w-\[200px\] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-filters-bar .relative,
+  .mobile_listing_item .relative,
+  .admin-filter-dropdown-wrap {
+    width: 100% !important;
+    position: relative;
+  }
+
+  .admin-filter-dropdown-wrap > button {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .admin-filter-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Custom select dropdown (mobile/tablet only via AdminSelect) */
+  .admin-select-wrap,
+  .admin-custom-select {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+  }
+
+  .admin-filter-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 2.25rem 0 0.75rem !important;
+    font-size: 14px;
+    line-height: 1.25;
+    background-color: #fff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 1rem !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .admin-filter-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .admin-select-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .admin-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    z-index: 10050;
+    max-height: 220px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-select-dropdown li {
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.3;
+    cursor: pointer;
+    color: #374151;
+  }
+
+  .admin-select-dropdown li:hover {
+    background: #f3f4f6;
+  }
+
+  .admin-select-dropdown li.is-selected {
+    background: #383d71;
+    color: #fff;
+  }
+
+  .admin-page-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  /* --- Tables: horizontal scroll, no sticky/fixed columns --- */
+  .admin-listing-wrap,
+  .admin-listing-card {
+    min-width: 0;
+    overflow-x: visible;
+  }
+
+  .admin-table-wrap,
+  .custom-table-scroll,
+  .shadow-lg .overflow-auto.rounded-md,
+  .overflow-auto.rounded-md,
+  .overflow-x-auto.rounded-md,
+  .overflow-x-auto.rounded-lg {
+    display: block;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-table-wrap > table,
+  table.table.w-full.table-fixed {
+    display: table;
+    table-layout: auto !important;
+    width: max-content !important;
+    max-width: none !important;
+    min-width: 100%;
+  }
+
+  /* View detail / invoice tables */
+  .admin-view-detail {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+  }
+
+  .admin-view-detail.mobile_listing.container,
+  .mobile_listing.admin-view-detail {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .admin-view-detail.pl-\[5rem\] {
+    padding-left: 0 !important;
+  }
+
+  .admin-view-detail .admin-view-detail-embed,
+  .admin-view-detail .admin-view-detail-embed.mobile_listing {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Job view — tech & vehicles report toolbar */
+  .admin-job-report-toolbar .admin-job-report-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .admin-job-report-toolbar .admin-job-report-search {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .admin-job-report-toolbar .admin-job-report-search input {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .admin-job-report-toolbar .admin-job-report-pay-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .admin-view-table-wrap {
+    display: block;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-view-table-wrap > table {
+    display: table;
+    table-layout: auto !important;
+    width: max-content !important;
+    min-width: 100%;
+  }
+
+  .admin-view-table-wrap > table th,
+  .admin-view-table-wrap > table td {
+    padding: 8px 12px !important;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  .admin-view-table-wrap > table thead th {
+    white-space: nowrap;
+  }
+
+  .admin-vehicle-table > table th,
+  .admin-vehicle-table > table td {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 160px;
+  }
+
+  .admin-vehicle-table > table td:first-child {
+    min-width: 110px;
+    max-width: 180px;
+  }
+
+  .admin-vehicle-table > table td:nth-child(2) {
+    min-width: 130px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+
+  .admin-vehicle-table > table th:last-child,
+  .admin-vehicle-table > table td:last-child {
+    white-space: nowrap;
+    min-width: 72px;
+    max-width: none;
+    text-align: right;
+  }
+
+  table.table.w-full.table-fixed.sdev_table {
+    min-width: 900px;
+  }
+
+  table.table.w-full.table-fixed thead tr th,
+  table.table.w-full.table-fixed tbody tr td {
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    vertical-align: middle;
+    width: auto !important;
+    max-width: none;
+    overflow: visible;
+  }
+
+  /* Each column keeps its own space — no overlap */
+  table.table.w-full.table-fixed thead tr th:first-child,
+  table.table.w-full.table-fixed tbody tr td:first-child {
+    min-width: 40px;
+  }
+
+  table.table.w-full.table-fixed thead tr th:last-child,
+  table.table.w-full.table-fixed tbody tr td:last-child,
+  table.table.w-full.table-fixed .admin-col-action {
+    min-width: 120px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .admin-table-actions,
+  table.table.w-full.table-fixed td .flex.items-center.space-x-1 {
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    white-space: nowrap;
+    gap: 6px;
+  }
+
+  .admin-table-actions a,
+  .admin-table-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  /* --- Pagination --- */
+  .pagination,
+  .admin-pagination {
+    justify-content: center !important;
+    gap: 4px;
+    row-gap: 8px;
+  }
+
+  .pagination > li a {
+    padding: 6px 10px;
+    margin: 2px;
+    font-size: 12px;
+  }
+
+  /* --- Listing cards --- */
+  .admin-listing-card,
+  .shadow-lg.p-4.bg-white.rounded-lg,
+  .shadow-lg.p-5.bg-white.rounded {
+    padding: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* --- Header --- */
+  .main-header {
+    width: 100% !important;
+    left: 0 !important;
+  }
+
+  .admin-mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border-right: 1px solid #383d71;
+    cursor: pointer;
+    background: transparent;
+    flex-shrink: 0;
+  }
+
+  .admin-mobile-menu-btn:hover {
+    background: #383d71;
+    color: white;
+  }
+
+  header.bg-white.shadow-md {
+    padding-left: 0 !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Keep mobile drawer above page content (both used z-10 before) */
+  .main-sidebar {
+    z-index: 100002 !important;
+    position: relative;
+  }
+
+  .main-container,
+  .right_section {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* --- Sidebar drawer --- */
+  .combine__sidebar__with__header {
+    z-index: 100001;
+  }
+
+  .admin-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 100000;
+    animation: adminOverlayFade 0.2s ease;
+  }
+
+  .admin-sidebar-panel.admin-sidebar--mobile-closed {
+    transform: translateX(-100%);
+    width: min(300px, 85vw) !important;
+    pointer-events: none;
+  }
+
+  .admin-sidebar-panel.admin-sidebar--mobile-open {
+    transform: translateX(0);
+    width: min(300px, 85vw) !important;
+    pointer-events: auto;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    z-index: 100001;
+  }
+
+  .admin-sidebar-panel.admin-sidebar--mobile-open ul.laptop_size,
+  .admin-sidebar-panel.admin-sidebar--mobile-open .laptop_size {
+    display: flex !important;
+  }
+
+  .admin-sidebar-panel .sidebar-text {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+  }
+
+  .admin-sidebar-panel.admin-sidebar--mobile-open svg.transform {
+    opacity: 1 !important;
+    max-width: none !important;
+    overflow: visible !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .admin-sidebar-panel .toggle__icon {
+    display: flex !important;
+    position: relative !important;
+    right: auto !important;
+  }
+
+  .admin-sidebar-panel .flex.justify-end.toggle__icon button {
+    position: relative !important;
+    right: auto !important;
+    border-right: none !important;
+    height: auto !important;
+    padding: 8px !important;
+  }
+
+  /* Override legacy fixed-width mobile rules */
+  .bg-color.text-white.fixed.top-0.h-full.transition-all.duration-300.w-\[70px\] ul.flex.flex-col.py-4.laptop_size {
+    display: flex !important;
+  }
+
+  .bg-color.text-white.fixed.top-0.h-full.transition-all.duration-300.w-\[70px\] {
+    width: 0 !important;
+  }
+
+  .invoice_tab_content {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch !important;
+  }
+
+  .invoice_tab_content button.primary-bg {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .flex.flex-col.sm\:flex-row.items-center.justify-between.w-full {
+    flex-direction: column;
+    width: 100%;
+    gap: 11px;
+  }
+
+  .admin-filters-bar .min-w-\[220px\] {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+  }
+
+  .admin-filters-bar .min-w-\[160px\],
+  .admin-filters-bar .min-w-\[180px\],
+  .admin-filters-bar .min-w-\[200px\] {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+  }
+
+  .admin-filter-field-wrap {
+    width: 100% !important;
+    position: relative;
+    min-width: 0 !important;
+  }
+
+  .admin-filter-field-wrap > button {
+    justify-content: space-between !important;
+    text-align: left !important;
+  }
+
+  .admin-date-popover {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    z-index: 10050 !important;
+    box-sizing: border-box;
+  }
+
+  .admin-date-popover-open {
+    padding-bottom: 190px;
+  }
+
+  .admin-filters-bar .admin-select-wrap select.admin-filter-select,
+  .admin-filters-bar .admin-select-wrap .admin-filter-select {
+    justify-content: space-between !important;
+    text-align: left !important;
+  }
+  .admin-filters-bar button{
+    padding-right: 15px;
+  }
+  .admin-filters-bar input[type="date"],
+  .admin-filters-bar button,
+  .admin-filters-bar a,
+  .admin-filters-bar label {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  /* --- Forms (create/edit pages) --- */
+  .admin-form-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .right_section > .w-\[60\%\],
+  .right_section > .w-\[85\%\] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .admin-form-card,
+  .admin-form-shell > .bg-white,
+  .admin-form-shell .bg-white.p-4 {
+    width: 100% !important;
+    padding: 12px !important;
+    box-sizing: border-box;
+  }
+
+  .admin-form-grid,
+  .admin-form-shell .grid.grid-cols-2,
+  .admin-form-shell .grid.grid-cols-3,
+  .admin-form-shell .grid.grid-cols-4 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .admin-form-shell h1 {
+    font-size: 1rem;
+    padding: 0 4px;
+  }
+
+  .admin-form-shell .primary-bg,
+  .admin-form-shell .text-left.mt-5 .primary-bg {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .admin-form-shell .MuiFormControl-root,
+  .admin-form-shell .mb-4.relative {
+    width: 100% !important;
+  }
+
+  /* Address autocomplete — push fields below open dropdown (mobile/tablet) */
+  .admin-address-field {
+    position: relative;
+    z-index: 1;
+    width: 100% !important;
+  }
+
+  .admin-address-field--open {
+    position: relative;
+    z-index: 5;
+    /* margin-bottom: 240px !important; */
+  }
+
+  .admin-address-field [class*='-menu'] {
+    z-index: 50 !important;
+    background: #fff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    overflow: hidden;
+  }
+
+  .admin-address-field [class*='-MenuList'] {
+    background: #fff !important;
+  }
+
+  .admin-address-field [class*='-option'] {
+    background-color: #fff !important;
+    color: #111827 !important;
+  }
+
+  .admin-address-field [class*='-option']:hover,
+  .admin-address-field [class*='-option'][aria-selected='true'] {
+    background-color: #f3f4f6 !important;
+  }
+
+  .admin-form-actions {
+    position: relative;
+    z-index: 1;
+    clear: both;
+  }
+
+  @media screen and (max-width: 767px) {
+    .admin-form-shell .admin-form-actions {
+      margin-top: 1.25rem !important;
+    }
+  }
+
+  /* Tablet only — space between upload fields and submit */
+  @media screen and (min-width: 768px) and (max-width: 991px) {
+    .admin-form-shell .admin-form-actions {
+      margin-top: 2rem !important;
+    }
+  }
+
+  /* Date range picker (react-date-range) */
+  .admin-date-filter-wrap {
+    width: 100% !important;
+  }
+
+  .admin-date-picker,
+  .sdev_date_picker {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: calc(100% + 4px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 8px;
+    box-sizing: border-box;
+    z-index: 10050 !important;
+  }
+
+  .admin-date-picker .rdrCalendarWrapper,
+  .sdev_date_picker .rdrCalendarWrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 12px;
+    color: #000;
+  }
+
+  .admin-date-picker .rdrDateRangeWrapper,
+  .sdev_date_picker .rdrDateRangeWrapper {
+    width: 100% !important;
+  }
+
+  .admin-date-picker .rdrMonths,
+  .sdev_date_picker .rdrMonths {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .admin-date-picker .rdrMonth,
+  .sdev_date_picker .rdrMonth {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 4px 8px;
+    box-sizing: border-box;
+  }
+
+  .admin-date-picker .rdrWeekDays,
+  .sdev_date_picker .rdrWeekDays {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+  }
+
+  .admin-date-picker .rdrWeekDay,
+  .sdev_date_picker .rdrWeekDay {
+    flex: 1 1 14.2857% !important;
+    flex-basis: 14.2857% !important;
+    max-width: 14.2857% !important;
+    text-align: center;
+  }
+
+  .admin-date-picker .rdrDays,
+  .sdev_date_picker .rdrDays {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  .admin-date-picker .rdrDay,
+  .sdev_date_picker .rdrDay {
+    flex: 0 0 14.2857% !important;
+    width: 14.2857% !important;
+    max-width: 14.2857% !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-date-picker .rdrDay > button,
+  .sdev_date_picker .rdrDay > button,
+  .admin-date-picker .rdrDays > button,
+  .sdev_date_picker .rdrDays > button {
+    width: 100% !important;
+    height: 36px !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Breadcrumb + page actions (view detail pages) */
+  .admin-page-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-page-toolbar .admin-breadcrumb,
+  .admin-page-toolbar nav.flex.shadow.p-3.bg-white.text-gray-700 {
+    margin-bottom: 0 !important;
+    padding-right: 12px !important;
+  }
+
+  .admin-page-toolbar .admin-page-actions {
+    position: static !important;
+    width: 100%;
+  }
+
+  /* Breadcrumb */
+  .admin-breadcrumb,
+  nav.flex.shadow.p-3.bg-white.text-gray-700 {
+    flex-wrap: wrap;
+    padding: 10px 12px !important;
+    font-size: 11px;
+    margin-bottom: 12px !important;
+  }
+
+  nav.flex.shadow.p-3.bg-white.text-gray-700 ol {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  /* Page container on create/edit routes */
+  .right_section .container.m-auto,
+  .right_section > .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .right_section {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    margin-top: 4rem !important;
+  }
+
+  .admin-mobile-menu-btn {
+    padding: 10px 12px;
+  }
+
+  header .cursor-pointer.border-l {
+    padding: 12px !important;
+  }
+}
+
+@keyframes adminOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

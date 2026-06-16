@@ -2469,7 +2469,7 @@ export default function Technicians() {
   };
 
   return (
-    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
+    <div className='admin-form-shell m-auto mb-5'>
       <Breadcrumb
         items={[
           isEdit
