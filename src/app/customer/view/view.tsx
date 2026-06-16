@@ -212,7 +212,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full' : 'w-full lg:container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
 
       <Breadcrumb
         items={[
