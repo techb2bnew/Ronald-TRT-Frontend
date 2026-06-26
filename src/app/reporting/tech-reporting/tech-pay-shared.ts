@@ -17,8 +17,9 @@ export type WorkOrderRow = {
   stockNumber?: string;
   color?: string;
   techPayAmount?: number;
-  paidStatus?: boolean;
+  generatedInvoiceStatus?: boolean;
   paidAt?: string | null;
+  generatedInvoiceDate?: string | null;
 };
 
 export type DetailJobDetails = {

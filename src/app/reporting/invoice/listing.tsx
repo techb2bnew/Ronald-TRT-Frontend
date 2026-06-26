@@ -572,112 +572,189 @@ const JobTable: React.FC = () => {
       setIsGeneratingInvoice(false);
     }
   };
+ 
+  // const handleGenerateInvoice = async (isPrint = false) => {
+  //   const token = localStorage.getItem('token');
+  //   const roleType = localStorage.getItem('types') || '';
+  //   const userId = localStorage.getItem('userID');
+  //   const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
 
-  // ─── Main generate invoice handler ────────────────────────────────────────
-  const handleGenerateInvoice = async (isPrint = false) => {
-    const token = localStorage.getItem('token');
-    const roleType = localStorage.getItem('types') || '';
-    const userId = localStorage.getItem('userID');
-    const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
+  //   if (selectedJobs.length === 0) {
+  //     toast.error('Please select at least one vehicle to generate invoice'); return;
+  //   }
+  //   if (roleType !== 'single-technician') {
+  //     const vehiclesWithoutPdr = selectedJobs.filter(job => !job.pdr || isNaN(Number(job.pdr)));
+  //     if (vehiclesWithoutPdr.length > 0) {
+  //       toast.error('Please enter PDR values for all selected vehicles before generating invoice'); return;
+  //     }
+  //   }
 
-    if (selectedJobs.length === 0) {
-      toast.error('Please select at least one vehicle to generate invoice'); return;
-    }
-    if (roleType !== 'single-technician') {
-      const vehiclesWithoutPdr = selectedJobs.filter(job => !job.pdr || isNaN(Number(job.pdr)));
-      if (vehiclesWithoutPdr.length > 0) {
-        toast.error('Please enter PDR values for all selected vehicles before generating invoice'); return;
-      }
-    }
+  //   const jobIdsUnique = uniqueNumericJobIdsFromVehicles(selectedJobs);
+  //   const jobTypeFromSelected =
+  //     selectedJobs[0]?.job?.jobType ??
+  //     selectedJobs[0]?.job?.job_type ??
+  //     selectedJobs[0]?.jobType ??
+  //     '';
 
-    const jobIdsUnique = uniqueNumericJobIdsFromVehicles(selectedJobs);
-    const jobTypeFromSelected =
-      selectedJobs[0]?.job?.jobType ??
-      selectedJobs[0]?.job?.job_type ??
-      selectedJobs[0]?.jobType ??
-      '';
+  //   const useInsuranceVinCompare =
+  //     roleType === 'superadmin' &&
+  //     jobIdsUnique.length > 0 &&
+  //     isInsuranceJobTypeForInvoice(jobTypeFromSelected);
 
-    const useInsuranceVinCompare =
-      roleType === 'superadmin' &&
-      jobIdsUnique.length > 0 &&
-      isInsuranceJobTypeForInvoice(jobTypeFromSelected);
+  //   // ── Superadmin + insurance job: compare selected VINs (all selected job ids in array) ──
+  //   if (useInsuranceVinCompare) {
+  //     for (const jid of jobIdsUnique) {
+  //       const row =
+  //         selectedJobs.find((j) => Number(j.jobId ?? j.job?.id) === jid) ?? selectedJobs[0];
+  //       const jt =
+  //         row?.job?.jobType ??
+  //         row?.job?.job_type ??
+  //         row?.jobType ??
+  //         '';
+  //       if (!isInsuranceJobTypeForInvoice(jt)) {
+  //         toast.error(
+  //           `Invoice VIN compare is only for insurance percentage jobs (job ${jid} is not eligible).`
+  //         );
+  //         return;
+  //       }
+  //     }
 
-    // ── Superadmin + insurance job: compare selected VINs (all selected job ids in array) ──
-    if (useInsuranceVinCompare) {
-      for (const jid of jobIdsUnique) {
-        const row =
-          selectedJobs.find((j) => Number(j.jobId ?? j.job?.id) === jid) ?? selectedJobs[0];
-        const jt =
-          row?.job?.jobType ??
-          row?.job?.job_type ??
-          row?.jobType ??
-          '';
-        if (!isInsuranceJobTypeForInvoice(jt)) {
-          toast.error(
-            `Invoice VIN compare is only for insurance percentage jobs (job ${jid} is not eligible).`
-          );
-          return;
-        }
-      }
+  //     setIsGeneratingInvoice(true);
+  //     try {
+  //       const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIdsUnique, token!);
+  //       const { missingInScanned, missingInInsurance } = computeVinMismatch(
+  //         selectedJobs,
+  //         insuranceVehicles
+  //       );
+  //       if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
+  //         setMismatchUseInsuranceCompare(true);
+  //         setPendingInvoiceArgs({
+  //           isPrint,
+  //           selectedJobs,
+  //           token,
+  //           roleType,
+  //           userId,
+  //           jobIds: jobIdsUnique,
+  //         });
+  //         setMismatchData({ missingInScanned, missingInInsurance });
+  //         setShowMismatchAlert(true);
+  //         return;
+  //       }
+  //     } catch (error) {
+  //       console.error('Insurance VIN compare failed:', error);
+  //       toast.error('Could not load insurance vehicles for comparison. Try again.');
+  //       return;
+  //     } finally {
+  //       setIsGeneratingInvoice(false);
+  //     }
+  //     await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
+  //     return;
+  //   }
 
-      setIsGeneratingInvoice(true);
-      try {
-        const insuranceVehicles = await fetchAllInsuranceVehiclesByJobIds(jobIdsUnique, token!);
-        const { missingInScanned, missingInInsurance } = computeVinMismatch(
-          selectedJobs,
-          insuranceVehicles
-        );
-        if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
-          setMismatchUseInsuranceCompare(true);
-          setPendingInvoiceArgs({
-            isPrint,
-            selectedJobs,
-            token,
-            roleType,
-            userId,
-            jobIds: jobIdsUnique,
-          });
-          setMismatchData({ missingInScanned, missingInInsurance });
-          setShowMismatchAlert(true);
-          return;
-        }
-      } catch (error) {
-        console.error('Insurance VIN compare failed:', error);
-        toast.error('Could not load insurance vehicles for comparison. Try again.');
-        return;
-      } finally {
-        setIsGeneratingInvoice(false);
-      }
-      await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
+  //   setMismatchUseInsuranceCompare(false);
+
+  //   // ── Step 1: Check for mismatches (backend) for other roles / job types ────
+  //   try {
+  //     const mismatchResponse = await axios.post(
+  //       `${apiUrl}/fetchInsuranceVehiclesByJob`,
+  //       { vehicleIds: selectedJobs.map(job => job.id), roleType, userId },
+  //       { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
+  //     );
+  //     const { missingInScanned = [], missingInInsurance = [] } = mismatchResponse.data || {};
+
+  //     if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
+  //       // Store args so "Proceed Anyway" can call _callInvoiceApi
+  //       setPendingInvoiceArgs({ isPrint, selectedJobs, token, roleType, userId });
+  //       setMismatchData({ missingInScanned, missingInInsurance });
+  //       setShowMismatchAlert(true);
+  //       return; // Do NOT call invoice API yet
+  //     }
+  //   } catch (err) {
+  //     // If mismatch check fails, proceed directly (silent fail)
+  //     console.warn('Mismatch check failed, proceeding:', err);
+  //   }
+
+  //   // ── Step 2: No mismatches → call invoice API directly ────────────────────
+  //   await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
+  // };
+
+  
+const handleGenerateInvoice = async () => {
+  const token = localStorage.getItem('token');
+  const roleType = localStorage.getItem('types') || '';
+  const userId = localStorage.getItem('userID');
+  const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
+
+  if (selectedJobs.length === 0) {
+    toast.error('Please select at least one vehicle to generate invoice');
+    return;
+  }
+
+  if (roleType !== 'single-technician') {
+    const vehiclesWithoutPdr = selectedJobs.filter(job => !job.pdr || isNaN(Number(job.pdr)));
+    if (vehiclesWithoutPdr.length > 0) {
+      toast.error('Please enter PDR values for all selected vehicles before generating invoice');
       return;
     }
+  }
 
-    setMismatchUseInsuranceCompare(false);
+  try {
+    setIsGeneratingInvoice(true);
 
-    // ── Step 1: Check for mismatches (backend) for other roles / job types ────
-    try {
-      const mismatchResponse = await axios.post(
-        `${apiUrl}/fetchInsuranceVehiclesByJob`,
-        { vehicleIds: selectedJobs.map(job => job.id), roleType, userId },
-        { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
-      );
-      const { missingInScanned = [], missingInInsurance = [] } = mismatchResponse.data || {};
+    const payload = {
+      vehicles: selectedJobs.map(job => ({
+        vehicleId: job.id,
+        jobId: job.jobId || job.id,
+        customerId: job.customer?.id,
+        roleType,
+        userId,
+        generatedInvoiceStatus: false,
+        print: 'print',
+      })),
+    };
 
-      if (missingInScanned.length > 0 || missingInInsurance.length > 0) {
-        // Store args so "Proceed Anyway" can call _callInvoiceApi
-        setPendingInvoiceArgs({ isPrint, selectedJobs, token, roleType, userId });
-        setMismatchData({ missingInScanned, missingInInsurance });
-        setShowMismatchAlert(true);
-        return; // Do NOT call invoice API yet
-      }
-    } catch (err) {
-      // If mismatch check fails, proceed directly (silent fail)
-      console.warn('Mismatch check failed, proceeding:', err);
+    const response = await axios.post(`${apiUrl}/createInvoice`, payload, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    });
+
+    if (response.data) {
+      toast.success('Invoice generated successfully!');
+      const pdfLink = response.data.invoice.invoiceUrl;
+
+      // Download the PDF
+      const link = document.createElement('a');
+      link.href = pdfLink;
+      link.download = response.data.invoice.invoiceNumber
+        ? `${response.data.invoice.invoiceNumber}.pdf`
+        : 'invoice.pdf';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      fetchJobs(currentPage, searchTerm, pageSize);
+    } else {
+      toast.error('Failed to generate invoice');
     }
-
-    // ── Step 2: No mismatches → call invoice API directly ────────────────────
-    await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
-  };
+  } catch (error: unknown) {
+    console.error('Error generating invoice:', error);
+    let errMsg = '';
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data;
+      errMsg =
+        typeof data === 'string'
+          ? data
+          : String(
+              (data as { error?: string; message?: string })?.error ??
+              (data as { message?: string })?.message ??
+              ''
+            );
+    }
+    toast.error(errMsg || 'An error occurred while generating invoice');
+  } finally {
+    setIsGeneratingInvoice(false);
+  }
+};
 
   const handleFillAllPdr = async () => {
     if (selectedIds.length === 0) { toast.error("Please select at least one vehicle to fill PDR"); return; }
@@ -785,12 +862,12 @@ const JobTable: React.FC = () => {
       <Breadcrumb items={[{ label: 'Invoice', href: '/reporting/invoice' }]} />
 
       <div className="invoice_tab_content flex justify-end gap-3 mb-3 items-center">
-        <button onClick={() => handleGenerateInvoice(false)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'>
+        <button onClick={() => handleGenerateInvoice()} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'>
           {isGeneratingInvoice ? (
             <><svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...</>
-          ) : ('Generate Invoice')}
+          ) : ('Download Invoice')}
         </button>
-        <button onClick={() => handleGenerateInvoice(true)} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Print</button>
+        {/* <button onClick={() => handleGenerateInvoice()} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Print</button> */}
         <button onClick={handleFillAllPdr} disabled={selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Fill All PDR</button>
       </div>
 

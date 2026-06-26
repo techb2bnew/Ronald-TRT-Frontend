@@ -192,7 +192,7 @@ export default function ViewDetails() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
+        {/* <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
           <h3 className="font-bold p-3">Assign Dent Tech</h3>
           <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
@@ -274,7 +274,7 @@ export default function ViewDetails() {
             </table>
           </div>
         </div>
-        <Tooltip id="view-tech" place="top" />
+        <Tooltip id="view-tech" place="top" /> */}
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
           <h3 className="font-bold p-3">Vehicle List</h3>
@@ -299,7 +299,7 @@ export default function ViewDetails() {
                       <td className="px-6 py-4">
                         <span className="capitalize">
                           {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
-                            ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
+                            ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName} - ($${tech.VehicleTechnician?.techPercentageCalculatedAmount || tech.VehicleTechnician?.rPercentageCalculatedAmount})`).join(', ')
                             : '–'}
                         </span>
                       </td>

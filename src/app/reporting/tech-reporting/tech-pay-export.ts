@@ -218,7 +218,7 @@ export function resolveDatePaidText(
       return raw;
     }
   }
-  return formatDatePaid(wo.paidAt, wo.paidStatus);
+  return formatDatePaid(wo.paidAt, wo.generatedInvoiceStatus);
 }
 
 export function exportTechPayTotalsCsv(rows: TechPayExportRow[], summary: TechPayJobSummary) {
@@ -314,6 +314,7 @@ export function exportWorkOrdersCsv(
     "Stock Number": wo.stockNumber?.trim() ? wo.stockNumber : "—",
     Color: wo.color?.trim() ? wo.color : "—",
     "Tech Pay Amount": money(wo.techPayAmount),
+    "Invoice Status": wo.generatedInvoiceStatus ? "Paid" : "Unpaid",
     "Date Paid": resolveDatePaidText(wo, dateDrafts),
   }));
 
@@ -340,6 +341,7 @@ export function downloadWorkOrdersPdf(
       thCell("Stock"),
       thCell("Color"),
       thCell("Tech Pay", true),
+      thCell("Invoice Status"),
       thCell("Date Paid"),
     ],
     ...rows.map((wo, i) => {
@@ -354,6 +356,7 @@ export function downloadWorkOrdersPdf(
         tdCell(wo.stockNumber?.trim() ? wo.stockNumber : "—", alt),
         tdCell(wo.color?.trim() ? wo.color : "—", alt),
         tdCell(money(wo.techPayAmount), alt, true),
+        tdCell(wo.generatedInvoiceStatus ? "Paid" : "Unpaid", alt),
         tdCell(resolveDatePaidText(wo, dateDrafts), alt),
       ];
     }),
@@ -375,7 +378,7 @@ export function downloadWorkOrdersPdf(
         {
           table: {
             headerRows: 1,
-            widths: ["15%", "11%", "18%", "6%", "8%", "8%", "8%", "7%", "9%", "10%"],
+            widths: ["15%", "11%", "18%", "6%", "8%", "8%", "8%", "7%", "9%", "9%", "10%"],
             body,
           },
           layout: pdfTableLayout(),

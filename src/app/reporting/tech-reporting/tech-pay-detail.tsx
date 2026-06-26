@@ -70,9 +70,9 @@ export default function TechPayDetailView() {
   const dateRangeLabel =
     filterStartDate && filterEndDate
       ? `${format(new Date(filterStartDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-          new Date(filterEndDate + "T12:00:00"),
-          "MMM d, yyyy"
-        )}`
+        new Date(filterEndDate + "T12:00:00"),
+        "MMM d, yyyy"
+      )}`
       : "From – To";
 
   useEffect(() => {
@@ -202,7 +202,7 @@ export default function TechPayDetailView() {
       const drafts: Record<number, string> = {};
       rows.forEach((wo: WorkOrderRow) => {
         if (wo.vehicleId != null) {
-          drafts[wo.vehicleId] = toDateInputValue(wo.paidAt);
+          drafts[wo.vehicleId] = toDateInputValue(wo.generatedInvoiceDate);
         }
       });
       setDateDrafts(drafts);
@@ -439,11 +439,10 @@ export default function TechPayDetailView() {
             vehicle${emptyRows.length === 1 ? "" : "s"} without a payment date?
           </p>
           <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#6b7280;text-align:center">
-            ${
-              hasExistingDate
-                ? `${skippedCount} vehicle${skippedCount === 1 ? "" : "s"} with an existing date will not be changed. Using the most recent date already set in this job.`
-                : "No payment date was set yet — using today's date."
-            }
+            ${hasExistingDate
+            ? `${skippedCount} vehicle${skippedCount === 1 ? "" : "s"} with an existing date will not be changed. Using the most recent date already set in this job.`
+            : "No payment date was set yet — using today's date."
+          }
           </p>
         `,
         icon: "question",
@@ -498,9 +497,8 @@ export default function TechPayDetailView() {
 
   return (
     <div
-      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${
-        isCollapsed ? "w-full pl-20" : "container max-w-7xl"
-      }`}
+      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${isCollapsed ? "w-full pl-20" : "container max-w-7xl"
+        }`}
     >
       <Breadcrumb
         items={[
@@ -624,7 +622,7 @@ export default function TechPayDetailView() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 md:p-5">
-              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-medium text-gray-500 mb-1">
                     {detailMeta?.technicianType || "Dent Tech"}
                   </p>
@@ -642,7 +640,7 @@ export default function TechPayDetailView() {
                     {(detailMeta?.totalCars ?? 0) === 1 ? "car" : "cars"}
                   </p>
                 </div>
-               
+
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:col-span-1 lg:col-span-1">
                   <p className="text-xs font-medium text-gray-500 mb-1">Job</p>
                   <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
@@ -653,7 +651,7 @@ export default function TechPayDetailView() {
                   <p className="text-xs font-medium text-gray-500 mb-1">Job ID</p>
                   <p className="text-lg font-bold text-[#383d71] font-mono">{displayJobId}</p>
                 </div>
-                
+
               </div>
             </div>
 
@@ -661,7 +659,7 @@ export default function TechPayDetailView() {
               <div className="px-4 py-3 border-b border-gray-100 bg-white flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-gray-900">
-                    Tech Cars Detail per JobID 
+                    Tech Cars Detail per JobID
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Vehicles worked by {detailMeta?.technicianName || "technician"}
@@ -715,6 +713,7 @@ export default function TechPayDetailView() {
                             "Stock Number",
                             "Color",
                             "Tech Pay Amount",
+                            "Invoice Status",
                             "Date Paid",
                           ].map((col) => (
                             <th
@@ -737,65 +736,73 @@ export default function TechPayDetailView() {
                           workOrders.map((wo, i) => {
                             const hasPaidDate = vehicleHasPaidDate(wo, dateDrafts);
                             return (
-                            <tr
-                              key={wo.vehicleId ?? i}
-                              className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
-                            >
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.technicianName || detailMeta?.technicianName || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.customerName || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100 font-mono text-xs">
-                                {wo.vin || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.modelYear ?? "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.make || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.model || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.stockNumber?.trim() ? wo.stockNumber : "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.color?.trim() ? wo.color : "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
-                                {money(wo.techPayAmount)}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                <div className="flex flex-wrap items-center gap-2 min-w-[220px]">
-                                  <input
-                                    type="date"
-                                    value={dateDrafts[wo.vehicleId] ?? toDateInputValue(wo.paidAt)}
-                                    onChange={(e) => void handleDateChange(wo, e.target.value)}
-                                    disabled={
-                                      isSubmittingPaid || submittingVehicleId === wo.vehicleId
-                                    }
-                                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleClearDate(wo)}
-                                    disabled={
-                                      !hasPaidDate ||
-                                      isSubmittingPaid ||
-                                      submittingVehicleId === wo.vehicleId
-                                    }
-                                    className="primary-bg px-3 py-1.5 rounded text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+                              <tr
+                                key={wo.vehicleId ?? i}
+                                className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
+                              >
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.technicianName || detailMeta?.technicianName || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.customerName || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-mono text-xs">
+                                  {wo.vin || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.modelYear ?? "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.make || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.model || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.stockNumber?.trim() ? wo.stockNumber : "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.color?.trim() ? wo.color : "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
+                                  {money(wo.techPayAmount)}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-white text-sm ${wo.generatedInvoiceStatus ? "bg-green-500" : "bg-red-500"
+                                      }`}
                                   >
-                                    {submittingVehicleId === wo.vehicleId
-                                      ? "..."
-                                      : "Clear Date"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
+                                    {wo.generatedInvoiceStatus ? "Paid" : "Unpaid"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  <div className="flex flex-wrap items-center gap-2 min-w-[220px]">
+                                    <input
+                                      type="date"
+                                      value={dateDrafts[wo.vehicleId] ?? toDateInputValue(wo.generatedInvoiceDate)}
+                                      onChange={(e) => void handleDateChange(wo, e.target.value)}
+                                      disabled={
+                                        isSubmittingPaid || submittingVehicleId === wo.vehicleId
+                                      }
+                                      className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleClearDate(wo)}
+                                      disabled={
+                                        !hasPaidDate ||
+                                        isSubmittingPaid ||
+                                        submittingVehicleId === wo.vehicleId
+                                      }
+                                      className="primary-bg px-3 py-1.5 rounded text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                      {submittingVehicleId === wo.vehicleId
+                                        ? "..."
+                                        : "Clear Date"}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
                             );
                           })
                         )}
