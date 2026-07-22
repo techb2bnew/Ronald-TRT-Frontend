@@ -462,7 +462,7 @@ const JobTable: React.FC = () => {
       const payload = {
         vehicles: selectedJobs.map(job => ({
           vehicleId: job.id,
-          jobId: job.jobId || job.id,
+          jobId: job.jobId ?? job.job?.id ?? job.id,
           customerId: job.customer?.id,
           roleType,
           userId,
@@ -475,14 +475,21 @@ const JobTable: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        toast.success(' Invoice generated successfully and sent to customer via email.');
+        toast.success('Invoice generated successfully!');
         const pdfLink = response.data.invoice.invoiceUrl;
         if (isPrint) {
           window.open(pdfLink, '_blank');
         } else {
-          const subject = 'Your Invoice is Ready';
-          const body = `Dear Customer,\n\nPlease find your invoice below:\n\n${pdfLink}\n\nBest regards.`;
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          // Download Invoice: same save path as Generate, but open PDF instead of mailto
+          const link = document.createElement('a');
+          link.href = pdfLink;
+          link.download = response.data.invoice.invoiceNumber
+            ? `${response.data.invoice.invoiceNumber}.pdf`
+            : 'invoice.pdf';
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
         fetchJobs(currentPage, searchTerm, pageSize);
       } else {
@@ -698,62 +705,8 @@ const handleGenerateInvoice = async () => {
     }
   }
 
-  try {
-    setIsGeneratingInvoice(true);
-
-    const payload = {
-      vehicles: selectedJobs.map(job => ({
-        vehicleId: job.id,
-        jobId: job.jobId || job.id,
-        customerId: job.customer?.id,
-        roleType,
-        userId,
-        generatedInvoiceStatus: false,
-        print: 'print',
-      })),
-    };
-
-    const response = await axios.post(`${apiUrl}/createInvoice`, payload, {
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    });
-
-    if (response.data) {
-      toast.success('Invoice generated successfully!');
-      const pdfLink = response.data.invoice.invoiceUrl;
-
-      // Download the PDF
-      const link = document.createElement('a');
-      link.href = pdfLink;
-      link.download = response.data.invoice.invoiceNumber
-        ? `${response.data.invoice.invoiceNumber}.pdf`
-        : 'invoice.pdf';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      fetchJobs(currentPage, searchTerm, pageSize);
-    } else {
-      toast.error('Failed to generate invoice');
-    }
-  } catch (error: unknown) {
-    console.error('Error generating invoice:', error);
-    let errMsg = '';
-    if (axios.isAxiosError(error)) {
-      const data = error.response?.data;
-      errMsg =
-        typeof data === 'string'
-          ? data
-          : String(
-              (data as { error?: string; message?: string })?.error ??
-              (data as { message?: string })?.message ??
-              ''
-            );
-    }
-    toast.error(errMsg || 'An error occurred while generating invoice');
-  } finally {
-    setIsGeneratingInvoice(false);
-  }
+  // Same API path as main "Generate Invoice" (saves to Sent Invoice) — PDF download instead of mailto
+  await _callInvoiceApi(false, selectedJobs, token, roleType, userId);
 };
 
   const handleFillAllPdr = async () => {
@@ -833,7 +786,7 @@ const handleGenerateInvoice = async () => {
         <td>
           <TextField label="" variant="outlined" fullWidth color="warning" size="small" type='date' value={invoiceDates[job.id] || ''} onChange={(e) => handleDateAutoSave(job.id, e.target.value)} InputLabelProps={{ shrink: true }} />
         </td>
-        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Sent' : 'Pending'}</span>)}</td>
+        <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Generated' : 'Pending'}</span>)}</td>
         <td>{canCreate && (<span className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.vehicleStatus ? 'Completed' : 'In Progress'}</span>)}</td>
         {roleType !== 'single-technician' && (
           <td>
@@ -910,7 +863,7 @@ const handleGenerateInvoice = async () => {
                 <th className="w-[200px]">Generated Invoice Date</th>
                 <th className="w-[120px]">Invoice Status</th>
                 <th className="w-[130px]">W.O Status</th>
-                {roleType !== 'single-technician' && (<th className="w-[160px]">PDR</th>)}
+                {roleType !== 'single-technician' && (<th className="w-[160px]">Invoice Amount</th>)}
                 <th className="w-[80px]">Action</th>
               </tr>
             </thead>

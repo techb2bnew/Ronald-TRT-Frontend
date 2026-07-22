@@ -534,6 +534,7 @@ const JobTable: React.FC = () => {
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
+          showDatePicker={true} onDateChange={handleDateChange}
           onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
         <div className="overflow-auto rounded-md">
