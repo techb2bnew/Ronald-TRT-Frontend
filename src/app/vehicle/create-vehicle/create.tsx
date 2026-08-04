@@ -496,20 +496,20 @@ export default function Technicians() {
         if (Array.isArray(form.technicianDetails)) {
           const formTechPcts = techPercentages[formIndex] || {};
           const formRPcts = rPercentages[formIndex] || {};
+          const formTechAmts = techAmounts[formIndex] || {};
+          const formRAmts = rAmounts[formIndex] || {};
 
           form.technicianDetails.forEach((techDetail, techIndex) => {
             const tid = String(techDetail.id);
             formDataObj.append(`technicians[${techIndex}][id]`, tid);
             formDataObj.append(`technicians[${techIndex}][techType]`, techDetail.techType || '');
 
-            const isTechType = techDetail.techType === 'technician';
+            const isTechType = isDentTechnicianType(techDetail.techType);
             const pctValueRaw = isTechType ? formTechPcts[tid] : formRPcts[tid];
-            const pctValue =
-              pctValueRaw !== undefined && pctValueRaw !== null
-                ? Number(pctValueRaw).toFixed(2)
-                : '';
+            const pctNumber = Number(pctValueRaw);
+            const pctValue = Number.isFinite(pctNumber) ? pctNumber.toFixed(2) : '';
 
-            // Always send both percentage keys so the backend payload shape stays consistent.
+            // Updated % from UI state
             formDataObj.append(
               `technicians[${techIndex}][techPercentage]`,
               isTechType ? pctValue : ''
@@ -519,25 +519,45 @@ export default function Technicians() {
               !isTechType ? pctValue : ''
             );
 
-            const formTechAmts = techAmounts[formIndex] || {};
-            const formRAmts = rAmounts[formIndex] || {};
-            const techAmountValue =
-              formTechAmts[tid] !== undefined && formTechAmts[tid] !== null
-                ? Number(formTechAmts[tid]).toFixed(2)
-                : '';
-            const rAmountValue =
-              formRAmts[tid] !== undefined && formRAmts[tid] !== null
-                ? Number(formRAmts[tid]).toFixed(2)
-                : '';
+            // Updated amount: prefer UI amount state, else compute from % × rate
+            const amountFromState = isTechType ? formTechAmts[tid] : formRAmts[tid];
+            const ratePool = getTechnicianRatePool(techDetail, isTechType);
+            const computedAmount =
+              Number.isFinite(pctNumber) && ratePool
+                ? amountFromPercentage(pctNumber, ratePool)
+                : 0;
+            const amountNumber =
+              amountFromState !== undefined &&
+              amountFromState !== null &&
+              Number.isFinite(Number(amountFromState))
+                ? Number(amountFromState)
+                : computedAmount;
+            const amountValue = Number.isFinite(amountNumber)
+              ? amountNumber.toFixed(2)
+              : '';
 
             formDataObj.append(
               `technicians[${techIndex}][techPercentageCalculatedAmount]`,
-              isTechType ? techAmountValue : ''
+              isTechType ? amountValue : ''
             );
             formDataObj.append(
               `technicians[${techIndex}][rPercentageCalculatedAmount]`,
-              !isTechType ? rAmountValue : ''
+              !isTechType ? amountValue : ''
             );
+
+            // Keep rate fields in payload when present (existing backend shape)
+            if (isTechType && techDetail.techFlatRate != null && String(techDetail.techFlatRate).trim() !== '') {
+              formDataObj.append(
+                `technicians[${techIndex}][techFlatRate]`,
+                String(techDetail.techFlatRate)
+              );
+            }
+            if (!isTechType && techDetail.rRate != null && String(techDetail.rRate).trim() !== '') {
+              formDataObj.append(
+                `technicians[${techIndex}][rRate]`,
+                String(techDetail.rRate)
+              );
+            }
           });
         }
       });
@@ -1543,10 +1563,9 @@ export default function Technicians() {
   };
 
   /**
-   * Auto-distribute 100% across `ids` while preserving manually-locked rows.
-   * Same logic as create-job: locked rows keep their values, the remainder
-   * is split evenly across unlocked rows, and any rounding diff is absorbed
-   * by the first unlocked row so the total stays exactly 100.
+   * Auto-distribute across cohort while preserving manually-locked rows.
+   * Manual edits may exceed 100% (e.g. 150). Single-tech rows keep their
+   * entered value — only default to 100 when no value is set yet.
    */
   const computeDistributionWithLocks = (
     ids: string[],
@@ -1554,7 +1573,14 @@ export default function Technicians() {
     locks: Record<string, boolean>
   ): Record<string, number> => {
     if (ids.length === 0) return {};
-    if (ids.length === 1) return { [ids[0]]: 100 };
+    if (ids.length === 1) {
+      const id = ids[0];
+      const existing = percentages[id];
+      if (existing !== undefined && Number.isFinite(Number(existing))) {
+        return { [id]: Number(Number(existing).toFixed(2)) };
+      }
+      return { [id]: 100 };
+    }
 
     const lockedIds = ids.filter((id) => Boolean(locks[id]));
     const unlockedIds = ids.filter((id) => !Boolean(locks[id]));
@@ -1574,9 +1600,13 @@ export default function Technicians() {
       });
 
       const currentSum = ids.reduce((acc, id) => acc + (next[id] || 0), 0);
-      const diff = Number((100 - currentSum).toFixed(2));
-      if (Math.abs(diff) > 0) {
-        next[unlockedIds[0]] = Number(((next[unlockedIds[0]] || 0) + diff).toFixed(2));
+      // Only absorb rounding into unlocked rows when total was aiming near 100
+      // and locked sum is under 100 — do not force totals down when locked > 100.
+      if (lockedSum <= 100) {
+        const diff = Number((100 - currentSum).toFixed(2));
+        if (Math.abs(diff) > 0) {
+          next[unlockedIds[0]] = Number(((next[unlockedIds[0]] || 0) + diff).toFixed(2));
+        }
       }
     }
 
@@ -1603,19 +1633,14 @@ export default function Technicians() {
     const cohort = getTechCohort(formIndex);
     const editedId = String(techId);
     const parsed = Number(rawValue);
-    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+    // Allow values above 100 (e.g. 150); only block negatives / NaN
+    const safeParsed = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
 
     const formLocks = techManualLocks[formIndex] || {};
     const formPcts = techPercentages[formIndex] || {};
 
     const nextLocks = { ...formLocks, [editedId]: true };
-    const otherLockedSum = cohort
-      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
-      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
-    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
-    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
-
-    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const baseNext = { ...formPcts, [editedId]: Number(safeParsed.toFixed(2)) };
     const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
 
     setTechManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
@@ -1626,19 +1651,13 @@ export default function Technicians() {
     const cohort = getRCohort(formIndex);
     const editedId = String(techId);
     const parsed = Number(rawValue);
-    const safeParsed = Number.isFinite(parsed) ? parsed : 0;
+    const safeParsed = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
 
     const formLocks = rManualLocks[formIndex] || {};
     const formPcts = rPercentages[formIndex] || {};
 
     const nextLocks = { ...formLocks, [editedId]: true };
-    const otherLockedSum = cohort
-      .filter((id) => id !== editedId && Boolean(nextLocks[id]))
-      .reduce((acc, id) => acc + Number(formPcts[id] || 0), 0);
-    const maxForEdited = Math.max(0, Number((100 - otherLockedSum).toFixed(2)));
-    const clampedEdited = Math.min(maxForEdited, Math.max(0, safeParsed));
-
-    const baseNext = { ...formPcts, [editedId]: Number(clampedEdited.toFixed(2)) };
+    const baseNext = { ...formPcts, [editedId]: Number(safeParsed.toFixed(2)) };
     const distributed = computeDistributionWithLocks(cohort, baseNext, nextLocks);
 
     setRManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
@@ -1652,8 +1671,13 @@ export default function Technicians() {
     const ratePool = getTechnicianRatePool(techDetail, true);
     if (!ratePool) return;
 
+    if (rawValue.trim() === '') {
+      handleTechPercentageChange(techId, '0', formIndex);
+      return;
+    }
+
     const parsed = Number(rawValue);
-    if (!Number.isFinite(parsed)) return;
+    if (!Number.isFinite(parsed) || parsed < 0) return;
 
     const nextPct = percentageFromAmount(parsed, ratePool);
     handleTechPercentageChange(techId, String(nextPct), formIndex);
@@ -1666,8 +1690,13 @@ export default function Technicians() {
     const ratePool = getTechnicianRatePool(techDetail, false);
     if (!ratePool) return;
 
+    if (rawValue.trim() === '') {
+      handleRPercentageChange(techId, '0', formIndex);
+      return;
+    }
+
     const parsed = Number(rawValue);
-    if (!Number.isFinite(parsed)) return;
+    if (!Number.isFinite(parsed) || parsed < 0) return;
 
     const nextPct = percentageFromAmount(parsed, ratePool);
     handleRPercentageChange(techId, String(nextPct), formIndex);

@@ -25,7 +25,7 @@ const TechnicianPercentageAmountFields: React.FC<TechnicianPercentageAmountField
         color="warning"
         value={Number.isFinite(percentage) ? percentage : ""}
         onChange={(e) => onPercentageChange(e.target.value)}
-        inputProps={{ min: 0, max: 100, step: 0.01 }}
+        inputProps={{ min: 0, step: 0.01 }}
         sx={{ width: 120 }}
       />
       <TextField
