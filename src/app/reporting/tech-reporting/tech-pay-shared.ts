@@ -17,10 +17,22 @@ export type WorkOrderRow = {
   stockNumber?: string;
   color?: string;
   techPayAmount?: number;
+  /** Tech pay Paid/Unpaid — use this, not invoiceStatus / generatedInvoiceStatus. */
+  paidStatus?: boolean | string | null;
   generatedInvoiceStatus?: boolean;
+  invoiceStatus?: string | null;
   paidAt?: string | null;
   generatedInvoiceDate?: string | null;
 };
+
+/** Paid badge + filters must follow API `paidStatus`, not invoice generation flags. */
+export function isWorkOrderPaid(wo: Pick<WorkOrderRow, "paidStatus"> | null | undefined): boolean {
+  const raw = wo?.paidStatus;
+  if (typeof raw === "boolean") return raw;
+  if (raw == null) return false;
+  const s = String(raw).trim().toLowerCase();
+  return s === "true" || s === "paid" || s === "1";
+}
 
 export type DetailJobDetails = {
   id?: number;

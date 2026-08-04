@@ -30,6 +30,7 @@ import {
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
 import SortIcon from '@/app/component/sortIcon';
+import { getVehicleTypePriceFromJobOrVehicle } from '@/app/component/vehicleTypePriceUtils';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -82,6 +83,7 @@ const JobTable: React.FC = () => {
   const [invoiceDates, setInvoiceDates] = useState<Record<string, string>>({});
   const [pdrErrors, setPdrErrors] = useState<{ [vehicleId: string]: string }>({});
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
   // ─── Mismatch modal state ─────────────────────────────────────────────────
   const [showMismatchAlert, setShowMismatchAlert] = useState(false);
@@ -92,6 +94,7 @@ const JobTable: React.FC = () => {
   // Store pending invoice call args so "Proceed Anyway" can trigger it
   const [pendingInvoiceArgs, setPendingInvoiceArgs] = useState<{
     isPrint: boolean;
+    mode?: 'generate' | 'download';
     selectedJobs: any[];
     token: string | null;
     roleType: string;
@@ -107,6 +110,88 @@ const JobTable: React.FC = () => {
       ...job,
       serialNo: start + index,
     }));
+
+  /** Always refill Invoice Amount from vehicle_type_price and autosave when different from saved pdr. */
+  const refillInvoiceAmountsFromVehicleTypePrice = async (vehicles: any[]) => {
+    if (!Array.isArray(vehicles) || vehicles.length === 0) return;
+
+    const token = localStorage.getItem('token');
+    const roleType = localStorage.getItem('types') || '';
+    const userId = localStorage.getItem('userID');
+    const today = new Date().toISOString().split('T')[0];
+
+    const nextPdrValues: Record<string, string> = {};
+    const autosavePayload: Array<{
+      vehicleId: string;
+      pdr: number;
+      generatedInvoiceDate: string;
+      roleType: string;
+      userId: string | null;
+    }> = [];
+
+    vehicles.forEach((job) => {
+      const price = getVehicleTypePriceFromJobOrVehicle(job);
+      if (price === '') {
+        if (job.pdr != null && String(job.pdr).trim() !== '') {
+          nextPdrValues[job.id] = String(job.pdr);
+        }
+        return;
+      }
+
+      nextPdrValues[job.id] = price;
+      const currentPdr =
+        job.pdr != null && String(job.pdr).trim() !== '' && String(job.pdr).toLowerCase() !== 'null'
+          ? String(job.pdr).trim()
+          : '';
+
+      if (currentPdr !== price) {
+        let dateToUse = today;
+        if (job.generatedInvoiceDate) {
+          try {
+            dateToUse = new Date(job.generatedInvoiceDate).toISOString().split('T')[0];
+          } catch {
+            dateToUse = today;
+          }
+        }
+        autosavePayload.push({
+          vehicleId: job.id,
+          pdr: Number(price),
+          generatedInvoiceDate: dateToUse,
+          roleType,
+          userId,
+        });
+      }
+    });
+
+    setPdrValues((prev) => ({ ...prev, ...nextPdrValues }));
+
+    if (autosavePayload.length === 0) return;
+
+    try {
+      const response = await fetch(`${apiUrl}/updateVehiclePdr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(autosavePayload),
+      });
+      if (!response.ok) {
+        console.warn('Failed to autosave invoice amounts from vehicle_type_price');
+        return;
+      }
+      // Keep in-memory rows in sync so Generate Invoice validation sees updated amounts
+      setActiveJob((prev) =>
+        prev.map((job) =>
+          nextPdrValues[job.id] != null ? { ...job, pdr: nextPdrValues[job.id] } : job
+        )
+      );
+      setOriginalJobs((prev) =>
+        prev.map((job) =>
+          nextPdrValues[job.id] != null ? { ...job, pdr: nextPdrValues[job.id] } : job
+        )
+      );
+    } catch (err) {
+      console.warn('Autosave invoice amount error:', err);
+    }
+  };
 
   const handlePdrChange = (jobId: string, value: string) => {
     if (value === '') {
@@ -173,7 +258,10 @@ const JobTable: React.FC = () => {
         const initialPdrValues: Record<string, string> = {};
         const initialInvoiceDates: Record<string, string> = {};
         fetchedTechnicians.forEach(job => {
-          if (job.pdr) initialPdrValues[job.id] = job.pdr.toString();
+          // Prefer vehicle_type_price for Invoice Amount (always refill)
+          const typePrice = getVehicleTypePriceFromJobOrVehicle(job);
+          if (typePrice !== '') initialPdrValues[job.id] = typePrice;
+          else if (job.pdr) initialPdrValues[job.id] = job.pdr.toString();
           if (job.generatedInvoiceDate) {
             const date = new Date(job.generatedInvoiceDate);
             initialInvoiceDates[job.id] = date.toISOString().split('T')[0];
@@ -186,6 +274,7 @@ const JobTable: React.FC = () => {
         const jobsWithSerial = withSerialNo(updatedJobs, (page - 1) * limit + 1);
         setOriginalJobs(jobsWithSerial);
         setActiveJob(jobsWithSerial);
+        void refillInvoiceAmountsFromVehicleTypePrice(jobsWithSerial);
         setDentTechTotalAmount(data.response?.totalDantTechCost ?? data.data.totalDantTechCost ?? '0');
         setRRTotalAmount(data.response?.totalRrCost ?? data.data.totalRrCost ?? '0');
         setTotalEstimateAmount(data.response?.totalEstimateCost ?? data.data.totalEstimateCost ?? '0');
@@ -374,6 +463,7 @@ const JobTable: React.FC = () => {
         setTotalEstimateAmount(data.vehicles?.totalEstimateCost);
         setTotalJobAmount(data.vehicles?.totalJobEstimateCost || '0');
         setActiveJob(withSerialNo(filteredJobs));
+        void refillInvoiceAmountsFromVehicleTypePrice(filteredJobs);
       }
     } catch (error) { console.error("Error during API request:", error); }
   };
@@ -399,6 +489,7 @@ const JobTable: React.FC = () => {
       const { jobs, vehicles } = await fetchCustomerData(customerId);
       const vehiclesWithSerial = withSerialNo(vehicles);
       setCustomerJobs(vehiclesWithSerial); setActiveJob(vehiclesWithSerial);
+      void refillInvoiceAmountsFromVehicleTypePrice(vehiclesWithSerial);
     } catch (error) { toast.error("Failed to load customer data"); } finally { setLoading(false); }
   };
 
@@ -450,48 +541,85 @@ const JobTable: React.FC = () => {
   };
 
   // ─── Internal invoice API caller (shared by direct path & "Proceed Anyway") ──
+  // mode: 'generate' → status + date only (no PDF)
+  // mode: 'download' → createInvoice with print (PDF only, no status/date change)
   const _callInvoiceApi = async (
     isPrint: boolean,
     selectedJobs: any[],
     token: string | null,
     roleType: string,
-    userId: string | null
+    userId: string | null,
+    mode: 'generate' | 'download' = isPrint ? 'download' : 'generate'
   ) => {
     try {
-      if (!isPrint) setIsGeneratingInvoice(true);
+      if (mode === 'generate') setIsGeneratingInvoice(true);
+      else setIsDownloadingInvoice(true);
+
+      const today = new Date().toISOString().split('T')[0];
       const payload = {
-        vehicles: selectedJobs.map(job => ({
-          vehicleId: job.id,
-          jobId: job.jobId ?? job.job?.id ?? job.id,
-          customerId: job.customer?.id,
-          roleType,
-          userId,
-          generatedInvoiceStatus: true,
-          ...(isPrint && { print: 'print' }),
-          ...(isPrint && { generatedInvoiceStatus: false }),
-        })),
+        vehicles: selectedJobs.map(job => {
+          const dateToUse = invoiceDates[job.id] || today;
+          if (mode === 'download') {
+            return {
+              vehicleId: job.id,
+              jobId: job.jobId ?? job.job?.id ?? job.id,
+              customerId: job.customer?.id,
+              roleType,
+              userId,
+              print: 'print',
+              generatedInvoiceStatus: false,
+            };
+          }
+          return {
+            vehicleId: job.id,
+            jobId: job.jobId ?? job.job?.id ?? job.id,
+            customerId: job.customer?.id,
+            roleType,
+            userId,
+            generatedInvoiceStatus: true,
+            generatedInvoiceDate: dateToUse,
+          };
+        }),
       };
       const response = await axios.post(`${apiUrl}/createInvoice`, payload, {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        toast.success('Invoice generated successfully!');
-        const pdfLink = response.data.invoice.invoiceUrl;
-        if (isPrint) {
-          window.open(pdfLink, '_blank');
+        if (mode === 'download') {
+          toast.success('Invoice ready to download');
+          const pdfLink = response.data.invoice?.invoiceUrl;
+          if (pdfLink) {
+            window.open(pdfLink, '_blank');
+          } else {
+            toast.error('Invoice PDF URL not found');
+          }
         } else {
-          // Download Invoice: same save path as Generate, but open PDF instead of mailto
-          const link = document.createElement('a');
-          link.href = pdfLink;
-          link.download = response.data.invoice.invoiceNumber
-            ? `${response.data.invoice.invoiceNumber}.pdf`
-            : 'invoice.pdf';
-          link.target = '_blank';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          // Generate: fill dates (existing date or today) via same PDR/date API, then refresh
+          const nextDates: Record<string, string> = { ...invoiceDates };
+          const datePayload = selectedJobs.map((job) => {
+            const dateToUse = invoiceDates[job.id] || today;
+            nextDates[job.id] = dateToUse;
+            return {
+              vehicleId: job.id,
+              pdr: pdrValues[job.id] ? Number(pdrValues[job.id]) : (job.pdr ? Number(job.pdr) : null),
+              generatedInvoiceDate: dateToUse,
+              roleType,
+              userId,
+            };
+          });
+          setInvoiceDates(nextDates);
+          try {
+            await fetch(`${apiUrl}/updateVehiclePdr`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(datePayload),
+            });
+          } catch (dateErr) {
+            console.warn('Invoice generated but date fill failed:', dateErr);
+          }
+          toast.success('Invoice generated successfully!');
+          fetchJobs(currentPage, searchTerm, pageSize);
         }
-        fetchJobs(currentPage, searchTerm, pageSize);
       } else {
         toast.error(response.data.message || 'Failed to generate invoice');
       }
@@ -577,6 +705,7 @@ const JobTable: React.FC = () => {
       );
     } finally {
       setIsGeneratingInvoice(false);
+      setIsDownloadingInvoice(false);
     }
   };
  
@@ -700,30 +829,53 @@ const handleGenerateInvoice = async () => {
   if (roleType !== 'single-technician') {
     const vehiclesWithoutPdr = selectedJobs.filter(job => !job.pdr || isNaN(Number(job.pdr)));
     if (vehiclesWithoutPdr.length > 0) {
-      toast.error('Please enter PDR values for all selected vehicles before generating invoice');
+      toast.error('Please enter Invoice Amount for all selected vehicles before generating invoice');
       return;
     }
   }
 
-  // Same API path as main "Generate Invoice" (saves to Sent Invoice) — PDF download instead of mailto
-  await _callInvoiceApi(false, selectedJobs, token, roleType, userId);
+  // Generate: status + date only (no PDF)
+  await _callInvoiceApi(false, selectedJobs, token, roleType, userId, 'generate');
+};
+
+const handleDownloadInvoice = async () => {
+  const token = localStorage.getItem('token');
+  const roleType = localStorage.getItem('types') || '';
+  const userId = localStorage.getItem('userID');
+  const selectedJobs = activeJob.filter(job => selectedIds.includes(job.id));
+
+  if (selectedJobs.length === 0) {
+    toast.error('Please select at least one vehicle to download invoice');
+    return;
+  }
+
+  if (roleType !== 'single-technician') {
+    const vehiclesWithoutPdr = selectedJobs.filter(job => !job.pdr || isNaN(Number(job.pdr)));
+    if (vehiclesWithoutPdr.length > 0) {
+      toast.error('Please enter Invoice Amount for all selected vehicles before downloading invoice');
+      return;
+    }
+  }
+
+  // Download: createInvoice with print — PDF only, no status/date change
+  await _callInvoiceApi(true, selectedJobs, token, roleType, userId, 'download');
 };
 
   const handleFillAllPdr = async () => {
-    if (selectedIds.length === 0) { toast.error("Please select at least one vehicle to fill PDR"); return; }
+    if (selectedIds.length === 0) { toast.error("Please select at least one vehicle to fill Invoice Amount"); return; }
     let pdrValueToFill = '';
     for (const id of selectedIds) { if (pdrValues[id] && pdrValues[id].trim() !== '') { pdrValueToFill = pdrValues[id]; break; } }
-    if (!pdrValueToFill) { toast.error("Please enter a PDR value for at least one selected vehicle"); return; }
-    if (isNaN(Number(pdrValueToFill))) { toast.error("PDR value must be a number"); return; }
+    if (!pdrValueToFill) { toast.error("Please enter an Invoice Amount for at least one selected vehicle"); return; }
+    if (isNaN(Number(pdrValueToFill))) { toast.error("Invoice Amount must be a number"); return; }
     try {
       const token = localStorage.getItem('token'); const roleType = localStorage.getItem('types') || ""; const userId = localStorage.getItem('userID');
       const payload = selectedIds.map(vehicleId => ({ vehicleId, pdr: Number(pdrValueToFill), generatedInvoiceDate: invoiceDates[vehicleId] || new Date().toISOString().split('T')[0], roleType, userId }));
       const response = await fetch(`${apiUrl}/updateVehiclePdr`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
       if (!response.ok) throw new Error('Failed to update PDR for selected vehicles');
-      toast.success("PDR updated successfully for all selected vehicles!");
+      toast.success("Invoice Amount updated successfully for all selected vehicles!");
       const updatedPdrValues = { ...pdrValues }; selectedIds.forEach(id => { updatedPdrValues[id] = pdrValueToFill; }); setPdrValues(updatedPdrValues);
       fetchJobs(currentPage, searchTerm, pageSize);
-    } catch (error) { toast.error("Failed to update PDR for selected vehicles"); }
+    } catch (error) { toast.error("Failed to update Invoice Amount for selected vehicles"); }
   };
 
   const renderRow = (job: any) => {
@@ -792,7 +944,7 @@ const handleGenerateInvoice = async () => {
           <td>
             <div className="flex gap-2 items-center">
               <FormControl fullWidth size="small">
-                <TextField label="PDR" variant="outlined" fullWidth color="warning" size="small" type='number' inputProps={{ min: 0 }} value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
+                <TextField label="Invoice Amount" variant="outlined" fullWidth color="warning" size="small" type='number' inputProps={{ min: 0 }} value={pdrValues[job.id] || ''} onChange={(e) => handlePdrChange(job.id, e.target.value)} />
               </FormControl>
               <button type='button' className="primary-bg p-2 rounded" onClick={() => handleSavePdr(job.id, pdrValues[job.id])}>Save</button>
             </div>
@@ -815,13 +967,26 @@ const handleGenerateInvoice = async () => {
       <Breadcrumb items={[{ label: 'Invoice', href: '/reporting/invoice' }]} />
 
       <div className="invoice_tab_content flex justify-end gap-3 mb-3 items-center">
-        <button onClick={() => handleGenerateInvoice()} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'>
+        <button
+          onClick={() => handleGenerateInvoice()}
+          disabled={isGeneratingInvoice || isDownloadingInvoice || selectedIds.length === 0}
+          className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'
+        >
           {isGeneratingInvoice ? (
             <><svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...</>
+          ) : ('Generate Invoice')}
+        </button>
+        <button
+          onClick={() => handleDownloadInvoice()}
+          disabled={isGeneratingInvoice || isDownloadingInvoice || selectedIds.length === 0}
+          className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 justify-center disabled:opacity-50 disabled:cursor-not-allowed'
+        >
+          {isDownloadingInvoice ? (
+            <><svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Downloading...</>
           ) : ('Download Invoice')}
         </button>
         {/* <button onClick={() => handleGenerateInvoice()} disabled={isGeneratingInvoice || selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Print</button> */}
-        <button onClick={handleFillAllPdr} disabled={selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Fill All PDR</button>
+        <button onClick={handleFillAllPdr} disabled={selectedIds.length === 0} className='primary-bg text-sm border border-black-500 p-2 pl-5 pr-5 bg-black text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'>Fill All Invoice Amount</button>
       </div>
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
@@ -904,9 +1069,16 @@ const handleGenerateInvoice = async () => {
             setShowMismatchAlert(false);
             setMismatchUseInsuranceCompare(false);
             if (pendingInvoiceArgs) {
-              const { isPrint, selectedJobs, token, roleType, userId } = pendingInvoiceArgs;
+              const { isPrint, selectedJobs, token, roleType, userId, mode } = pendingInvoiceArgs;
               setPendingInvoiceArgs(null);
-              await _callInvoiceApi(isPrint, selectedJobs, token, roleType, userId);
+              await _callInvoiceApi(
+                isPrint,
+                selectedJobs,
+                token,
+                roleType,
+                userId,
+                mode || (isPrint ? 'download' : 'generate')
+              );
             }
           }}
         />

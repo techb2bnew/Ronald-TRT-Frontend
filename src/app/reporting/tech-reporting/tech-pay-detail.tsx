@@ -24,6 +24,7 @@ import {
   markVehicleTechnicianPaid,
   resolveFillAllPaidAt,
   vehicleHasPaidDate,
+  isWorkOrderPaid,
   workOrdersApiPath,
 } from "./tech-pay-shared";
 import { downloadWorkOrdersPdf, exportWorkOrdersCsv } from "./tech-pay-export";
@@ -769,10 +770,10 @@ export default function TechPayDetailView() {
                                 </td>
                                 <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
                                   <span
-                                    className={`px-2 py-1 rounded-full text-white text-sm ${wo.generatedInvoiceStatus ? "bg-green-500" : "bg-red-500"
+                                    className={`px-2 py-1 rounded-full text-white text-sm ${isWorkOrderPaid(wo) ? "bg-green-500" : "bg-red-500"
                                       }`}
                                   >
-                                    {wo.generatedInvoiceStatus ? "Paid" : "Unpaid"}
+                                    {isWorkOrderPaid(wo) ? "Paid" : "Unpaid"}
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 border-b border-gray-100">

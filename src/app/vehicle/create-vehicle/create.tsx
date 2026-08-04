@@ -17,6 +17,16 @@ import { Tooltip } from 'react-tooltip';
 
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import Breadcrumb from '@/app/component/breadcrumb';
+import TechnicianPercentageAmountFields from '@/app/component/TechnicianPercentageAmountFields';
+import {
+  amountFromPercentage,
+  buildAmountMapFromPercentages,
+  getTechnicianRatePool,
+  isDentTechnicianType,
+  percentageFromAmount,
+  seedAmountMapFromDetails,
+} from '@/app/component/vehicleTechnicianPayUtils';
+import { resolveVehicleTypePrice } from '@/app/component/vehicleTypePriceUtils';
 import Scanner from '../../jobs/create-job/[create]/scanner'
 import VehicleTable from '../../jobs/create-job/[create]/vehicleTable';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -254,6 +264,8 @@ export default function Technicians() {
   // Per-form percentage state (cohorts split by techType within each jobForm)
   const [techPercentages, setTechPercentages] = useState<Record<number, Record<string, number>>>({});
   const [rPercentages, setRPercentages] = useState<Record<number, Record<string, number>>>({});
+  const [techAmounts, setTechAmounts] = useState<Record<number, Record<string, number>>>({});
+  const [rAmounts, setRAmounts] = useState<Record<number, Record<string, number>>>({});
   const [techManualLocks, setTechManualLocks] = useState<Record<number, Record<string, boolean>>>({});
   const [rManualLocks, setRManualLocks] = useState<Record<number, Record<string, boolean>>>({});
 
@@ -417,6 +429,23 @@ export default function Technicians() {
       formDataObj.append('vehicleType', selectedVehicleType);
     }
 
+    // Attach job Vehicle Type Pricing amount for the selected vehicle type.
+    const selectedJobId = String(jobIdFromStorage || jobForms[0]?.jobId || jobId || '');
+    const selectedJob =
+      jobNames.find((j: any) => String(j.id) === selectedJobId) ||
+      jobNames.find(
+        (j: any) =>
+          String(j.jobName ?? '').trim() ===
+          String(selectedJobName || jobForms[0]?.jobName || '').trim()
+      );
+    const vehicleTypePrice = resolveVehicleTypePrice(
+      selectedVehicleType,
+      (selectedJob as any)?.vehicleTypePricing
+    );
+    if (vehicleTypePrice !== '') {
+      formDataObj.append('vehicle_type_price', vehicleTypePrice);
+    }
+
     // Append customer and schedule - use jobForms[0] instead of formData
     formDataObj.append('customerId', jobForms[0].assignCustomer || '');
     formDataObj.append('schedule', jobForms[0].schedule ? 'true' : 'false');
@@ -488,6 +517,26 @@ export default function Technicians() {
             formDataObj.append(
               `technicians[${techIndex}][rPercentage]`,
               !isTechType ? pctValue : ''
+            );
+
+            const formTechAmts = techAmounts[formIndex] || {};
+            const formRAmts = rAmounts[formIndex] || {};
+            const techAmountValue =
+              formTechAmts[tid] !== undefined && formTechAmts[tid] !== null
+                ? Number(formTechAmts[tid]).toFixed(2)
+                : '';
+            const rAmountValue =
+              formRAmts[tid] !== undefined && formRAmts[tid] !== null
+                ? Number(formRAmts[tid]).toFixed(2)
+                : '';
+
+            formDataObj.append(
+              `technicians[${techIndex}][techPercentageCalculatedAmount]`,
+              isTechType ? techAmountValue : ''
+            );
+            formDataObj.append(
+              `technicians[${techIndex}][rPercentageCalculatedAmount]`,
+              !isTechType ? rAmountValue : ''
             );
           });
         }
@@ -1026,6 +1075,8 @@ export default function Technicians() {
         });
         setTechPercentages({ 0: seedTechPcts });
         setRPercentages({ 0: seedRPcts });
+        setTechAmounts({ 0: seedAmountMapFromDetails(technicianDetails, true) });
+        setRAmounts({ 0: seedAmountMapFromDetails(technicianDetails, false) });
         setTechManualLocks({ 0: seedTechLocks });
         setRManualLocks({ 0: seedRLocks });
 
@@ -1593,6 +1644,53 @@ export default function Technicians() {
     setRManualLocks((prev) => ({ ...prev, [formIndex]: nextLocks }));
     setRPercentages((prev) => ({ ...prev, [formIndex]: distributed }));
   };
+
+  const handleTechAmountChange = (techId: string, rawValue: string, formIndex: number) => {
+    const techDetail = jobForms[formIndex]?.technicianDetails?.find(
+      (tech: any) => String(tech.id) === String(techId)
+    );
+    const ratePool = getTechnicianRatePool(techDetail, true);
+    if (!ratePool) return;
+
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) return;
+
+    const nextPct = percentageFromAmount(parsed, ratePool);
+    handleTechPercentageChange(techId, String(nextPct), formIndex);
+  };
+
+  const handleRAmountChange = (techId: string, rawValue: string, formIndex: number) => {
+    const techDetail = jobForms[formIndex]?.technicianDetails?.find(
+      (tech: any) => String(tech.id) === String(techId)
+    );
+    const ratePool = getTechnicianRatePool(techDetail, false);
+    if (!ratePool) return;
+
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) return;
+
+    const nextPct = percentageFromAmount(parsed, ratePool);
+    handleRPercentageChange(techId, String(nextPct), formIndex);
+  };
+
+  useEffect(() => {
+    jobForms.forEach((form, formIndex) => {
+      const techCohortAmounts = buildAmountMapFromPercentages(
+        form?.technicianDetails,
+        techPercentages[formIndex] || {},
+        true
+      );
+      const rCohortAmounts = buildAmountMapFromPercentages(
+        form?.technicianDetails,
+        rPercentages[formIndex] || {},
+        false
+      );
+
+      setTechAmounts((prev) => ({ ...prev, [formIndex]: techCohortAmounts }));
+      setRAmounts((prev) => ({ ...prev, [formIndex]: rCohortAmounts }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [techPercentages, rPercentages, jobForms]);
 
   /**
    * Whenever the technicians assigned to any jobForm change, re-balance
@@ -3174,11 +3272,15 @@ export default function Technicians() {
                             displayTechnicians.map((tech) => {
                               const tid = String(tech.id);
                               const isChecked = jobForms[index]?.assignTechnicians?.includes(tid) || false;
-                              const isTechType = tech.techType === 'technician';
+                              const isTechType = isDentTechnicianType(tech.techType);
                               const formPcts = isTechType
                                 ? techPercentages[index] || {}
                                 : rPercentages[index] || {};
+                              const formAmts = isTechType
+                                ? techAmounts[index] || {}
+                                : rAmounts[index] || {};
                               const percentage = isChecked ? (formPcts[tid] ?? 0) : 0;
+                              const amount = isChecked ? (formAmts[tid] ?? 0) : 0;
 
                               return (
                                 <ListItem component="div" key={tech.id} className="flex items-center justify-between gap-2">
@@ -3196,22 +3298,20 @@ export default function Technicians() {
                                     />
                                   </div>
                                   {isChecked && (
-                                    <div className="flex flex-col items-end" style={{ maxWidth: '280px' }}>
-                                      <TextField
-                                        size="small"
-                                        type="number"
-                                        label="Per Tech %"
-                                        color="warning"
-                                        value={Number.isFinite(percentage) ? percentage : ''}
-                                        onChange={(e) =>
-                                          isTechType
-                                            ? handleTechPercentageChange(tid, e.target.value, index)
-                                            : handleRPercentageChange(tid, e.target.value, index)
-                                        }
-                                        inputProps={{ min: 0, max: 100, step: 0.01 }}
-                                        sx={{ width: 130 }}
-                                      />
-                                    </div>
+                                    <TechnicianPercentageAmountFields
+                                      percentage={percentage}
+                                      amount={amount}
+                                      onPercentageChange={(value) =>
+                                        isTechType
+                                          ? handleTechPercentageChange(tid, value, index)
+                                          : handleRPercentageChange(tid, value, index)
+                                      }
+                                      onAmountChange={(value) =>
+                                        isTechType
+                                          ? handleTechAmountChange(tid, value, index)
+                                          : handleRAmountChange(tid, value, index)
+                                      }
+                                    />
                                   )}
                                 </ListItem>
                               );

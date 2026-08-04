@@ -2,7 +2,13 @@ import { ExportToCsv } from "export-to-csv-file";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { format } from "date-fns";
-import { money, formatDatePaid, toDateInputValue, WorkOrderRow } from "./tech-pay-shared";
+import {
+  money,
+  formatDatePaid,
+  toDateInputValue,
+  isWorkOrderPaid,
+  WorkOrderRow,
+} from "./tech-pay-shared";
 
 if (pdfFonts && (pdfFonts as { pdfMake?: { vfs?: unknown } }).pdfMake?.vfs) {
   (pdfMake as { vfs?: unknown }).vfs = (pdfFonts as { pdfMake: { vfs: unknown } }).pdfMake.vfs;
@@ -218,7 +224,7 @@ export function resolveDatePaidText(
       return raw;
     }
   }
-  return formatDatePaid(wo.paidAt, wo.generatedInvoiceStatus);
+  return formatDatePaid(wo.paidAt, isWorkOrderPaid(wo));
 }
 
 export function exportTechPayTotalsCsv(rows: TechPayExportRow[], summary: TechPayJobSummary) {
@@ -314,7 +320,7 @@ export function exportWorkOrdersCsv(
     "Stock Number": wo.stockNumber?.trim() ? wo.stockNumber : "—",
     Color: wo.color?.trim() ? wo.color : "—",
     "Tech Pay Amount": money(wo.techPayAmount),
-    "Invoice Status": wo.generatedInvoiceStatus ? "Paid" : "Unpaid",
+    "Invoice Status": isWorkOrderPaid(wo) ? "Paid" : "Unpaid",
     "Date Paid": resolveDatePaidText(wo, dateDrafts),
   }));
 
@@ -356,7 +362,7 @@ export function downloadWorkOrdersPdf(
         tdCell(wo.stockNumber?.trim() ? wo.stockNumber : "—", alt),
         tdCell(wo.color?.trim() ? wo.color : "—", alt),
         tdCell(money(wo.techPayAmount), alt, true),
-        tdCell(wo.generatedInvoiceStatus ? "Paid" : "Unpaid", alt),
+        tdCell(isWorkOrderPaid(wo) ? "Paid" : "Unpaid", alt),
         tdCell(resolveDatePaidText(wo, dateDrafts), alt),
       ];
     }),
