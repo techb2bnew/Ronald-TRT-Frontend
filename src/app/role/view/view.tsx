@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 
 interface RolePermissions {
   isActive: boolean;
@@ -137,7 +138,7 @@ export default function ViewDetails() {
                     )}
                   </td>
 
-                  <td>  {new Date(item.createdAt).toLocaleDateString('en-GB')}</td>
+                  <td>  {formatDisplayDate(item.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

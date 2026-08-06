@@ -2,6 +2,7 @@ import { ExportToCsv } from "export-to-csv-file";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { format } from "date-fns";
+import { formatDisplayDateFromYmd, UI_DATE_DISPLAY_FORMAT } from "@/lib/dateUtils";
 import {
   money,
   formatDatePaid,
@@ -177,7 +178,7 @@ function pdfMetaCards(items: { label: string; value: string }[]) {
 
 function pdfFooter() {
   return {
-    text: `Generated on ${format(new Date(), "MMM d, yyyy 'at' h:mm a")}`,
+    text: `Generated on ${format(new Date(), `${UI_DATE_DISPLAY_FORMAT} 'at' h:mm a`)}`,
     style: "footer",
     margin: [0, 14, 0, 0],
   };
@@ -219,7 +220,7 @@ export function resolveDatePaidText(
   const raw = draft || toDateInputValue(wo.paidAt);
   if (raw) {
     try {
-      return format(new Date(`${raw}T12:00:00`), "MMM d, yyyy");
+      return formatDisplayDateFromYmd(raw);
     } catch {
       return raw;
     }

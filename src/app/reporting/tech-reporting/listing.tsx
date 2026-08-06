@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { ExportToCsv } from "export-to-csv-file";
 import SortIcon from "@/app/component/sortIcon";
 import Pagination from "@/app/component/pagination";
-import { format } from "date-fns";
+import { formatDisplayDateRangeYmd } from "@/lib/dateUtils";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -559,10 +559,7 @@ export default function TechReportingDashboard() {
 
   const dateRangeLabel =
     startDate && endDate
-      ? `${format(new Date(startDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-        new Date(endDate + "T12:00:00"),
-        "MMM d, yyyy"
-      )}`
+      ? formatDisplayDateRangeYmd(startDate, endDate)
       : "Optional date range";
 
   const clearFilters = () => {

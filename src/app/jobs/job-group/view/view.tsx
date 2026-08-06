@@ -769,6 +769,7 @@ import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/app/component/loader";
+import { formatDisplayDate } from "@/lib/dateUtils";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { capitalize, TextField } from "@mui/material";
 import { Tooltip } from 'react-tooltip';
@@ -1136,7 +1137,7 @@ export default function ViewDetails() {
 
                         <div className="mb-2 text-sm items-center flex">
                           <strong className="inline-block mr-3 w-[180px]">Date: </strong>{" "}
-                          {new Date(job.updatedAt).toLocaleDateString("en-GB")}
+                          {formatDisplayDate(job.updatedAt)}
                         </div>
                       </div>
                       <div className="pl-2 pr-2">

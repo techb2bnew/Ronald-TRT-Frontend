@@ -21,6 +21,8 @@ import Image from 'next/image';
 import Eye from '../../../../public/eye.svg';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import InvoiceGenerator from '@/app/component/invoice-genrated';
+import { formatDisplayDate } from '@/lib/dateUtils';
+import UiYmdDateInput from '@/app/component/UiYmdDateInput';
 import {
   VehicleMismatchAlert,
   computeVinMismatch,
@@ -30,6 +32,7 @@ import {
   type MismatchData,
 } from '@/app/component/vehicleMismatchModals';
 import SortIcon from '@/app/component/sortIcon';
+import { formatStockNumberCell } from '@/lib/stockNumberUtils';
 import { getVehicleTypePriceFromJobOrVehicle } from '@/app/component/vehicleTypePriceUtils';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -369,6 +372,7 @@ const JobTable: React.FC = () => {
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.join(''), technicianRates,
+        stockNumber: formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
       };
     });
     csvExporter.generateCsv(formattedData);
@@ -382,7 +386,7 @@ const JobTable: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       let text = (e.target?.result as string).replace(/^\uFEFF/, '').trimStart();
-      const manualHeaders = ['id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color', 'make', 'model', 'vehicleType', 'modelYear', 'vehicleDescriptor', 'manufacturerName', 'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus', 'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates'];
+      const manualHeaders = ['id', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color', 'make', 'model', 'vehicleType', 'modelYear', 'vehicleDescriptor', 'manufacturerName', 'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus', 'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates', 'stockNumber'];
       Papa.parse(text, {
         header: false, skipEmptyLines: true,
         complete: async (result) => {
@@ -894,6 +898,7 @@ const handleDownloadInvoice = async () => {
         <td>{job?.serialNo}</td>
         <td><Link href={`/jobs/view?jobId=${job?.job?.id}&ActiveWorkOrder`} className='hover:underline'>{job?.jobName}</Link></td>
         <td><Link href={`/vehicle/view?vehicleId=${job.id}`} className='hover:underline'>{job?.vin}</Link></td>
+        <td>{formatStockNumberCell(job)}</td>
         <td><Link href={`/client/view?customerId=${job?.customer?.id}`} className='hover:underline'>{job?.customer?.fullName}</Link></td>
         {roleType !== 'single-technician' && (
           <td>
@@ -933,10 +938,13 @@ const handleDownloadInvoice = async () => {
         )}
         {roleType === 'single-technician' && (<td>{job?.labourCost ? `$${job.labourCost}` : 'N/A'}</td>)}
         {/* {roleType !== 'single-technician' && (<td>{job?.totalCombined && job?.totalCombined !== '' ? `$${job?.totalCombined}` : <span className="text-gray-400 text-sm"></span>}</td>)} */}
-        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+        <td>{job.startDate ? formatDisplayDate(job.startDate) : ''}</td>
+        <td>{job.endDate ? formatDisplayDate(job.endDate) : ''}</td>
         <td>
-          <TextField label="" variant="outlined" fullWidth color="warning" size="small" type='date' value={invoiceDates[job.id] || ''} onChange={(e) => handleDateAutoSave(job.id, e.target.value)} InputLabelProps={{ shrink: true }} />
+          <UiYmdDateInput
+            value={invoiceDates[job.id] || ''}
+            onChange={(ymd) => void handleDateAutoSave(job.id, ymd)}
+          />
         </td>
         <td>{canCreate && (<span className={`badge ${job.generatedInvoiceStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.generatedInvoiceStatus ? 'Generated' : 'Pending'}</span>)}</td>
         <td>{canCreate && (<span className={`badge ${job.vehicleStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}>{job.vehicleStatus ? 'Completed' : 'In Progress'}</span>)}</td>
@@ -1016,6 +1024,7 @@ const handleDownloadInvoice = async () => {
                 </th>
                 <th className="w-[100px]">Job Title</th>
                 <th className="w-[160px]">VIN</th>
+                <th className="w-[110px]">Stock Number</th>
                 <th className="w-[120px]">Customer Name</th>
                 {roleType !== 'single-technician' && (<th className="w-[200px]">Assigned Dent Tech</th>)}
                 {roleType !== 'single-technician' && (<th className="w-[100px]">Dent Tech Rate</th>)}
@@ -1034,9 +1043,9 @@ const handleDownloadInvoice = async () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Loader /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 16 : 11} className="text-center py-10"><Loader /></td></tr>
               ) : activeJob.length === 0 ? (
-                <tr><td colSpan={roleType !== 'single-technician' ? 15 : 10} className="text-center py-10"><Empty /></td></tr>
+                <tr><td colSpan={roleType !== 'single-technician' ? 16 : 11} className="text-center py-10"><Empty /></td></tr>
               ) : (
                 activeJob.map((job) => renderRow(job))
               )}

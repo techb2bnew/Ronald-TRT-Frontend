@@ -34,6 +34,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { MUI_DATE_PICKER_DISPLAY_FORMAT } from '@/lib/dateUtils';
 
 // import { CKEditor } from '@ckeditor/ckeditor5-react'; 
 // import type { Editor } from '@ckeditor/ckeditor5-core';
@@ -377,6 +378,10 @@ export default function Technicians() {
       // if (!form.jobName?.trim()) newErrors[`jobName`] = 'Job Name is required';
       if (!form.vehicleDescriptor?.trim()) newErrors[`vehicleDescriptor`] = 'Vehicle Descriptor is required';
       if (!form.assignCustomer) newErrors[`assignCustomer`] = 'Customer is required';
+      const sn = String(form.stockNumber ?? '').trim();
+      if (sn && !/^[A-Za-z0-9]+$/.test(sn)) {
+        newErrors[`stockNumber`] = 'Stock number must be alphanumeric (letters and numbers only)';
+      }
     });
 
 
@@ -1948,12 +1953,17 @@ export default function Technicians() {
     target: 'formData' | 'vehicleData' = 'formData',
     techIndex?: number
   ) => {
-    const value = event.target.value;
+    let value = event.target.value;
 
     // Regex validation for techFlatRate
     if (key === 'techFlatRate') {
       const regex = /^\d{0,5}(\.\d{0,2})?$/;
       if (value !== '' && !regex.test(value)) return;
+    }
+
+    if (key === 'stockNumber') {
+      value = String(value).replace(/[^A-Za-z0-9]/g, '');
+      if (!/^[A-Za-z0-9]*$/.test(value)) return;
     }
 
     let shouldUpdate = true;
@@ -2969,12 +2979,13 @@ export default function Technicians() {
                           <TextField
                             fullWidth
                             label="Stock Number"
-                            type='number'
                             size="small"
                             color="warning"
                             value={form.stockNumber || ''}
                             onChange={(e) => handleChange(e, 'stockNumber', index)}
-
+                            error={!!errors.stockNumber}
+                            helperText={errors.stockNumber || ''}
+                            inputProps={{ maxLength: 32 }}
                           />
                         </div>
 
@@ -3157,6 +3168,7 @@ export default function Technicians() {
                 <div className="grid grid-cols-2 gap-4">
                   <DatePicker
                     label="Start Date"
+                    format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                     value={startDate}
                     readOnly
                     onChange={(newValue) => {
@@ -3173,6 +3185,7 @@ export default function Technicians() {
                   />
                   <DatePicker
                     label="End Date"
+                    format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                     value={endDate}
                     onChange={(newValue) => {
                       setEndDate(newValue);
@@ -3286,8 +3299,13 @@ export default function Technicians() {
                         fullWidth
                         size="small"
                         color="warning"
-                        placeholder="Search technician..."
+                        placeholder={
+                          techPanelOpen
+                            ? 'Search technician...'
+                            : 'Click "Add More Technicians?" to search'
+                        }
                         value={technicianSearchTerm}
+                        disabled={!techPanelOpen}
                         onChange={(e) => setTechnicianSearchTerm(e.target.value)}
                         className="mb-2"
                       />

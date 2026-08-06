@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import Logo from "../../../public/trt-logo.png";
+import { formatDisplayDate } from '@/lib/dateUtils';
 
 const initializePdfMake = () => {
     try {
@@ -65,7 +66,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ selectedJobs }) => 
             }));
 
             const invoiceNumber = `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`;
-            const invoiceDate = new Date().toLocaleDateString();
+            const invoiceDate = formatDisplayDate(new Date());
             const grandTotal = invoiceData.reduce((sum, job) => {
                 const price = parseFloat(job.price) || 0;
                 return sum + price;

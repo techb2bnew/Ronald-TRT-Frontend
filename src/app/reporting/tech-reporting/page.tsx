@@ -3,7 +3,6 @@
 import React, { Suspense } from "react";
 import TechPayTotalsReporting from "./tech-pay-totals";
 import { useSidebar } from "@/app/component/SidebarContext";
-import Loading from "@/app/component/loader";
 
 export default function Technicians() {
   const { isCollapsed } = useSidebar();
@@ -15,13 +14,8 @@ export default function Technicians() {
         } pl-8 pr-8 ml-auto mt-[7rem] transition-all duration-300`}
       >
         {/* <TechReportingListing /> */}
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-16">
-              <Loading />
-            </div>
-          }
-        >
+        {/* Fallback null: TechPayTotalsReporting shows its own loader (avoids double Loading). */}
+        <Suspense fallback={null}>
           <TechPayTotalsReporting />
         </Suspense>
       </div>

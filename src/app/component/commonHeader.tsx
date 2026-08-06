@@ -4,7 +4,8 @@ import AdminSelect from './AdminSelect';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
+import { formatDisplayDateRange } from '@/lib/dateUtils';
 import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
@@ -1006,10 +1007,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                 onClick={handleDateFilterClick}
               >
                 {dates.startDate && dates.endDate
-                  ? `${format(dates.startDate, "dd MMM")} - ${format(
-                    dates.endDate,
-                    "dd MMM"
-                  )}`
+                  ? formatDisplayDateRange(dates.startDate, dates.endDate, " - ")
                   : "Date Filter"}
               </button>
               {showDatePickers && (

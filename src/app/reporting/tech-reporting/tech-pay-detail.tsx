@@ -10,6 +10,8 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import Pagination from "@/app/component/pagination";
 import AdminSelect from "@/app/component/AdminSelect";
+import { formatDisplayDateRangeYmd, formatDisplayDateFromYmd } from "@/lib/dateUtils";
+import UiYmdDateInput from "@/app/component/UiYmdDateInput";
 import {
   baseUrl,
   PAGE_LIMIT,
@@ -21,6 +23,7 @@ import {
   DetailActiveFilter,
   techReportingListUrl,
   toDateInputValue,
+  workOrderDatePaidInputValue,
   markVehicleTechnicianPaid,
   resolveFillAllPaidAt,
   vehicleHasPaidDate,
@@ -28,7 +31,6 @@ import {
   workOrdersApiPath,
 } from "./tech-pay-shared";
 import { downloadWorkOrdersPdf, exportWorkOrdersCsv } from "./tech-pay-export";
-import { format } from "date-fns";
 
 export default function TechPayDetailView() {
   const router = useRouter();
@@ -70,10 +72,7 @@ export default function TechPayDetailView() {
 
   const dateRangeLabel =
     filterStartDate && filterEndDate
-      ? `${format(new Date(filterStartDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-        new Date(filterEndDate + "T12:00:00"),
-        "MMM d, yyyy"
-      )}`
+      ? formatDisplayDateRangeYmd(filterStartDate, filterEndDate)
       : "From – To";
 
   useEffect(() => {
@@ -203,7 +202,7 @@ export default function TechPayDetailView() {
       const drafts: Record<number, string> = {};
       rows.forEach((wo: WorkOrderRow) => {
         if (wo.vehicleId != null) {
-          drafts[wo.vehicleId] = toDateInputValue(wo.generatedInvoiceDate);
+          drafts[wo.vehicleId] = isWorkOrderPaid(wo) ? toDateInputValue(wo.paidAt) : "";
         }
       });
       setDateDrafts(drafts);
@@ -397,15 +396,6 @@ export default function TechPayDetailView() {
     );
   };
 
-  const handleClearDate = async (wo: WorkOrderRow) => {
-    const vehicleId = Number(wo.vehicleId);
-    const techId = Number(technicianId);
-    if (Number.isNaN(vehicleId) || Number.isNaN(techId)) return;
-
-    setDateDrafts((prev) => ({ ...prev, [vehicleId]: "" }));
-    await submitPaidUpdate(false, [{ vehicleId, technicianId: techId }], { vehicleId });
-  };
-
   const handleFillAllDates = async () => {
     const techId = Number(technicianId);
     if (!jobId || Number.isNaN(techId)) {
@@ -427,7 +417,7 @@ export default function TechPayDetailView() {
       }
 
       const paidAt = resolveFillAllPaidAt(allRows, dateDrafts);
-      const dateLabel = format(new Date(`${paidAt}T12:00:00`), "MMM d, yyyy");
+      const dateLabel = formatDisplayDateFromYmd(paidAt);
       const skippedCount = allRows.length - emptyRows.length;
       const hasExistingDate = skippedCount > 0;
 
@@ -734,9 +724,7 @@ export default function TechPayDetailView() {
                             </td>
                           </tr>
                         ) : (
-                          workOrders.map((wo, i) => {
-                            const hasPaidDate = vehicleHasPaidDate(wo, dateDrafts);
-                            return (
+                          workOrders.map((wo, i) => (
                               <tr
                                 key={wo.vehicleId ?? i}
                                 className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
@@ -777,35 +765,18 @@ export default function TechPayDetailView() {
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 border-b border-gray-100">
-                                  <div className="flex flex-wrap items-center gap-2 min-w-[220px]">
-                                    <input
-                                      type="date"
-                                      value={dateDrafts[wo.vehicleId] ?? toDateInputValue(wo.generatedInvoiceDate)}
-                                      onChange={(e) => void handleDateChange(wo, e.target.value)}
-                                      disabled={
-                                        isSubmittingPaid || submittingVehicleId === wo.vehicleId
-                                      }
-                                      className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleClearDate(wo)}
-                                      disabled={
-                                        !hasPaidDate ||
-                                        isSubmittingPaid ||
-                                        submittingVehicleId === wo.vehicleId
-                                      }
-                                      className="primary-bg px-3 py-1.5 rounded text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                      {submittingVehicleId === wo.vehicleId
-                                        ? "..."
-                                        : "Clear Date"}
-                                    </button>
-                                  </div>
+                                  <UiYmdDateInput
+                                    value={workOrderDatePaidInputValue(wo, dateDrafts)}
+                                    onChange={(ymd) => void handleDateChange(wo, ymd)}
+                                    disabled={
+                                      isSubmittingPaid || submittingVehicleId === wo.vehicleId
+                                    }
+                                    fullWidth={false}
+                                    minWidth={180}
+                                  />
                                 </td>
                               </tr>
-                            );
-                          })
+                            ))
                         )}
                       </tbody>
                       {workOrders.length > 0 && (

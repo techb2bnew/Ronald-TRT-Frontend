@@ -38,6 +38,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { MUI_DATE_PICKER_DISPLAY_FORMAT } from '@/lib/dateUtils';
 
 /** API: single URL or JSON string array e.g. `["https://...","https://..."]` */
 function parseInsuranceFileUrls(raw: unknown): string[] {
@@ -1446,6 +1447,7 @@ export default function JobForm() {
             <div className="grid grid-cols-2 gap-4">
               <DatePicker
                 label="Start Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                 value={startDate}
                 readOnly
                 onChange={(newValue) => {
@@ -1461,6 +1463,7 @@ export default function JobForm() {
               />
               <DatePicker
                 label="End Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                 value={endDate}
                 onChange={(newValue) => {
                   setEndDate(newValue);
