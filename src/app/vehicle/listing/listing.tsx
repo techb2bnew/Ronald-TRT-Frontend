@@ -628,6 +628,34 @@ const JobTable: React.FC = () => {
     return `${day}-${month}-${year}`;
   };
 
+  /** Filter API omits techPercentageCalculatedAmount / rPercentageCalculatedAmount — merge from full vehicle payload. */
+  const hydrateFilterVehiclesPay = async (vehicles: any[], token: string) => {
+    if (!Array.isArray(vehicles) || vehicles.length === 0) return vehicles;
+    return Promise.all(
+      vehicles.map(async (vehicle) => {
+        try {
+          const res = await fetch(`/api/fetchSingleVehicleInfo?vehicleId=${vehicle.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!res.ok) return vehicle;
+          const data = await res.json();
+          const full = data?.vehicle?.vehicle;
+          if (!full?.assignedTechnicians) return vehicle;
+          return {
+            ...vehicle,
+            assignedTechnicians: full.assignedTechnicians,
+          };
+        } catch {
+          return vehicle;
+        }
+      })
+    );
+  };
+
   const fetchVehicleWithFilters = async (jobId?: string, startDate?: string | null, endDate?: string | null) => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
@@ -645,7 +673,9 @@ const JobTable: React.FC = () => {
       });
       const data = await response.json();
       if (response.ok && data.status) {
-        const filteredVehiclesWithSerialNo = (data.vehicles.updatedVehicles || []).map((vehicle: any, index: number) => ({
+        const filtered = data.vehicles.updatedVehicles || [];
+        const hydrated = await hydrateFilterVehiclesPay(filtered, token);
+        const filteredVehiclesWithSerialNo = hydrated.map((vehicle: any, index: number) => ({
           ...vehicle,
           serialNo: (currentPage - 1) * pageSize + index + 1,
         }));

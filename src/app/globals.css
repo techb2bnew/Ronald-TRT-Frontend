@@ -569,10 +569,19 @@ div:where(.swal2-container) div:where(.swal2-html-container) {
   overflow: auto;
 }
 
-/* Date range picker — desktop default position */
-.sdev_date_picker {
-  top: 3rem;
-  right: 0;
+/* Date range picker — open below trigger, grow right (avoids sidebar clip) */
+.sdev_date_picker,
+.admin-date-picker {
+  top: calc(100% + 4px);
+  left: 0;
+  right: auto;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  box-sizing: border-box;
+  z-index: 10050;
 }
 /* .MuiSelect-select{
       padding: 14px 14px !important;
