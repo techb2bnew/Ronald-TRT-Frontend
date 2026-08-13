@@ -78,6 +78,7 @@ function serializeInsuranceFileForApi(urls: string[]): string {
   return JSON.stringify(urls);
 }
 
+
 interface SelectedTechnician {
   userId: string;
   techFlatRate?: string;
