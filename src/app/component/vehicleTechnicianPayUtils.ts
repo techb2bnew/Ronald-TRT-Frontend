@@ -17,7 +17,8 @@ export function getTechnicianRatePool(
 }
 
 export function amountFromPercentage(percentage: number, ratePool: number): number {
-  if (!Number.isFinite(percentage) || !ratePool) return 0;
+  if (!Number.isFinite(percentage)) return 0;
+  if (!ratePool) return Number(percentage.toFixed(2));
   return Number(((percentage / 100) * ratePool).toFixed(2));
 }
 
