@@ -9,6 +9,7 @@ export default function TechPayDetailPage() {
   const { isCollapsed } = useSidebar();
   return (
     <div className="main-container">
+      
       <div
         className={`right_section ${
           isCollapsed ? "w-full" : "w-[85%]"
