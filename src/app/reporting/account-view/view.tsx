@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -166,8 +167,8 @@ export default function ViewDetails() {
                                 <InfoCard icon={<PhoneIcon />} label="Manager Ph. Number:" value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.manager?.phoneNumber}`}>{jobData?.manager?.phoneNumber || 'N/A'}</a>} />
                             </>
                         )}
-                        <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.startDate ? new Date(jobData.startDate).toLocaleDateString() : '–'} />
-                        <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : '–'} />
+                        <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.startDate ? formatDisplayDate(jobData.startDate) : '–'} />
+                        <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.endDate ? formatDisplayDate(jobData.endDate) : '–'} />
 
                         {userType === 'single-technician' && jobData.technicians?.length > 0 && jobData.technicians.map((tech: any, index: number) => (
                             <React.Fragment key={index}>

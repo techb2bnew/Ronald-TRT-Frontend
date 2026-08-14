@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -644,8 +645,8 @@ const CompletedJobs: React.FC = () => {
           </div>
         ))}</td> */}
           <td>{completejob?.vin}</td>
-          <td>{completejob.startDate ? new Date(completejob.startDate).toLocaleDateString() : ''}</td>
-          <td>{completejob.endDate ? new Date(completejob.endDate).toLocaleDateString() : ''}</td>
+          <td>{completejob.startDate ? formatDisplayDate(completejob.startDate) : ''}</td>
+          <td>{completejob.endDate ? formatDisplayDate(completejob.endDate) : ''}</td>
 
           {roleType === 'single-technician' && (
             <td>

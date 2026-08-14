@@ -1,10 +1,12 @@
+"use client";
 // components/CommonHeader.tsx
 import Link from 'next/link';
 import AdminSelect from './AdminSelect';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
+import { formatDisplayDateRange } from '@/lib/dateUtils';
 import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
@@ -124,6 +126,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDatePickers]);
+
   const [jobs, setJobs] = useState<any[]>([]);
   const [tech, setTech] = useState<any[]>([]);
   const [jobsFilter, setJobsFilter] = useState<string>('');
@@ -726,19 +729,28 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSelectFirstJob, onNewJobClick, onCustomerChange, jobs]);
 
-
-
+  const showClearButton = !!(
+    showClearFilters &&
+    (selectedJobId ||
+      selectedCustomerId ||
+      selectedTechId ||
+      dates.startDate ||
+      dates.endDate ||
+      searchValue ||
+      workOrderStatus ||
+      invoiceStatus ||
+      accountStatusFilter ||
+      (activeFilter && activeFilter !== "all"))
+  );
 
   return (
     <div className="px-1 mb-4">
-      <div className="admin-page-header flex flex-col sm:flex-row items-center justify-between w-full ">
-        <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
-        </div>
-        <div className='admin-filters-bar mobile_listing_item flex flex-wrap items-center gap-2'>
+      {/* Visible title removed — breadcrumbs already show page name. Keep h1 for a11y. */}
+      <h1 className="sr-only">{heading}</h1>
+      <div className="admin-page-header w-full">
+        <div className="admin-filters-bar mobile_listing_item flex flex-wrap items-center gap-2 w-full">
           {onSearch && (
-
-            <div className="flex w-[200px] relative search__input border border-gray-300 rounded-lg">
+            <div className="flex w-full sm:w-[220px] max-w-full relative search__input border border-gray-300 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="absolute right-3 top-1/2 -translate-y-1/2 z-[1] pointer-events-none text-gray-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -1006,14 +1018,11 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                 onClick={handleDateFilterClick}
               >
                 {dates.startDate && dates.endDate
-                  ? `${format(dates.startDate, "dd MMM")} - ${format(
-                    dates.endDate,
-                    "dd MMM"
-                  )}`
+                  ? formatDisplayDateRange(dates.startDate, dates.endDate, " - ")
                   : "Date Filter"}
               </button>
               {showDatePickers && (
-                <div className="absolute z-[99999] sdev_date_picker admin-date-picker">
+                <div className="absolute z-[99999] left-0 top-full mt-1 sdev_date_picker admin-date-picker">
                   <DateRange
                     editableDateInputs={true}
                     onChange={handleDateChange}
@@ -1025,9 +1034,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                     direction={isMobileView ? 'vertical' : 'horizontal'}
                     showDateDisplay={false}
                   />
-                  <div className="text-right">
+                  <div className="text-right pt-2 mt-1 border-t border-gray-100">
                     <button
-                      className="bg-[#383d71] text-white p-2 text-sm rounded"
+                      type="button"
+                      className="bg-[#383d71] text-white px-3 py-1.5 text-sm rounded"
                       onClick={handleApplyFilter}
                     >
                       Close
@@ -1039,28 +1049,17 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
 
-          {showClearFilters && (
-            selectedJobId ||
-            selectedCustomerId ||
-            selectedTechId ||
-            dates.startDate ||
-            dates.endDate ||
-            searchValue ||
-            workOrderStatus ||
-            invoiceStatus ||
-            accountStatusFilter
-          ) && (
-              <button
-                type="button"
-                className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
-                onClick={() => {
-                  handleClearFilters();
-                  onClearFilters?.();
-                }}
-              >
-                Clear
-              </button>
-            )}
+          {showClearButton && (
+            <button
+              type="button"
+              className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
+              onClick={() => {
+                handleClearFilters();
+              }}
+            >
+              Clear
+            </button>
+          )}
 
           {onPageSizeChange && (
             <AdminSelect className='admin-filter-select border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
@@ -1182,7 +1181,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             </button>
           )}
           {buttonLink && buttonLabel && canCreate && (
-            <Link href={buttonLink} className="flex items-center gap-1 px-2 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+            <Link
+              href={buttonLink}
+              className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shrink-0 sm:ml-auto"
+            >
               {buttonLabel}
               <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

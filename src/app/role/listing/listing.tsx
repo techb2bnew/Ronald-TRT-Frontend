@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2'; 
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import SortIcon from '@/app/component/sortIcon';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
@@ -153,7 +154,7 @@ const downloadCSV = () => {
       <td>{role.id}</td> 
       <td>{role?.name}</td>
       <td> {role?.type}</td> 
-      <td>{new Date(role.createdAt).toLocaleDateString('en-GB')}</td>
+      <td>{formatDisplayDate(role.createdAt)}</td>
       {/* <td onClick={() => toggleApproval(role.id, role.jobStatus)} style={{ cursor: 'pointer' }}>
         <span
           className={`badge ${role.jobStatus ? 'badge-success bg-[#E6F9DD] text-[#1A932E] p-2 pl-4 pr-4 rounded shadow' : 'badge-error bg-[#FFE4E1] text-[#FF0000] p-2 pl-4 pr-4 rounded shadow'}`}

@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 import Loading from "@/app/component/loader";
+import { formatDisplayDate } from "@/lib/dateUtils";
 import Breadcrumb from "@/app/component/breadcrumb";
 import { useSidebar } from "@/app/component/SidebarContext";
 
@@ -592,7 +593,7 @@ export default function TechView() {
               </svg>
             }
             label="Start Date"
-            value={fv?.startDate ? new Date(fv.startDate).toLocaleDateString() : "N/A"}
+            value={fv?.startDate ? formatDisplayDate(fv.startDate) : "N/A"}
           />
           <InfoCard
             icon={
@@ -601,7 +602,7 @@ export default function TechView() {
               </svg>
             }
             label="End Date"
-            value={fv?.endDate ? new Date(fv.endDate).toLocaleDateString() : "N/A"}
+            value={fv?.endDate ? formatDisplayDate(fv.endDate) : "N/A"}
           />
           <InfoCard
             icon={

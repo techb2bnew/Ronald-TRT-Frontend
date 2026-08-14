@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Loading from '@/app/component/loader'; 
+import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils'; 
 
 export default function ViewDetails() { 
   const [technician, setTechnician] = useState<any>(null);  // Using `any` type for flexibility
@@ -84,7 +85,7 @@ export default function ViewDetails() {
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</p>
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</p> 
             <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</p>
-            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </p>
+            <p className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {formatDisplayDate(technician.updatedAt)} </p>
           {technician?.taxForms && technician.taxForms.length > 0 && (
           <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
             {technician.taxForms.map((form:any, index:any) => (

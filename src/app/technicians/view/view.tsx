@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Empty from '@/app/component/empty';
 import Pagination from '@/app/component/pagination';
 import Breadcrumb from '@/app/component/breadcrumb';
@@ -496,7 +497,7 @@ export default function ViewDetails() {
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="Date"
-              value={technician?.createdAt ? new Date(technician.createdAt).toLocaleDateString('en-GB') : 'N/A'}
+              value={technician?.createdAt ? formatDisplayDate(technician.createdAt) : 'N/A'}
             />
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -583,8 +584,8 @@ export default function ViewDetails() {
                           ? `$${job.techTotalEarned}`
                           : '–'}
                       </td>
-                      <td className="px-6 py-4">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
-                      <td className="px-6 py-4">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4">{job.startDate ? formatDisplayDate(job.startDate) : '–'}</td>
+                      <td className="px-6 py-4">{job.endDate ? formatDisplayDate(job.endDate) : '–'}</td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9  " data-tooltip-id="view-job" data-tooltip-content="View">
                           <Image alt="View" src={Eye} className="w-4 h-4" />

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Pagination from '@/app/component/pagination';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
@@ -610,10 +611,10 @@ export default function ViewDetails() {
                         <span className="capitalize">{job.jobName || '-'}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {job.startDate ? new Date(job.startDate).toLocaleDateString() : '-'}
+                        {job.startDate ? formatDisplayDate(job.startDate) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {job.endDate ? new Date(job.endDate).toLocaleDateString() : '-'}
+                        {job.endDate ? formatDisplayDate(job.endDate) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {job.estimatedCost ? `$${job.estimatedCost}` : '-'}

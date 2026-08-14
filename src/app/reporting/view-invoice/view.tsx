@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
@@ -132,8 +133,8 @@ export default function ViewDetails() {
             <InfoCard icon={<PersonIcon />} label="Customer Name:" value={<span className="capitalize">{jobData?.customer?.fullName ?? '–'}</span>} />
             <InfoCard icon={<MailIcon />} label="Customer Email:" value={<a className="hover:underline text-[#383d71]" href={`mailto:${jobData?.customer?.email}`}>{jobData?.customer?.email || 'N/A'}</a>} />
             <InfoCard icon={<PhoneIcon />} label="Customer Ph. Number:" value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.customer?.phoneNumber}`}>{jobData?.customer?.phoneNumber || 'N/A'}</a>} />
-            <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.job?.startDate ? new Date(jobData.job.startDate).toLocaleDateString() : 'N/A'} />
-            <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.job?.endDate ? new Date(jobData.job.endDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.job?.startDate ? formatDisplayDate(jobData.job.startDate) : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.job?.endDate ? formatDisplayDate(jobData.job.endDate) : 'N/A'} />
 
             {userType === 'single-technician' && jobData.technicians?.map((tech: any, index: number) => (
               <React.Fragment key={index}>
@@ -155,7 +156,7 @@ export default function ViewDetails() {
               </React.Fragment>
             ))}
 
-            <InfoCard icon={<CalendarIcon />} label="Paid Date:" value={jobData?.paidDate ? new Date(jobData.paidDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="Paid Date:" value={jobData?.paidDate ? formatDisplayDate(jobData.paidDate) : 'N/A'} />
             <InfoCard icon={<DollarIcon />} label="Vehicle Price:" value={`$${jobData?.job?.estimatedCost || '0'}`} />
             {jobData?.estimatedBy != null && <InfoCard icon={<PersonIcon />} label="Created By:" value={jobData?.job?.createdBy ?? '–'} />}
             {jobData?.estimatedBy != null && <InfoCard icon={<PersonIcon />} label="Estimated By:" value={jobData?.job?.estimatedBy ?? '–'} />}

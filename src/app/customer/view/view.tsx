@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Empty from '@/app/component/empty';
 import Pagination from '@/app/component/pagination';
 import { useRouter, useSearchParams } from "next/navigation";
@@ -299,8 +300,8 @@ export default function ViewDetails() {
                       <td className="px-6 py-4 text-gray-900">{job.id || '–'}</td>
                       <td className="px-6 py-4"><span className="capitalize">{job.jobName || '–'}</span></td>
                       {/* <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td> */}
-                      <td className="px-6 py-4 text-gray-700">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
-                      <td className="px-6 py-4 text-gray-700">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.startDate ? formatDisplayDate(job.startDate) : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.endDate ? formatDisplayDate(job.endDate) : '–'}</td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
                           <Image alt="View" src={Eye} className="w-4 h-4" />
