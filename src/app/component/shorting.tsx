@@ -12,6 +12,8 @@ interface SortableTableProps {
   handleSort: (column: string) => void;
   loading: boolean;  // New prop to track loading state
   renderHeaderCell?: (header: string, index: number) => React.ReactNode;
+  /** Optional table class override (layout only). */
+  tableClassName?: string;
 }
 
 const SortableTable: React.FC<SortableTableProps> = ({
@@ -23,13 +25,14 @@ const SortableTable: React.FC<SortableTableProps> = ({
   handleSort,
   loading, 
   renderHeaderCell,
+  tableClassName,
 }) => {
   // Define sortable columns
   const sortableColumns = ['serialNo', 'name', 'email', 'type'];
 
   return (
     <div className="overflow-x-auto rounded-md">
-      <table className="table w-full table-fixed">
+      <table className={tableClassName || "table w-full table-fixed"}>
       <thead>
   <tr>
     {headers.map((header, index) => {

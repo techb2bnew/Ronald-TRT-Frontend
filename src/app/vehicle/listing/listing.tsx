@@ -1,6 +1,6 @@
 // components/JobTable.tsx
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import TableActions from '../../component/action';
 import CommonHeader from '../../component/commonHeader';
 import {
@@ -22,6 +22,8 @@ import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
 import { renumberSerialNo } from '@/lib/renumberSerialNo';
+import { formatStockNumberCell } from '@/lib/stockNumberUtils';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import { Tooltip } from 'react-tooltip';
 
 import Papa from 'papaparse';
@@ -364,6 +366,10 @@ const JobTable: React.FC = () => {
           valueA = (a?.[column] ?? '').toString().toLowerCase();
           valueB = (b?.[column] ?? '').toString().toLowerCase();
           break;
+        case 'stockNumber':
+          valueA = formatStockNumberCell(a).toLowerCase();
+          valueB = formatStockNumberCell(b).toLowerCase();
+          break;
         default:
           valueA = (a?.[column] ?? '').toString().toLowerCase();
           valueB = (b?.[column] ?? '').toString().toLowerCase();
@@ -506,6 +512,7 @@ const JobTable: React.FC = () => {
         technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
         assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
         jobDescription: jobData.jobDescription.join(' '), technicianRates,
+        stockNumber: formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
       };
     });
     localStorage.setItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
@@ -533,7 +540,8 @@ const JobTable: React.FC = () => {
         'Serial No', 'vin', 'customer', 'jobName', 'assignCustomer', 'bodyClass', 'color',
         'make', 'model', 'vehicleType', 'modelYear', 'vehicleDescriptor', 'manufacturerName',
         'plantCompanyName', 'plantCountry', 'plantState', 'deletedStatus',
-        'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates'
+        'notes', 'technicians', 'assignTechnicians', 'jobDescription', 'technicianRates',
+        'stockNumber',
       ];
       Papa.parse(text, {
         header: false,
@@ -620,6 +628,34 @@ const JobTable: React.FC = () => {
     return `${day}-${month}-${year}`;
   };
 
+  /** Filter API omits techPercentageCalculatedAmount / rPercentageCalculatedAmount — merge from full vehicle payload. */
+  const hydrateFilterVehiclesPay = async (vehicles: any[], token: string) => {
+    if (!Array.isArray(vehicles) || vehicles.length === 0) return vehicles;
+    return Promise.all(
+      vehicles.map(async (vehicle) => {
+        try {
+          const res = await fetch(`/api/fetchSingleVehicleInfo?vehicleId=${vehicle.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!res.ok) return vehicle;
+          const data = await res.json();
+          const full = data?.vehicle?.vehicle;
+          if (!full?.assignedTechnicians) return vehicle;
+          return {
+            ...vehicle,
+            assignedTechnicians: full.assignedTechnicians,
+          };
+        } catch {
+          return vehicle;
+        }
+      })
+    );
+  };
+
   const fetchVehicleWithFilters = async (jobId?: string, startDate?: string | null, endDate?: string | null) => {
     const token = localStorage.getItem('token');
     const roleType = localStorage.getItem('types') || "";
@@ -637,7 +673,9 @@ const JobTable: React.FC = () => {
       });
       const data = await response.json();
       if (response.ok && data.status) {
-        const filteredVehiclesWithSerialNo = (data.vehicles.updatedVehicles || []).map((vehicle: any, index: number) => ({
+        const filtered = data.vehicles.updatedVehicles || [];
+        const hydrated = await hydrateFilterVehiclesPay(filtered, token);
+        const filteredVehiclesWithSerialNo = hydrated.map((vehicle: any, index: number) => ({
           ...vehicle,
           serialNo: (currentPage - 1) * pageSize + index + 1,
         }));
@@ -770,8 +808,9 @@ const JobTable: React.FC = () => {
           </td>
         )} */}
         <td>{job?.vin}</td>
-        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td>
+        <td>{formatStockNumberCell(job)}</td>
+        <td>{job.startDate ? formatDisplayDate(job.startDate) : ''}</td>
+        <td>{job.endDate ? formatDisplayDate(job.endDate) : ''}</td>
         {roleType === 'single-technician' && (
           <td>{job.labourCost !== null && (`$${job.labourCost || '-'}`) || '-'}</td>
         )}
@@ -901,6 +940,30 @@ const JobTable: React.FC = () => {
       toast.error('Could not load insurance vehicles. Try again.');
     }
   };
+
+  /** Compare is insurance-percentage only; hide for flat_rate jobs and All Jobs flat-rate lists. */
+  const resolveRowJobType = (row: any) =>
+    row?.job?.jobType ?? row?.job?.job_type ?? row?.jobType ?? '';
+
+  const isInsuranceWorkOrderRow = (row: any) => {
+    if (isInsuranceJobTypeForInvoice(resolveRowJobType(row))) return true;
+    const ip = row?.job?.insurancePercentage;
+    return ip != null && String(ip).trim() !== '' && String(ip).toLowerCase() !== 'null';
+  };
+
+  const showCompareWorkOrder = useMemo(() => {
+    if (roleType !== 'superadmin' || activeTab !== 'scanned') return false;
+    if (activeJob.length === 0) return false;
+
+    const jobId = normalizeJobId(selectedJobId);
+    if (jobId) {
+      const row =
+        activeJob.find((j) => String(j.jobId ?? j.job?.id) === jobId) ?? activeJob[0];
+      return row ? isInsuranceWorkOrderRow(row) : false;
+    }
+
+    return activeJob.some(isInsuranceWorkOrderRow);
+  }, [roleType, activeTab, selectedJobId, activeJob]);
 
   // ─── Shared table JSX (used in both tabs) ────────────────────────────────────
   const renderTable = () => {
@@ -1047,6 +1110,10 @@ const JobTable: React.FC = () => {
                   VIN
                   <SortIcon active={sortBy === 'vin'} direction={sortDirection} />
                 </th>
+                <th className="w-[110px] cursor-pointer select-none" onClick={() => handleSort('stockNumber')}>
+                  Stock Number
+                  <SortIcon active={sortBy === 'stockNumber'} direction={sortDirection} />
+                </th>
                 <th className="w-[100px] cursor-pointer select-none" onClick={() => handleSort('startDate')}>
                   Start Date
                   <SortIcon active={sortBy === 'startDate'} direction={sortDirection} />
@@ -1068,13 +1135,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading && activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 13} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={roleType === 'single-technician' ? 10 : 12} className="text-center py-10">
+                  <td colSpan={roleType === 'single-technician' ? 11 : 13} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>
@@ -1118,17 +1185,10 @@ const JobTable: React.FC = () => {
           showDatePicker={activeTab === 'scanned'}
           onDateChange={activeTab === 'scanned' ? handleDateChange : undefined}
           onNewJobClick={handleNewJobClick}
-          autoSelectFirstJob
           showClearFilters={true}
           onClearFilters={handleClearFilters}
-          onStatusChange={(status) => {
-            setWorkOrderStatus(status);
-            fetchvehicleInfo(1, searchTerm, pageSize, { status });
-          }}
           onCompareWorkOrderClick={
-            roleType === 'superadmin' && activeTab === 'scanned'
-              ? handleCompareWorkOrder
-              : undefined
+            showCompareWorkOrder ? handleCompareWorkOrder : undefined
           }
           compareWorkOrderLabel="Compare work order"
           selectedRows={selectedIds}

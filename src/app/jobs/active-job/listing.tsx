@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -555,8 +556,8 @@ const JobTable: React.FC = () => {
           </td>
         )}
         <td>{job.vehicleCount ?? 0}</td>
-        <td>{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-        <td>{job.endDate ? new Date(job.endDate).toLocaleDateString() : ''}</td> 
+        <td>{job.startDate ? formatDisplayDate(job.startDate) : ''}</td>
+        <td>{job.endDate ? formatDisplayDate(job.endDate) : ''}</td> 
         {/* <td>
           {canCreate && (
             <span

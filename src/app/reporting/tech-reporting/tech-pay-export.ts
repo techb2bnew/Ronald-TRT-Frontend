@@ -2,7 +2,14 @@ import { ExportToCsv } from "export-to-csv-file";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import { format } from "date-fns";
-import { money, formatDatePaid, toDateInputValue, WorkOrderRow } from "./tech-pay-shared";
+import { formatDisplayDateFromYmd, UI_DATE_DISPLAY_FORMAT } from "@/lib/dateUtils";
+import {
+  money,
+  formatDatePaid,
+  toDateInputValue,
+  isWorkOrderPaid,
+  WorkOrderRow,
+} from "./tech-pay-shared";
 
 if (pdfFonts && (pdfFonts as { pdfMake?: { vfs?: unknown } }).pdfMake?.vfs) {
   (pdfMake as { vfs?: unknown }).vfs = (pdfFonts as { pdfMake: { vfs: unknown } }).pdfMake.vfs;
@@ -171,7 +178,7 @@ function pdfMetaCards(items: { label: string; value: string }[]) {
 
 function pdfFooter() {
   return {
-    text: `Generated on ${format(new Date(), "MMM d, yyyy 'at' h:mm a")}`,
+    text: `Generated on ${format(new Date(), `${UI_DATE_DISPLAY_FORMAT} 'at' h:mm a`)}`,
     style: "footer",
     margin: [0, 14, 0, 0],
   };
@@ -213,12 +220,12 @@ export function resolveDatePaidText(
   const raw = draft || toDateInputValue(wo.paidAt);
   if (raw) {
     try {
-      return format(new Date(`${raw}T12:00:00`), "MMM d, yyyy");
+      return formatDisplayDateFromYmd(raw);
     } catch {
       return raw;
     }
   }
-  return formatDatePaid(wo.paidAt, wo.paidStatus);
+  return formatDatePaid(wo.paidAt, isWorkOrderPaid(wo));
 }
 
 export function exportTechPayTotalsCsv(rows: TechPayExportRow[], summary: TechPayJobSummary) {
@@ -314,6 +321,7 @@ export function exportWorkOrdersCsv(
     "Stock Number": wo.stockNumber?.trim() ? wo.stockNumber : "—",
     Color: wo.color?.trim() ? wo.color : "—",
     "Tech Pay Amount": money(wo.techPayAmount),
+    "Invoice Status": isWorkOrderPaid(wo) ? "Paid" : "Unpaid",
     "Date Paid": resolveDatePaidText(wo, dateDrafts),
   }));
 
@@ -340,6 +348,7 @@ export function downloadWorkOrdersPdf(
       thCell("Stock"),
       thCell("Color"),
       thCell("Tech Pay", true),
+      thCell("Invoice Status"),
       thCell("Date Paid"),
     ],
     ...rows.map((wo, i) => {
@@ -354,6 +363,7 @@ export function downloadWorkOrdersPdf(
         tdCell(wo.stockNumber?.trim() ? wo.stockNumber : "—", alt),
         tdCell(wo.color?.trim() ? wo.color : "—", alt),
         tdCell(money(wo.techPayAmount), alt, true),
+        tdCell(isWorkOrderPaid(wo) ? "Paid" : "Unpaid", alt),
         tdCell(resolveDatePaidText(wo, dateDrafts), alt),
       ];
     }),
@@ -375,7 +385,7 @@ export function downloadWorkOrdersPdf(
         {
           table: {
             headerRows: 1,
-            widths: ["15%", "11%", "18%", "6%", "8%", "8%", "8%", "7%", "9%", "10%"],
+            widths: ["15%", "11%", "18%", "6%", "8%", "8%", "8%", "7%", "9%", "9%", "10%"],
             body,
           },
           layout: pdfTableLayout(),

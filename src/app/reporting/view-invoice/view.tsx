@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
@@ -105,7 +106,7 @@ export default function ViewDetails() {
   const LinkIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>;
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
           { label: 'Sent Invoice', href: '/reporting/genrated-invoice' },
@@ -132,8 +133,8 @@ export default function ViewDetails() {
             <InfoCard icon={<PersonIcon />} label="Customer Name:" value={<span className="capitalize">{jobData?.customer?.fullName ?? '–'}</span>} />
             <InfoCard icon={<MailIcon />} label="Customer Email:" value={<a className="hover:underline text-[#383d71]" href={`mailto:${jobData?.customer?.email}`}>{jobData?.customer?.email || 'N/A'}</a>} />
             <InfoCard icon={<PhoneIcon />} label="Customer Ph. Number:" value={<a className="hover:underline text-[#383d71]" href={`tel:${jobData?.customer?.phoneNumber}`}>{jobData?.customer?.phoneNumber || 'N/A'}</a>} />
-            <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.job?.startDate ? new Date(jobData.job.startDate).toLocaleDateString() : 'N/A'} />
-            <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.job?.endDate ? new Date(jobData.job.endDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="Start Date:" value={jobData?.job?.startDate ? formatDisplayDate(jobData.job.startDate) : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="End Date:" value={jobData?.job?.endDate ? formatDisplayDate(jobData.job.endDate) : 'N/A'} />
 
             {userType === 'single-technician' && jobData.technicians?.map((tech: any, index: number) => (
               <React.Fragment key={index}>
@@ -155,7 +156,7 @@ export default function ViewDetails() {
               </React.Fragment>
             ))}
 
-            <InfoCard icon={<CalendarIcon />} label="Paid Date:" value={jobData?.paidDate ? new Date(jobData.paidDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<CalendarIcon />} label="Paid Date:" value={jobData?.paidDate ? formatDisplayDate(jobData.paidDate) : 'N/A'} />
             <InfoCard icon={<DollarIcon />} label="Vehicle Price:" value={`$${jobData?.job?.estimatedCost || '0'}`} />
             {jobData?.estimatedBy != null && <InfoCard icon={<PersonIcon />} label="Created By:" value={jobData?.job?.createdBy ?? '–'} />}
             {jobData?.estimatedBy != null && <InfoCard icon={<PersonIcon />} label="Estimated By:" value={jobData?.job?.estimatedBy ?? '–'} />}
@@ -192,9 +193,9 @@ export default function ViewDetails() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
+        {/* <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
           <h3 className="font-bold p-3">Assign Dent Tech</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
@@ -274,11 +275,11 @@ export default function ViewDetails() {
             </table>
           </div>
         </div>
-        <Tooltip id="view-tech" place="top" />
+        <Tooltip id="view-tech" place="top" /> */}
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4 p-3">
           <h3 className="font-bold p-3">Vehicle List</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap admin-vehicle-table overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
@@ -299,7 +300,7 @@ export default function ViewDetails() {
                       <td className="px-6 py-4">
                         <span className="capitalize">
                           {Array.isArray(vehicles.assignedTechnicians) && vehicles.assignedTechnicians.length > 0
-                            ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', ')
+                            ? vehicles.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName} - ($${tech.VehicleTechnician?.techPercentageCalculatedAmount || tech.VehicleTechnician?.rPercentageCalculatedAmount})`).join(', ')
                             : '–'}
                         </span>
                       </td>

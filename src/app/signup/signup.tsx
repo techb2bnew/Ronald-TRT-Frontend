@@ -82,6 +82,7 @@ export default function Role() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<any>(null);
   const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
+  const [addressMenuOpen, setAddressMenuOpen] = useState(false);
 
   const [formData, setFormData] = useState<registerForm>({
     firstName: '',
@@ -847,12 +848,15 @@ export default function Role() {
                     )}
                   </div>
                 </div> */}
-                <div className='mb-4 relative z-10'>
+                <div className={`mb-4 relative admin-address-field${addressMenuOpen ? ' admin-address-field--open' : ''}`}>
                   <GooglePlacesAutocomplete
                     apiKey=" AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M"
                     selectProps={{
                       placeholder: 'Search for an address...',
                       value: address,
+                      onMenuOpen: () => setAddressMenuOpen(true),
+                      onMenuClose: () => setAddressMenuOpen(false),
+                      menuPlacement: 'auto',
                       onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                         if (newValue) {
                           handleAddressSelect(newValue);
@@ -873,6 +877,14 @@ export default function Role() {
                           '&:focus': {
                             borderColor: errors.address ? 'orange' : 'orange',
                           },
+                        }),
+                        menu: (provided) => ({
+                          ...provided,
+                          zIndex: 40,
+                        }),
+                        menuPortal: (provided) => ({
+                          ...provided,
+                          zIndex: 40,
                         }),
                       }
                     }}

@@ -1,9 +1,12 @@
+"use client";
 // components/CommonHeader.tsx
 import Link from 'next/link';
+import AdminSelect from './AdminSelect';
 import { useEffect, useLayoutEffect, useState, useCallback, useRef, useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
+import { formatDisplayDateRange } from '@/lib/dateUtils';
 import { enUS } from 'date-fns/locale';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css'; // core styles
@@ -93,6 +96,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
   const [permissions, setPermissions] = useState<any[]>([]);
   const [showDatePickers, setShowDatePicker] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const customerDropdownRef = useRef<HTMLDivElement>(null);
@@ -100,6 +104,13 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
   const [selectedCustomerLabel, setSelectedCustomerLabel] = useState<string>('');
 
   // Close date picker when clicking outside
+  useEffect(() => {
+    const handleViewport = () => setIsMobileView(window.innerWidth <= 991);
+    handleViewport();
+    window.addEventListener('resize', handleViewport);
+    return () => window.removeEventListener('resize', handleViewport);
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
@@ -115,6 +126,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDatePickers]);
+
   const [jobs, setJobs] = useState<any[]>([]);
   const [tech, setTech] = useState<any[]>([]);
   const [jobsFilter, setJobsFilter] = useState<string>('');
@@ -717,19 +729,28 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSelectFirstJob, onNewJobClick, onCustomerChange, jobs]);
 
-
-
+  const showClearButton = !!(
+    showClearFilters &&
+    (selectedJobId ||
+      selectedCustomerId ||
+      selectedTechId ||
+      dates.startDate ||
+      dates.endDate ||
+      searchValue ||
+      workOrderStatus ||
+      invoiceStatus ||
+      accountStatusFilter ||
+      (activeFilter && activeFilter !== "all"))
+  );
 
   return (
     <div className="px-1 mb-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
-        <div>
-          <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">{heading}</h1>
-        </div>
-        <div className='mobile_listing_item  flex flex-wrap items-center gap-2'>
+      {/* Visible title removed — breadcrumbs already show page name. Keep h1 for a11y. */}
+      <h1 className="sr-only">{heading}</h1>
+      <div className="admin-page-header w-full">
+        <div className="admin-filters-bar mobile_listing_item flex flex-wrap items-center gap-2 w-full">
           {onSearch && (
-
-            <div className="flex w-[200px] relative search__input border border-gray-300 rounded-lg">
+            <div className="flex w-full sm:w-[220px] max-w-full relative search__input border border-gray-300 rounded-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="absolute right-3 top-1/2 -translate-y-1/2 z-[1] pointer-events-none text-gray-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -749,7 +770,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
           {onCustomerChange && (
-            <div className="relative" ref={customerDropdownRef}>
+            <div className="relative admin-filter-dropdown-wrap" ref={customerDropdownRef}>
               <button
                 type="button"
                 className="w-[160px] h-[44px] min-h-[44px] px-3 pr-8 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 cursor-pointer text-left truncate"
@@ -768,7 +789,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               </button>
 
               {isCustomerDropdownOpen && (
-                <div className="absolute z-[9999] mt-1 w-[300px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="admin-filter-dropdown absolute z-[9999] mt-1 w-[300px] bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="p-2 border-b border-gray-100">
                     <input
                       value={customerSearchTerm}
@@ -822,7 +843,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
 
           {onNewJobClick && (
-            <div className="relative" ref={jobDropdownRef}>
+            <div className="relative admin-filter-dropdown-wrap" ref={jobDropdownRef}>
               <button
                 type="button"
                 id="job-dropdown"
@@ -841,7 +862,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               </button>
 
               {isJobDropdownOpen && (
-                <div className="absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="admin-filter-dropdown absolute z-[9999] mt-1 w-[320px] bg-white border border-gray-200 rounded-lg shadow-lg">
                   <div className="p-2 border-b border-gray-100">
                     <input
                       value={jobSearchTerm}
@@ -922,7 +943,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             </div>
           )}
           {onStatusChange && (
-            <select
+            <AdminSelect
               id="status-dropdown"
               defaultValue=""
               onChange={(e) => onStatusChange?.(e.target.value)}
@@ -932,10 +953,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">All Status</option>
               <option value="completed">Completed</option>
               <option value="inProgress">In Progress</option>
-            </select>
+            </AdminSelect>
           )}
           {onInvoiceStatueChange && (
-            <select
+            <AdminSelect
               id="invoiceStatus-dropdown"
               defaultValue=""
               onChange={(e) => onInvoiceStatueChange?.(e.target.value)}
@@ -945,10 +966,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">Invoice Status</option>
               <option value="paid">Paid</option>
               <option value="unPaid">Unpaid</option>
-            </select>
+            </AdminSelect>
           )}
           {onAccountStatusChange && (
-            <select
+            <AdminSelect
               id="accountStatus-dropdown"
               value={accountStatusFilter}
               onChange={(e) => {
@@ -962,10 +983,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="">Account Status</option>
               <option value="active">Active</option>
               <option value="inactive">Deactive</option>
-            </select>
+            </AdminSelect>
           )}
           {onNewTechClick && (
-            <select
+            <AdminSelect
               id="tech-dropdown"
               value={techFilter}
               onChange={(e) => handleTechFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
@@ -980,7 +1001,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               ) : (
                 <option value="">No Technician Available</option>
               )}
-            </select>
+            </AdminSelect>
           )}
 
           {additionalComponents && (
@@ -990,20 +1011,18 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
           {showDatePicker && (
-            <div className="relative" ref={datePickerRef}>
+            <div className="relative admin-date-filter-wrap" ref={datePickerRef}>
               <button
-                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300"
+                type="button"
+                className="p-3 bg-white text-[12px] rounded-lg min-w-[150px] border border-gray-300 w-full"
                 onClick={handleDateFilterClick}
               >
                 {dates.startDate && dates.endDate
-                  ? `${format(dates.startDate, "dd MMM")} - ${format(
-                    dates.endDate,
-                    "dd MMM"
-                  )}`
+                  ? formatDisplayDateRange(dates.startDate, dates.endDate, " - ")
                   : "Date Filter"}
               </button>
               {showDatePickers && (
-                <div className="absolute z-[99999] sdev_date_picker" style={{ top: '3rem', right: '0rem' }}>
+                <div className="absolute z-[99999] left-0 top-full mt-1 sdev_date_picker admin-date-picker">
                   <DateRange
                     editableDateInputs={true}
                     onChange={handleDateChange}
@@ -1011,13 +1030,14 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
                     ranges={[{ startDate: dates.startDate || new Date(), endDate: dates.endDate || addDays(new Date(), 1), key: 'selection' }]}
                     rangeColors={["#383d71"]}
                     locale={enUS}
-                    months={2}
-                    direction="horizontal"
+                    months={isMobileView ? 1 : 2}
+                    direction={isMobileView ? 'vertical' : 'horizontal'}
                     showDateDisplay={false}
                   />
-                  <div className="text-right">
+                  <div className="text-right pt-2 mt-1 border-t border-gray-100">
                     <button
-                      className="bg-[#383d71] text-white p-2 text-sm rounded"
+                      type="button"
+                      className="bg-[#383d71] text-white px-3 py-1.5 text-sm rounded"
                       onClick={handleApplyFilter}
                     >
                       Close
@@ -1029,31 +1049,20 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           )}
 
 
-          {showClearFilters && (
-            selectedJobId ||
-            selectedCustomerId ||
-            selectedTechId ||
-            dates.startDate ||
-            dates.endDate ||
-            searchValue ||
-            workOrderStatus ||
-            invoiceStatus ||
-            accountStatusFilter
-          ) && (
-              <button
-                type="button"
-                className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
-                onClick={() => {
-                  handleClearFilters();
-                  onClearFilters?.();
-                }}
-              >
-                Clear
-              </button>
-            )}
+          {showClearButton && (
+            <button
+              type="button"
+              className="text-xs border border-gray-300 p-3 pl-2 pr-2 bg-white rounded flex items-center gap-2 hover:text-white hover:bg-red-600"
+              onClick={() => {
+                handleClearFilters();
+              }}
+            >
+              Clear
+            </button>
+          )}
 
           {onPageSizeChange && (
-            <select name="" id="" className='border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
+            <AdminSelect className='admin-filter-select border border-gray-300 rounded-lg p-3 text-[12px]' onChange={(e) => onPageSizeChange?.(parseInt(e.target.value as string))}>
               <option value="10">Show 10</option>
               <option value="10">10</option>
               <option value="20">20</option>
@@ -1061,10 +1070,10 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="40">40</option>
               <option value="50">50</option>
               <option value="100">100</option>
-            </select>
+            </AdminSelect>
           )}
           {(onCompletedJobClick || onInProgressJobClick) && (
-            <select
+            <AdminSelect
               id="job-status-select"
               value={activeFilter}
               onChange={(e) => handleFilterChange({ target: { value: e.target.value } } as SelectChangeEvent<string>)}
@@ -1074,7 +1083,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               <option value="all">All Jobs</option>
               <option value="completed">Completed Jobs</option>
               <option value="inProgress">In Progress Jobs</option>
-            </select>
+            </AdminSelect>
           )}
           {onCompletedClick && (
             <button
@@ -1155,7 +1164,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
 
           {onExport && (
 
-            <button disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+            <button type="button" disabled={!isRowSelected} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all
                 ${isRowSelected
                 ? "bg-[#383d71] text-white hover:bg-[#2d3159]"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -1172,14 +1181,16 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             </button>
           )}
           {buttonLink && buttonLabel && canCreate && (
-            <Link href={buttonLink} className="flex items-center gap-1 px-2 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+            <Link
+              href={buttonLink}
+              className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shrink-0 sm:ml-auto"
+            >
               {buttonLabel}
               <svg width="18" height="18" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22.5C17.5228 22.5 22 18.0228 22 12.5C22 6.97715 17.5228 2.5 12 2.5C6.47715 2.5 2 6.97715 2 12.5C2 18.0228 6.47715 22.5 12 22.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M12 8.5V16.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M8 12.5H16" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-
             </Link>
           )}
         </div>

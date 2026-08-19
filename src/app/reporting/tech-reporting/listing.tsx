@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { ExportToCsv } from "export-to-csv-file";
 import SortIcon from "@/app/component/sortIcon";
 import Pagination from "@/app/component/pagination";
-import { format } from "date-fns";
+import { formatDisplayDateRangeYmd } from "@/lib/dateUtils";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -559,10 +559,7 @@ export default function TechReportingDashboard() {
 
   const dateRangeLabel =
     startDate && endDate
-      ? `${format(new Date(startDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-        new Date(endDate + "T12:00:00"),
-        "MMM d, yyyy"
-      )}`
+      ? formatDisplayDateRangeYmd(startDate, endDate)
       : "Optional date range";
 
   const clearFilters = () => {
@@ -770,8 +767,8 @@ export default function TechReportingDashboard() {
         </div>
 
         {/* Filters */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
-          <div className="min-w-[220px] flex-1 relative" ref={jobDropdownRef}>
+        <div className="admin-filters-bar rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
+          <div className="min-w-[220px] flex-1 relative admin-filter-field-wrap admin-filter-dropdown-wrap" ref={jobDropdownRef}>
             <label className="block text-xs font-medium text-gray-500 mb-1">Select Job</label>
 
             <button
@@ -800,7 +797,7 @@ export default function TechReportingDashboard() {
             </button>
 
             {isJobDropdownOpen && (
-              <div className="absolute left-0 right-0 z-[9999] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="admin-filter-dropdown absolute left-0 right-0 z-[9999] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                 <div className="p-2 border-b border-gray-100">
                   <input
                     type="search"
@@ -854,7 +851,10 @@ export default function TechReportingDashboard() {
             )}
           </div>
 
-          <div className="min-w-[220px] relative" ref={datePopoverRef}>
+          <div
+            className={`min-w-[220px] relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
+            ref={datePopoverRef}
+          >
             <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
             <button
               type="button"
@@ -869,7 +869,7 @@ export default function TechReportingDashboard() {
               </span>
             </button>
             {selectedJobId && datePopoverOpen && (
-              <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
+              <div className="admin-date-popover absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
                 <div className="flex flex-col gap-2">
                   <div>
                     <label className="text-xs text-gray-500">Start</label>

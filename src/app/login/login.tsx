@@ -162,13 +162,13 @@ export default function Login() {
 
   return (
     <div className="items-center justify-items-center">
-      <section className="min-h-screen w-full">
-        <div className="bg-white flex items-center gap-8 w-full ">
+      <section className="admin-login-page min-h-screen w-full">
+        <div className="admin-login-shell bg-white flex items-center gap-8 w-full">
 
-          <div className="w-1/2 md:block hidden  ">
+          <div className="admin-login-banner w-1/2 md:block hidden">
             <img src='https://jdp.nyc3.cdn.digitaloceanspaces.com/logo/image+(27).avif' className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
           </div>
-          <div className="md:w-1/2" style={{ padding: '0px 5rem' }}>
+          <div className="admin-login-form-wrap md:w-1/2">
             <div className="text-center mb-5 w-full">
               <Image src={Logo} className="m-auto rounded object-cover" width='100' height='50' alt="page img" />
               <h2 className="text-2xl font-bold text-[#161616] mt-5">Welcome back to Prorevv!</h2>
@@ -255,7 +255,7 @@ export default function Login() {
               <div className="pt-4 text-right">
                 <Link href="/forgot" className="text-sm primary-text underline">Forgot Password?</Link>
               </div>
-              <button type="submit" className="w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
+              <button type="submit" className="admin-login-submit w-[40%] m-auto block flex items-center justify-center gap-2 focus:bg-black text-white font-semibold rounded-lg primary-bg
                 px-4 py-3 mt-6"
                 disabled={submitting}
               >

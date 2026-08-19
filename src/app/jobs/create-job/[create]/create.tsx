@@ -24,12 +24,21 @@ import {
   FormControlLabel
 } from '@mui/material';
 import Breadcrumb from '@/app/component/breadcrumb';
+import VehicleTypePricingWarningModal, {
+  getVehicleTypePricingWarning,
+  type VehiclePricingWarningVariant,
+  type VehicleTypePricingValues,
+} from '@/app/component/vehicleTypePricingWarningModal';
+import VehicleTypePricingUpdateModal, {
+  hasVehicleTypePricingChanged,
+} from '@/app/component/vehicleTypePricingUpdateModal';
 import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { MUI_DATE_PICKER_DISPLAY_FORMAT } from '@/lib/dateUtils';
 
 /** API: single URL or JSON string array e.g. `["https://...","https://..."]` */
 function parseInsuranceFileUrls(raw: unknown): string[] {
@@ -68,6 +77,7 @@ function serializeInsuranceFileForApi(urls: string[]): string {
   if (urls.length === 1) return urls[0];
   return JSON.stringify(urls);
 }
+
 
 interface SelectedTechnician {
   userId: string;
@@ -197,6 +207,16 @@ export default function JobForm() {
   const [managerSearchTerm, setManagerSearchTerm] = useState<string>('');
   const [isManagerSearching, setIsManagerSearching] = useState<boolean>(false);
   const [existingInsuranceFileUrls, setExistingInsuranceFileUrls] = useState<string[]>([]);
+  const [vehiclePricingWarning, setVehiclePricingWarning] = useState<VehiclePricingWarningVariant | null>(null);
+  const [missingVehicleTypeLabels, setMissingVehicleTypeLabels] = useState<string[]>([]);
+  const [originalVehiclePricing, setOriginalVehiclePricing] = useState<VehicleTypePricingValues>({
+    suvPrice: '',
+    sedanPrice: '',
+    truckPrice: '',
+    chassisTruckPrice: '',
+    other: '',
+  });
+  const [showVehiclePricingUpdateModal, setShowVehiclePricingUpdateModal] = useState(false);
 
   useEffect(() => {
     const type = localStorage.getItem('types');
@@ -505,6 +525,13 @@ export default function JobForm() {
           insurancePercentage: jobData.insurancePercentage || '',
           pricePerVehicle: jobData.pricePerVehicle || '',
         }));
+        setOriginalVehiclePricing({
+          suvPrice: getVehicleAmount('SUV') || jobData.suvPrice || '',
+          sedanPrice: getVehicleAmount('Sedan') || jobData.sedanPrice || '',
+          truckPrice: getVehicleAmount('Truck') || jobData.truckPrice || '',
+          chassisTruckPrice: getVehicleAmount('Chassis Truck') || jobData.chassisTruckPrice || '',
+          other: getVehicleAmount('Other') || jobData.other || '',
+        });
         setExistingInsuranceFileUrls(parseInsuranceFileUrls(jobData.insuranceFile));
 
         setJobId(jobData.id);
@@ -610,41 +637,7 @@ export default function JobForm() {
     return (amount / count).toFixed(2);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newErrors: { [key: string]: string } = {};
-    if (!formData.jobName?.trim()) newErrors.jobName = 'Job Title is required';
-    if (!formData.assignCustomer) newErrors.assignCustomer = 'Customer is required';
-
-    if (formData.jobType === 'insurancePercentage' && !formData.insurancePercentage?.trim()) {
-      newErrors.insurancePercentage = 'Percentage is required';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    if (userType !== 'single-technician') {
-      if (selectedNormalTechnicians.length > 0 && !simpleFlatRate.trim()) {
-        toast.error('Please fill the Dent Tech Flat Rate ($)');
-        return;
-      }
-      if (selectedRrTechnicians.length > 0 && !rirValue.trim()) {
-        toast.error('Please fill the R&I Flat Rate ($)');
-        return;
-      }
-      // if (simpleFlatRate.trim() && selectedNormalTechnicians.length === 0) {
-      //   toast.error('Please assign at least one Dent Tech');
-      //   return;
-      // }
-      // if (rirValue.trim() && selectedRrTechnicians.length === 0) {
-      //   toast.error('Please assign at least one R&I technician');
-      //   return;
-      // }
-    }
-
+  const submitJobToApi = async (options?: { applyPricingTo?: 'future' | 'all' }) => {
     try {
       setSubmitting(true);
       const token = localStorage.getItem('token');
@@ -746,6 +739,11 @@ export default function JobForm() {
         ...(formData.jobType !== 'insurancePercentage' && {
           pricePerVehicle: formData.pricePerVehicle,
         }),
+        ...(isEdit &&
+          formData.jobType === 'flatRate' &&
+          options?.applyPricingTo && {
+          applyPricingTo: options.applyPricingTo,
+        }),
       };
       console.log(requestBody, 'requestBody');
       const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
@@ -845,6 +843,82 @@ export default function JobForm() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.jobName?.trim()) newErrors.jobName = 'Job Title is required';
+    if (!formData.assignCustomer) newErrors.assignCustomer = 'Customer is required';
+
+    if (formData.jobType === 'insurancePercentage' && !formData.insurancePercentage?.trim()) {
+      newErrors.insurancePercentage = 'Percentage is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (userType !== 'single-technician') {
+      if (selectedNormalTechnicians.length > 0 && !simpleFlatRate.trim()) {
+        toast.error('Please fill the Dent Tech Flat Rate ($)');
+        return;
+      }
+      if (selectedRrTechnicians.length > 0 && !rirValue.trim()) {
+        toast.error('Please fill the R&I Flat Rate ($)');
+        return;
+      }
+      // if (simpleFlatRate.trim() && selectedNormalTechnicians.length === 0) {
+      //   toast.error('Please assign at least one Dent Tech');
+      //   return;
+      // }
+      // if (rirValue.trim() && selectedRrTechnicians.length === 0) {
+      //   toast.error('Please assign at least one R&I technician');
+      //   return;
+      // }
+    }
+
+    if (!isEdit && formData.jobType === 'flatRate') {
+      const { variant, missingLabels } = getVehicleTypePricingWarning({
+        suvPrice: formData.suvPrice,
+        sedanPrice: formData.sedanPrice,
+        truckPrice: formData.truckPrice,
+        chassisTruckPrice: formData.chassisTruckPrice,
+        other: formData.other,
+      });
+
+      if (variant) {
+        setMissingVehicleTypeLabels(missingLabels);
+        setVehiclePricingWarning(variant);
+        return;
+      }
+    }
+
+    await continueJobSubmit();
+  };
+
+  const getCurrentVehiclePricing = (): VehicleTypePricingValues => ({
+    suvPrice: formData.suvPrice,
+    sedanPrice: formData.sedanPrice,
+    truckPrice: formData.truckPrice,
+    chassisTruckPrice: formData.chassisTruckPrice,
+    other: formData.other,
+  });
+
+  const continueJobSubmit = async (options?: { applyPricingTo?: 'future' | 'all' }) => {
+    if (
+      isEdit &&
+      formData.jobType === 'flatRate' &&
+      !options?.applyPricingTo &&
+      hasVehicleTypePricingChanged(originalVehiclePricing, getCurrentVehiclePricing())
+    ) {
+      setShowVehiclePricingUpdateModal(true);
+      return;
+    }
+
+    await submitJobToApi(options);
   };
 
   const handleJobNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1374,6 +1448,7 @@ export default function JobForm() {
             <div className="grid grid-cols-2 gap-4">
               <DatePicker
                 label="Start Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                 value={startDate}
                 readOnly
                 onChange={(newValue) => {
@@ -1389,6 +1464,7 @@ export default function JobForm() {
               />
               <DatePicker
                 label="End Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
                 value={endDate}
                 onChange={(newValue) => {
                   setEndDate(newValue);
@@ -1599,6 +1675,32 @@ export default function JobForm() {
           </div>
         </form>
       </div>
+
+      {vehiclePricingWarning && (
+        <VehicleTypePricingWarningModal
+          variant={vehiclePricingWarning}
+          missingLabels={missingVehicleTypeLabels}
+          isEdit={isEdit}
+          onProceed={() => {
+            setVehiclePricingWarning(null);
+            void continueJobSubmit();
+          }}
+          onDismiss={() => setVehiclePricingWarning(null)}
+        />
+      )}
+
+      {showVehiclePricingUpdateModal && (
+        <VehicleTypePricingUpdateModal
+          onApplyFutureOnly={() => {
+            setShowVehiclePricingUpdateModal(false);
+            void submitJobToApi({ applyPricingTo: 'future' });
+          }}
+          onApplyPreviousToo={() => {
+            setShowVehiclePricingUpdateModal(false);
+            void submitJobToApi({ applyPricingTo: 'all' });
+          }}
+        />
+      )}
     </div>
   );
 }

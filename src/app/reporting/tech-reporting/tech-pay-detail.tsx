@@ -9,6 +9,9 @@ import Loader from "@/app/component/loader";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import Pagination from "@/app/component/pagination";
+import AdminSelect from "@/app/component/AdminSelect";
+import { formatDisplayDateRangeYmd, formatDisplayDateFromYmd } from "@/lib/dateUtils";
+import UiYmdDateInput from "@/app/component/UiYmdDateInput";
 import {
   baseUrl,
   PAGE_LIMIT,
@@ -20,13 +23,14 @@ import {
   DetailActiveFilter,
   techReportingListUrl,
   toDateInputValue,
+  workOrderDatePaidInputValue,
   markVehicleTechnicianPaid,
   resolveFillAllPaidAt,
   vehicleHasPaidDate,
+  isWorkOrderPaid,
   workOrdersApiPath,
 } from "./tech-pay-shared";
 import { downloadWorkOrdersPdf, exportWorkOrdersCsv } from "./tech-pay-export";
-import { format } from "date-fns";
 
 export default function TechPayDetailView() {
   const router = useRouter();
@@ -68,10 +72,7 @@ export default function TechPayDetailView() {
 
   const dateRangeLabel =
     filterStartDate && filterEndDate
-      ? `${format(new Date(filterStartDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-          new Date(filterEndDate + "T12:00:00"),
-          "MMM d, yyyy"
-        )}`
+      ? formatDisplayDateRangeYmd(filterStartDate, filterEndDate)
       : "From – To";
 
   useEffect(() => {
@@ -201,7 +202,7 @@ export default function TechPayDetailView() {
       const drafts: Record<number, string> = {};
       rows.forEach((wo: WorkOrderRow) => {
         if (wo.vehicleId != null) {
-          drafts[wo.vehicleId] = toDateInputValue(wo.paidAt);
+          drafts[wo.vehicleId] = isWorkOrderPaid(wo) ? toDateInputValue(wo.paidAt) : "";
         }
       });
       setDateDrafts(drafts);
@@ -395,15 +396,6 @@ export default function TechPayDetailView() {
     );
   };
 
-  const handleClearDate = async (wo: WorkOrderRow) => {
-    const vehicleId = Number(wo.vehicleId);
-    const techId = Number(technicianId);
-    if (Number.isNaN(vehicleId) || Number.isNaN(techId)) return;
-
-    setDateDrafts((prev) => ({ ...prev, [vehicleId]: "" }));
-    await submitPaidUpdate(false, [{ vehicleId, technicianId: techId }], { vehicleId });
-  };
-
   const handleFillAllDates = async () => {
     const techId = Number(technicianId);
     if (!jobId || Number.isNaN(techId)) {
@@ -425,7 +417,7 @@ export default function TechPayDetailView() {
       }
 
       const paidAt = resolveFillAllPaidAt(allRows, dateDrafts);
-      const dateLabel = format(new Date(`${paidAt}T12:00:00`), "MMM d, yyyy");
+      const dateLabel = formatDisplayDateFromYmd(paidAt);
       const skippedCount = allRows.length - emptyRows.length;
       const hasExistingDate = skippedCount > 0;
 
@@ -438,11 +430,10 @@ export default function TechPayDetailView() {
             vehicle${emptyRows.length === 1 ? "" : "s"} without a payment date?
           </p>
           <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#6b7280;text-align:center">
-            ${
-              hasExistingDate
-                ? `${skippedCount} vehicle${skippedCount === 1 ? "" : "s"} with an existing date will not be changed. Using the most recent date already set in this job.`
-                : "No payment date was set yet — using today's date."
-            }
+            ${hasExistingDate
+            ? `${skippedCount} vehicle${skippedCount === 1 ? "" : "s"} with an existing date will not be changed. Using the most recent date already set in this job.`
+            : "No payment date was set yet — using today's date."
+          }
           </p>
         `,
         icon: "question",
@@ -497,9 +488,8 @@ export default function TechPayDetailView() {
 
   return (
     <div
-      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${
-        isCollapsed ? "w-full pl-20" : "container max-w-7xl"
-      }`}
+      className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${isCollapsed ? "w-full pl-20" : "container max-w-7xl"
+        }`}
     >
       <Breadcrumb
         items={[
@@ -520,15 +510,18 @@ export default function TechPayDetailView() {
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-4">
-            <div className="min-w-[180px] flex-1">
+          <div className="admin-filters-bar flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-4">
+            <div className="min-w-[180px] flex-1 admin-filter-field-wrap">
               <label className="block text-xs font-medium text-gray-500 mb-1">Job ID</label>
               <div className="h-[44px] flex items-center px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm font-mono text-[#383d71]">
                 {displayJobId || "—"}
               </div>
             </div>
 
-            <div className="min-w-[220px] flex-1 relative" ref={datePopoverRef}>
+            <div
+              className={`min-w-[220px] flex-1 relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
+              ref={datePopoverRef}
+            >
               <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
               <button
                 type="button"
@@ -546,7 +539,7 @@ export default function TechPayDetailView() {
                 </span>
               </button>
               {datePopoverOpen && (
-                <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
+                <div className="admin-date-popover absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
                   <div className="flex flex-col gap-2">
                     <div>
                       <label className="text-xs text-gray-500">Date From</label>
@@ -582,9 +575,9 @@ export default function TechPayDetailView() {
               )}
             </div>
 
-            <div className="min-w-[160px]">
+            <div className="min-w-[160px] admin-filter-field-wrap admin-select-wrap">
               <label className="block text-xs font-medium text-gray-500 mb-1">Pay Status</label>
-              <select
+              <AdminSelect
                 value={filterPayStatus}
                 onChange={(e) => applyPayStatus(e.target.value as PayStatusFilter)}
                 className="w-full h-[44px] px-3 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-[#383d71]/30"
@@ -592,7 +585,7 @@ export default function TechPayDetailView() {
                 <option value="all">All</option>
                 <option value="paid">Paid</option>
                 <option value="unpaid">Unpaid</option>
-              </select>
+              </AdminSelect>
             </div>
 
             <button
@@ -620,7 +613,7 @@ export default function TechPayDetailView() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 md:p-5">
-              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                   <p className="text-xs font-medium text-gray-500 mb-1">
                     {detailMeta?.technicianType || "Dent Tech"}
                   </p>
@@ -638,7 +631,7 @@ export default function TechPayDetailView() {
                     {(detailMeta?.totalCars ?? 0) === 1 ? "car" : "cars"}
                   </p>
                 </div>
-               
+
                 <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:col-span-1 lg:col-span-1">
                   <p className="text-xs font-medium text-gray-500 mb-1">Job</p>
                   <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
@@ -649,7 +642,7 @@ export default function TechPayDetailView() {
                   <p className="text-xs font-medium text-gray-500 mb-1">Job ID</p>
                   <p className="text-lg font-bold text-[#383d71] font-mono">{displayJobId}</p>
                 </div>
-                
+
               </div>
             </div>
 
@@ -657,7 +650,7 @@ export default function TechPayDetailView() {
               <div className="px-4 py-3 border-b border-gray-100 bg-white flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-gray-900">
-                    Tech Cars Detail per JobID 
+                    Tech Cars Detail per JobID
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
                     Vehicles worked by {detailMeta?.technicianName || "technician"}
@@ -711,6 +704,7 @@ export default function TechPayDetailView() {
                             "Stock Number",
                             "Color",
                             "Tech Pay Amount",
+                            "Invoice Status",
                             "Date Paid",
                           ].map((col) => (
                             <th
@@ -730,70 +724,59 @@ export default function TechPayDetailView() {
                             </td>
                           </tr>
                         ) : (
-                          workOrders.map((wo, i) => {
-                            const hasPaidDate = vehicleHasPaidDate(wo, dateDrafts);
-                            return (
-                            <tr
-                              key={wo.vehicleId ?? i}
-                              className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
-                            >
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.technicianName || detailMeta?.technicianName || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.customerName || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100 font-mono text-xs">
-                                {wo.vin || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.modelYear ?? "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.make || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.model || "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.stockNumber?.trim() ? wo.stockNumber : "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                {wo.color?.trim() ? wo.color : "—"}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
-                                {money(wo.techPayAmount)}
-                              </td>
-                              <td className="px-3 py-2.5 border-b border-gray-100">
-                                <div className="flex flex-wrap items-center gap-2 min-w-[220px]">
-                                  <input
-                                    type="date"
-                                    value={dateDrafts[wo.vehicleId] ?? toDateInputValue(wo.paidAt)}
-                                    onChange={(e) => void handleDateChange(wo, e.target.value)}
+                          workOrders.map((wo, i) => (
+                              <tr
+                                key={wo.vehicleId ?? i}
+                                className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}
+                              >
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.technicianName || detailMeta?.technicianName || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.customerName || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-mono text-xs">
+                                  {wo.vin || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.modelYear ?? "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.make || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.model || "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.stockNumber?.trim() ? wo.stockNumber : "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  {wo.color?.trim() ? wo.color : "—"}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
+                                  {money(wo.techPayAmount)}
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100 font-medium">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-white text-sm ${isWorkOrderPaid(wo) ? "bg-green-500" : "bg-red-500"
+                                      }`}
+                                  >
+                                    {isWorkOrderPaid(wo) ? "Paid" : "Unpaid"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2.5 border-b border-gray-100">
+                                  <UiYmdDateInput
+                                    value={workOrderDatePaidInputValue(wo, dateDrafts)}
+                                    onChange={(ymd) => void handleDateChange(wo, ymd)}
                                     disabled={
                                       isSubmittingPaid || submittingVehicleId === wo.vehicleId
                                     }
-                                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50"
+                                    fullWidth={false}
+                                    minWidth={180}
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleClearDate(wo)}
-                                    disabled={
-                                      !hasPaidDate ||
-                                      isSubmittingPaid ||
-                                      submittingVehicleId === wo.vehicleId
-                                    }
-                                    className="primary-bg px-3 py-1.5 rounded text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    {submittingVehicleId === wo.vehicleId
-                                      ? "..."
-                                      : "Clear Date"}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                            );
-                          })
+                                </td>
+                              </tr>
+                            ))
                         )}
                       </tbody>
                       {workOrders.length > 0 && (

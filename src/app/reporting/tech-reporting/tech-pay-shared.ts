@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 export const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api";
 export const PAGE_LIMIT = 10;
@@ -17,9 +18,22 @@ export type WorkOrderRow = {
   stockNumber?: string;
   color?: string;
   techPayAmount?: number;
-  paidStatus?: boolean;
+  /** Tech pay Paid/Unpaid — use this, not invoiceStatus / generatedInvoiceStatus. */
+  paidStatus?: boolean | string | null;
+  generatedInvoiceStatus?: boolean;
+  invoiceStatus?: string | null;
   paidAt?: string | null;
+  generatedInvoiceDate?: string | null;
 };
+
+/** Paid badge + filters must follow API `paidStatus`, not invoice generation flags. */
+export function isWorkOrderPaid(wo: Pick<WorkOrderRow, "paidStatus"> | null | undefined): boolean {
+  const raw = wo?.paidStatus;
+  if (typeof raw === "boolean") return raw;
+  if (raw == null) return false;
+  const s = String(raw).trim().toLowerCase();
+  return s === "true" || s === "paid" || s === "1";
+}
 
 export type DetailJobDetails = {
   id?: number;
@@ -44,7 +58,7 @@ export function money(n: number | string | undefined | null) {
 export function formatDatePaid(paidAt: string | null | undefined, paidStatus?: boolean) {
   if (paidAt) {
     try {
-      return format(new Date(paidAt), "MMM d, yyyy");
+      return formatDisplayDate(paidAt);
     } catch {
       return paidAt;
     }
@@ -170,6 +184,19 @@ export function toDateInputValue(raw: string | null | undefined): string {
 
 export function todayDateInputValue(): string {
   return format(new Date(), "yyyy-MM-dd");
+}
+
+/** Tech pay date for type="date" inputs — paidAt only; empty when unpaid (not generatedInvoiceDate). */
+export function workOrderDatePaidInputValue(
+  wo: WorkOrderRow,
+  dateDrafts: Record<number, string> = {}
+): string {
+  const id = wo.vehicleId;
+  if (id != null && Object.prototype.hasOwnProperty.call(dateDrafts, id)) {
+    return dateDrafts[id] ?? "";
+  }
+  if (!isWorkOrderPaid(wo)) return "";
+  return toDateInputValue(wo.paidAt);
 }
 
 /** Whether this vehicle already has a payment date (draft or saved). */

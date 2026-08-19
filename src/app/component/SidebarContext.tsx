@@ -1,20 +1,32 @@
 import { createContext, useState, useContext, ReactNode } from "react";
 
-// 1. Define the context type
 interface SidebarContextType {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (value: boolean) => void;
+  isMobileView: boolean;
+  setIsMobileView: (value: boolean) => void;
 }
 
-// 2. Create context with default value
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-// 3. Create provider with props typing
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   return (
-    <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
+    <SidebarContext.Provider
+      value={{
+        isCollapsed,
+        setIsCollapsed,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
+        isMobileView,
+        setIsMobileView,
+      }}
+    >
       {children}
     </SidebarContext.Provider>
   );

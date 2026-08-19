@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -490,8 +491,8 @@ const CompletedJobs: React.FC = () => {
 
           <td>{completejob.vin}</td>
           <td>{completejob.make}</td>
-          <td>{new Date(completejob.createdAt).toLocaleDateString('en-GB')}</td>
-          <td>{new Date(completejob.completedDate).toLocaleDateString('en-GB')}</td>
+          <td>{formatDisplayDate(completejob.createdAt)}</td>
+          <td>{formatDisplayDate(completejob.completedDate)}</td>
           <td>
             <span
               className={`badge ${completejob.jobStatus

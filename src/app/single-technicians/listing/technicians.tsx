@@ -804,10 +804,11 @@ const TechnicianTable: React.FC = () => {
         sortDirection={sortDirection}
         handleSort={handleSort}
         loading={loading}
+        tableClassName="table w-full min-w-[1500px] table-fixed"
         renderHeaderCell={(header, index) => {
           if (index === 0) {
             return (
-              <th key={index} className='w-[40px]'>
+              <th key={index} className='w-[40px] min-w-[40px]'>
                 <label className="flex items-center cursor-pointer relative">
                   <input
                     type="checkbox"
@@ -836,10 +837,22 @@ const TechnicianTable: React.FC = () => {
           const sortKey = headerToSortKey[header];
           const isSortable = Boolean(sortKey);
 
+          const widthByIndex: Record<number, string> = {
+            1: 'w-[90px] min-w-[90px]',
+            2: 'w-[180px] min-w-[180px]',
+            3: 'w-[220px] min-w-[220px]',
+            4: 'w-[140px] min-w-[140px]',
+            5: 'w-[110px] min-w-[110px]',
+            6: 'w-[160px] min-w-[160px]',
+            7: 'w-[140px] min-w-[140px]',
+            8: 'w-[230px] min-w-[230px]',
+            9: 'w-[110px] min-w-[110px]',
+          };
+
           return (
             <th
               key={index}
-              className={`cursor-pointer ${index === 1 ? 'w-[100px]' : ''} ${index === 2 ? 'w-[180px]' : ''} ${index === 3 ? 'w-[220px]' : ''} ${index === 4 ? 'w-[150px]' : ''} ${index === 7 ? 'w-[120px]' : ''} ${index === 8 ? 'w-[230px]' : ''} ${index === 9 ? 'w-[110px]' : ''}`}
+              className={`cursor-pointer whitespace-nowrap align-middle ${widthByIndex[index] || ''}`}
               onClick={() => isSortable && handleSort(sortKey)}
             >
               {header}

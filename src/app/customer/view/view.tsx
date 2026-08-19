@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Empty from '@/app/component/empty';
 import Pagination from '@/app/component/pagination';
 import { useRouter, useSearchParams } from "next/navigation";
@@ -212,7 +213,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`mobile_listing mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
 
       <Breadcrumb
         items={[
@@ -274,7 +275,7 @@ export default function ViewDetails() {
         {/* Job List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold rounded-t-lg mb-4">Job List</h3>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-300">
@@ -299,8 +300,8 @@ export default function ViewDetails() {
                       <td className="px-6 py-4 text-gray-900">{job.id || '–'}</td>
                       <td className="px-6 py-4"><span className="capitalize">{job.jobName || '–'}</span></td>
                       {/* <td className="px-6 py-4">{job.estimatedCost ? `$${job.estimatedCost}` : '–'}</td> */}
-                      <td className="px-6 py-4 text-gray-700">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
-                      <td className="px-6 py-4 text-gray-700">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.startDate ? formatDisplayDate(job.startDate) : '–'}</td>
+                      <td className="px-6 py-4 text-gray-700">{job.endDate ? formatDisplayDate(job.endDate) : '–'}</td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#383d71] transition-colors" data-tooltip-id="view-job" data-tooltip-content="View">
                           <Image alt="View" src={Eye} className="w-4 h-4" />
@@ -331,7 +332,7 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold rounded-t-lg mb-4">Vehicle List</h3>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
+          <div className="admin-table-wrap admin-view-table-wrap admin-vehicle-table overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm mb-6">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-300">

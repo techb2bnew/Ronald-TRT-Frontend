@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Pagination from '@/app/component/pagination';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { Country, State } from 'country-state-city';
@@ -434,7 +435,7 @@ export default function ViewDetails() {
   const UserIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
           { label: 'Single Technicians', href: '/single-technicians/listing' },
@@ -583,7 +584,7 @@ export default function ViewDetails() {
         {/* Job List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold text-gray-800 mb-4">Job List</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
@@ -610,10 +611,10 @@ export default function ViewDetails() {
                         <span className="capitalize">{job.jobName || '-'}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {job.startDate ? new Date(job.startDate).toLocaleDateString() : '-'}
+                        {job.startDate ? formatDisplayDate(job.startDate) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {job.endDate ? new Date(job.endDate).toLocaleDateString() : '-'}
+                        {job.endDate ? formatDisplayDate(job.endDate) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {job.estimatedCost ? `$${job.estimatedCost}` : '-'}
@@ -653,7 +654,7 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-4">
           <h3 className="font-bold text-gray-800 mb-4">Vehicle List</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">

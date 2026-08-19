@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tooltip } from 'react-tooltip';
@@ -639,7 +640,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
           getBaseBreadcrumb(),
@@ -713,12 +714,12 @@ export default function ViewDetails() {
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="Start Date"
-              value={jobData?.startDate ? new Date(jobData.startDate).toLocaleDateString() : '–'}
+              value={jobData?.startDate ? formatDisplayDate(jobData.startDate) : '–'}
             />
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="End Date"
-              value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : '–'}
+              value={jobData?.endDate ? formatDisplayDate(jobData.endDate) : '–'}
             />
             {/* <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -809,10 +810,10 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-5">
           <div className="flex flex-col gap-3 mb-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="admin-job-report-toolbar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="font-bold rounded-t-lg m-0">Tech and assigned vehicles report</h3>
-              <div className="flex flex-row gap-3">
-                <div className="w-[500px]">
+              <div className="admin-job-report-actions flex flex-row gap-3">
+                <div className="admin-job-report-search w-full sm:w-[500px]">
                   <label htmlFor="assignment-table-search" className="sr-only">
                     Search tech and vehicles
                   </label>
@@ -830,7 +831,7 @@ export default function ViewDetails() {
                   type="button"
                   onClick={handleMarkTechniciansPaid}
                   disabled={isSubmittingPaid}
-                  className="primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                  className="admin-job-report-pay-btn primary-bg shrink-0 px-5 py-2 rounded text-white font-medium cursor-pointer hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmittingPaid ? 'Updating...' : 'Mark as paid'}
                 </button>
@@ -839,7 +840,7 @@ export default function ViewDetails() {
             </div>
 
           </div>
-          <div className="overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">

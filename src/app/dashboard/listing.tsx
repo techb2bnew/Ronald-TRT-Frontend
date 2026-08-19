@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
  
 import { useSidebar } from "@/app/component/SidebarContext";
+import { formatDisplayDate } from '@/lib/dateUtils';
 
 interface DashboardCounts {
     jobsuperadmin?: number;
@@ -622,10 +623,10 @@ export default function Dashboard() {
                                             )}
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{job.vehicleCount || 0}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {job.startDate ? new Date(job.startDate).toLocaleDateString() : '-'}
+                                                {job.startDate ? formatDisplayDate(job.startDate) : '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {job.endDate ? new Date(job.endDate).toLocaleDateString() : '-'}
+                                                {job.endDate ? formatDisplayDate(job.endDate) : '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 ${job.estimatedCost || '0'}

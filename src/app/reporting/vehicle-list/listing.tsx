@@ -10,6 +10,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import Empty from '@/app/component/empty';
 import Loader from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
@@ -408,10 +409,10 @@ const handleImportCSV = (file: File) => {
         <td>{job.make} </td>
         <td>{job.model}</td>
         <td>{job.modelYear}</td> 
-        <td> {job.endDate?new Date(job.startDate).toLocaleDateString('en-GB') : ''}</td>
+        <td> {job.endDate?formatDisplayDate(job.startDate) : ''}</td>
         <td>
           {job.endDate
-            ? new Date(job.endDate).toLocaleDateString('en-GB')
+            ? formatDisplayDate(job.endDate)
             : ''}
         </td>
  

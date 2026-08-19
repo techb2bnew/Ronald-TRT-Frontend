@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Empty from '@/app/component/empty';
 import Pagination from '@/app/component/pagination';
 import Breadcrumb from '@/app/component/breadcrumb';
@@ -425,7 +426,7 @@ export default function ViewDetails() {
   );
 
   return (
-    <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
+    <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
           { label: 'IFS Technicians', href: '/technicians/listing' },
@@ -458,15 +459,15 @@ export default function ViewDetails() {
             )}
             <div className="flex-1 min-w-0 text-white space-y-2">
               <h2 className="text-xl font-bold capitalize truncate">{technician?.firstName} {technician?.lastName}</h2>
-              <p className="flex items-center gap-2 flex-wrap">
+              <p className="flex items-center gap-2 flex-nowrap min-[992px]:flex-wrap">
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 <a href={`mailto:${technician?.email}`} className="hover:underline truncate">{technician?.email || 'N/A'}</a>
               </p>
-              <p className="flex items-center gap-2 flex-wrap">
+              <p className="flex items-center gap-2 flex-nowrap min-[992px]:flex-wrap">
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="truncate">{displayAddress}</span>
               </p>
-              <p className="flex items-center gap-2 flex-wrap">
+              <p className="flex items-center gap-2 flex-nowrap min-[992px]:flex-wrap">
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                 <a href={`tel:${technician?.phoneNumber}`} className="hover:underline">{technician?.phoneNumber || 'N/A'}</a>
               </p>
@@ -496,7 +497,7 @@ export default function ViewDetails() {
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
               label="Date"
-              value={technician?.createdAt ? new Date(technician.createdAt).toLocaleDateString('en-GB') : 'N/A'}
+              value={technician?.createdAt ? formatDisplayDate(technician.createdAt) : 'N/A'}
             />
             <InfoCard
               icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -544,7 +545,7 @@ export default function ViewDetails() {
         {/* Job List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold text-gray-800 mb-4">Job List</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
@@ -583,8 +584,8 @@ export default function ViewDetails() {
                           ? `$${job.techTotalEarned}`
                           : '–'}
                       </td>
-                      <td className="px-6 py-4">{job.startDate ? new Date(job.startDate).toLocaleDateString() : '–'}</td>
-                      <td className="px-6 py-4">{job.endDate ? new Date(job.endDate).toLocaleDateString() : '–'}</td>
+                      <td className="px-6 py-4">{job.startDate ? formatDisplayDate(job.startDate) : '–'}</td>
+                      <td className="px-6 py-4">{job.endDate ? formatDisplayDate(job.endDate) : '–'}</td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/jobs/view?jobId=${job.id}&ActiveWorkOrder`} className="inline-flex items-center justify-center w-9 h-9  " data-tooltip-id="view-job" data-tooltip-content="View">
                           <Image alt="View" src={Eye} className="w-4 h-4" />
@@ -615,7 +616,7 @@ export default function ViewDetails() {
         {/* Vehicle List */}
         <div className="shadow-lg p-4 bg-white rounded-lg mt-4">
           <h3 className="font-bold text-gray-800 mb-4">Vehicle List</h3>
-          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="admin-table-wrap admin-view-table-wrap admin-vehicle-table overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">

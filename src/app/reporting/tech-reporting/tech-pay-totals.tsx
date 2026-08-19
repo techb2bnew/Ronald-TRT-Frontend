@@ -9,7 +9,7 @@ import Loader from "@/app/component/loader";
 import toast from "react-hot-toast";
 import SortIcon from "@/app/component/sortIcon";
 import Pagination from "@/app/component/pagination";
-import { format } from "date-fns";
+import { formatDisplayDateRangeYmd, formatDisplayDateFromYmd } from "@/lib/dateUtils";
 import {
   baseUrl,
   PAGE_LIMIT,
@@ -51,14 +51,22 @@ export default function TechPayTotalsReporting() {
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
-  const [selectedJobId, setSelectedJobId] = useState("");
+  // Init from URL so first totals fetch uses correct job/filters (avoids empty→URL double load).
+  const [selectedJobId, setSelectedJobId] = useState(
+    () => searchParams?.get("jobId") || ""
+  );
   const [jobSearch, setJobSearch] = useState("");
   const [isJobDropdownOpen, setIsJobDropdownOpen] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [payStatus, setPayStatus] = useState<PayStatusFilter>("all");
+  const [startDate, setStartDate] = useState(
+    () => searchParams?.get("startDate") || ""
+  );
+  const [endDate, setEndDate] = useState(() => searchParams?.get("endDate") || "");
+  const [payStatus, setPayStatus] = useState<PayStatusFilter>(() => {
+    const ps = searchParams?.get("payStatus");
+    return ps === "paid" || ps === "unpaid" || ps === "all" ? ps : "all";
+  });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Boolean(searchParams?.get("jobId")));
   const [jobDetails, setJobDetails] = useState<JobDetails | null>(null);
   const [techPayTotals, setTechPayTotals] = useState<TechPayRow[]>([]);
   const [listPage, setListPage] = useState(1);
@@ -125,11 +133,16 @@ export default function TechPayTotalsReporting() {
       const list = json?.jobs?.jobs ?? json?.data?.jobs?.jobs ?? [];
       const safeList = Array.isArray(list) ? list : [];
       setJobs(safeList);
+      let autoSelected = false;
       setSelectedJobId((prev) => {
         if (prev) return prev;
         const firstId = safeList[0]?.id;
-        return firstId != null ? String(firstId) : "";
+        if (firstId == null) return "";
+        autoSelected = true;
+        return String(firstId);
       });
+      // Keep a single continuous loader into the totals fetch (no jobs→totals spinner gap).
+      if (autoSelected) setLoading(true);
     } catch (e) {
       console.error(e);
       toast.error("Failed to load jobs");
@@ -213,13 +226,11 @@ export default function TechPayTotalsReporting() {
     }
   };
 
-  useEffect(() => {
-    setListPage(1);
-  }, [selectedJobId, startDate, endDate, payStatus]);
-
+  // Page reset is handled in job/filter handlers below (avoids filter-change double fetch).
   useEffect(() => {
     if (!selectedJobId || !urlFiltersApplied) return;
     fetchTechPayTotals(listPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: re-fetch on filter/page/job changes
   }, [selectedJobId, startDate, endDate, payStatus, listPage, urlFiltersApplied]);
 
   const selectedJob = useMemo(
@@ -280,10 +291,7 @@ export default function TechPayTotalsReporting() {
 
   const dateRangeLabel =
     startDate && endDate
-      ? `${format(new Date(startDate + "T12:00:00"), "MMM d, yyyy")} – ${format(
-          new Date(endDate + "T12:00:00"),
-          "MMM d, yyyy"
-        )}`
+      ? formatDisplayDateRangeYmd(startDate, endDate)
       : "Optional date range";
 
   const clearFilters = () => {
@@ -428,8 +436,8 @@ export default function TechPayTotalsReporting() {
         </h1>
 
         {/* Filters */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
-          <div className="min-w-[220px] flex-1 relative" ref={jobDropdownRef}>
+        <div className="admin-filters-bar rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
+          <div className="min-w-[220px] flex-1 relative admin-filter-field-wrap admin-filter-dropdown-wrap" ref={jobDropdownRef}>
             <label className="block text-xs font-medium text-gray-500 mb-1">Select Job</label>
             <button
               type="button"
@@ -457,7 +465,7 @@ export default function TechPayTotalsReporting() {
             </button>
 
             {isJobDropdownOpen && (
-              <div className="absolute left-0 right-0 z-[9999] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="admin-filter-dropdown absolute left-0 right-0 z-[9999] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                 <div className="p-2 border-b border-gray-100">
                   <input
                     type="search"
@@ -474,6 +482,7 @@ export default function TechPayTotalsReporting() {
                     className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 truncate ${!selectedJobId ? "bg-gray-50" : ""}`}
                     onClick={() => {
                       setSelectedJobId("");
+                      setListPage(1);
                       setIsJobDropdownOpen(false);
                       setJobSearch("");
                     }}
@@ -490,6 +499,7 @@ export default function TechPayTotalsReporting() {
                         }`}
                         onClick={() => {
                           setSelectedJobId(String(j.id));
+                          setListPage(1);
                           setIsJobDropdownOpen(false);
                           setJobSearch("");
                         }}
@@ -505,7 +515,10 @@ export default function TechPayTotalsReporting() {
             )}
           </div>
 
-          <div className="min-w-[220px] relative" ref={datePopoverRef}>
+          <div
+            className={`min-w-[220px] relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
+            ref={datePopoverRef}
+          >
             <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
             <button
               type="button"
@@ -525,7 +538,7 @@ export default function TechPayTotalsReporting() {
               </span>
             </button>
             {selectedJobId && datePopoverOpen && (
-              <div className="absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
+              <div className="admin-date-popover absolute z-20 mt-1 rounded-lg border border-gray-200 bg-white p-3 shadow-lg min-w-[260px]">
                 <div className="flex flex-col gap-2">
                   <div>
                     <label className="text-xs text-gray-500">Start</label>
@@ -533,7 +546,10 @@ export default function TechPayTotalsReporting() {
                       type="date"
                       className="w-full mt-0.5 rounded border border-gray-300 px-2 py-1.5 text-sm"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        setListPage(1);
+                      }}
                     />
                   </div>
                   <div>
@@ -542,7 +558,10 @@ export default function TechPayTotalsReporting() {
                       type="date"
                       className="w-full mt-0.5 rounded border border-gray-300 px-2 py-1.5 text-sm"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        setListPage(1);
+                      }}
                     />
                   </div>
                   <button
@@ -551,6 +570,7 @@ export default function TechPayTotalsReporting() {
                     onClick={() => {
                       setStartDate("");
                       setEndDate("");
+                      setListPage(1);
                     }}
                   >
                     Clear dates
@@ -558,20 +578,6 @@ export default function TechPayTotalsReporting() {
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="min-w-[160px]">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Pay Status</label>
-            <select
-              value={payStatus}
-              onChange={(e) => setPayStatus(e.target.value as PayStatusFilter)}
-              disabled={!selectedJobId}
-              className="w-full h-[44px] px-3 text-sm border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-[#383d71]/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
-            >
-              <option value="all">All</option>
-              <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
-            </select>
           </div>
 
           <button
@@ -583,23 +589,17 @@ export default function TechPayTotalsReporting() {
           </button>
         </div>
 
-        {jobsLoading && (
-          <div className="flex justify-center py-8">
-            <Loader />
-          </div>
-        )}
-
-        {!selectedJobId && !jobsLoading && (
-          <p className="text-center text-gray-500 py-8 text-sm">Select a job above to load tech pay totals.</p>
-        )}
-
-        {selectedJobId && loading && (
+        {(jobsLoading || loading) && (
           <div className="flex justify-center py-12">
             <Loader />
           </div>
         )}
 
-        {selectedJobId && !loading && jobDetails && (
+        {!selectedJobId && !jobsLoading && !loading && (
+          <p className="text-center text-gray-500 py-8 text-sm">Select a job above to load tech pay totals.</p>
+        )}
+
+        {selectedJobId && !jobsLoading && !loading && jobDetails && (
           <>
             <div className="rounded-lg border border-gray-200 bg-white overflow-hidden mb-4 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 bg-[#1e3e6f] text-white px-4 py-3">

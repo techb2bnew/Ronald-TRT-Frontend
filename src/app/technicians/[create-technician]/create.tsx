@@ -90,6 +90,7 @@ export default function Technicians() {
   const [simpleFlatRateAll, setSimpleFlatRateAll] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [address, setAddressValue] = useState<NullableGooglePlacesOption>(null);
+  const [addressMenuOpen, setAddressMenuOpen] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [formData, setFormData] = useState<TechnicianForm>({
@@ -1083,7 +1084,7 @@ export default function Technicians() {
 
 
   return (
-    <div className='w-[60%] m-auto mb-5 max-md:w-full m-auto'>
+    <div className='admin-form-shell m-auto mb-5'>
       <Breadcrumb
         items={[
           {
@@ -1382,12 +1383,15 @@ export default function Technicians() {
           </div> */}
           {/* Address and Email */}
 
-          <div className='mb-4 relative z-10'>
+          <div className={`mb-4 relative admin-address-field${addressMenuOpen ? ' admin-address-field--open' : ''}`}>
             <GooglePlacesAutocomplete
               apiKey=" AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M"
               selectProps={{
                 placeholder: 'Search for an address',
                 value: address,
+                onMenuOpen: () => setAddressMenuOpen(true),
+                onMenuClose: () => setAddressMenuOpen(false),
+                menuPlacement: 'auto',
                 onChange: (newValue: SingleValue<GooglePlacesOption>, actionMeta: ActionMeta<GooglePlacesOption>) => {
                   if (newValue) {
                     handleAddressSelect(newValue);
@@ -1416,6 +1420,14 @@ export default function Technicians() {
                     '&:focus': {
                       borderColor: errors.address ? 'orange' : 'orange',
                     },
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    zIndex: 40,
+                  }),
+                  menuPortal: (provided) => ({
+                    ...provided,
+                    zIndex: 40,
                   }),
                 }
               }}
@@ -1693,7 +1705,7 @@ export default function Technicians() {
 
 
           {/* Submit Button */}
-          <div className="text-left">
+          <div className="text-left admin-form-actions">
             <button
               type="submit"
               className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"

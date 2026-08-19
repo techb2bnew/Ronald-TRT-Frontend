@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -136,34 +137,36 @@ export default function ViewDetails() {
 
   return (
     <div className={`relative mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
-      <Breadcrumb
-        items={[
-          { label: 'Vehicles Info', onClick: () => router.back() },
-          { label: 'View Detail', href: '' },
-        ]}
-      />
-      <div className="flex justify-end absolute top-[2px] right-[2px]">
-        <button
-          type="button"
-          onClick={() => router.push(`/vehicle/create-vehicle?vahicleId=${jobData?.id}`)}
-          className="inline-flex items-center gap-2 primary-bg text-white px-4 py-2 rounded-md hover:opacity-95 transition-opacity"
-        >
-          <svg
-            className="w-4 h-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden
+      <div className="admin-page-toolbar relative mb-4">
+        <Breadcrumb
+          items={[
+            { label: 'Vehicles Info', onClick: () => router.back() },
+            { label: 'View Detail', href: '' },
+          ]}
+        />
+        <div className="admin-page-actions flex justify-end">
+          <button
+            type="button"
+            onClick={() => router.push(`/vehicle/create-vehicle?vahicleId=${jobData?.id}`)}
+            className="inline-flex items-center gap-2 primary-bg text-white px-4 py-2 rounded-md hover:opacity-95 transition-opacity"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-            />
-          </svg>
-          Edit
-        </button>
+            <svg
+              className="w-4 h-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+            Edit
+          </button>
+        </div>
       </div>
       <div className="mx-auto">
         {/* <div className="flex items-center gap-3 mb-4">
@@ -188,7 +191,7 @@ export default function ViewDetails() {
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label="Job Title" value={na(jobData?.jobName)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Make" value={na(jobData?.make)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Manufacturer Name" value={na(jobData?.manufacturerName)} />
-            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="Start Date" value={jobData?.startDate ? new Date(jobData.startDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="Start Date" value={jobData?.startDate ? formatDisplayDate(jobData.startDate) : 'N/A'} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant Country" value={na(jobData?.plantCountry)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} label="Plant State" value={na(jobData?.plantState)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>} label="Customer" value={<span className="capitalize">{na(jobData?.customer?.fullName)}</span>} />
@@ -198,7 +201,7 @@ export default function ViewDetails() {
             <InfoCard icon={<span className="text-sm font-bold">#</span>} label="VIN" value={na(jobData?.vin)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Model" value={na(jobData?.model)} />
             <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>} label="Vehicle Type" value={na(jobData?.vehicleType)} />
-            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="End Date" value={jobData?.endDate ? new Date(jobData.endDate).toLocaleDateString() : 'N/A'} />
+            <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>} label="End Date" value={jobData?.endDate ? formatDisplayDate(jobData.endDate) : 'N/A'} />
 
             {jobData?.pdr !== 'null' && jobData?.pdr !== null && (
               <InfoCard icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label="PDR" value={jobData?.pdr && String(jobData.pdr).trim() !== '' ? `$${jobData.pdr}` : <span className="text-gray-500">No price added</span>} />

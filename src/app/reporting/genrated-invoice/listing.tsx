@@ -13,6 +13,8 @@ import Loader from '@/app/component/loader';
 import { ExportToCsv } from 'export-to-csv-file';
 import Breadcrumb from '@/app/component/breadcrumb';
 import { useSidebar } from "@/app/component/SidebarContext";
+import { formatDisplayDate } from '@/lib/dateUtils';
+import UiYmdDateInput from '@/app/component/UiYmdDateInput';
 import { Tooltip } from 'react-tooltip';
 
 import Papa from 'papaparse';
@@ -22,6 +24,7 @@ import Eye from '../../../../public/eye.svg'
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import InvoiceGenerator from '@/app/component/invoice-genrated';
 import SortIcon from '@/app/component/sortIcon';
+import { formatStockNumberCell } from '@/lib/stockNumberUtils';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';  // ✅ Get the base URL here
 
@@ -439,8 +442,9 @@ const JobTable: React.FC = () => {
         <td> <Link href={`/reporting/view-invoice?invoiceId=${job.invoiceNumber}`} className='hover:underline'> {job?.invoiceNumber}</Link> </td>
         <td>  {job?.customer?.fullName} </td>
         <td>  {job?.job?.jobName} </td>
+        <td>{formatStockNumberCell(job)}</td>
         {/* <td>  {job?.totalCombined ? `$${job.totalCombined}` : 'N/A'}</td> */}
-        <td>{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</td>
+        <td>{job.createdAt ? formatDisplayDate(job.createdAt) : ''}</td>
         <td>
           <div
             className={`badge w-[80px] text-center ${job.status === 'paid'
@@ -455,27 +459,18 @@ const JobTable: React.FC = () => {
         <td>
           <div className="flex gap-2 items-center">
 
-            <TextField
-              label=""
-              variant="outlined"
-              fullWidth
-              color="warning"
-              size="small"
-              type="date"
+            <UiYmdDateInput
               disabled={job.status === 'paid'}
               value={
                 invoiceDates[job.invoiceNumber] ||
                 new Date().toISOString().split('T')[0]
               }
-              onChange={(e) =>
+              onChange={(ymd) =>
                 setInvoiceDates((prev) => ({
                   ...prev,
-                  [job.invoiceNumber]: e.target.value,
+                  [job.invoiceNumber]: ymd,
                 }))
               }
-              InputLabelProps={{
-                shrink: true,
-              }}
             />
 
             <button
@@ -534,6 +529,7 @@ const JobTable: React.FC = () => {
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader heading="Sent Invoice" onSearch={(term) => setSearchTerm(term)} userRole='Activejobs' buttonLabel="" buttonLink=""
+          showDatePicker={true} onDateChange={handleDateChange}
           onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onInvoiceStatueChange={handleInvoiceStatusChange} showClearFilters={true} onClearFilters={handleClearFilters} />
 
         <div className="overflow-auto rounded-md">
@@ -574,6 +570,9 @@ const JobTable: React.FC = () => {
                 <th>
                   Job Name
                 </th>
+                <th>
+                  Stock Number
+                </th>
                 {/* <th className="w-[160px]">Grand Total</th> */}
                 <th>Invoice Created Date</th>
                 <th className="w-[130px]">Status</th>
@@ -584,13 +583,13 @@ const JobTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10">
+                  <td colSpan={9} className="text-center py-10">
                     <Loader />
                   </td>
                 </tr>
               ) : activeJob?.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10">
+                  <td colSpan={9} className="text-center py-10">
                     <Empty />
                   </td>
                 </tr>

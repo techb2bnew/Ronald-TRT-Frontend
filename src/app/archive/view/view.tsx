@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from '@/app/component/loader';
+import { formatDisplayDate } from '@/lib/dateUtils';
 import Breadcrumb from '@/app/component/breadcrumb';
 
 export default function ViewDetails() {
@@ -141,7 +142,7 @@ export default function ViewDetails() {
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>State:</strong> {technician?.state}</div>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>City:</strong> {technician?.city}</div>
               <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Zip Code:</strong> {technician?.zipCode}</div>
-              <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-2 border-b border-gray-500 mb-3 pb-2'><strong className='w-[200px] inline-block'>Date:</strong> {formatDisplayDate(technician.updatedAt)} </div>
               {technician?.taxForms && technician.taxForms.length > 0 && (
                 <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
                   {technician.taxForms.map((form: any, index: number) => {
@@ -229,7 +230,7 @@ export default function ViewDetails() {
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Model Year:</strong> {technician?.modelYear}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Vehicle Type:</strong> {technician?.vehicleType}</div>
               <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Color:</strong> {technician?.color}</div>
-              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {new Date(technician.updatedAt).toLocaleDateString('en-GB')} </div>
+              <div className='mb-4 border-b border-gray-500 text-sm mb-3 pb-4'><strong className='w-[200px] inline-block'>Date:</strong> {formatDisplayDate(technician.updatedAt)} </div>
               <div className="mt-1 m-auto block mb-2 flex gap-2 items-center">
                 {technician.images.map((form: any, index: any) => (
                   <img
