@@ -272,11 +272,13 @@ export default function ViewDetails() {
 
       const items: any[] = Array.isArray(data?.vehicles)
         ? data.vehicles
-        : Array.isArray(data?.data?.vehicles)
-          ? data.data.vehicles
-          : Array.isArray(data?.jobVehicles)
-            ? data.jobVehicles
-            : [];
+        : Array.isArray(data?.vehicles?.vehicles)
+          ? data.vehicles.vehicles
+          : Array.isArray(data?.data?.vehicles)
+            ? data.data.vehicles
+            : Array.isArray(data?.jobVehicles)
+              ? data.jobVehicles
+              : [];
       const totalPages = Number(
         data?.totalPages ?? data?.vehicles?.totalPages ?? data?.pagination?.totalPages ?? 1
       );
@@ -804,6 +806,135 @@ export default function ViewDetails() {
               label="Notes"
               value={jobData?.notes || '–'}
             />
+          </div>
+        </div>
+
+        {/* Work Orders (one row per vehicle) */}
+        <div className="shadow-lg p-4 bg-white rounded-lg mt-4 mb-5">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-bold rounded-t-lg m-0">Work Orders</h3>
+            <span className="inline-flex items-center justify-center rounded-full bg-[#383d71]/10 px-2.5 py-0.5 text-sm font-semibold text-[#383d71]">
+              {assignmentVehicles.length}
+            </span>
+          </div>
+          <div className="admin-table-wrap overflow-x-auto bg-white border border-gray-200 rounded-b-lg shadow-sm">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="w-12 text-left text-sm font-semibold text-gray-700 px-4 py-3">#</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">VIN</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Stock Number</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Make</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Model Year</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Assigned Dent Tech</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Tech Flat Rate</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Assigned R&I</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">R&I</th>
+                  <th className="text-left text-sm font-semibold text-gray-700 px-6 py-3">Invoice Status</th>
+                  <th className="text-right text-sm font-semibold text-gray-700 px-6 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {assignmentVehiclesLoading ? (
+                  <tr>
+                    <td colSpan={12} className="text-center py-8 text-gray-500"><Loading /></td>
+                  </tr>
+                ) : assignmentVehicles.length > 0 ? (
+                  assignmentVehicles.map((vehicle: any, index: number) => {
+                    const dentTechs = (vehicle?.assignedTechnicians ?? []).filter(
+                      (t: any) => t?.techType !== 'R/I/R/R',
+                    );
+                    const riTechs = (vehicle?.assignedTechnicians ?? []).filter(
+                      (t: any) => t?.techType === 'R/I/R/R',
+                    );
+                    const invoiceStatus = vehicle?.invoice?.[0]?.status?.toLowerCase();
+                    const isInvoicePaid = invoiceStatus === 'paid';
+                    return (
+                      <tr key={vehicle?.id ?? index} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-4">{index + 1}</td>
+                        <td className="px-6 py-4">{vehicle?.vin ?? '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.stockNumber || '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.make ?? 'N/A'}</td>
+                        <td className="px-6 py-4">{vehicle?.model ?? '–'}</td>
+                        <td className="px-6 py-4">{vehicle?.modelYear ?? '–'}</td>
+                        <td className="px-6 py-4">
+                          {dentTechs.length > 0
+                            ? dentTechs.map((t: any) => (
+                                <div key={t.id} className="capitalize">
+                                  {t.firstName} {t.lastName}
+                                </div>
+                              ))
+                            : '–'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {dentTechs.length > 0
+                            ? dentTechs.map((t: any) => {
+                                const vt = getVehicleTechnicianLink(t);
+                                return (
+                                  <div key={t.id}>
+                                    {vt?.techPercentageCalculatedAmount != null
+                                      ? `$${vt.techPercentageCalculatedAmount}`
+                                      : vt?.techFlatRate
+                                        ? `$${vt.techFlatRate}`
+                                        : '–'}
+                                  </div>
+                                );
+                              })
+                            : '–'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {riTechs.length > 0
+                            ? riTechs.map((t: any) => (
+                                <div key={t.id} className="capitalize">
+                                  {t.firstName} {t.lastName}
+                                </div>
+                              ))
+                            : '–'}
+                        </td>
+                        <td className="px-6 py-4">
+                          {riTechs.length > 0
+                            ? riTechs.map((t: any) => {
+                                const vt = getVehicleTechnicianLink(t);
+                                return (
+                                  <div key={t.id}>
+                                    {vt?.rPercentageCalculatedAmount != null
+                                      ? `$${vt.rPercentageCalculatedAmount}`
+                                      : vt?.rRate
+                                        ? `$${vt.rRate}`
+                                        : '–'}
+                                  </div>
+                                );
+                              })
+                            : '–'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded px-3 py-1.5 text-sm font-medium ${isInvoicePaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                          >
+                            {isInvoicePaid ? 'Paid' : 'Unpaid'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            href={`/vehicle/view?vehicleId=${vehicle?.id}`}
+                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#000] transition-colors"
+                            data-tooltip-id="view-vehicle"
+                            data-tooltip-content="View vehicle"
+                          >
+                            <Image alt="View" src={Eye} className="w-4 h-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={12} className="text-center py-8 text-gray-500"><Empty /></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
