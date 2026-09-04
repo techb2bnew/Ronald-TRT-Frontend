@@ -13,6 +13,7 @@ import 'react-date-range/dist/styles.css'; // core styles
 import 'react-date-range/dist/theme/default.css'; // theme styles
 import toast from 'react-hot-toast';
 import { Tooltip } from 'react-tooltip';
+import { BASE_PATH } from '@/lib/basePath';
 interface CommonHeaderProps {
   heading: string;
   // title: string;
@@ -322,7 +323,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
           params.set('userId', userId);
         }
 
-        const response = await fetch(`/api/jobListing?${params.toString()}`, { headers });
+        const response = await fetch(`${BASE_PATH}/api/jobListing?${params.toString()}`, { headers });
         const data = await response.json();
 
         if (response.ok) {
@@ -450,7 +451,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
       }
 
       const response = await fetch(
-        `/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
+        `${BASE_PATH}/api/customerJobNamefetch?customerId=${encodeURIComponent(customerId)}`,
         {
           method: 'GET',
           headers,

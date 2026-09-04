@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Loading from "./loader"; 
 import Swal from 'sweetalert2';
 
+import { BASE_PATH } from '@/lib/basePath';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const AuthCheck = ({ children }: { children: React.ReactNode }) => {
@@ -38,11 +39,11 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
           'Authorization': `Bearer ${token}`,
         };
         
-        // const response = await fetch(`/api/viewTechnician?technicianId=${userId}`, {
+        // const response = await fetch(`${BASE_PATH}/api/viewTechnician?technicianId=${userId}`, {
         //   method: 'POST',
         //   headers,
         // });
-        const response = await fetch(`/api/viewTechnician`, {
+        const response = await fetch(`${BASE_PATH}/api/viewTechnician`, {
               method: 'POST',
               headers,
               body: JSON.stringify({ technicianId }),

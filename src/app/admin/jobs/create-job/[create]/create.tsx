@@ -1,0 +1,1707 @@
+"use client";
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
+  FormHelperText,
+  Paper,
+  List,
+  ListItem,
+  TextField,
+  Button,
+  FormLabel,
+  InputAdornment,
+  Radio,
+  RadioGroup,
+  FormControlLabel
+} from '@mui/material';
+import Breadcrumb from '@/app/component/breadcrumb';
+import VehicleTypePricingWarningModal, {
+  getVehicleTypePricingWarning,
+  type VehiclePricingWarningVariant,
+  type VehicleTypePricingValues,
+} from '@/app/component/vehicleTypePricingWarningModal';
+import VehicleTypePricingUpdateModal, {
+  hasVehicleTypePricingChanged,
+} from '@/app/component/vehicleTypePricingUpdateModal';
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import { MUI_DATE_PICKER_DISPLAY_FORMAT } from '@/lib/dateUtils';
+
+import { BASE_PATH } from '@/lib/basePath';
+/** API: single URL or JSON string array e.g. `["https://...","https://..."]` */
+function parseInsuranceFileUrls(raw: unknown): string[] {
+  if (raw == null || raw === '') return [];
+  if (Array.isArray(raw)) {
+    return raw.map((u) => String(u).trim()).filter(Boolean);
+  }
+  const s = String(raw).trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) {
+        return parsed.map((u) => String(u).trim()).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [s];
+}
+
+function fileLabelFromInsuranceUrl(url: string): string {
+  try {
+    const path = new URL(url).pathname;
+    const name = decodeURIComponent(path.split('/').pop() || url);
+    return name.replace(/\s+/g, ' ').trim() || url;
+  } catch {
+    return url;
+  }
+}
+
+/** Match backend: one URL as string; multiple as JSON.stringify array. */
+function serializeInsuranceFileForApi(urls: string[]): string {
+  if (urls.length === 0) return '';
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
+
+
+interface SelectedTechnician {
+  userId: string;
+  techFlatRate?: string;
+  rRate?: string;
+  techPercentage?: string;
+  rPercentage?: string;
+}
+
+interface Technician {
+  id: string;
+  firstName: string;
+  lastName: string;
+  techType: string;
+}
+
+const TECH_LIST_LIMIT = 10;
+const SCROLL_LOAD_THRESHOLD_PX = 40;
+
+function mergeUniqueTechnicians(prev: Technician[], incoming: Technician[]): Technician[] {
+  const map = new Map(prev.map((t) => [String(t.id), t]));
+  incoming.forEach((t) => map.set(String(t.id), t));
+  return Array.from(map.values());
+}
+
+function isNearScrollBottom(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_LOAD_THRESHOLD_PX;
+}
+
+interface JobPayload {
+  id?: string;
+  jobName: string;
+  labourCost: string;
+  estimatedCost: string;
+  techFlatRate: string;
+  rRate: string;
+  assignTechnicians: string[];
+  technicianId: string[];
+  assignCustomer: string;
+  notes: string;
+  assignManager: string;
+  createdBy: string;
+  jobId?: string;
+  startDate?: string;
+  endDate?: string;
+  role: string;
+
+  // new fields
+  jobType: 'flatRate' | 'insurancePercentage';
+  suvPrice: string;
+  sedanPrice: string;
+  truckPrice: string;
+  chassisTruckPrice: string;
+  other: string;
+  insurancePercentage: string;
+  pricePerVehicle: string;
+  /** Multiple insurance uploads (CSV / Excel). */
+  insuranceFiles: File[];
+}
+
+export default function JobForm() {
+  const [formData, setFormData] = useState<JobPayload>({
+    jobName: '',
+    labourCost: '',
+    estimatedCost: '',
+    techFlatRate: '',
+    rRate: '',
+    assignTechnicians: [],
+    technicianId: [],
+    assignCustomer: '',
+    notes: '',
+    assignManager: '',
+    createdBy: 'admin',
+    jobId: '',
+    startDate: '',
+    endDate: '',
+    role: '',
+
+    // new default values
+    jobType: 'flatRate',
+    suvPrice: '',
+    sedanPrice: '',
+    truckPrice: '',
+    chassisTruckPrice: '',
+    other: '',
+    insurancePercentage: '',
+    pricePerVehicle: '',
+    insuranceFiles: [],
+  });
+
+  const [manager, setManager] = useState<any[]>([]);
+  const [customer, setCustomer] = useState<any[]>([]);
+  const [descriptionCostFields, setDescriptionCostFields] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isEdit, setIsEdit] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [dentTechList, setDentTechList] = useState<Technician[]>([]);
+  const [dentTechPage, setDentTechPage] = useState(1);
+  const [dentTechTotalPages, setDentTechTotalPages] = useState(1);
+  const [dentTechLoading, setDentTechLoading] = useState(false);
+  const [dentTechSearching, setDentTechSearching] = useState(false);
+  const [dentTechSearchTerm, setDentTechSearchTerm] = useState('');
+  const [riTechList, setRiTechList] = useState<Technician[]>([]);
+  const [riTechPage, setRiTechPage] = useState(1);
+  const [riTechTotalPages, setRiTechTotalPages] = useState(1);
+  const [riTechLoading, setRiTechLoading] = useState(false);
+  const [riTechSearching, setRiTechSearching] = useState(false);
+  const [riTechSearchTerm, setRiTechSearchTerm] = useState('');
+  const dentTechFetchInFlight = useRef(false);
+  const riTechFetchInFlight = useRef(false);
+  const router = useRouter();
+  const [totalPages, setTotalPages] = useState(1);
+  const searchParams = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs());
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [selectedNormalTechnicians, setSelectedNormalTechnicians] = useState<any[]>([]);
+  const [selectedRrTechnicians, setSelectedRrTechnicians] = useState<any[]>([]);
+  const [simpleFlatRate, setSimpleFlatRate] = useState<string>('');
+  const [rirValue, setRirValue] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [managerSearchTerm, setManagerSearchTerm] = useState<string>('');
+  const [isManagerSearching, setIsManagerSearching] = useState<boolean>(false);
+  const [existingInsuranceFileUrls, setExistingInsuranceFileUrls] = useState<string[]>([]);
+  const [vehiclePricingWarning, setVehiclePricingWarning] = useState<VehiclePricingWarningVariant | null>(null);
+  const [missingVehicleTypeLabels, setMissingVehicleTypeLabels] = useState<string[]>([]);
+  const [originalVehiclePricing, setOriginalVehiclePricing] = useState<VehicleTypePricingValues>({
+    suvPrice: '',
+    sedanPrice: '',
+    truckPrice: '',
+    chassisTruckPrice: '',
+    other: '',
+  });
+  const [showVehiclePricingUpdateModal, setShowVehiclePricingUpdateModal] = useState(false);
+
+  useEffect(() => {
+    const type = localStorage.getItem('types');
+    setUserType(type);
+
+    if (type === 'manager') {
+      const managerId = localStorage.getItem('userID');
+      if (managerId) {
+        setFormData(prev => ({
+          ...prev,
+          assignManager: managerId
+        }));
+      }
+    }
+
+    if (searchParams) {
+      const jobId = searchParams.get('jobId') || '';
+      if (jobId) {
+        setJobId(jobId);
+        setIsEdit(true);
+        fetchJobData(jobId);
+      }
+    }
+
+    fetchCustomers(page);
+  }, [searchParams]);
+
+  const fetchDentTechnicians = async (
+    page = 1,
+    options: { append?: boolean; searchQuery?: string } = {}
+  ) => {
+    const { append = false, searchQuery = '' } = options;
+    if (dentTechFetchInFlight.current) return;
+    dentTechFetchInFlight.current = true;
+
+    setDentTechLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || '';
+      const trimmedQuery = searchQuery.trim();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      let url: string;
+
+      if (trimmedQuery) {
+        url =
+          `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
+          `&roleType=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      } else {
+        url = `${apiUrl}/fetchDentTech?page=${page}&limit=${TECH_LIST_LIMIT}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      const allTechs: Technician[] =
+        trimmedQuery && data.status && Array.isArray(data.technicians)
+          ? data.technicians
+          : Array.isArray(data?.technicians)
+            ? data.technicians
+            : data.technician?.technicians || [];
+
+      const technicians = trimmedQuery
+        ? allTechs.filter((tech: Technician) => tech.techType === 'technician')
+        : allTechs;
+      const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
+
+      setDentTechList((prev) => (append ? mergeUniqueTechnicians(prev, technicians) : technicians));
+      setDentTechTotalPages(totalPages);
+      setDentTechPage(page);
+    } catch (error) {
+      console.error('Error fetching dent technicians:', error);
+    } finally {
+      setDentTechLoading(false);
+      dentTechFetchInFlight.current = false;
+    }
+  };
+
+  const fetchRiTechnicians = async (
+    page = 1,
+    options: { append?: boolean; searchQuery?: string } = {}
+  ) => {
+    const { append = false, searchQuery = '' } = options;
+    if (riTechFetchInFlight.current) return;
+    riTechFetchInFlight.current = true;
+
+    setRiTechLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = localStorage.getItem('types') || '';
+      const trimmedQuery = searchQuery.trim();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      let url: string;
+
+      if (trimmedQuery) {
+        url =
+          `${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(trimmedQuery)}` +
+          `&roleType=${encodeURIComponent(roleType)}` +
+          `&page=${page}&limit=${TECH_LIST_LIMIT}`;
+      } else {
+        url = `${apiUrl}/fetchRandIR?page=${page}&limit=${TECH_LIST_LIMIT}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      const allTechs: Technician[] =
+        trimmedQuery && data.status && Array.isArray(data.technicians)
+          ? data.technicians
+          : Array.isArray(data?.technicians)
+            ? data.technicians
+            : data.technician?.technicians || [];
+
+      const technicians = trimmedQuery
+        ? allTechs.filter((tech: Technician) => tech.techType === 'R/I/R/R')
+        : allTechs;
+      const totalPages = Number(data?.totalPages ?? data?.technician?.totalPages ?? 1) || 1;
+
+      setRiTechList((prev) => (append ? mergeUniqueTechnicians(prev, technicians) : technicians));
+      setRiTechTotalPages(totalPages);
+      setRiTechPage(page);
+    } catch (error) {
+      console.error('Error fetching R&I technicians:', error);
+    } finally {
+      setRiTechLoading(false);
+      riTechFetchInFlight.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (userType === 'single-technician') return;
+    const timeoutId = setTimeout(() => {
+      const q = dentTechSearchTerm.trim();
+      setDentTechSearching(!!q);
+      setDentTechPage(1);
+      setDentTechList([]);
+      void fetchDentTechnicians(1, { searchQuery: dentTechSearchTerm });
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [dentTechSearchTerm, userType]);
+
+  useEffect(() => {
+    if (userType === 'single-technician') return;
+    const timeoutId = setTimeout(() => {
+      const q = riTechSearchTerm.trim();
+      setRiTechSearching(!!q);
+      setRiTechPage(1);
+      setRiTechList([]);
+      void fetchRiTechnicians(1, { searchQuery: riTechSearchTerm });
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [riTechSearchTerm, userType]);
+
+  const fetchCustomers = async (page = 1) => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
+
+      const response = await fetch(`${BASE_PATH}/api/fetchJobCustomerTechnician?endpoint=fetchCustomer&userId=${userId}&roleType=${roleType}&page=${page}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      setCustomer((prevCustomers) => [...prevCustomers, ...data.customers?.customers || []]);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  const handleCustomerScroll = (e: any) => {
+    const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
+    if (bottom && !isSearching) {
+      setPage((prevPage) => {
+        const newPage = prevPage + 1;
+        fetchCustomers(newPage);
+        return newPage;
+      });
+    }
+  };
+
+  const searchCustomers = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsSearching(false);
+      setCustomer([]);
+      setPage(1);
+      fetchCustomers(1);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userID');
+      const roleType = localStorage.getItem('types');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/searchCustomers?userId=${userId}&searchQuery=${encodeURIComponent(searchValue)}&roleType=${roleType}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      const data = await response.json();
+      if (data.status && data.customers) {
+        setCustomer(data.customers);
+      }
+    } catch (error) {
+      console.error('Error searching customers:', error);
+    }
+  };
+
+  const handleCustomerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomerSearchTerm(value);
+    searchCustomers(value);
+  };
+
+  const fetchJobData = async (jobid: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BASE_PATH}/api/fetchSingleJobs?jobid=${jobid}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      console.log(data, 'data');
+      if (response.ok && data.jobs) {
+        const jobData = data.jobs;
+        const technicians = jobData.technicians || [];
+        const vehicleTypePricing = Array.isArray(jobData.vehicleTypePricing) ? jobData.vehicleTypePricing : [];
+        const getVehicleAmount = (type: string) =>
+          String(
+            vehicleTypePricing.find(
+              (item: any) => String(item?.vehicleType || '').toLowerCase() === type.toLowerCase()
+            )?.amount ?? ''
+          );
+        const normalizedJobType =
+          jobData.jobType === 'insurance_percentage'
+            ? 'insurancePercentage'
+            : jobData.jobType === 'flat_rate'
+              ? 'flatRate'
+              : (jobData.jobType || 'flatRate');
+
+        const normalTechs = technicians.filter((tech: any) => tech.techType === "technician");
+        const rirrTechs = technicians.filter((tech: any) => tech.techType === "R/I/R/R");
+
+        setSelectedNormalTechnicians(normalTechs);
+        setSelectedRrTechnicians(rirrTechs);
+
+        const totalNormal = normalTechs.reduce((acc: number, tech: any) => {
+          const flat = tech?.UserJob?.techFlatRate;
+          if (flat !== null && flat !== undefined) return acc + Number(flat);
+          return acc;
+        }, 0);
+
+        const totalRr = rirrTechs.reduce((acc: number, tech: any) => {
+          const flat = tech?.UserJob?.rRate;
+          if (flat !== null && flat !== undefined) return acc + Number(flat);
+          return acc;
+        }, 0);
+
+        // Prefill totals from API edit payload
+        setSimpleFlatRate(jobData.techFlatRate || "");
+        setRirValue(jobData?.rRate || "");
+
+        const startDateValue = jobData.startDate ? dayjs(jobData.startDate) : null;
+        const endDateValue = jobData.endDate ? dayjs(jobData.endDate) : null;
+
+        const roleType = localStorage.getItem('types');
+        const managerId = roleType === 'manager'
+          ? localStorage.getItem('userID') || ''
+          : jobData.assignManager || '';
+
+        setFormData((prev) => ({
+          ...prev,
+          assignCustomer: String(jobData.customer?.id || jobData.assignCustomer || ''),
+          jobName: jobData.jobName || '',
+          assignManager: managerId,
+          labourCost: jobData.labourCost || '',
+          estimatedCost: jobData.estimatedCost || '',
+          notes: jobData.notes || '',
+          techFlatRate: jobData.techFlatRate || '',
+          rRate: jobData.rRate || '',
+          assignTechnicians: technicians.map((tech: any) => String(tech.id)),
+          technicianId: technicians.map((tech: any) => String(tech.id)),
+          createdBy: jobData.createdBy || 'admin',
+
+          // edit values
+          jobType: normalizedJobType,
+          suvPrice: getVehicleAmount('SUV') || jobData.suvPrice || '',
+          sedanPrice: getVehicleAmount('Sedan') || jobData.sedanPrice || '',
+          truckPrice: getVehicleAmount('Truck') || jobData.truckPrice || '',
+          chassisTruckPrice: getVehicleAmount('Chassis Truck') || jobData.chassisTruckPrice || '',
+          other: getVehicleAmount('Other') || jobData.other || '',
+          insurancePercentage: jobData.insurancePercentage || '',
+          pricePerVehicle: jobData.pricePerVehicle || '',
+        }));
+        setOriginalVehiclePricing({
+          suvPrice: getVehicleAmount('SUV') || jobData.suvPrice || '',
+          sedanPrice: getVehicleAmount('Sedan') || jobData.sedanPrice || '',
+          truckPrice: getVehicleAmount('Truck') || jobData.truckPrice || '',
+          chassisTruckPrice: getVehicleAmount('Chassis Truck') || jobData.chassisTruckPrice || '',
+          other: getVehicleAmount('Other') || jobData.other || '',
+        });
+        setExistingInsuranceFileUrls(parseInsuranceFileUrls(jobData.insuranceFile));
+
+        setJobId(jobData.id);
+        setStartDate(startDateValue);
+        setEndDate(endDateValue);
+      }
+    } catch (error) {
+      console.error('Error fetching job data:', error);
+      toast.error('An error occurred while fetching job data');
+    }
+  };
+
+  const handleTechnicianChange = (tech: Technician, techType: string) => {
+    if (techType === "technician") {
+      const isAlreadySelected = selectedNormalTechnicians.some(
+        (t) => String(t.id) === String(tech.id)
+      );
+      setSelectedNormalTechnicians((prev) =>
+        isAlreadySelected
+          ? prev.filter((t) => String(t.id) !== String(tech.id))
+          : [...prev, tech]
+      );
+    } else if (techType === "R/I/R/R") {
+      const isAlreadySelected = selectedRrTechnicians.some(
+        (t) => String(t.id) === String(tech.id)
+      );
+      setSelectedRrTechnicians((prev) =>
+        isAlreadySelected
+          ? prev.filter((t) => String(t.id) !== String(tech.id))
+          : [...prev, tech]
+      );
+    }
+  };
+
+  const handleDentTechScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!isNearScrollBottom(e.currentTarget)) return;
+    if (dentTechLoading || dentTechSearching || dentTechPage >= dentTechTotalPages) return;
+    const nextPage = dentTechPage + 1;
+    void fetchDentTechnicians(nextPage, {
+      append: true,
+      searchQuery: dentTechSearchTerm,
+    });
+  };
+
+  const handleRiTechScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!isNearScrollBottom(e.currentTarget)) return;
+    if (riTechLoading || riTechSearching || riTechPage >= riTechTotalPages) return;
+    const nextPage = riTechPage + 1;
+    void fetchRiTechnicians(nextPage, {
+      append: true,
+      searchQuery: riTechSearchTerm,
+    });
+  };
+
+  const handleJobTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value as 'flatRate' | 'insurancePercentage';
+    setFormData((prev) => ({
+      ...prev,
+      jobType: value,
+    }));
+  };
+
+  const handleInsuranceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files;
+    if (!list?.length) return;
+    const picked = Array.from(list);
+    const allowedExt = /\.(csv|xlsx|xls)$/i;
+    const allowed = picked.filter((f) => allowedExt.test(f.name));
+    if (allowed.length < picked.length) {
+      toast.error('Only CSV or Excel (.csv, .xlsx, .xls) files are allowed for insurance upload.');
+    }
+    if (allowed.length === 0) {
+      e.target.value = '';
+      return;
+    }
+    setFormData((prev) => {
+      const seen = new Set(
+        prev.insuranceFiles.map((f) => `${f.name}-${f.size}-${f.lastModified}`)
+      );
+      const merged = [...prev.insuranceFiles];
+      for (const f of allowed) {
+        const key = `${f.name}-${f.size}-${f.lastModified}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(f);
+        }
+      }
+      return { ...prev, insuranceFiles: merged };
+    });
+    e.target.value = '';
+  };
+
+  const removeInsuranceFileAt = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      insuranceFiles: prev.insuranceFiles.filter((_, i) => i !== index),
+    }));
+  };
+
+  const getSplitAmount = (total: string, count: number) => {
+    const amount = Number(total);
+    if (!Number.isFinite(amount) || count <= 0) return '';
+    return (amount / count).toFixed(2);
+  };
+
+  const submitJobToApi = async (options?: { applyPricingTo?: 'future' | 'all' }) => {
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('token');
+      const technicianData = localStorage.getItem('technicianData');
+      const roleType = localStorage.getItem('types');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+      let estimatedByName = '';
+      let labourCost = null;
+      let estimatedCost = null;
+      let techFlatRate = null;
+      let rRate = null;
+      let assignTechnician = null;
+
+      if (technicianData) {
+        try {
+          const parsed = JSON.parse(technicianData);
+          estimatedByName = `${parsed.firstName} ${parsed.lastName}`;
+          labourCost = parsed.labourCost;
+          estimatedCost = parsed.estimatedCost;
+          techFlatRate = parsed.techFlatRate;
+          rRate = parsed.rRate;
+          assignTechnician = [parsed.id];
+        } catch (err) {
+          console.error('Failed to parse technicianData:', err);
+        }
+      }
+
+      const currentUserId = localStorage.getItem('userID') || '';
+      const selectedTechnicians: SelectedTechnician[] = roleType === 'single-technician'
+        ? [{ userId: currentUserId || '' }]
+        : [
+          ...selectedNormalTechnicians.map(tech => ({
+            userId: tech.id,
+            techFlatRate: simpleFlatRate || '0',
+          })),
+          ...selectedRrTechnicians.map(tech => ({
+            userId: tech.id,
+            rRate: rirValue || '0',
+          }))
+        ];
+
+      const selectedTechnicianIds =
+        roleType === 'single-technician'
+          ? (assignTechnician || [])
+          : Array.from(
+            new Set([
+              ...selectedNormalTechnicians.map((tech: any) => String(tech.id)),
+              ...selectedRrTechnicians.map((tech: any) => String(tech.id)),
+              ...(formData.technicianId || []).map((id: any) => String(id)),
+            ])
+          ).filter(Boolean);
+
+      const managerId = roleType === 'manager'
+        ? localStorage.getItem('userID')
+        : roleType === 'single-technician'
+          ? null
+          : formData.assignManager;
+
+      const requestBody = {
+        jobName: formData.jobName,
+        assignCustomer: formData.assignCustomer,
+        assignTechnician: selectedTechnicianIds,
+        techFlatRate: simpleFlatRate || '0',
+        rRate: rirValue || '0',
+        assignManager: managerId,
+        createdBy: formData.createdBy,
+        notes: formData.notes,
+        roleType: roleType,
+        estimatedBy: estimatedByName,
+        labourCost: labourCost ?? formData.labourCost,
+        estimatedCost: estimatedCost ?? formData.estimatedCost,
+        selectedTechnicians,
+        jobId: jobId || undefined,
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+
+        // new fields
+        jobType: formData.jobType === 'flatRate' ? 'flat_rate' : 'insurance_percentage',
+        ...(formData.jobType !== 'insurancePercentage' && {
+          other: formData.other || '',
+          vehicleTypePricing: [
+            { vehicleType: 'SUV', amount: formData.suvPrice || '' },
+            { vehicleType: 'Sedan', amount: formData.sedanPrice || '' },
+            { vehicleType: 'Truck', amount: formData.truckPrice || '' },
+            { vehicleType: 'Chassis Truck', amount: formData.chassisTruckPrice || '' },
+            { vehicleType: 'Other', amount: formData.other || '' },
+          ],
+        }),
+        ...(formData.jobType === 'insurancePercentage' && {
+          insurancePercentage: formData.insurancePercentage,
+        }),
+        // Previously saved file URL (edit). Send whenever present — including when new files are
+        // uploaded so the backend still receives the original attachment alongside multipart uploads.
+        ...(formData.jobType === 'insurancePercentage' &&
+          existingInsuranceFileUrls.length > 0 && {
+          insuranceFile: serializeInsuranceFileForApi(existingInsuranceFileUrls),
+        }),
+        ...(formData.jobType !== 'insurancePercentage' && {
+          pricePerVehicle: formData.pricePerVehicle,
+        }),
+        ...(isEdit &&
+          formData.jobType === 'flatRate' &&
+          options?.applyPricingTo && {
+          applyPricingTo: options.applyPricingTo,
+        }),
+      };
+      console.log(requestBody, 'requestBody');
+      const endpoint = isEdit ? `${apiUrl}/updateJob` : `${apiUrl}/technicianCreateJob`;
+
+      // if file upload needed
+      if (formData.insuranceFiles.length > 0) {
+        const multipartData = new FormData();
+        Object.entries(requestBody).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+          if (Array.isArray(value) || (typeof value === 'object' && !(value instanceof File))) {
+            multipartData.append(key, JSON.stringify(value));
+            return;
+          }
+          multipartData.append(key, String(value));
+        });
+        formData.insuranceFiles.forEach((file) => {
+          multipartData.append('insuranceFile', file);
+        });
+        console.log(formData.insuranceFiles, 'formData.insuranceFiles');
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: multipartData,
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully', {
+            style: {
+              background: '#16a34a', // strong green
+              color: '#ffffff',      // white text
+              fontWeight: '600',
+              padding: '12px 16px',
+            },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#16a34a',
+            },
+          });
+          if (searchParams!.has('completeOrder')) {
+            router.push('/admin/jobs/complete-job/listing');
+          } else if (searchParams!.has('vehicleInfo')) {
+            router.push('/admin/reporting/vehicle-info');
+          } else if (searchParams!.has('groupjob')) {
+            router.push('/admin/jobs/job-group/listing');
+          } else {
+            router.push('/admin/jobs/active-job');
+          }
+        } else {
+          toast.error(result.message || result.error || 'Error saving job');
+        }
+
+        return;
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        toast.success(isEdit ? 'Job updated successfully' : 'Job created successfully', {
+          style: {
+            background: '#16a34a', // strong green
+            color: '#ffffff',      // white text
+            fontWeight: '600',
+            padding: '12px 16px',
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#16a34a',
+          },
+        });
+        if (searchParams!.has('completeOrder')) {
+          router.push('/admin/jobs/complete-job/listing');
+        } else if (searchParams!.has('vehicleInfo')) {
+          router.push('/admin/reporting/vehicle-info');
+        } else if (searchParams!.has('groupjob')) {
+          router.push('/admin/jobs/job-group/listing');
+        } else {
+          router.push('/admin/jobs/active-job');
+        }
+      } else {
+        toast.error(result.message || result.error || 'Error saving job');
+      }
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast.error('An error occurred while saving the job');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.jobName?.trim()) newErrors.jobName = 'Job Title is required';
+    if (!formData.assignCustomer) newErrors.assignCustomer = 'Customer is required';
+
+    if (formData.jobType === 'insurancePercentage' && !formData.insurancePercentage?.trim()) {
+      newErrors.insurancePercentage = 'Percentage is required';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (userType !== 'single-technician') {
+      if (selectedNormalTechnicians.length > 0 && !simpleFlatRate.trim()) {
+        toast.error('Please fill the Dent Tech Flat Rate ($)');
+        return;
+      }
+      if (selectedRrTechnicians.length > 0 && !rirValue.trim()) {
+        toast.error('Please fill the R&I Flat Rate ($)');
+        return;
+      }
+      // if (simpleFlatRate.trim() && selectedNormalTechnicians.length === 0) {
+      //   toast.error('Please assign at least one Dent Tech');
+      //   return;
+      // }
+      // if (rirValue.trim() && selectedRrTechnicians.length === 0) {
+      //   toast.error('Please assign at least one R&I technician');
+      //   return;
+      // }
+    }
+
+    if (!isEdit && formData.jobType === 'flatRate') {
+      const { variant, missingLabels } = getVehicleTypePricingWarning({
+        suvPrice: formData.suvPrice,
+        sedanPrice: formData.sedanPrice,
+        truckPrice: formData.truckPrice,
+        chassisTruckPrice: formData.chassisTruckPrice,
+        other: formData.other,
+      });
+
+      if (variant) {
+        setMissingVehicleTypeLabels(missingLabels);
+        setVehiclePricingWarning(variant);
+        return;
+      }
+    }
+
+    await continueJobSubmit();
+  };
+
+  const getCurrentVehiclePricing = (): VehicleTypePricingValues => ({
+    suvPrice: formData.suvPrice,
+    sedanPrice: formData.sedanPrice,
+    truckPrice: formData.truckPrice,
+    chassisTruckPrice: formData.chassisTruckPrice,
+    other: formData.other,
+  });
+
+  const continueJobSubmit = async (options?: { applyPricingTo?: 'future' | 'all' }) => {
+    if (
+      isEdit &&
+      formData.jobType === 'flatRate' &&
+      !options?.applyPricingTo &&
+      hasVehicleTypePricingChanged(originalVehiclePricing, getCurrentVehiclePricing())
+    ) {
+      setShowVehiclePricingUpdateModal(true);
+      return;
+    }
+
+    await submitJobToApi(options);
+  };
+
+  const handleJobNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, jobName: value }));
+    if (value.trim()) {
+      setErrors(prev => ({ ...prev, jobName: '' }));
+    }
+  };
+
+  const handleAssignCustomerChange = (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, assignCustomer: value }));
+    if (value) {
+      setErrors(prev => ({ ...prev, assignCustomer: '' }));
+    }
+  };
+
+  const handleAssignManagerChange = (e: SelectChangeEvent) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, assignManager: value }));
+    if (value) {
+      setErrors(prev => ({ ...prev, assignManager: '' }));
+    }
+  };
+
+  const handleManagercroll = (e: any) => {
+    const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
+    if (bottom && !isManagerSearching) {
+      setPage((prevPage) => {
+        const newPage = prevPage + 1;
+        fetchManager(newPage);
+        return newPage;
+      });
+    }
+  };
+
+  const searchManagers = async (searchValue: string) => {
+    if (!searchValue.trim()) {
+      setIsManagerSearching(false);
+      setManager([]);
+      setPage(1);
+      fetchManager(1);
+      return;
+    }
+
+    try {
+      setIsManagerSearching(true);
+      const token = localStorage.getItem('token');
+      const roleType = 'manager';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/searchTechnicians?searchQuery=${encodeURIComponent(searchValue)}&roleType=${encodeURIComponent(roleType)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      const data = await response.json();
+      if (data.status && data.technicians) {
+        setManager(data.technicians);
+      }
+    } catch (error) {
+      console.error('Error searching managers:', error);
+    }
+  };
+
+  const handleManagerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setManagerSearchTerm(value);
+    searchManagers(value);
+  };
+
+  const fetchManager = async (page = 1, query = '', limit = pageSize) => {
+    try {
+      const token = localStorage.getItem('token');
+      const roleType = 'manager';
+      if (!token) {
+        localStorage.removeItem('token');
+        router.push('/admin');
+        return;
+      }
+
+      const response = await fetch(`${BASE_PATH}/api/manager?page=${page}&limit=${limit}&roleType=${encodeURIComponent(roleType)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status == 400) {
+        localStorage.removeItem('token');
+        router.push('/admin');
+      }
+
+      const data = await response.json();
+      if (response.ok) {
+        setManager((prevCustomers) => [...prevCustomers, ...data.data?.managers || []]);
+        setTotalPages(data.totalPages || 1);
+      } else {
+        console.error('Error fetching technicians:');
+      }
+    } catch (error) {
+      console.error('Error fetching technicians:', error);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchManager(currentPage, managerSearchTerm, pageSize);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, managerSearchTerm, pageSize]);
+
+  const displayDentTechnicians = useMemo(() => {
+    const selectedMissing = selectedNormalTechnicians.filter(
+      (s) => !dentTechList.some((t) => String(t.id) === String(s.id))
+    );
+    return mergeUniqueTechnicians(selectedMissing, dentTechList);
+  }, [dentTechList, selectedNormalTechnicians]);
+
+  const displayRiTechnicians = useMemo(() => {
+    const selectedMissing = selectedRrTechnicians.filter(
+      (s) => !riTechList.some((t) => String(t.id) === String(s.id))
+    );
+    return mergeUniqueTechnicians(selectedMissing, riTechList);
+  }, [riTechList, selectedRrTechnicians]);
+
+  return (
+    <div className='w-[60%] m-auto mb-5 max-md:w-full'>
+      <Breadcrumb
+        items={[
+          isEdit
+            ? { label: 'Edit Job' }
+            : { label: 'Create New Job', href: '/jobs/create-job/create' },
+        ]}
+      />
+
+      <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
+        {isEdit ? 'Edit Job' : 'Create New Job'}
+      </h1>
+
+      <div className='bg-white p-4 mt-5'>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-3 gap-4 mb-2">
+            <div className='mb-2 items-start gap-3 relative'>
+              <FormControl fullWidth size="small">
+                <InputLabel id="assignCustomer" color="warning">Select customer *</InputLabel>
+                <Select
+                  labelId="assignCustomer"
+                  id="select-assignCustomer"
+                  color="warning"
+                  value={formData.assignCustomer}
+                  label="Select customer"
+                  name="assignCustomer"
+                  onChange={handleAssignCustomerChange}
+                  MenuProps={{
+                    PaperProps: {
+                      onScroll: handleCustomerScroll,
+                      style: { maxHeight: 300 }
+                    },
+                    autoFocus: false
+                  }}
+                  onOpen={() => {
+                    setCustomerSearchTerm('');
+                    if (customer.length === 0) {
+                      fetchCustomers(1);
+                    }
+                  }}
+                >
+                  <div
+                    style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <TextField
+                      size="small"
+                      fullWidth
+                      color="warning"
+                      placeholder="Search customer..."
+                      value={customerSearchTerm}
+                      onChange={handleCustomerSearchChange}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
+                  {customer.length > 0 ? (
+                    customer.map((cust) => (
+                      <MenuItem key={cust.id + Math.random().toString(36).substr(2, 5)} value={cust.id}>
+                        {cust.fullName}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <span className="text-gray-500 text-sm">No customer found</span>
+                    </MenuItem>
+                  )}
+                </Select>
+                {errors.assignCustomer && (
+                  <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                    {errors.assignCustomer}
+                  </div>
+                )}
+              </FormControl>
+            </div>
+
+            <div className='relative w-[100%]'>
+              <TextField
+                fullWidth
+                name="jobName"
+                id="outlined-basic"
+                color="warning"
+                label="Enter Job Title *"
+                size="small"
+                value={formData.jobName}
+                onChange={handleJobNameChange}
+              />
+              {errors.jobName && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                  {errors.jobName}
+                </div>
+              )}
+            </div>
+            <div className={`grid ${userType === 'single-technician' || userType === 'manager' ? 'grid-cols-1' : 'grid-cols-1'} gap-4 mb-2`}>
+            {userType !== 'single-technician' && userType !== 'manager' && (
+              <div className='mb-2 items-start gap-3 relative'>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="assignManager" color="warning">Select manager</InputLabel>
+                  <Select
+                    labelId="assignManager"
+                    id="select-assignManager"
+                    color="warning"
+                    value={formData.assignManager}
+                    label="Select manager"
+                    name="assignManager"
+                    onChange={handleAssignManagerChange}
+                    MenuProps={{
+                      PaperProps: {
+                        onScroll: handleManagercroll,
+                        style: { maxHeight: 300 }
+                      },
+                      autoFocus: false
+                    }}
+                    onOpen={() => {
+                      setManagerSearchTerm('');
+                      if (manager.length === 0) {
+                        fetchManager(1);
+                      }
+                    }}
+                  >
+                    <div
+                      style={{ padding: '8px 16px', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <TextField
+                        size="small"
+                        fullWidth
+                        color="warning"
+                        placeholder="Search manager..."
+                        value={managerSearchTerm}
+                        onChange={handleManagerSearchChange}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    </div>
+                    {manager?.length > 0 ? (
+                      manager.map((mgr) => (
+                        <MenuItem key={mgr.id + Math.random().toString(36).substr(2, 5)} value={mgr.id}>
+                          {mgr?.firstName} {mgr?.lastName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <span className="text-gray-500 text-sm">No manager found</span>
+                      </MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+              </div>
+            )} 
+
+          </div>
+          </div>
+
+          
+
+          {/* NEW SECTION START */}
+          <div className="mb-0">
+            <FormControl component="fieldset">
+              <FormLabel color="warning" className="mb-0">Job Type</FormLabel>
+              <RadioGroup
+                value={formData.jobType}
+                onChange={handleJobTypeChange}
+              >
+                <FormControlLabel
+                  value="flatRate"
+                  control={<Radio color="warning" />}
+                  label="Flat rate"
+                />
+                {userType !== 'manager' && (
+                  <FormControlLabel
+                    value="insurancePercentage"
+                    control={<Radio color="warning" />}
+                    label="Insurance percentage"
+                  />
+                )}
+              </RadioGroup>
+            </FormControl>
+          </div>
+
+          {formData.jobType === 'flatRate' && (
+            <Accordion defaultExpanded className="mb-4">
+              <AccordionSummary expandIcon={<svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>}>
+                <span className="font-medium">Vehicle Type Pricing</span>
+              </AccordionSummary>
+              <AccordionDetails>
+                <div className="grid grid-cols-3 gap-4">
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="SUV's"
+                    size="small"
+                    color="warning"
+                    value={formData.suvPrice}
+                    onChange={(e) => setFormData({ ...formData, suvPrice: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Sedans"
+                    size="small"
+                    color="warning"
+                    value={formData.sedanPrice}
+                    onChange={(e) => setFormData({ ...formData, sedanPrice: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Trucks (Pick up trucks)"
+                    size="small"
+                    color="warning"
+                    value={formData.truckPrice}
+                    onChange={(e) => setFormData({ ...formData, truckPrice: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Chassis trucks (Cab only trucks)"
+                    size="small"
+                    color="warning"
+                    value={formData.chassisTruckPrice}
+                    onChange={(e) => setFormData({ ...formData, chassisTruckPrice: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Other Vehicles"
+                    size="small"
+                    color="warning"
+                    value={formData.other}
+                    onChange={(e) => setFormData({ ...formData, other: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                  />
+                </div>
+              </AccordionDetails>
+            </Accordion>
+          )}
+
+          {formData.jobType === 'insurancePercentage' && (
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <TextField
+                fullWidth
+                type="number"
+                label="Percentage (%) *"
+                size="small"
+                color="warning"
+                value={formData.insurancePercentage}
+                onChange={(e) => setFormData({ ...formData, insurancePercentage: e.target.value })}
+              />
+              {errors.insurancePercentage && (
+                <div style={{ color: 'red', fontSize: '12px', marginTop: '-10px' }}>
+                  {errors.insurancePercentage}
+                </div>
+              )}
+
+              <div>
+                <FormLabel color="warning" className="mb-2 block">
+                  Upload insurance file — CSV or Excel (multiple files allowed)
+                </FormLabel>
+
+                <label className="w-full cursor-pointer block">
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                    multiple
+                    onChange={handleInsuranceFileChange}
+                    className="hidden"
+                  />
+
+                  <div className="w-full rounded-full border border-gray-300 py-3 text-center text-gray-500 bg-white shadow-sm hover:shadow-md transition">
+                    {formData.insuranceFiles.length > 0
+                      ? `${formData.insuranceFiles.length} file(s) selected — click to add more`
+                      : 'Choose CSV or Excel file(s)'}
+                  </div>
+                </label>
+
+                {formData.insuranceFiles.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-xs text-gray-700">
+                    {formData.insuranceFiles.map((f, i) => (
+                      <li
+                        key={`${f.name}-${i}-${f.lastModified}`}
+                        className="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-50 px-2 py-1"
+                      >
+                        <span className="truncate" title={f.name}>
+                          {f.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeInsuranceFileAt(i)}
+                          className="shrink-0 text-red-600 hover:underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {existingInsuranceFileUrls.length > 0 && formData.insuranceFiles.length === 0 && (
+                  <div className="mt-3 text-xs text-gray-600">
+                    <p className="font-medium text-gray-800 mb-2">Current insurance file(s)</p>
+                    <ul className="space-y-2">
+                      {existingInsuranceFileUrls.map((url, idx) => (
+                        <li
+                          key={`${url}-${idx}`}
+                          className="flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                        >
+                          <span className="text-gray-500 shrink-0 font-medium">{idx + 1}.</span>
+                          <div className="min-w-0 flex-1">
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#383d71] font-medium hover:underline break-all"
+                            >
+                              {fileLabelFromInsuranceUrl(url)}
+                            </a>
+                            <p className="text-[11px] text-gray-400 mt-0.5 break-all line-clamp-2" title={url}>
+                              {url}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+
+          {userType !== 'single-technician' && (
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="mb-4">
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Dent Tech Flat Rate ($)"
+                  size="small"
+                  color="warning"
+                  value={simpleFlatRate}
+                  onChange={(e) => setSimpleFlatRate(e.target.value)}
+                  inputProps={{
+                    inputMode: 'decimal',
+                    maxLength: 8,
+                  }}
+                />
+              </div>
+
+              <div className="mb-4">
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="R&I Flat Rate ($)"
+                  size="small"
+                  color="warning"
+                  value={rirValue}
+                  onChange={(e) => setRirValue(e.target.value)}
+                  inputProps={{
+                    inputMode: 'decimal',
+                    maxLength: 8,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <div className="grid grid-cols-2 gap-4">
+              <DatePicker
+                label="Start Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
+                value={startDate}
+                readOnly
+                onChange={(newValue) => {
+                  setStartDate(newValue);
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    color: 'warning',
+                  },
+                }}
+              />
+              <DatePicker
+                label="End Date"
+                format={MUI_DATE_PICKER_DISPLAY_FORMAT}
+                value={endDate}
+                onChange={(newValue) => {
+                  setEndDate(newValue);
+                }}
+                minDate={startDate || undefined}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    color: 'warning',
+                  },
+                }}
+              />
+            </div>
+          </LocalizationProvider>
+
+          <div className="grid grid-cols-1 gap-4 mt-4">
+            <div className="mb-4">
+              <textarea
+                name="notes"
+                id="notes"
+                placeholder="Notes"
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    notes: e.target.value
+                  })
+                }
+                className="w-full p-3 border border-gray-300 rounded-md resize-y min-h-[100px] focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400"
+              />
+
+              <div className="mt-1 text-sm text-gray-500 text-right">
+                {
+                  formData.notes
+                    .trim()
+                    .split(/\s+/)
+                    .filter(word => word.length > 0).length
+                }{" "}
+                words
+              </div>
+            </div>
+          </div>
+
+          {userType !== 'single-technician' && (
+            <div className='mb-3 flex items-start relative'>
+              <FormControl fullWidth size="small">
+                <FormLabel color="warning" className='mb-4'>Assign Dent Tech to this vehicle</FormLabel>
+                <TextField
+                  label="Search"
+                  variant="outlined"
+                  fullWidth
+                  color="warning"
+                  size="small"
+                  type='search'
+                  value={dentTechSearchTerm}
+                  onChange={(e) => setDentTechSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        🔍
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Paper
+                  variant="outlined"
+                  style={{ maxHeight: 160, overflowY: "auto" }}
+                  onScroll={handleDentTechScroll}
+                >
+                  <List dense>
+                    {displayDentTechnicians.length > 0 ? (
+                      <div className='grid grid-cols-3'>
+                        {displayDentTechnicians.map((tech) => {
+                          const value = String(tech.id);
+                          const isSelected = selectedNormalTechnicians.some(t => String(t.id) === String(tech.id));
+                          return (
+                            <ListItem
+                              key={value}
+                              component="div"
+                              onClick={() => handleTechnicianChange(tech, "technician")}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              <Checkbox
+                                edge="start"
+                                color="warning"
+                                checked={isSelected}
+                                tabIndex={-1}
+                                disableRipple
+                              />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName}`} />
+                            </ListItem>
+                          );
+                        })}
+                      </div>
+                    ) : dentTechLoading ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No Dent Tech available
+                      </div>
+                    )}
+                    {dentTechLoading && displayDentTechnicians.length > 0 && (
+                      <div className="p-2 text-center text-gray-500 text-xs">Loading more...</div>
+                    )}
+                  </List>
+                </Paper>
+              </FormControl>
+            </div>
+          )}
+
+          {userType !== 'single-technician' && (
+            <div className='mb-4 flex items-start gap-3 relative mt-3'>
+              <FormControl fullWidth size="small">
+                <FormLabel color="warning" className='mb-4'>Assign R&I to this vehicle</FormLabel>
+                <TextField
+                  label="Search"
+                  variant="outlined"
+                  fullWidth
+                  color="warning"
+                  size="small"
+                  type='search'
+                  value={riTechSearchTerm}
+                  onChange={(e) => setRiTechSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        🔍
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Paper
+                  variant="outlined"
+                  style={{ maxHeight: 160, overflowY: "auto" }}
+                  onScroll={handleRiTechScroll}
+                >
+                  <List dense>
+                    {displayRiTechnicians.length > 0 ? (
+                      <div className='grid grid-cols-3'>
+                        {displayRiTechnicians.map((tech) => {
+                          const value = String(tech.id);
+                          const isSelected = selectedRrTechnicians.some(t => String(t.id) === String(tech.id));
+                          return (
+                            <ListItem
+                              key={value}
+                              component="div"
+                              onClick={() => handleTechnicianChange(tech, "R/I/R/R")}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                }
+                              }}
+                            >
+                              <Checkbox
+                                edge="start"
+                                color="warning"
+                                checked={isSelected}
+                                tabIndex={-1}
+                                disableRipple
+                              />
+                              <ListItemText primary={`${tech.firstName} ${tech.lastName} (R&I)`} />
+                            </ListItem>
+                          );
+                        })}
+                      </div>
+                    ) : riTechLoading ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        Loading...
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No R&I Dent Tech Available
+                      </div>
+                    )}
+                    {riTechLoading && displayRiTechnicians.length > 0 && (
+                      <div className="p-2 text-center text-gray-500 text-xs">Loading more...</div>
+                    )}
+                  </List>
+                </Paper>
+              </FormControl>
+            </div>
+          )}
+
+          <div className="flex gap-4 justify-end mt-4 mb-4">
+            <button
+              type="submit"
+              className="primary-bg pl-5 pr-5 p-2 rounded flex items-center justify-center gap-2 min-w-[100px]"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <span className="animate-spin">↻</span>
+                  Submitting...
+                </>
+              ) : (
+                isEdit ? 'Update Job' : 'Create Job'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {vehiclePricingWarning && (
+        <VehicleTypePricingWarningModal
+          variant={vehiclePricingWarning}
+          missingLabels={missingVehicleTypeLabels}
+          isEdit={isEdit}
+          onProceed={() => {
+            setVehiclePricingWarning(null);
+            void continueJobSubmit();
+          }}
+          onDismiss={() => setVehiclePricingWarning(null)}
+        />
+      )}
+
+      {showVehiclePricingUpdateModal && (
+        <VehicleTypePricingUpdateModal
+          onApplyFutureOnly={() => {
+            setShowVehiclePricingUpdateModal(false);
+            void submitJobToApi({ applyPricingTo: 'future' });
+          }}
+          onApplyPreviousToo={() => {
+            setShowVehiclePricingUpdateModal(false);
+            void submitJobToApi({ applyPricingTo: 'all' });
+          }}
+        />
+      )}
+    </div>
+  );
+}

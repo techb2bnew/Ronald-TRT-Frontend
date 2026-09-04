@@ -1,0 +1,24 @@
+"use client";
+import TechniciansListing from '../listing/listing'
+import React, { useState } from 'react';
+import Sidebar from '@/app/component/sidebar/sidebar-shell';
+import AuthCheck from '@/app/component/AuthCheck';  
+// import Link from 'next/link';
+ 
+export default function Technicians() { 
+ 
+  return (
+    <>
+    <AuthCheck>
+    <div className='main-container'>
+        {/* <Sidebar /> */}
+        <div className="right_section w-[85%] pl-6 pr-8 ml-auto mt-[7rem] lg:w-[85%] lg:ml-auto w-full pl-4 pr-4 ml-0">
+         {/* <Link href='/admin/technicians/listing'>Technicians</Link> */}
+            <TechniciansListing />
+        </div>
+    </div>
+    </AuthCheck>
+    </>
+
+  );
+}

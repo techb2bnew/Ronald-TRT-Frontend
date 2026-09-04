@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 
+import { BASE_PATH } from '@/lib/basePath';
 interface TechnicianApprovalActionsProps {
     technician: any;
     onRejectClick: (id: number) => void;
@@ -22,7 +23,7 @@ const TechnicianApprovalActions: React.FC<TechnicianApprovalActionsProps> = ({
     const handleAccountStatusChange = async (accountStatus: boolean) => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/updateTechnicianAccountStatus`, {
+            const response = await fetch(`${BASE_PATH}/api/updateTechnicianAccountStatus`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +46,7 @@ const TechnicianApprovalActions: React.FC<TechnicianApprovalActionsProps> = ({
 
     const handleApprovalChange = async (status: string) => {
         try {
-            const res = await fetch(`/api/technicianActiveUnactiveAccount`, {
+            const res = await fetch(`${BASE_PATH}/api/technicianActiveUnactiveAccount`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

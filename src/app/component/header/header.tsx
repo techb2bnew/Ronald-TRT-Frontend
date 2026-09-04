@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTechnician } from "../../techheaderprofile/headerprofile";
+import { useTechnician } from "../../admin/techheaderprofile/headerprofile";
 import user from "../../../../public/user.png";
 import { useState, useRef, useEffect } from "react";
 import { useSidebar } from "@/app/component/SidebarContext";
 import Image from "next/image";
 import Swal from "sweetalert2";
 
+import { BASE_PATH } from '@/lib/basePath';
 export default function Header() {
   const router = useRouter();
   const { technician, isLoading } = useTechnician();
@@ -29,7 +30,7 @@ export default function Header() {
   //   }).then((result) => {
   //     if (result.isConfirmed) {
   //       localStorage.clear();
-  //       router.push("/");
+  //       router.push("/admin");
   //     }
   //   });
   // };
@@ -41,7 +42,7 @@ export default function Header() {
 
     if (!token || !technicianData) {
       localStorage.clear();
-      router.push("/");
+      router.push("/admin");
       return;
     }
 
@@ -68,7 +69,7 @@ export default function Header() {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await fetch(`/api/logout`, {
+      const response = await fetch(`${BASE_PATH}/api/logout`, {
         method: "POST",
         headers,
         body: JSON.stringify({ email }),
@@ -78,11 +79,11 @@ export default function Header() {
 
       // Clear localStorage and redirect
       localStorage.clear();
-      router.push("/");
+      router.push("/admin");
     } catch (error) {
       console.error("Error in logOut:", error);
       localStorage.clear();
-      router.push("/");
+      router.push("/admin");
     }
   };
 
@@ -124,7 +125,7 @@ export default function Header() {
         </svg>
       </button>
       <div className="w-100 ml-auto flex items-center justify-end">
-        <div className="cursor-pointer  border-l border-[#383d71] p-5 hover:bg-[#383d71] hover:text-white" onClick={() => router.push('/profile')}>
+        <div className="cursor-pointer  border-l border-[#383d71] p-5 hover:bg-[#383d71] hover:text-white" onClick={() => router.push('/admin/profile')}>
           <p className="text-sm p-[2px]">
             {technician?.firstName} {technician?.lastName}
           </p>
@@ -187,7 +188,7 @@ export default function Header() {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 py-2 w-40 bg-white rounded-md shadow-xl border border-[#383d71] z-20">
               <Link
-                href="/profile"
+                href="/admin/profile"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-[var(--foreground)] hover:text-white flex items-center gap-1"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24" height="24">
