@@ -651,11 +651,11 @@ const JobTable: React.FC = () => {
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Jobs List', href: '/jobs/active-job' }
+          { label: 'Jobs List', href: '/admin/jobs/active-job' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-        <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/jobs/create-job/create" showDatePicker={true}
+        <CommonHeader heading="Jobs List" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Activejobs' buttonLabel="Create Job" buttonLink="/admin/jobs/create-job/create" showDatePicker={true}
           onDateChange={handleDateChange} showClearFilters={true} onClearFilters={handleClearFilters}  selectedRows={selectedIds} />
 
         <div className="overflow-auto rounded-md">

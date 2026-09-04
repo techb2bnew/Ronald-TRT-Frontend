@@ -333,7 +333,7 @@ const TechnicianTable: React.FC = () => {
   };
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  userRole='Customer' buttonLabel="Create Technician" buttonLink="/enterprice/technicians/create" />
+      <CommonHeader heading="IFS Technicians" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV}  userRole='Customer' buttonLabel="Create Technician" buttonLink="/admin/enterprice/technicians/create" />
 
     
         <SortableTable

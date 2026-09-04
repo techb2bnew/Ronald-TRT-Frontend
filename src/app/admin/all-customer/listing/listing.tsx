@@ -659,7 +659,7 @@ export default function ClientListing() {
       }`}
     >
       <Breadcrumb
-        items={[{ label: "All Customer", href: "/all-reoprts/listing" }]}
+        items={[{ label: "All Customer", href: "/admin/all-reoprts/listing" }]}
       />
       <CommonHeader
         heading="All Customer"

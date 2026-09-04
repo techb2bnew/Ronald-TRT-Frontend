@@ -524,7 +524,7 @@ const JobTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Sent Invoice', href: '/reporting/invoice' }
+          { label: 'Sent Invoice', href: '/admin/reporting/invoice' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">

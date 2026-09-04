@@ -615,11 +615,11 @@ const ManagerTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Manager Listing', href: '/technicians/listing' }
+          { label: 'Manager Listing', href: '/admin/technicians/listing' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg"> 
-      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/manager/create-manager?manager"  selectedRows={selectedIds} />
+      <CommonHeader heading="Manager Listing" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Manager" buttonLink="/admin/manager/create-manager?manager"  selectedRows={selectedIds} />
       <SortableTable
         headers={['', 'Serial No', 'Name', 'Email', 'Phone Number', 'Total Jobs' ,'Account Status', 'Action']}
         data={technicians}

@@ -733,7 +733,7 @@ const handleNewTechClick = async (technicianId: string, roleType: string) => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Jobs List', href: '/jobs/active-job' }
+          { label: 'Jobs List', href: '/admin/jobs/active-job' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">

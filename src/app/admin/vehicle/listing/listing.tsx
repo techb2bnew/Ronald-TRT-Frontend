@@ -1171,7 +1171,7 @@ const JobTable: React.FC = () => {
 
   return (
     <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
-      <Breadcrumb items={[{ label: 'Work Order List', href: '/vehicle/listing' }]} />
+      <Breadcrumb items={[{ label: 'Work Order List', href: '/admin/vehicle/listing' }]} />
 
       <div className="shadow-lg p-4 bg-white rounded-lg">
         <CommonHeader
@@ -1182,7 +1182,7 @@ const JobTable: React.FC = () => {
           onImport={activeTab === 'scanned' ? handleImportCSV : undefined}
           userRole='Activejobs'
           buttonLabel="Create Vehicle / Work Order"
-          buttonLink="/vehicle/create-vehicle"
+          buttonLink="/admin/vehicle/create-vehicle"
           showDatePicker={activeTab === 'scanned'}
           onDateChange={activeTab === 'scanned' ? handleDateChange : undefined}
           onNewJobClick={handleNewJobClick}

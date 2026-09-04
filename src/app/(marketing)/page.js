@@ -1,15 +1,15 @@
 
 import React from "react";
-import Banner from "./Components/Pagecomponents/Banner";
-import Purpose from "./Components/Pagecomponents/Purpose";
-import ChooseProrevv from "./Components/Pagecomponents/ChooseProrevv";
-import HighVolume from "./Components/Pagecomponents/HighVolume";
-import ProrevvStats from "./Components/Pagecomponents/ProrevvStats";
-// import Awards from "./Components/Pagecomponents/Awards";
-import ManageTab from "./Components/Pagecomponents/ManageTab";
-import BookDemobar from "./Components/Pagecomponents/BookDemobar";
-import Testimonial from "./Components/Pagecomponents/Testimonial";
-import Faqs from "./Components/Uiux/Faqs";
+import Banner from ".././Components/Pagecomponents/Banner";
+import Purpose from ".././Components/Pagecomponents/Purpose";
+import ChooseProrevv from ".././Components/Pagecomponents/ChooseProrevv";
+import HighVolume from ".././Components/Pagecomponents/HighVolume";
+import ProrevvStats from ".././Components/Pagecomponents/ProrevvStats";
+// import Awards from ".././Components/Pagecomponents/Awards";
+import ManageTab from ".././Components/Pagecomponents/ManageTab";
+import BookDemobar from ".././Components/Pagecomponents/BookDemobar";
+import Testimonial from ".././Components/Pagecomponents/Testimonial";
+import Faqs from ".././Components/Uiux/Faqs";
 
 
 const testinomialData = [

@@ -520,7 +520,7 @@ const fetchArchive = async (page = 1, query = '', limit = pageSize) => {
       {/* Breadcrumb Component */}
       <Breadcrumb
         items={[
-          { label: 'Archive', href: '/archive/listing' }
+          { label: 'Archive', href: '/admin/archive/listing' }
         ]}
       />
 

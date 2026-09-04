@@ -516,10 +516,10 @@ export default function Technicians() {
     <div className='admin-form-shell w-[60%] m-auto mb-5 max-md:w-full'>
       <Breadcrumb
         items={[
-          { label: 'Customers', href: '/customer/listing' },
+          { label: 'Customers', href: '/admin/customer/listing' },
           isEdit
             ? { label: 'Edit Customer' }
-            : { label: 'Create Customer', href: '/customer/create' },
+            : { label: 'Create Customer', href: '/admin/customer/create' },
 
         ]}
       />

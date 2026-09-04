@@ -32,7 +32,7 @@ export default function Login() {
     
     if (token && userID) {
       // User is already logged in, redirect to dashboard
-      router.replace("/dashboard");
+      router.replace("/admin/dashboard");
     } else {
       setIsCheckingAuth(false);
     }

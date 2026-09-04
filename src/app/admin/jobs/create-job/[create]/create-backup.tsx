@@ -578,7 +578,7 @@
 //         items={[
 //           isEdit
 //             ? { label: 'Edit Job' }
-//             : { label: 'Create New Job', href: '/jobs/create-job/create' },
+//             : { label: 'Create New Job', href: '/admin/jobs/create-job/create' },
 //         ]}
 //       />
 //       <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">
@@ -1663,7 +1663,7 @@
 //         items={[
 //           isEdit
 //             ? { label: 'Edit Job' }
-//             : { label: 'Create New Job', href: '/jobs/create-job/create' },
+//             : { label: 'Create New Job', href: '/admin/jobs/create-job/create' },
 //         ]}
 //       />
 

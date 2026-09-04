@@ -1096,7 +1096,7 @@ export default function Technicians() {
             ? { label: isTechnician ? 'Edit Dent Tech' : isManager ? 'Edit Manager' : 'Edit Job' }
             : {
               label: isTechnician ? 'Create Dent Tech' : isManager ? 'Create Manager' : 'Create Single Technician',
-              href: '/technicians/create-technician',
+              href: '/admin/technicians/create-technician',
             },
         ]}
       />

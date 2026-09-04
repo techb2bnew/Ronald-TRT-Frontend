@@ -50,7 +50,7 @@ export default function ViewDetails() {
 
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const backHref = '/reporting/account-reports';
+    const backHref = '/admin/reporting/account-reports';
 
     const isSingleTechnician = searchParams!.has('ActiveWorkOrder');
     const isSingleTechnicianWorkOrder = searchParams!.has('workorder');
@@ -142,7 +142,7 @@ export default function ViewDetails() {
         <div className={`mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
             <Breadcrumb
                 items={[
-                    { label: 'Account Reports', href: '/reporting/account-reports' },
+                    { label: 'Account Reports', href: '/admin/reporting/account-reports' },
                     { label: 'View Account Details', href: '' },
                 ]}
             />

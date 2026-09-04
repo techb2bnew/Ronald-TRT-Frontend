@@ -739,7 +739,7 @@ export default function TechReportingDashboard() {
       className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${isCollapsed ? "w-full pl-20" : "container max-w-7xl"
         }`}
     >
-      <Breadcrumb items={[{ label: "Tech Reporting", href: "/reporting/tech-reporting" }]} />
+      <Breadcrumb items={[{ label: "Tech Reporting", href: "/admin/reporting/tech-reporting" }]} />
 
       <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 md:p-6 shadow-sm">
         {/* Header row */}

@@ -1053,7 +1053,7 @@ export default function JobForm() {
         items={[
           isEdit
             ? { label: 'Edit Job' }
-            : { label: 'Create New Job', href: '/jobs/create-job/create' },
+            : { label: 'Create New Job', href: '/admin/jobs/create-job/create' },
         ]}
       />
 

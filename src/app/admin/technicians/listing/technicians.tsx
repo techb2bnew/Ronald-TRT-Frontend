@@ -680,11 +680,11 @@ const TechnicianTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'IFS Dent Techs', href: '/technicians/listing' }
+          { label: 'IFS Dent Techs', href: '/admin/technicians/listing' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/technicians/create-technician?technician"  selectedRows={selectedIds} onAccountStatusChange={(status) => setAccountStatusFilter(status)} showClearFilters={true} onClearFilters={() => setAccountStatusFilter('')} />
+      <CommonHeader heading="IFS Dent Techs" onPageSizeChange={handlePageSizeChange} onSearch={(term) => setSearchTerm(term)} onExport={downloadCSV} onImport={handleImportCSV} userRole='Technician' buttonLabel="Create Dent Tech" buttonLink="/admin/technicians/create-technician?technician"  selectedRows={selectedIds} onAccountStatusChange={(status) => setAccountStatusFilter(status)} showClearFilters={true} onClearFilters={() => setAccountStatusFilter('')} />
       <SortableTable
         headers={['', 'Serial No',   'Name', 'Email', 'Phone Number', 'Account Status', 'Type', 'Action']}
         data={technicians}

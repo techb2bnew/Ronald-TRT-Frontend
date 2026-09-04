@@ -220,7 +220,7 @@ const VehicleTable: React.FC = () => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Vehicles Info', href: '/reporting/vehicle-info' }
+          { label: 'Vehicles Info', href: '/admin/reporting/vehicle-info' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">

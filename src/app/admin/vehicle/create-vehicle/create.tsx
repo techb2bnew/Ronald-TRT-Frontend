@@ -2675,7 +2675,7 @@ export default function Technicians() {
         items={[
           isEdit
             ? { label: 'Edit Vehicle / Work Order' }
-            : { label: 'Add New Vehicle / Work Order', href: '/jobs/create-job/create' },
+            : { label: 'Add New Vehicle / Work Order', href: '/admin/jobs/create-job/create' },
         ]}
       />
       <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0"> {isEdit ? 'Edit Vehicle / Work Order' : 'Add New Vehicle / Work Order'}</h1>

@@ -237,7 +237,7 @@ export default function Technicians() {
     <div className='main-container mb-5'>
       <Breadcrumb
         items={[
-          { label: 'Banner', href: '/banner' },
+          { label: 'Banner', href: '/admin/banner' },
         ]}
       />
       

@@ -29,7 +29,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
       if (!token || !technicianId) {
         localStorage.clear();
         setIsBlocking(true);
-        router.replace("/login");
+        router.replace("/admin");
         return;
       }
   
@@ -50,7 +50,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             });
         if (response.status === 400 || response.status === 401) {
           localStorage.clear();
-          router.replace("/login");
+          router.replace("/admin");
           return;
         }
   
@@ -68,7 +68,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.replace("/login");
+          router.replace("/admin");
           return;
         }   
         if (!currentUser?.accountStatus) {
@@ -81,7 +81,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.replace("/login");
+          router.replace("/admin");
           return;
         }
         if (currentUser?.deletedStatus) {
@@ -94,7 +94,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
             }
           });
           localStorage.clear();
-          router.replace("/login");
+          router.replace("/admin");
           return;
         }
   
@@ -105,7 +105,7 @@ const AuthCheck = ({ children }: { children: React.ReactNode }) => {
         console.error("Error in AuthCheck:", error);
         localStorage.clear();
         setIsBlocking(true);
-        router.replace("/login");
+        router.replace("/admin");
       }
     };
   

@@ -411,7 +411,7 @@ export default function ViewDetails() {
     return <div><Loading /></div>;
   }
 
-  const backHref = '/technicians/listing';
+  const backHref = '/admin/technicians/listing';
   const displayAddress = technician?.address ? technician.address.replace(/^,\s*/g, '').replace(/\s*,\s*/g, ', ').trim() : 'N/A';
 
   const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) => (
@@ -430,7 +430,7 @@ export default function ViewDetails() {
     <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
-          { label: 'IFS Technicians', href: '/technicians/listing' },
+          { label: 'IFS Technicians', href: '/admin/technicians/listing' },
           { label: 'View Detail', href: '' }
         ]}
       />

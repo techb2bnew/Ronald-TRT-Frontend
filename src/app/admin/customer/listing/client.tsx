@@ -433,12 +433,12 @@ export default function ClientListing() {
     <div className={`admin-listing-wrap mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Customers', href: '/customer/listing' }
+          { label: 'Customers', href: '/admin/customer/listing' }
         ]}
       />
       
       <div className="admin-listing-card shadow-lg p-4 bg-white rounded-lg">
-      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/customer/create"  selectedRows={selectedIds}/>
+      <CommonHeader heading='Customers' onPageSizeChange={handlePageSizeChange} onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }} onExport={downloadCSV} onImport={handleImportCSV} userRole='Customer' buttonLabel="Create Customer" buttonLink="/admin/customer/create"  selectedRows={selectedIds}/>
       
 
       <div className="admin-table-wrap overflow-x-auto rounded-md">

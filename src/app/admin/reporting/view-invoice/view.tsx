@@ -22,7 +22,7 @@ export default function ViewDetails() {
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const backHref = '/reporting/genrated-invoice';
+  const backHref = '/admin/reporting/genrated-invoice';
 
   const isSingleTechnician = searchParams!.has('ActiveWorkOrder');
   const isSingleTechnicianWorkOrder = searchParams!.has('workorder');
@@ -109,7 +109,7 @@ export default function ViewDetails() {
     <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Sent Invoice', href: '/reporting/genrated-invoice' },
+          { label: 'Sent Invoice', href: '/admin/reporting/genrated-invoice' },
           { label: 'Invoice Details', href: '' }
         ]}
       />

@@ -220,7 +220,7 @@ export default function ViewDetails() {
         items={[
           isSingleTechnician
             ? { label: 'All Customer', onClick: () => router.back() }
-            : { label: 'Customer', href: '/customer/listing' },
+            : { label: 'Customer', href: '/admin/customer/listing' },
           { label: 'View Detail', href: '' }
         ]}
       />

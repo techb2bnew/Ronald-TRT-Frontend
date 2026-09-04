@@ -428,7 +428,7 @@ export default function TechPayTotalsReporting() {
         isCollapsed ? "w-full pl-20" : "container max-w-7xl"
       }`}
     >
-      <Breadcrumb items={[{ label: "Tech Reporting", href: "/reporting/tech-reporting" }]} />
+      <Breadcrumb items={[{ label: "Tech Reporting", href: "/admin/reporting/tech-reporting" }]} />
 
       <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-4 md:p-6 shadow-sm">
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-6">

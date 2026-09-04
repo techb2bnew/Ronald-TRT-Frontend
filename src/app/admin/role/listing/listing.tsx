@@ -178,7 +178,7 @@ const downloadCSV = () => {
 
   return (
     <div className="container mx-auto mt-4">
-      <CommonHeader heading="Roles" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Role' buttonLabel="Create role" buttonLink="/role/create" />
+      <CommonHeader heading="Roles" onSearch={(term) => setSearchTerm(term)}  onExport={downloadCSV} userRole='Role' buttonLabel="Create role" buttonLink="/admin/role/create" />
 
       <div className="overflow-auto rounded-md">
         <table className="table w-full table-fixed">

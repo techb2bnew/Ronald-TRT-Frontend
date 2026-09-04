@@ -544,7 +544,7 @@ const ArchivePage = () => {
       {/* Breadcrumb Component */}
       <Breadcrumb
         items={[
-          { label: 'IFS Archive', href: '/archive/listing' }
+          { label: 'IFS Archive', href: '/admin/archive/listing' }
         ]}
       />
 

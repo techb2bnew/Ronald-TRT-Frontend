@@ -425,7 +425,7 @@ const handleImportCSV = (file: File) => {
     <div className={` mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Vehicles List', href: '/reporting/vehicle-list' }
+          { label: 'Vehicles List', href: '/admin/reporting/vehicle-list' }
         ]}
       />
       <div className="shadow-lg p-4 bg-white rounded-lg">

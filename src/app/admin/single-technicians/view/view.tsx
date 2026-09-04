@@ -439,7 +439,7 @@ export default function ViewDetails() {
     <div className={`admin-view-detail mobile_listing mx-auto mt-4 transition-all duration-300 ${isCollapsed ? 'w-full pl-[5rem]' : 'w-full lg:container'}`}>
       <Breadcrumb
         items={[
-          { label: 'Single Technicians', href: '/single-technicians/listing' },
+          { label: 'Single Technicians', href: '/admin/single-technicians/listing' },
           { label: 'View Detail', href: '' }
         ]}
       />
