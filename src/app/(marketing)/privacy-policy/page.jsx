@@ -1,6 +1,6 @@
 
 import React from 'react'
-import BannerCenter from '../Components/Uiux/BannerCenter'
+import BannerCenter from '../../Components/Uiux/BannerCenter'
 
 const sections = [
     {
