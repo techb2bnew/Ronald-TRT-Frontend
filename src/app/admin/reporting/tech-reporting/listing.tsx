@@ -1037,8 +1037,8 @@ export default function TechReportingDashboard() {
                               <Link
                                 href={
                                   selectedJobId
-                                    ? `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
-                                    : `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
+                                    ? `/admin/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
+                                    : `/admin/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
                                 }
                                 className="text-[#383d71]  underline font-medium"
                               >
@@ -1131,8 +1131,8 @@ export default function TechReportingDashboard() {
                               <Link
                                 href={
                                   selectedJobId
-                                    ? `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
-                                    : `/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
+                                    ? `/admin/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}&jobId=${encodeURIComponent(selectedJobId)}`
+                                    : `/admin/reporting/tech-view?vin=${encodeURIComponent(String(r.vin))}`
                                 }
                                 className="text-[#383d71]  underline font-medium"
                               >

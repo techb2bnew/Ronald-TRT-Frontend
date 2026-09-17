@@ -159,7 +159,7 @@ export function techReportingListUrl(filters?: {
   if (filters?.startDate) q.set("startDate", filters.startDate);
   if (filters?.endDate) q.set("endDate", filters.endDate);
   const qs = q.toString();
-  return `/reporting/tech-reporting${qs ? `?${qs}` : ""}`;
+  return `/admin/reporting/tech-reporting${qs ? `?${qs}` : ""}`;
 }
 
 export type MarkPaidItem = {

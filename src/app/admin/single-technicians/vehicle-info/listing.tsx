@@ -352,7 +352,7 @@ const VehicleTable: React.FC = () => {
         : "";
     const techViewHref =
       vin.length > 0
-        ? `/reporting/tech-view?vin=${encodeURIComponent(vin)}${
+        ? `/admin/reporting/tech-view?vin=${encodeURIComponent(vin)}${
             jobIdStr ? `&jobId=${encodeURIComponent(jobIdStr)}` : ""
           }&hideActions=1`
         : "";

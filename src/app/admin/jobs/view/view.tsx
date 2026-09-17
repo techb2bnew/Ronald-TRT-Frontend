@@ -424,7 +424,7 @@ export default function ViewDetails() {
       };
     }
 
-    if (pathname!.includes('/reporting/job-status')) {
+    if (pathname!.includes('/admin/reporting/job-status')) {
       return { label: 'All Work Orders', onClick: goBack };
     }
 

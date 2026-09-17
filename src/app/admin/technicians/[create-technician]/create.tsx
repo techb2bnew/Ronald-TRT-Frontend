@@ -1090,7 +1090,7 @@ export default function Technicians() {
         items={[
           {
             label: isSingleTechnician ? 'Single Technician' : isManager ? 'Manager' : 'IFS Dent Tech',
-            href: isSingleTechnician ? '/single-technicians/listing' : isManager ? '/manager/listing' : '/technicians/listing',
+            href: isSingleTechnician ? '/admin/single-technicians/listing' : isManager ? '/admin/manager/listing' : '/admin/technicians/listing',
           },
           isEdit
             ? { label: isTechnician ? 'Edit Dent Tech' : isManager ? 'Edit Manager' : 'Edit Job' }

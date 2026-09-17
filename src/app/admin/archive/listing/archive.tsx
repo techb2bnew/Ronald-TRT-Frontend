@@ -523,12 +523,12 @@ const ArchivePage = () => {
           className="p-1"
           href={
             selectedArchiveType === ARCHIVE_TYPES.JOB || item.type === "Job" || item.type === "JOB"
-              ? `/jobs/view?jobId=${item.id}`
+              ? `/admin/jobs/view?jobId=${item.id}`
               : selectedArchiveType === ARCHIVE_TYPES.TECHNICIAN ||
                 item.type === "Technician" ||
                 item.type === "User"
-                ? `/archive/view?technicianId=${item.id}`
-                : `/client/view?customerId=${item.id}`
+                ? `/admin/archive/view?technicianId=${item.id}`
+                : `/admin/customer/view?customerId=${item.id}`
           }
         >
           <Image alt="eye" src={Eye} className="w-[16px]" />

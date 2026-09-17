@@ -85,8 +85,8 @@ export default function ViewDetails() {
           {
             label: isSingleTechnician ? 'All TRT Customer' : 'Customer',
             href: isSingleTechnician
-              ? '/all-customer/listing'
-              : '/client/listing',
+              ? '/admin/all-customer/listing'
+              : '/admin/customer/listing',
           },
           { label: 'View Detail', href: '' }
         ]}

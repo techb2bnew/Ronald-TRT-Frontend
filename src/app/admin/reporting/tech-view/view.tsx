@@ -843,7 +843,7 @@ export default function TechView() {
                     type="button"
                     onClick={() =>
                       router.push(
-                        `/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
+                        `/admin/vehicle/create-vehicle?vahicleId=${encodeURIComponent(String(v.id))}`
                       )
                     }
                     className="inline-flex items-center gap-1.5 rounded-md border border-[#1e3e6f] bg-white px-3 py-1.5 text-base font-medium text-[#3a3a3a] hover:bg-[#1e3e6f] hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"

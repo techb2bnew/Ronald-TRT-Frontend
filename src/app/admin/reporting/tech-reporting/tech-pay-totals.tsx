@@ -311,7 +311,7 @@ export default function TechPayTotalsReporting() {
     if (startDate) q.set("startDate", startDate);
     if (endDate) q.set("endDate", endDate);
     if (displayJobId && displayJobId !== "—") q.set("displayJobId", displayJobId);
-    return `/reporting/tech-reporting/detail?${q.toString()}`;
+    return `/admin/reporting/tech-reporting/detail?${q.toString()}`;
   };
 
   const handleListPageChange = (selectedItem: { selected: number }) => {

@@ -404,7 +404,7 @@ const TechnicianTable: React.FC = () => {
 
         {/* <td className='font-sm'>
           <Link
-            href={tech.accountStatus === true && tech.isApproved === 'accept' ? '/jobs/create-job/create' : '#'}
+            href={tech.accountStatus === true && tech.isApproved === 'accept' ? '/admin/jobs/create-job/create' : '#'}
             className={`flex gap-1 items-center border border-[#383d71] rounded p-2 pl-4 pr-4 text-[#383d71] w-[fit-content] justify-center ${tech.accountStatus === true && tech.isApproved === 'accept'
               ? 'cursor-pointer bg-white hover:bg-[#383d71] hover:text-[#fff] '  // Active styles
               : 'cursor-not-allowed bg-gray-200' // Disabled styles
