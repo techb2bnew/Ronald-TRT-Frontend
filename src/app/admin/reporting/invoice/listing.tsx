@@ -359,21 +359,17 @@ const JobTable: React.FC = () => {
     const csvOptions = { filename: 'Invoice', fieldSeparator: ',', quoteStrings: '"', decimalSeparator: '.', showLabels: true, showTitle: true, title: 'Invoice', useTextFile: false, useBom: true, useKeysAsHeaders: true };
     const csvExporter = new ExportToCsv(csvOptions);
     const formattedData = selectedJobs.map((jobData) => {
-      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
-        const vt = tech.VehicleTechnician || {};
-        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}`;
-      }).join(', ');
       return {
-        // id: jobData.id, vin: jobData.vin, customer: `${jobData?.customer?.fullName}`, jobName: jobData.jobName,
-        assignCustomer: jobData?.customer?.id, bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
-        model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
-        vehicleDescriptor: jobData.vehicleDescriptor, manufacturerName: jobData.manufacturerName,
-        plantCompanyName: jobData.plantCompanyName, plantCountry: jobData.plantCountry, plantState: jobData.plantState,
-        deletedStatus: jobData.deletedStatus, notes: jobData.notes,
-        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.join(''), technicianRates,
-        stockNumber: formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
+        'Customer Name': jobData?.customer?.fullName || '',
+        'VIN': jobData.vin || '',
+        'Color': jobData.color || '',
+        'Make': jobData.make || '',
+        'Model': jobData.model || '',
+        'Model Year': jobData.modelYear || '',
+        'Vehicle Descriptor': jobData.vehicleDescriptor || '',
+        'Notes': jobData.notes || '',
+        'Job Description': jobData.jobDescription.join(''),
+        'Stock Number': formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
       };
     });
     csvExporter.generateCsv(formattedData);

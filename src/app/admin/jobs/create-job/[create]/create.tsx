@@ -98,6 +98,41 @@ interface Technician {
 const TECH_LIST_LIMIT = 10;
 const SCROLL_LOAD_THRESHOLD_PX = 40;
 
+/** Shared vehicle-type rows for Vehicle Type Pricing / Dent Tech Flat Rate / R&I Flat Rate. */
+type VehicleTypeRowKey = 'suv' | 'sedan' | 'truck' | 'chassisTruck' | 'other';
+type VehicleTypeRateMap = Record<VehicleTypeRowKey, string>;
+
+const VEHICLE_TYPE_RATE_ROWS: {
+  key: VehicleTypeRowKey;
+  label: string;
+  /** vehicleType value backend uses inside vehicleTypePricing / dentTechFlatRatePricing / rFlatRatePricing */
+  apiType: string;
+  /** matching field on formData for the customer-facing Vehicle Type Pricing column */
+  customerField: 'suvPrice' | 'sedanPrice' | 'truckPrice' | 'chassisTruckPrice' | 'other';
+}[] = [
+  { key: 'suv', label: "SUV's", apiType: 'SUV', customerField: 'suvPrice' },
+  { key: 'sedan', label: 'Sedans', apiType: 'Sedan', customerField: 'sedanPrice' },
+  { key: 'truck', label: 'Trucks (Pick up trucks)', apiType: 'Truck', customerField: 'truckPrice' },
+  { key: 'chassisTruck', label: 'Chassis trucks (Cab only trucks)', apiType: 'Chassis Truck', customerField: 'chassisTruckPrice' },
+  { key: 'other', label: 'Other Vehicles', apiType: 'Other', customerField: 'other' },
+];
+
+function emptyVehicleTypeRateMap(): VehicleTypeRateMap {
+  return { suv: '', sedan: '', truck: '', chassisTruck: '', other: '' };
+}
+
+function buildVehicleTypeRatePricingPayload(
+  rates: VehicleTypeRateMap
+): { vehicleType: string; amount: string }[] {
+  return VEHICLE_TYPE_RATE_ROWS.map(({ apiType, key }) => ({ vehicleType: apiType, amount: rates[key] || '' }));
+}
+
+/** Legacy job-level single techFlatRate/rRate field — kept populated for backend compatibility. */
+function firstFilledRate(rates: VehicleTypeRateMap): string {
+  const found = VEHICLE_TYPE_RATE_ROWS.map(({ key }) => rates[key]).find((v) => String(v ?? '').trim() !== '');
+  return found ?? '0';
+}
+
 function mergeUniqueTechnicians(prev: Technician[], incoming: Technician[]): Technician[] {
   const map = new Map(prev.map((t) => [String(t.id), t]));
   incoming.forEach((t) => map.set(String(t.id), t));
@@ -200,8 +235,9 @@ export default function JobForm() {
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [selectedNormalTechnicians, setSelectedNormalTechnicians] = useState<any[]>([]);
   const [selectedRrTechnicians, setSelectedRrTechnicians] = useState<any[]>([]);
-  const [simpleFlatRate, setSimpleFlatRate] = useState<string>('');
-  const [rirValue, setRirValue] = useState<string>('');
+  /** Per-vehicle-type Dent Tech / R&I flat rates (used as the pay pool per car of that type). */
+  const [dentTechRates, setDentTechRates] = useState<VehicleTypeRateMap>(emptyVehicleTypeRateMap());
+  const [riRates, setRiRates] = useState<VehicleTypeRateMap>(emptyVehicleTypeRateMap());
   const [page, setPage] = useState(1);
   const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -478,21 +514,31 @@ export default function JobForm() {
         setSelectedNormalTechnicians(normalTechs);
         setSelectedRrTechnicians(rirrTechs);
 
-        const totalNormal = normalTechs.reduce((acc: number, tech: any) => {
-          const flat = tech?.UserJob?.techFlatRate;
-          if (flat !== null && flat !== undefined) return acc + Number(flat);
-          return acc;
-        }, 0);
+        // Prefill per-vehicle-type Dent Tech / R&I rates. Older jobs only have a single
+        // flat techFlatRate/rRate — fall back to that value on every row so editing an
+        // old job doesn't show blank rates.
+        const dentTechFlatRatePricing = Array.isArray(jobData.dentTechFlatRatePricing)
+          ? jobData.dentTechFlatRatePricing
+          : [];
+        const rFlatRatePricing = Array.isArray(jobData.rFlatRatePricing) ? jobData.rFlatRatePricing : [];
+        const getRateAmount = (list: any[], type: string) =>
+          String(
+            list.find((item: any) => String(item?.vehicleType || '').toLowerCase() === type.toLowerCase())
+              ?.amount ?? ''
+          );
+        const legacyDentRate = jobData.techFlatRate != null ? String(jobData.techFlatRate) : '';
+        const legacyRiRate = jobData.rRate != null ? String(jobData.rRate) : '';
 
-        const totalRr = rirrTechs.reduce((acc: number, tech: any) => {
-          const flat = tech?.UserJob?.rRate;
-          if (flat !== null && flat !== undefined) return acc + Number(flat);
-          return acc;
-        }, 0);
-
-        // Prefill totals from API edit payload
-        setSimpleFlatRate(jobData.techFlatRate || "");
-        setRirValue(jobData?.rRate || "");
+        const nextDentTechRates = emptyVehicleTypeRateMap();
+        const nextRiRates = emptyVehicleTypeRateMap();
+        VEHICLE_TYPE_RATE_ROWS.forEach(({ key, apiType }) => {
+          nextDentTechRates[key] =
+            dentTechFlatRatePricing.length > 0 ? getRateAmount(dentTechFlatRatePricing, apiType) : legacyDentRate;
+          nextRiRates[key] =
+            rFlatRatePricing.length > 0 ? getRateAmount(rFlatRatePricing, apiType) : legacyRiRate;
+        });
+        setDentTechRates(nextDentTechRates);
+        setRiRates(nextRiRates);
 
         const startDateValue = jobData.startDate ? dayjs(jobData.startDate) : null;
         const endDateValue = jobData.endDate ? dayjs(jobData.endDate) : null;
@@ -668,17 +714,14 @@ export default function JobForm() {
       }
 
       const currentUserId = localStorage.getItem('userID') || '';
+      // Dent Tech / R&I pay is now resolved per vehicle type (see dentTechFlatRatePricing /
+      // rFlatRatePricing below) rather than one flat number per technician, so the job-tech
+      // association no longer carries a rate — it's just the assignment.
       const selectedTechnicians: SelectedTechnician[] = roleType === 'single-technician'
         ? [{ userId: currentUserId || '' }]
         : [
-          ...selectedNormalTechnicians.map(tech => ({
-            userId: tech.id,
-            techFlatRate: simpleFlatRate || '0',
-          })),
-          ...selectedRrTechnicians.map(tech => ({
-            userId: tech.id,
-            rRate: rirValue || '0',
-          }))
+          ...selectedNormalTechnicians.map(tech => ({ userId: tech.id })),
+          ...selectedRrTechnicians.map(tech => ({ userId: tech.id })),
         ];
 
       const selectedTechnicianIds =
@@ -702,8 +745,10 @@ export default function JobForm() {
         jobName: formData.jobName,
         assignCustomer: formData.assignCustomer,
         assignTechnician: selectedTechnicianIds,
-        techFlatRate: simpleFlatRate || '0',
-        rRate: rirValue || '0',
+        // Legacy single-value fields — kept populated (first filled vehicle-type rate) for
+        // backend/report compatibility. The real per-vehicle-type rates are below.
+        techFlatRate: firstFilledRate(dentTechRates),
+        rRate: firstFilledRate(riRates),
         assignManager: managerId,
         createdBy: formData.createdBy,
         notes: formData.notes,
@@ -727,6 +772,12 @@ export default function JobForm() {
             { vehicleType: 'Chassis Truck', amount: formData.chassisTruckPrice || '' },
             { vehicleType: 'Other', amount: formData.other || '' },
           ],
+        }),
+        // Per-vehicle-type Dent Tech / R&I flat rates — shown for both job types (flat rate and
+        // insurance percentage) since technician pay is independent of how the customer is billed.
+        ...(userType !== 'single-technician' && {
+          dentTechFlatRatePricing: buildVehicleTypeRatePricingPayload(dentTechRates),
+          rFlatRatePricing: buildVehicleTypeRatePricingPayload(riRates),
         }),
         ...(formData.jobType === 'insurancePercentage' && {
           insurancePercentage: formData.insurancePercentage,
@@ -863,22 +914,16 @@ export default function JobForm() {
     }
 
     if (userType !== 'single-technician') {
-      if (selectedNormalTechnicians.length > 0 && !simpleFlatRate.trim()) {
-        toast.error('Please fill the Dent Tech Flat Rate ($)');
+      const hasAnyDentTechRate = VEHICLE_TYPE_RATE_ROWS.some(({ key }) => dentTechRates[key].trim());
+      const hasAnyRiRate = VEHICLE_TYPE_RATE_ROWS.some(({ key }) => riRates[key].trim());
+      if (selectedNormalTechnicians.length > 0 && !hasAnyDentTechRate) {
+        toast.error('Please fill the Dent Tech Flat Rate ($) for at least one vehicle type');
         return;
       }
-      if (selectedRrTechnicians.length > 0 && !rirValue.trim()) {
-        toast.error('Please fill the R&I Flat Rate ($)');
+      if (selectedRrTechnicians.length > 0 && !hasAnyRiRate) {
+        toast.error('Please fill the R&I Flat Rate ($) for at least one vehicle type');
         return;
       }
-      // if (simpleFlatRate.trim() && selectedNormalTechnicians.length === 0) {
-      //   toast.error('Please assign at least one Dent Tech');
-      //   return;
-      // }
-      // if (rirValue.trim() && selectedRrTechnicians.length === 0) {
-      //   toast.error('Please assign at least one R&I technician');
-      //   return;
-      // }
     }
 
     if (!isEdit && formData.jobType === 'flatRate') {
@@ -1228,7 +1273,7 @@ export default function JobForm() {
             </FormControl>
           </div>
 
-          {formData.jobType === 'flatRate' && (
+          {(formData.jobType === 'flatRate' || userType !== 'single-technician') && (
             <Accordion defaultExpanded className="mb-4">
               <AccordionSummary expandIcon={<svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1246,70 +1291,81 @@ export default function JobForm() {
                 <span className="font-medium">Vehicle Type Pricing</span>
               </AccordionSummary>
               <AccordionDetails>
-                <div className="grid grid-cols-3 gap-4">
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="SUV's"
-                    size="small"
-                    color="warning"
-                    value={formData.suvPrice}
-                    onChange={(e) => setFormData({ ...formData, suvPrice: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                {/* Columns: Vehicle Type Pricing (customer invoice, flat-rate jobs only) | Dent Tech
+                    Flat Rate | R&I Flat Rate — each row is a vehicle type. Dent Tech / R&I rates are
+                    the pay pool for that vehicle type: assigning 2 technicians of the same cohort to
+                    a car splits that pool 50/50 (percentage-based split, unchanged elsewhere). */}
+                <div className="overflow-x-auto">
+                  <div
+                    className="grid gap-x-4 gap-y-3 items-center min-w-[560px]"
+                    style={{
+                      gridTemplateColumns: `160px repeat(${
+                        (formData.jobType === 'flatRate' ? 1 : 0) + (userType !== 'single-technician' ? 2 : 0)
+                      }, minmax(140px, 1fr))`,
                     }}
-                  />
+                  >
+                    <div />
+                    {formData.jobType === 'flatRate' && (
+                      <div className="text-sm font-semibold text-gray-700">Vehicle Type Pricing</div>
+                    )}
+                    {userType !== 'single-technician' && (
+                      <>
+                        <div className="text-sm font-semibold text-gray-700">Dent Tech Flat Rate ($)</div>
+                        <div className="text-sm font-semibold text-gray-700">R&I Flat Rate ($)</div>
+                      </>
+                    )}
 
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Sedans"
-                    size="small"
-                    color="warning"
-                    value={formData.sedanPrice}
-                    onChange={(e) => setFormData({ ...formData, sedanPrice: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
-
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Trucks (Pick up trucks)"
-                    size="small"
-                    color="warning"
-                    value={formData.truckPrice}
-                    onChange={(e) => setFormData({ ...formData, truckPrice: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
-
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Chassis trucks (Cab only trucks)"
-                    size="small"
-                    color="warning"
-                    value={formData.chassisTruckPrice}
-                    onChange={(e) => setFormData({ ...formData, chassisTruckPrice: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    type="number"
-                    label="Other Vehicles"
-                    size="small"
-                    color="warning"
-                    value={formData.other}
-                    onChange={(e) => setFormData({ ...formData, other: e.target.value })}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                    }}
-                  />
+                    {VEHICLE_TYPE_RATE_ROWS.map(({ key, label, customerField }) => (
+                      <React.Fragment key={key}>
+                        <div className="text-sm text-gray-600">{label}</div>
+                        {formData.jobType === 'flatRate' && (
+                          <TextField
+                            fullWidth
+                            type="number"
+                            size="small"
+                            color="warning"
+                            value={formData[customerField]}
+                            onChange={(e) => setFormData({ ...formData, [customerField]: e.target.value })}
+                            InputProps={{
+                              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                            }}
+                          />
+                        )}
+                        {userType !== 'single-technician' && (
+                          <>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              size="small"
+                              color="warning"
+                              value={dentTechRates[key]}
+                              onChange={(e) =>
+                                setDentTechRates((prev) => ({ ...prev, [key]: e.target.value }))
+                              }
+                              inputProps={{ inputMode: 'decimal', maxLength: 8 }}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                              }}
+                            />
+                            <TextField
+                              fullWidth
+                              type="number"
+                              size="small"
+                              color="warning"
+                              value={riRates[key]}
+                              onChange={(e) =>
+                                setRiRates((prev) => ({ ...prev, [key]: e.target.value }))
+                              }
+                              inputProps={{ inputMode: 'decimal', maxLength: 8 }}
+                              InputProps={{
+                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                              }}
+                            />
+                          </>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
               </AccordionDetails>
             </Accordion>
@@ -1408,42 +1464,6 @@ export default function JobForm() {
           )}
 
 
-
-          {userType !== 'single-technician' && (
-            <div className="grid grid-cols-2 gap-4 mb-2">
-              <div className="mb-4">
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Dent Tech Flat Rate ($)"
-                  size="small"
-                  color="warning"
-                  value={simpleFlatRate}
-                  onChange={(e) => setSimpleFlatRate(e.target.value)}
-                  inputProps={{
-                    inputMode: 'decimal',
-                    maxLength: 8,
-                  }}
-                />
-              </div>
-
-              <div className="mb-4">
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="R&I Flat Rate ($)"
-                  size="small"
-                  color="warning"
-                  value={rirValue}
-                  onChange={(e) => setRirValue(e.target.value)}
-                  inputProps={{
-                    inputMode: 'decimal',
-                    maxLength: 8,
-                  }}
-                />
-              </div>
-            </div>
-          )}
 
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className="grid grid-cols-2 gap-4">

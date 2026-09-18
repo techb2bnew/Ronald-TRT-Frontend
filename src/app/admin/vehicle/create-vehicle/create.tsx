@@ -161,7 +161,12 @@ const vehicleDetailsMap: { [key: string]: keyof JobPayload | undefined } = {
   manufacturername: 'manufacturerName',
   model: 'model',
   modelyear: 'modelYear',
-  vehicletype: 'vehicleType',
+  // NOT 'vehicleType' — NHTSA's VIN-decode "Vehicle Type" is its own classification
+  // (e.g. "MULTIPURPOSE PASSENGER VEHICLE (MPV)"), not one of this app's 5 pricing
+  // buckets (SUV/Sedan/Truck/Chassis Trucks/Other). Auto-filling it here used to silently
+  // overwrite the "Select vehicle" dropdown with an out-of-range value, which both showed
+  // as unselected AND broke Vehicle Type Pricing / Dent Tech / R&I rate lookups for that
+  // work order. Leave vehicleType for the user to pick explicitly.
   plantcountry: 'plantCountry',
   plantcompanyname: 'plantCompanyName',
   plantstate: 'plantState',
@@ -1641,60 +1646,58 @@ export default function Technicians() {
   };
 
   /**
-   * Treat ALL assigned technicians (Dent/Tech + R&I) as ONE pool and split the
-   * percentage equally across them, so 2 techs of any type => 50/50, 3 => 33
-   * each, etc. Manually edited rows are locked and keep their value; the rest
-   * share the remainder. Results are written back into each cohort's map
-   * (techPercentages for Dent/Tech, rPercentages for R&I) so the per-type
-   * display and submit payload keep working.
+   * Dent/Tech and R&I are SEPARATE pools (each vehicle type now has its own Dent Tech
+   * Flat Rate and R&I Flat Rate), so each cohort must independently sum to its own
+   * 100% — 2 Dent techs => 50/50 of the Dent pool, 2 R&I techs => 50/50 of the R&I
+   * pool, regardless of how many technicians are assigned overall. Manually edited
+   * rows are locked and keep their value within their own cohort; the rest of that
+   * cohort share the remainder. Results are written back into each cohort's map
+   * (techPercentages for Dent/Tech, rPercentages for R&I) so the per-type display and
+   * submit payload keep working.
    */
   const redistributeAll = (
     formIndex: number,
     override?: { id: string; value: number },
   ) => {
-    const details = jobForms[formIndex]?.technicianDetails || [];
-    const allIds: string[] = details.map((t: any) => String(t.id));
-    const isDentId = (id: string) =>
-      isDentTechnicianType(details.find((t: any) => String(t.id) === id)?.techType);
+    const dentIds = getTechCohort(formIndex);
+    const rIds = getRCohort(formIndex);
 
     const curTech = techPercentages[formIndex] || {};
     const curR = rPercentages[formIndex] || {};
     const lockTech = techManualLocks[formIndex] || {};
     const lockR = rManualLocks[formIndex] || {};
 
-    const combinedPcts: Record<string, number> = {};
-    const combinedLocks: Record<string, boolean> = {};
-    allIds.forEach((id) => {
-      const dent = isDentId(id);
-      const v = dent ? curTech[id] : curR[id];
-      if (v !== undefined) combinedPcts[id] = v;
-      combinedLocks[id] = Boolean(dent ? lockTech[id] : lockR[id]);
+    const dentPcts: Record<string, number> = {};
+    const dentLocks: Record<string, boolean> = {};
+    dentIds.forEach((id) => {
+      if (curTech[id] !== undefined) dentPcts[id] = curTech[id];
+      dentLocks[id] = Boolean(lockTech[id]);
     });
+
+    const rPcts: Record<string, number> = {};
+    const rLocks: Record<string, boolean> = {};
+    rIds.forEach((id) => {
+      if (curR[id] !== undefined) rPcts[id] = curR[id];
+      rLocks[id] = Boolean(lockR[id]);
+    });
+
     if (override) {
-      combinedPcts[override.id] = Number(override.value.toFixed(2));
-      combinedLocks[override.id] = true;
+      if (dentIds.includes(override.id)) {
+        dentPcts[override.id] = Number(override.value.toFixed(2));
+        dentLocks[override.id] = true;
+      } else if (rIds.includes(override.id)) {
+        rPcts[override.id] = Number(override.value.toFixed(2));
+        rLocks[override.id] = true;
+      }
     }
 
-    const distributed = computeDistributionWithLocks(allIds, combinedPcts, combinedLocks);
-
-    const nextTech: Record<string, number> = {};
-    const nextR: Record<string, number> = {};
-    const nextLockTech: Record<string, boolean> = {};
-    const nextLockR: Record<string, boolean> = {};
-    allIds.forEach((id) => {
-      if (isDentId(id)) {
-        nextTech[id] = distributed[id];
-        nextLockTech[id] = Boolean(combinedLocks[id]);
-      } else {
-        nextR[id] = distributed[id];
-        nextLockR[id] = Boolean(combinedLocks[id]);
-      }
-    });
+    const nextTech = computeDistributionWithLocks(dentIds, dentPcts, dentLocks);
+    const nextR = computeDistributionWithLocks(rIds, rPcts, rLocks);
 
     setTechPercentages((prev) => ({ ...prev, [formIndex]: nextTech }));
     setRPercentages((prev) => ({ ...prev, [formIndex]: nextR }));
-    setTechManualLocks((prev) => ({ ...prev, [formIndex]: nextLockTech }));
-    setRManualLocks((prev) => ({ ...prev, [formIndex]: nextLockR }));
+    setTechManualLocks((prev) => ({ ...prev, [formIndex]: dentLocks }));
+    setRManualLocks((prev) => ({ ...prev, [formIndex]: rLocks }));
   };
 
   const handleTechPercentageChange = (techId: string, rawValue: string, formIndex: number) => {
@@ -1778,6 +1781,84 @@ export default function Technicians() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobForms]);
+
+  // Recompute whenever the vehicle type, job, or assigned technicians of any row change —
+  // this is what makes `getTechnicianRatePool` below pick up the right pool.
+  const vehicleTypeRateSignature = jobForms
+    .map(
+      (form) =>
+        `${form.jobId || jobId || ''}|${form.vehicleType || ''}|${(form.technicianDetails || [])
+          .map((t: any) => t.id)
+          .join('-')}`
+    )
+    .join(',');
+
+  /**
+   * Dent Tech / R&I flat rate is now priced per vehicle type on the job (e.g. SUV vs
+   * Sedan may have different pools) instead of one flat number for the whole job.
+   * Whenever a row's vehicle type (or its assigned job/technicians) changes, resolve
+   * each cohort's pool for that vehicle type from the job's dentTechFlatRatePricing /
+   * rFlatRatePricing and push it onto that row's technicianDetails — everything else
+   * (percentage split across technicians of the same cohort, amount computation,
+   * submit payload) already reads techFlatRate/rRate off technicianDetails via
+   * getTechnicianRatePool, so it picks up the new pool automatically.
+   *
+   * Skipped in edit mode: an existing work order's stored rate must not silently
+   * change just because the job's per-vehicle-type pricing was updated later.
+   */
+  useEffect(() => {
+    if (isEdit) return;
+
+    setJobForms((prev) => {
+      let changed = false;
+      const next = prev.map((form) => {
+        const vehicleType = String(form.vehicleType || '').trim();
+        if (!vehicleType || !Array.isArray(form.technicianDetails) || form.technicianDetails.length === 0) {
+          return form;
+        }
+
+        const formJobId = String(form.jobId || jobId || '');
+        const job =
+          jobNames.find((j: any) => String(j.id) === formJobId) ||
+          jobNames.find(
+            (j: any) => String(j.jobName ?? '').trim() === String(form.jobName ?? '').trim()
+          );
+        if (!job) return form;
+
+        // Prefer the vehicle-type-specific rate; fall back to the job's legacy single
+        // techFlatRate/rRate so this still works against a job payload that hasn't
+        // round-tripped the new per-vehicle-type arrays yet.
+        const dentPool =
+          resolveVehicleTypePrice(vehicleType, (job as any)?.dentTechFlatRatePricing) ||
+          (String((job as any)?.techFlatRate ?? '').trim());
+        const riPool =
+          resolveVehicleTypePrice(vehicleType, (job as any)?.rFlatRatePricing) ||
+          (String((job as any)?.rRate ?? '').trim());
+
+        let rowChanged = false;
+        const updatedDetails = form.technicianDetails.map((tech: any) => {
+          if (isDentTechnicianType(tech.techType)) {
+            if (dentPool !== '' && String(tech.techFlatRate ?? '') !== dentPool) {
+              rowChanged = true;
+              return { ...tech, techFlatRate: dentPool };
+            }
+          } else if (tech.techType === 'R/I/R/R') {
+            if (riPool !== '' && String(tech.rRate ?? '') !== riPool) {
+              rowChanged = true;
+              return { ...tech, rRate: riPool };
+            }
+          }
+          return tech;
+        });
+
+        if (!rowChanged) return form;
+        changed = true;
+        return { ...form, technicianDetails: updatedDetails };
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicleTypeRateSignature, jobNames, isEdit]);
 
   const handlePayRateInput = (
     techId: string,
@@ -2654,6 +2735,29 @@ export default function Technicians() {
       setRManualLocks((prev) => ({ ...prev, 0: {} }));
     }
   };
+
+  /**
+   * The Job Title dropdown only refetches jobNames when it's opened (onOpen), so if a job
+   * is already selected on this page and its Dent Tech / R&I assignments are saved
+   * elsewhere (e.g. the job edit page) without reopening this dropdown, this row's
+   * "Assign Technicians" panel stays stuck on whatever the job had at selection time —
+   * empty if the job had no technicians yet. Re-sync once jobNames refreshes and the
+   * selected job now has technicians but this row still shows none.
+   */
+  useEffect(() => {
+    const trimmedName = String(selectedJobName || jobForms[0]?.jobName || '').trim();
+    if (!trimmedName) return;
+    if (Array.isArray(jobForms[0]?.technicianDetails) && jobForms[0].technicianDetails.length > 0) {
+      return;
+    }
+
+    const job = jobNames.find((j: any) => String(j.jobName ?? '').trim() === trimmedName);
+    const jobTechs = Array.isArray((job as any)?.technicians) ? (job as any).technicians : [];
+    if (jobTechs.length === 0) return;
+
+    void handleJobNameSelect(trimmedName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobNames]);
 
 
 

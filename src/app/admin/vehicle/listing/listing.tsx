@@ -493,30 +493,20 @@ const JobTable: React.FC = () => {
       useKeysAsHeaders: true,
     };
     const csvExporter = new ExportToCsv(csvOptions);
-    const serialToIdMap: Record<string, string> = {};
-    const formattedData = selectedJobs.map((jobData, index) => {
-      const technicianRates = jobData.assignedTechnicians.map((tech: any) => {
-        const vt = tech.VehicleTechnician || {};
-        return `${tech.firstName} ${tech.lastName} - TechnicianFlatRate: ${vt.techFlatRate || ''}, RIRR: ${vt.rRate || ''}, techPercentage ${vt.techPercentage}`;
-      }).join(', ');
-      const serialNo = index + 1;
-      serialToIdMap[String(serialNo)] = String(jobData.id);
+    const formattedData = selectedJobs.map((jobData) => {
       return {
-        'Serial No': serialNo,
-        vin: jobData.vin, customer: `${jobData?.customer?.fullName}`,
-        jobName: jobData.jobName, assignCustomer: jobData?.customer?.id,
-        bodyClass: jobData.bodyClass, color: jobData.color, make: jobData.make,
-        model: jobData.model, vehicleType: jobData.vehicleType, modelYear: jobData.modelYear,
-        vehicleDescriptor: jobData.vehicleDescriptor, manufacturerName: jobData.manufacturerName,
-        plantCompanyName: jobData.plantCompanyName, plantCountry: jobData.plantCountry,
-        plantState: jobData.plantState, deletedStatus: jobData.deletedStatus, notes: jobData.notes,
-        technicians: jobData.assignedTechnicians.map((tech: any) => `${tech.firstName} ${tech.lastName}`).join(', '),
-        assignTechnicians: jobData.assignedTechnicians.map((techId: any) => `${techId.id}`).join(', '),
-        jobDescription: jobData.jobDescription.join(' '), technicianRates,
-        stockNumber: formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
+        'Customer Name': jobData?.customer?.fullName || '',
+        'VIN': jobData.vin || '',
+        'Color': jobData.color || '',
+        'Make': jobData.make || '',
+        'Model': jobData.model || '',
+        'Model Year': jobData.modelYear || '',
+        'Vehicle Descriptor': jobData.vehicleDescriptor || '',
+        'Notes': jobData.notes || '',
+        'Job Description': jobData.jobDescription.join(' '),
+        'Stock Number': formatStockNumberCell(jobData) === '—' ? '' : formatStockNumberCell(jobData),
       };
     });
-    localStorage.setItem(VEHICLE_WORKORDER_IMPORT_ID_MAP_KEY, JSON.stringify(serialToIdMap));
     csvExporter.generateCsv(formattedData);
   };
 

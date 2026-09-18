@@ -18,7 +18,10 @@ export function getTechnicianRatePool(
 
 export function amountFromPercentage(percentage: number, ratePool: number): number {
   if (!Number.isFinite(percentage)) return 0;
-  if (!ratePool) return Number(percentage.toFixed(2));
+  // No rate pool yet (e.g. vehicle type not selected, so the Dent Tech/R&I flat rate for
+  // that type can't be resolved) — show $0, not the raw percentage number as if it were a
+  // dollar amount.
+  if (!ratePool) return 0;
   return Number(((percentage / 100) * ratePool).toFixed(2));
 }
 

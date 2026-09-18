@@ -9,7 +9,7 @@ import Loader from "@/app/component/loader";
 import toast from "react-hot-toast";
 import SortIcon from "@/app/component/sortIcon";
 import Pagination from "@/app/component/pagination";
-import { formatDisplayDateRangeYmd, formatDisplayDateFromYmd } from "@/lib/dateUtils";
+import { formatDisplayDateRangeYmd, formatDisplayDateFromYmd, formatDisplayDate } from "@/lib/dateUtils";
 import {
   baseUrl,
   PAGE_LIMIT,
@@ -44,6 +44,46 @@ type JobDetails = {
   limit?: number;
 };
 
+/** Shape returned by GET /fetchSingleInvoice (response.invoice) — everything for one invoice number. */
+type InvoiceSearchResult = {
+  invoiceNumber?: string;
+  createdAt?: string;
+  customer?: {
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+    address?: string;
+  };
+  job?: {
+    id?: number;
+    jobName?: string;
+    startDate?: string;
+    endDate?: string;
+    vehicles?: Array<{
+      id?: number;
+      vin?: string;
+      make?: string;
+      model?: string;
+      modelYear?: string | number;
+      color?: string;
+      stockNumber?: string;
+      /** Archived/deleted work order — excluded from the job's Tech Pay Totals below, so its
+       *  numbers can legitimately differ from that table even when they look similar. */
+      deletedStatus?: boolean;
+      assignedTechnicians?: Array<{
+        id?: number;
+        firstName?: string;
+        lastName?: string;
+        techType?: string;
+        VehicleTechnician?: {
+          techPercentageCalculatedAmount?: number | string | null;
+          rPercentageCalculatedAmount?: number | string | null;
+        };
+      }>;
+    }>;
+  };
+};
+
 export default function TechPayTotalsReporting() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,6 +113,12 @@ export default function TechPayTotalsReporting() {
   const [listTotalPages, setListTotalPages] = useState(1);
   const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // ─── Search by Invoice No. ────────────────────────────────────────────────
+  const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [invoiceSearching, setInvoiceSearching] = useState(false);
+  const [invoiceResult, setInvoiceResult] = useState<InvoiceSearchResult | null>(null);
+  const [invoiceError, setInvoiceError] = useState("");
 
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({
     key: "name",
@@ -224,6 +270,72 @@ export default function TechPayTotalsReporting() {
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Look up a single invoice by its invoice number and show everything tied to it —
+   * customer, the specific car (VIN/make/model), and exactly which Dent Tech / R&I
+   * technicians worked on that car with their pay. Also selects the invoice's job in
+   * the dropdown above so the job-wide Tech Pay Totals table reflects it too.
+   */
+  const handleInvoiceSearch = async () => {
+    const query = invoiceQuery.trim();
+    if (!query) {
+      toast.error("Enter an invoice number to search.");
+      return;
+    }
+    setInvoiceSearching(true);
+    setInvoiceError("");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/admin");
+        return;
+      }
+      const res = await fetch(`${baseUrl}/fetchSingleInvoice?invoiceId=${encodeURIComponent(query)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 400) {
+        localStorage.removeItem("token");
+        router.push("/admin");
+        return;
+      }
+      const json = await res.json();
+      const invoice = json?.response?.invoice;
+      if (!res.ok || json?.response?.status === false || !invoice) {
+        setInvoiceResult(null);
+        setInvoiceError(json?.response?.message || `No invoice found for "${query}".`);
+        return;
+      }
+      setInvoiceResult(invoice);
+
+      // Bring the job-level Tech Pay Totals table (below) along with it, when that job is
+      // in the currently loaded job list.
+      const jobId = invoice?.job?.id;
+      if (jobId != null) {
+        const matches = jobs.some((j) => String(j?.id) === String(jobId));
+        if (matches && String(jobId) !== String(selectedJobId)) {
+          setSelectedJobId(String(jobId));
+          setListPage(1);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setInvoiceResult(null);
+      setInvoiceError("Failed to search for that invoice.");
+    } finally {
+      setInvoiceSearching(false);
+    }
+  };
+
+  const clearInvoiceSearch = () => {
+    setInvoiceQuery("");
+    setInvoiceResult(null);
+    setInvoiceError("");
   };
 
   // Page reset is handled in job/filter handlers below (avoids filter-change double fetch).
@@ -515,6 +627,33 @@ export default function TechPayTotalsReporting() {
             )}
           </div>
 
+          <div className="min-w-[240px] flex-1 admin-filter-field-wrap">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Search by Invoice No.</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={invoiceQuery}
+                onChange={(e) => setInvoiceQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleInvoiceSearch();
+                  }
+                }}
+                placeholder="e.g. INV-2026-9468"
+                className="flex-1 h-[44px] px-3 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#383d71]/30"
+              />
+              <button
+                type="button"
+                onClick={() => void handleInvoiceSearch()}
+                disabled={invoiceSearching}
+                className="h-[44px] rounded-lg bg-[#383d71] px-4 text-sm font-medium text-white hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+              >
+                {invoiceSearching ? "Searching…" : "Search"}
+              </button>
+            </div>
+          </div>
+
           <div
             className={`min-w-[220px] relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
             ref={datePopoverRef}
@@ -582,12 +721,161 @@ export default function TechPayTotalsReporting() {
 
           <button
             type="button"
-            onClick={clearFilters}
+            onClick={() => {
+              clearFilters();
+              clearInvoiceSearch();
+            }}
             className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 self-end"
           >
             Clear filters
           </button>
         </div>
+
+        {invoiceError && !invoiceResult && (
+          <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 mb-4">
+            {invoiceError}
+          </div>
+        )}
+
+        {invoiceResult && (
+          <div className="rounded-lg border border-gray-200 bg-white overflow-hidden mb-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-[#1e3e6f] text-white px-4 py-3">
+              <span className="font-bold text-sm md:text-base">Invoice Details</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono opacity-90">Invoice #: {invoiceResult.invoiceNumber || "—"}</span>
+                <button
+                  type="button"
+                  onClick={clearInvoiceSearch}
+                  className="text-xs underline opacity-90 hover:opacity-100"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Job</p>
+                  <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                    {invoiceResult.job?.jobName || "—"}
+                    {invoiceResult.job?.id != null ? ` (#${invoiceResult.job.id})` : ""}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Customer</p>
+                  <p className="text-sm font-semibold text-gray-900 capitalize">
+                    {invoiceResult.customer?.fullName || "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Email</p>
+                  <p className="text-sm text-gray-900 break-all">{invoiceResult.customer?.email || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Phone</p>
+                  <p className="text-sm text-gray-900">{invoiceResult.customer?.phoneNumber || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:col-span-2">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Address</p>
+                  <p className="text-sm text-gray-900">{invoiceResult.customer?.address || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Start Date</p>
+                  <p className="text-sm text-gray-900">
+                    {invoiceResult.job?.startDate ? formatDisplayDate(invoiceResult.job.startDate) : "—"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <p className="text-xs font-medium text-gray-500 mb-1">End Date</p>
+                  <p className="text-sm text-gray-900">
+                    {invoiceResult.job?.endDate ? formatDisplayDate(invoiceResult.job.endDate) : "—"}
+                  </p>
+                </div>
+              </div>
+
+              {(invoiceResult.job?.vehicles || []).map((vehicle, vIdx) => {
+                const techs = vehicle.assignedTechnicians || [];
+                const dentTechs = techs.filter((t) => t.techType !== "R/I/R/R");
+                const riTechs = techs.filter((t) => t.techType === "R/I/R/R");
+                const vehicleLabel =
+                  [vehicle.modelYear, vehicle.make, vehicle.model].filter(Boolean).join(" ") || "—";
+                return (
+                  <div key={vehicle.id ?? vIdx} className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200">
+                      <span className="text-sm font-semibold text-gray-800 inline-flex items-center gap-2">
+                        VIN: {vehicle.vin || "—"} — {vehicleLabel}
+                        {vehicle.stockNumber ? ` — Stock #${vehicle.stockNumber}` : ""}
+                        {vehicle.deletedStatus && (
+                          <span
+                            className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700"
+                            title="This work order has been deleted/archived — it's excluded from the job's Tech Pay Totals below, so totals there won't include it."
+                          >
+                            Deleted / Archived
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {dentTechs.length} Dent Tech{dentTechs.length === 1 ? "" : "s"}, {riTechs.length} R&amp;I
+                      </span>
+                    </div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-white">
+                          <th className="text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-100">
+                            Technician
+                          </th>
+                          <th className="text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-100">
+                            Type
+                          </th>
+                          <th className="text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-100">
+                            Pay
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {techs.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="px-3 py-4 text-center text-gray-500">
+                              No technicians assigned to this vehicle.
+                            </td>
+                          </tr>
+                        ) : (
+                          techs.map((tech, i) => {
+                            const isDent = tech.techType !== "R/I/R/R";
+                            const amount = isDent
+                              ? tech.VehicleTechnician?.techPercentageCalculatedAmount
+                              : tech.VehicleTechnician?.rPercentageCalculatedAmount;
+                            return (
+                              <tr key={tech.id ?? i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/60"}>
+                                <td className="px-3 py-2 border-b border-gray-100 capitalize">
+                                  {tech.firstName} {tech.lastName}
+                                </td>
+                                <td className="px-3 py-2 border-b border-gray-100">
+                                  {isDent ? "Dent Tech" : "R&I"}
+                                </td>
+                                <td className="px-3 py-2 border-b border-gray-100 font-medium">{money(amount)}</td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+
+              {(!invoiceResult.job?.vehicles || invoiceResult.job.vehicles.length === 0) && (
+                <p className="text-sm text-gray-500">No vehicle found for this invoice.</p>
+              )}
+
+              <p className="text-xs text-gray-500 italic">
+                Note: this shows only the vehicle(s) tied to this invoice. The Job Summary / Tech Pay
+                Totals below aggregate every active work order under the whole job, so its numbers can
+                include other vehicles too — they won't always match what's shown here.
+              </p>
+            </div>
+          </div>
+        )}
 
         {(jobsLoading || loading) && (
           <div className="flex justify-center py-12">
