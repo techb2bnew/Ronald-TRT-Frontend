@@ -719,7 +719,7 @@ export default function ClientListing() {
         ))}
       </div> */}
 
-      <div className="flex gap-40 mb-10">
+      <div className="flex flex-wrap gap-x-8 gap-y-6 lg:gap-x-40 mb-10">
         {[
           ["Customer Name", "Customer Id", "Techician Name", "Techician Id"],
           ["Job Id", "Job Name", "Job Status", "Job Description"],

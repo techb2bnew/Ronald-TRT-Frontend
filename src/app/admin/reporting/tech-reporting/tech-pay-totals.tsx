@@ -934,7 +934,7 @@ export default function TechPayTotalsReporting() {
                     </p>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 shrink-0">
+                <div className="flex flex-wrap gap-2 min-w-0 max-w-full">
                   <button
                     type="button"
                     onClick={() => void handleExportCsv()}

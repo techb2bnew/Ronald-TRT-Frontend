@@ -976,7 +976,7 @@ const handleDownloadInvoice = async () => {
           <div className="flex-1 min-w-[260px] [&_.px-1]:mb-0 [&_.mb-4]:mb-0">
             <CommonHeader heading="Invoice" onSearch={(term) => { setSearchTerm(term); setCurrentPage(1); }} onExport={downloadCSV} userRole='Activejobs' buttonLabel="" buttonLink="" showDatePicker={true} onDateChange={handleDateChange} onNewJobClick={handleNewJobClick} onCustomerChange={handleNewCustomerClick} onStatusChange={handleStatusChange} fetchCustomerData={fetchCustomerData} showClearFilters={true} onClearFilters={handleClearFilters} selectedRows={selectedIds} />
           </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0 sm:ml-auto">
+          <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full sm:ml-auto">
             <button
               onClick={() => handleGenerateInvoice()}
               disabled={isGeneratingInvoice || isDownloadingInvoice || selectedIds.length === 0}

@@ -747,7 +747,7 @@ export default function TechReportingDashboard() {
           <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
             Comprehensive Job &amp; Technician Analytics
           </h1>
-          <div className="flex flex-wrap gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2 min-w-0 max-w-full">
             <button
               type="button"
               onClick={exportCsv}

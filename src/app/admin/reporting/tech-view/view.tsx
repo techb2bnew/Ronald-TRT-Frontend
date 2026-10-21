@@ -838,7 +838,7 @@ export default function TechView() {
               {!hideEditDelete &&
                 v?.id != null &&
                 String(v.id).trim() !== "" && (
-                <div className="shrink-0 flex flex-wrap items-center gap-2">
+                <div className="min-w-0 max-w-full flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() =>

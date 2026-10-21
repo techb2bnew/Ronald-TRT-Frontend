@@ -656,7 +656,7 @@ export default function TechPayDetailView() {
                     Vehicles worked by {detailMeta?.technicianName || "technician"}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
                   <button
                     type="button"
                     onClick={() => void handleExportCsv()}

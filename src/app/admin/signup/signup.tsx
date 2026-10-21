@@ -619,10 +619,10 @@ export default function Role() {
     <div className='main-container mb-5 bg-white'>
       {/* <h1 className="text-lg leading-6 font-bold text-gray-900 mb-[2px] sm:mb-0">Create New Technician</h1> */}
       <div className="flex">
-        <div className="w-1/2 md:block fixed">
+        <div className="hidden md:block w-1/2 fixed">
           <Image src={Banner} className="" width='1000' style={{ width: '100%', height: '100vh', objectFit: 'cover' }} height='800' alt="page img" />
         </div>
-        <div className="md:w-1/2 absolute right-[0] top-[0rem] bg-white" style={{ padding: '2rem 5rem' }}>
+        <div className="w-full md:w-1/2 absolute right-[0] top-[0rem] bg-white px-5 py-8 md:px-20">
           <div className="text-center mb-5 w-full">
             <Image src={Logo} className="m-auto" width='100' height='50' alt="page img" />
             <h2 className="text-2xl font-bold text-[#161616] mt-5">Create Account</h2>
