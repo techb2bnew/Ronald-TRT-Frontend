@@ -243,10 +243,10 @@ const fetchRoleData = async (roleId: string) => {
         <Loader />
       </div>
     )}
-      <div className="flex gap-12">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
         {/* Create Roles */}
        
-        <div className="w-[40%] bg-white p-6 shadow-lg rounded-lg">
+        <div className="w-full lg:w-[40%] bg-white p-6 shadow-lg rounded-lg">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">{isEdit ? 'Edit Role' : 'Create Role'}</h2>
 
           <div className="mb-5">
@@ -299,21 +299,21 @@ const fetchRoleData = async (roleId: string) => {
         </div>
 
         {/* Permissions */}
-        <div className="w-[60%] bg-white p-6 shadow-lg rounded-lg">
+        <div className="w-full lg:w-[60%] bg-white p-6 shadow-lg rounded-lg">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">Permissions</h2>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-5 gap-4 text-left">
+            <div className="grid grid-cols-[minmax(6.5rem,1.6fr)_repeat(4,minmax(0,1fr))] sm:grid-cols-5 gap-2 sm:gap-4 text-left">
               <div className="font-medium text-gray-700 text-left text-sm"> </div>
-              <div className="font-medium text-gray-700 text-left text-sm">Create</div>
-              <div className="font-medium text-gray-700 text-left text-sm">Edit</div>
-              <div className="font-medium text-gray-700 text-left text-sm">Delete</div>
-              <div className="font-medium text-gray-700 text-left text-sm">Approve</div>
+              <div className="font-medium text-gray-700 text-left text-xs sm:text-sm">Create</div>
+              <div className="font-medium text-gray-700 text-left text-xs sm:text-sm">Edit</div>
+              <div className="font-medium text-gray-700 text-left text-xs sm:text-sm">Delete</div>
+              <div className="font-medium text-gray-700 text-left text-xs sm:text-sm">Approve</div>
             </div>
 
             {/* Repeat for other roles */}
             {[ 'workshop', 'workshopadmin', 'enterprises', 'technician', 'customer', 'activejobs', 'completedjobs', 'jobbygroup', 'vehicleinfo' ].map((role) => (
-              <div key={role} className="grid grid-cols-5 gap-5 text-left items-center">
+              <div key={role} className="grid grid-cols-[minmax(6.5rem,1.6fr)_repeat(4,minmax(0,1fr))] sm:grid-cols-5 gap-2 sm:gap-5 text-left items-center">
                 <div className='text-sm'>{role.charAt(0).toUpperCase() + role.slice(1)}</div>
                 {['create', 'edit', 'delete', 'approve'].map((action) => (
                   <label key={`${role}-${action}`} className="flex items-center cursor-pointer relative">

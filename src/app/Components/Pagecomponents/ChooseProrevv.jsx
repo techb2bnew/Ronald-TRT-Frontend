@@ -96,7 +96,7 @@ const ChooseProrevv = () => {
   return (
     <div className="bg-black relative">
       <h2 className="pt-12 md:pt-14 px-2 text-center gradient-text text-[28px] md:text-[38px] lg:text-[46px] xl:text-[60px] 2xl:text-[75px]   leading-9 md:leading-12 lg:leading-14 xl:leading-17.5 2xl:leading-21.25 font-semibold">
-        Experience Seamless Business
+        Experience Seamless Business{" "}
         <br className="hidden md:block" />
         Management on Mobile App
       </h2>
