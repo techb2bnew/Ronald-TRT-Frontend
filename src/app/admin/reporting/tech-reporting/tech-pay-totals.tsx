@@ -87,7 +87,7 @@ type InvoiceSearchResult = {
 export default function TechPayTotalsReporting() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, isMobileView } = useSidebar();
 
   const [jobs, setJobs] = useState<any[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
@@ -537,7 +537,7 @@ export default function TechPayTotalsReporting() {
   return (
     <div
       className={`mobile_listing mx-auto mt-4 transition-all duration-300 pb-10 ${
-        isCollapsed ? "w-full pl-20" : "container max-w-7xl"
+        isCollapsed && !isMobileView ? "w-full pl-20" : "container max-w-7xl"
       }`}
     >
       <Breadcrumb items={[{ label: "Tech Reporting", href: "/admin/reporting/tech-reporting" }]} />
@@ -549,7 +549,7 @@ export default function TechPayTotalsReporting() {
 
         {/* Filters */}
         <div className="admin-filters-bar rounded-lg border border-gray-200 bg-white p-4 mb-4 flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:items-end">
-          <div className="min-w-[220px] flex-1 relative admin-filter-field-wrap admin-filter-dropdown-wrap" ref={jobDropdownRef}>
+          <div className="w-full min-w-0 lg:w-auto lg:min-w-[220px] flex-1 relative admin-filter-field-wrap admin-filter-dropdown-wrap" ref={jobDropdownRef}>
             <label className="block text-xs font-medium text-gray-500 mb-1">Select Job</label>
             <button
               type="button"
@@ -627,7 +627,7 @@ export default function TechPayTotalsReporting() {
             )}
           </div>
 
-          <div className="min-w-[240px] flex-1 admin-filter-field-wrap">
+          <div className="w-full min-w-0 lg:w-auto lg:min-w-[240px] flex-1 admin-filter-field-wrap">
             <label className="block text-xs font-medium text-gray-500 mb-1">Search by Invoice No.</label>
             <div className="flex gap-2">
               <input
@@ -641,21 +641,26 @@ export default function TechPayTotalsReporting() {
                   }
                 }}
                 placeholder="e.g. INV-2026-9468"
-                className="flex-1 h-[44px] px-3 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#383d71]/30"
+                className="flex-1 min-w-0 w-full h-[44px] px-3 text-sm border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#383d71]/30"
               />
-              <button
-                type="button"
-                onClick={() => void handleInvoiceSearch()}
-                disabled={invoiceSearching}
-                className="h-[44px] rounded-lg bg-[#383d71] px-4 text-sm font-medium text-white hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
-              >
-                {invoiceSearching ? "Searching…" : "Search"}
-              </button>
+              {/* Wrapper keeps the button sized to its text on mobile: the global
+                  `.admin-filters-bar button { width: 100% !important }` rule would otherwise
+                  stretch it to the full row and push it out of the card. */}
+              <div className="shrink-0 min-w-[104px]">
+                <button
+                  type="button"
+                  onClick={() => void handleInvoiceSearch()}
+                  disabled={invoiceSearching}
+                  className="w-full h-[44px] rounded-lg bg-[#383d71] px-4 text-sm font-medium text-white hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {invoiceSearching ? "Searching…" : "Search"}
+                </button>
+              </div>
             </div>
           </div>
 
           <div
-            className={`min-w-[220px] relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
+            className={`w-full min-w-0 lg:w-auto lg:min-w-[220px] relative admin-filter-field-wrap admin-date-popover-wrap${datePopoverOpen ? " admin-date-popover-open" : ""}`}
             ref={datePopoverRef}
           >
             <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
@@ -802,7 +807,7 @@ export default function TechPayTotalsReporting() {
                 return (
                   <div key={vehicle.id ?? vIdx} className="rounded-lg border border-gray-200 overflow-hidden">
                     <div className="bg-gray-50 px-4 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200">
-                      <span className="text-sm font-semibold text-gray-800 inline-flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-800 inline-flex flex-wrap items-center gap-x-2 gap-y-1 break-all min-w-0">
                         VIN: {vehicle.vin || "—"} — {vehicleLabel}
                         {vehicle.stockNumber ? ` — Stock #${vehicle.stockNumber}` : ""}
                         {vehicle.deletedStatus && (
@@ -818,7 +823,8 @@ export default function TechPayTotalsReporting() {
                         {dentTechs.length} Dent Tech{dentTechs.length === 1 ? "" : "s"}, {riTechs.length} R&amp;I
                       </span>
                     </div>
-                    <table className="w-full text-sm">
+                    <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[320px]">
                       <thead>
                         <tr className="bg-white">
                           <th className="text-left text-xs font-semibold text-gray-700 px-3 py-2 border-b border-gray-100">
@@ -860,6 +866,7 @@ export default function TechPayTotalsReporting() {
                         )}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 );
               })}
